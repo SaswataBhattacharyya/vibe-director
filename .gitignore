@@ -31,3 +31,7 @@ local_data/
 *.ckpt
 *.pt
 *.pth
+
+# Browser verification output
+test-results/
+playwright-report/

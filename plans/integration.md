@@ -81,7 +81,7 @@ Standard upstream checkpoints and provider selectors must be adapted or bypassed
 
 Reuse the configured ComfyUI runtime rather than reinstalling it or moving model weights. Discover actual binary/package/node/model requirements per selected adapter. Existing FFmpeg-based paths may be reused; Node/composition dependencies are added only if the selected renderer needs them. Keep new tool dependencies isolated from the working ComfyUI environment.
 
-OpenMontage is AGPL-3.0: see the source/licensing assessment in `openmontage_comparison.md`. The current private-repository preference does not settle licensing for a distributed or hosted modified product. Before copying covered code into the product, decide whether its obligations fit the intended offering, obtain suitable additional permission if available, or implement ideas through independently licensed tools. This blocks only covered-source adoption, not UI planning or independent implementation. Do not assume a separate process removes obligations.
+OpenMontage is AGPL-3.0: see the source/licensing assessment in `openmontage_comparison.md`. The product repository is public by explicit user choice. Free publication and commercial sale both require compliance when covered code is distributed; see `openmontage_licensing.md`. Before copying covered code into the product, decide whether its obligations fit the intended offering, obtain suitable additional permission if available, or implement ideas through independently licensed tools. This blocks only covered-source adoption, not UI planning or independent implementation. Do not assume a separate process removes obligations.
 
 ## 6. Implementation sequence
 

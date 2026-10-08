@@ -15,6 +15,10 @@
 9. `integration.md` — source repositories, selective reuse, canonical contracts, dependencies/license decision and implementation sequence.
 10. `issue_backlog.md` — collaborator/source setup, proposed UI/backend responsibilities, issue drafts, dependencies and first milestone; `issues/` contains unpublished issue bodies.
 
+## Runtime and provider acceptance
+
+[Runtime supervision and provider choices](runtime_and_providers.md) records GPU, acceptance and Codex-first provider boundaries. [OpenMontage licensing context](openmontage_licensing.md) records the pinned AGPL-3.0 terms relevant to proposed imports. These notes supplement the product plans; they do not change Manual/Semi/Full behavior, adopt OpenMontage code, or mark optional workflows ready.
+
 ## Proposed implementation details
 
 The staged reuse map, CPU-only isolated T2V slice, and dependent work cards are proposed implementation details subordinate to the product requirements above: [`G2_isolated_video_reuse.md`](implementation/G2_isolated_video_reuse.md), [`LUNA_WORK_PACKAGES.md`](implementation/LUNA_WORK_PACKAGES.md). They do not change navigation, workflow policy, or authorize live generation.
@@ -34,7 +38,7 @@ The staged reuse map, CPU-only isolated T2V slice, and dependent work cards are 
 
 ## What remains to be specified
 
-Media Prep implementation details, final clip assembly/audio mixing, deployment/provider integration, exact per-model image prompt budgets and graph-specific settings/capacity verification remain later planning or implementation tasks. Existing catalogued capabilities do not automatically become required stages in the new journey.
+Media Prep implementation details, final clip assembly/audio mixing, deployment, exact per-model image prompt budgets and graph-specific settings/capacity verification remain later planning or implementation tasks. The initial integrated application completion and acceptance baseline uses the configured Codex CLI. Only after the complete app works with Codex should OpenCode/direct API adapters, flexible model discovery or weaker Ollama/Qwen support be considered as a separate provider-expansion stage; existing Ollama may remain unchanged and need not be tested for Codex acceptance. Existing catalogued capabilities do not automatically become required stages in the new journey.
 
 These are plans, not changes to the running Story Builder. Architecture and code reuse choices will follow these product contracts.
 

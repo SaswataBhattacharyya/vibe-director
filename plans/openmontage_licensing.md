@@ -1,0 +1,7 @@
+# OpenMontage licensing context
+
+Reviewed source: OpenMontage commit `9327439db69021ab4b0e2776729bf3b58fdb5a87`. The pinned [`LICENSE`](https://raw.githubusercontent.com/calesthio/OpenMontage/9327439db69021ab4b0e2776729bf3b58fdb5a87/LICENSE) identifies GNU AGPL version 3.
+
+AGPLv3 permits commercial use and charging for copies/support (§4); this does not decide whether Vibe Director should include covered code. Program output is not automatically covered: output is subject to the license only if its content itself constitutes a covered work (§2). Redistribution of covered source/object forms carries applicable notices, license and modification notices plus corresponding-source/whole-covered-work obligations (§§4–6). A free public GitHub repository is still redistribution. Users interacting remotely with a modified covered program must receive a prominent opportunity to obtain its Corresponding Source (§13).
+
+No OpenMontage imports have been copied. Before any exact import, decide whether those obligations fit the intended source distribution and hosting model, or choose a separately licensed implementation/permission. This is an integration-specific decision, not an automatic AGPL adoption or a project-wide license choice. Licenses for models, reference/source media, datasets and other dependencies need a separate inventory; this note does not establish that all generated or referenced content is commercially usable.

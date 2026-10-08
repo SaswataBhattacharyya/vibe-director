@@ -1,6 +1,6 @@
 # [G1] Prepare the product repository and reproducible reference sources
 
-Status: local issue draft; not published. Type: Groundwork.
+Status: published as [GitHub issue #1](https://github.com/SaswataBhattacharyya/vibe-director/issues/1). Type: Groundwork.
 
 **Proposed lead/reviewer:** Saswata; Ashu reviews. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** None.

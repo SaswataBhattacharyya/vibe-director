@@ -1,6 +1,6 @@
 # Collaboration and issue backlog — Vibe Director
 
-Updated 2026-10-08. These are local issue drafts, not published GitHub issues. Draft IDs G1/D1/B1 etc. are planning IDs, not GitHub issue numbers.
+Updated 2026-10-08. All 14 issue specifications are published on GitHub. G1/D1/B1 etc. remain planning IDs; the publication table maps them to GitHub issue numbers.
 
 ## Repository and sources
 
@@ -57,13 +57,37 @@ The old StudioDirector issue is design evidence. This backlog translates useful 
 ## First milestone and publication order
 
 1. Create/configure the public product repository and share this planning set. Complete G1 source access; G2 contract/reuse decisions can begin from the local sources immediately.
-2. Publish G1, G2 and D1/D4 first. Agree navigation and video interaction, then make **isolated T2V → progress → playback → preserved retake** work as B1. Ashu can prototype using G2 fixtures while backend adaptation proceeds.
-3. Publish D2/D3/D5/D6 as parallelizable design work once shell/context/contracts are clear. Convert accepted designs into small UI implementation issues, by screen/behavior; do not treat the D issue itself as an all-in-one implementation ticket.
+2. Start with G1, G2 and D1/D4; these are published as issues #1–#4. Agree navigation and video interaction, then make **isolated T2V → progress → playback → preserved retake** work as B1. Ashu can prototype using G2 fixtures while backend adaptation proceeds.
+3. Use D2/D3/D5/D6 as parallelizable design work once shell/context/contracts are clear. Convert accepted designs into small UI implementation issues, by screen/behavior; do not treat the D issue itself as an all-in-one implementation ticket.
 4. Schedule B2/B3/B4/B5 after their relevant contracts/designs are accepted. Their drafts state required outcomes; split them into child issues if the source audit reveals wider changes.
-5. Keep F1 in Later until the user defines final assembly. Update issue links/IDs here after publication rather than publish every deferred task immediately.
+5. Keep F1 in Later until the user defines final assembly. All issues are now published at the owner's request; publication does not mean a dependency-blocked or Later issue is ready for implementation.
 
 First milestone acceptance: one usable isolated video journey with real input validation, saved state, engine-unavailable behavior, durable progress/playback and retake. UI evidence and an authorized monitored integration render are distinct from mocked demonstrations. The app remains planning-only until implementation evidence exists.
 
 ## What the design PR should contain
 
 For each screen: purpose, entry/exit/context, annotated layout, editable fields and actions, optional/required inputs, saved-state behavior, loading/empty/offline/error/running/done states, mobile behavior, API requests/responses needed, and unresolved questions. A linked prototype plus written decisions is sufficient; choose the design tool together. No requirement to use Figma or install a second app stack.
+
+
+## Published GitHub issues
+
+Repository: [SaswataBhattacharyya/vibe-director](https://github.com/SaswataBhattacharyya/vibe-director), public by the owner's explicit instruction. All 66 planning/guidance files have been uploaded; no application implementation is claimed.
+
+| Plan ID | GitHub issue | Stage |
+|---|---|---|
+| G1 | [#1: [G1] Prepare the product repository and reproducible reference sources](https://github.com/SaswataBhattacharyya/vibe-director/issues/1) | Planning/design |
+| G2 | [#2: [G2] Map reusable services and define the UI/API boundary](https://github.com/SaswataBhattacharyya/vibe-director/issues/2) | Planning/design |
+| D1 | [#3: [D1] Design shared navigation for story-led and isolated creation](https://github.com/SaswataBhattacharyya/vibe-director/issues/3) | Planning/design |
+| D4 | [#4: [D4] Design three video forms, reference collation and take review](https://github.com/SaswataBhattacharyya/vibe-director/issues/4) | Planning/design |
+| B1 | [#5: [B1] Connect isolated T2V from edited prompt to durable job and retake](https://github.com/SaswataBhattacharyya/vibe-director/issues/5) | Pending design/contracts |
+| D2 | [#6: [D2] Design merged story authoring and the readable screenplay](https://github.com/SaswataBhattacharyya/vibe-director/issues/6) | Planning/design |
+| D3 | [#7: [D3] Design optional character/world/frame creation and voice binding](https://github.com/SaswataBhattacharyya/vibe-director/issues/7) | Planning/design |
+| D5 | [#8: [D5] Design Automation & Parameters and shared run monitoring](https://github.com/SaswataBhattacharyya/vibe-director/issues/8) | Planning/design |
+| D6 | [#9: [D6] Arrange Media Prep libraries/tools and the Status catalog](https://github.com/SaswataBhattacharyya/vibe-director/issues/9) | Planning/design |
+| B2 | [#10: [B2] Adapt V2 revisions and build real story edits/graph/screenplay derivation](https://github.com/SaswataBhattacharyya/vibe-director/issues/10) | Pending design/contracts |
+| B3 | [#11: [B3] Adapt image/voice assets and exact FFLF/R2V request compilation](https://github.com/SaswataBhattacharyya/vibe-director/issues/11) | Pending design/contracts |
+| B4 | [#12: [B4] Reuse Media Prep services behind one searchable asset library](https://github.com/SaswataBhattacharyya/vibe-director/issues/12) | Pending design/contracts |
+| B5 | [#13: [B5] Implement the three wrappers using the shared execution service](https://github.com/SaswataBhattacharyya/vibe-director/issues/13) | Pending design/contracts |
+| F1 | [#14: [F1] Define final clip assembly, sound and export before selecting tools](https://github.com/SaswataBhattacharyya/vibe-director/issues/14) | Later design |
+
+Ashu currently has read access as checked during publication. The owner should invite `ashucodesbio` as a collaborator for the requested write/merge participation; public cloning does not require that invitation. Start with #1–#4, then #5 once its designs/contracts are accepted. Do not treat all open issues as simultaneously ready.

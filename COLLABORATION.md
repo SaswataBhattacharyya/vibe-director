@@ -5,7 +5,7 @@ Updated 2026-10-08. Owner: `SaswataBhattacharyya`. Public visibility is now expl
 ## Shared source of truth
 
 - [plans/README.md](plans/README.md) indexes current product decisions. [plans/issue_backlog.md](plans/issue_backlog.md) and linked drafts describe next work. Historical plans and source applications provide evidence, not a competing product specification.
-- Use one separate Vibe Director product repository. Existing local reference sources remain outside it. The canonical local planning repository has an initial commit. The owner created `https://github.com/SaswataBhattacharyya/vibe-director`; remote publication and collaborator access are tracked in the backlog.
+- Use one separate Vibe Director product repository. Existing local reference sources remain outside it. The canonical local planning repository has an initial commit. The owner created `https://github.com/SaswataBhattacharyya/vibe-director`; all planning files and 14 issues are published. The backlog records issue links; Ashu's write/merge access still requires a collaborator invitation.
 - Before the initial commit, review staged contents and ignore rules for credentials, private media, local state, model weights and environments. Share only the reviewed source/planning subset.
 
 ## People and decisions
@@ -16,7 +16,7 @@ Updated 2026-10-08. Owner: `SaswataBhattacharyya`. Public visibility is now expl
 
 ## Work cycle
 
-1. Use the public product remote, attach this local repository and arrange write access for the specified collaborator. G1 documents source access/setup; no invitation or remote setup has been performed here.
+1. Use the public product remote, attach this local repository and arrange write access for the specified collaborator. G1 documents source access/setup; the remote and issue publication are complete; no collaborator invitation has been sent by this agent.
 2. Publish only ready milestone issues. Use **Backlog → Ready → In progress → Review → Done**, plus Blocked for real dependencies.
 3. Design issues produce reviewable layouts/prototypes, answers and API requirements. Accepted designs lead to bounded implementation issues. Implementation issues close with demonstrated behavior, not merely a design or count of passing tests.
 4. Use short branches and PRs linked to issues. The other collaborator reviews before merge; either can merge after that approval. Follow this rule by agreement and enforce it in repository settings where available. Add meaningful automated checks as implementation starts.

@@ -1,6 +1,6 @@
 # [B2] Adapt V2 revisions and build real story edits/graph/screenplay derivation
 
-Status: local issue draft; not published. Type: Implementation.
+Status: published as [GitHub issue #10](https://github.com/SaswataBhattacharyya/vibe-director/issues/10). Type: Implementation.
 
 **Proposed lead/reviewer:** Backend implementer proposes; both review creative semantics. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** G2; D2 accepted; deliver in separate bounded PRs.

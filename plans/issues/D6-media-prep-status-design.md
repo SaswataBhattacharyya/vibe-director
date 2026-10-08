@@ -1,6 +1,6 @@
 # [D6] Arrange Media Prep libraries/tools and the Status catalog
 
-Status: local issue draft; not published. Type: Design.
+Status: published as [GitHub issue #9](https://github.com/SaswataBhattacharyya/vibe-director/issues/9). Type: Design.
 
 **Proposed lead/reviewer:** Ashu proposes; Saswata reviews. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** D1; G2 library/capability contracts.

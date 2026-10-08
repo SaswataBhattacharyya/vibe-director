@@ -1,6 +1,6 @@
 # [B1] Connect isolated T2V from edited prompt to durable job and retake
 
-Status: local issue draft; not published. Type: Implementation.
+Status: published as [GitHub issue #5](https://github.com/SaswataBhattacharyya/vibe-director/issues/5). Type: Implementation.
 
 **Proposed lead/reviewer:** Backend implementer proposes; Ashu integrates/reviews UI. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** G2; D1/D4 accepted for this slice.

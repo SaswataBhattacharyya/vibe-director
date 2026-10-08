@@ -1,6 +1,6 @@
 # [B4] Reuse Media Prep services behind one searchable asset library
 
-Status: local issue draft; not published. Type: Implementation.
+Status: published as [GitHub issue #12](https://github.com/SaswataBhattacharyya/vibe-director/issues/12). Type: Implementation.
 
 **Proposed lead/reviewer:** Backend implementer proposes; Ashu implements/reviews D6 UI. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** G2; D6 accepted.

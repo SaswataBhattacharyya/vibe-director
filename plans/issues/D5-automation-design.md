@@ -1,6 +1,6 @@
 # [D5] Design Automation & Parameters and shared run monitoring
 
-Status: local issue draft; not published. Type: Design.
+Status: published as [GitHub issue #8](https://github.com/SaswataBhattacharyya/vibe-director/issues/8). Type: Design.
 
 **Proposed lead/reviewer:** Ashu proposes; Saswata reviews. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** D1; G2 run-policy draft.

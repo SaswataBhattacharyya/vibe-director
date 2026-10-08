@@ -1,6 +1,6 @@
 # [B3] Adapt image/voice assets and exact FFLF/R2V request compilation
 
-Status: local issue draft; not published. Type: Implementation.
+Status: published as [GitHub issue #11](https://github.com/SaswataBhattacharyya/vibe-director/issues/11). Type: Implementation.
 
 **Proposed lead/reviewer:** Backend implementer proposes; Ashu implements/reviews shared forms. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** G2; D3/D4 accepted; B1 durable execution boundary.

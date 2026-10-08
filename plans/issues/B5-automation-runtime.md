@@ -1,6 +1,6 @@
 # [B5] Implement the three wrappers using the shared execution service
 
-Status: local issue draft; not published. Type: Implementation.
+Status: published as [GitHub issue #13](https://github.com/SaswataBhattacharyya/vibe-director/issues/13). Type: Implementation.
 
 **Proposed lead/reviewer:** Backend implementer proposes; both review journey behavior. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** B1/B3 contracts; B2 screenplay coverage; D5 accepted.

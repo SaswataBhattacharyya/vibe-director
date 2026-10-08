@@ -1,6 +1,6 @@
 # [F1] Define final clip assembly, sound and export before selecting tools
 
-Status: local issue draft; not published. Type: Design.
+Status: published as [GitHub issue #14](https://github.com/SaswataBhattacharyya/vibe-director/issues/14). Type: Design.
 
 **Proposed lead/reviewer:** Both; proposed later milestone. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** Generation/take journey stable; user supplies assembly intent.

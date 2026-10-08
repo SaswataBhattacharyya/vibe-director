@@ -1,6 +1,6 @@
 # [D4] Design three video forms, reference collation and take review
 
-Status: local issue draft; not published. Type: Design.
+Status: published as [GitHub issue #4](https://github.com/SaswataBhattacharyya/vibe-director/issues/4). Type: Design.
 
 **Proposed lead/reviewer:** Ashu proposes; Saswata reviews. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** D1; G2 workflow contracts.

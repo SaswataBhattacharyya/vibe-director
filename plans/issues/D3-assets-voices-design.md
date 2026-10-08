@@ -1,6 +1,6 @@
 # [D3] Design optional character/world/frame creation and voice binding
 
-Status: local issue draft; not published. Type: Design.
+Status: published as [GitHub issue #7](https://github.com/SaswataBhattacharyya/vibe-director/issues/7). Type: Design.
 
 **Proposed lead/reviewer:** Ashu proposes; Saswata reviews. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** D1; G2 asset contracts.

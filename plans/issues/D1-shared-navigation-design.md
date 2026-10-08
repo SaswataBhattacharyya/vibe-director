@@ -1,6 +1,6 @@
 # [D1] Design shared navigation for story-led and isolated creation
 
-Status: local issue draft; not published. Type: Design.
+Status: published as [GitHub issue #3](https://github.com/SaswataBhattacharyya/vibe-director/issues/3). Type: Design.
 
 **Proposed lead/reviewer:** Ashu proposes; Saswata reviews. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** Read G2 draft contracts; can design before backend exists.

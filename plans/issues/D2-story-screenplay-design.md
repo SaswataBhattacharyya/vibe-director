@@ -1,6 +1,6 @@
 # [D2] Design merged story authoring and the readable screenplay
 
-Status: local issue draft; not published. Type: Design.
+Status: published as [GitHub issue #6](https://github.com/SaswataBhattacharyya/vibe-director/issues/6). Type: Design.
 
 **Proposed lead/reviewer:** Ashu proposes; Saswata reviews. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** D1; G2 revision contract draft.

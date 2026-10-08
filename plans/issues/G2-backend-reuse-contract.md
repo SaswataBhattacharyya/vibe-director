@@ -1,6 +1,6 @@
 # [G2] Map reusable services and define the UI/API boundary
 
-Status: local issue draft; not published. Type: Groundwork.
+Status: published as [GitHub issue #2](https://github.com/SaswataBhattacharyya/vibe-director/issues/2). Type: Groundwork.
 
 **Proposed lead/reviewer:** Saswata/backend implementer proposes; Ashu co-designs. These are proposals, not an assignment already accepted by Ashu.
 **Dependencies:** G1 source access; can begin locally now.

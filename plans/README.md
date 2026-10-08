@@ -15,6 +15,10 @@
 9. `integration.md` — source repositories, selective reuse, canonical contracts, dependencies/license decision and implementation sequence.
 10. `issue_backlog.md` — collaborator/source setup, proposed UI/backend responsibilities, issue drafts, dependencies and first milestone; `issues/` contains unpublished issue bodies.
 
+## Proposed implementation details
+
+The staged reuse map, CPU-only isolated T2V slice, and dependent work cards are proposed implementation details subordinate to the product requirements above: [`G2_isolated_video_reuse.md`](implementation/G2_isolated_video_reuse.md), [`LUNA_WORK_PACKAGES.md`](implementation/LUNA_WORK_PACKAGES.md). They do not change navigation, workflow policy, or authorize live generation.
+
 ## Accepted current direction
 
 - One unified story workspace with real conversational editing, revision history and a source-linked knowledge graph; no arbitrary story-length cap and no silent truncation.

@@ -1,0 +1,385 @@
+{
+  "contract": "vibe-director.isolated-video",
+  "version": "1.0.0-proposed",
+  "status": "PROPOSED_ADAPTER_EXAMPLES_NOT_LIVE_ENDPOINTS",
+  "notes": {
+    "workflow_id": "minimax_h3_t2v_local_v1",
+    "workflow_version": 1,
+    "readiness": "Use existing production_t2v_capability.t2v_capability(): STORY_BUILDER_ENABLE_H3_T2V, exact graph/model files, graph node contract, live Comfy /object_info node list, and intact hash-verified output in output/disposable-h3-t2v-smoke/manifest.json. COMFYUI_ROOT selects model root; COMFYUI_URL defaults to http://127.0.0.1:3008.",
+    "settings_basis": "Local T2V compiler accepts 5..10 seconds, 16:9 and resolution presets 0.98→1344×768 and 0.4→864×480. ReferencePlan defaults to resolution 0.98, steps 20, seed 1. T2V compiler writes steps/seed without bounds checks. This first adapter fixes steps=20 and seed=1; editable settings are deferred pending a separately reviewed T2V capability contract.",
+    "duration": "duration_seconds is requested. Compiled frame_count is rounded upward to 17n+5 at 24 fps; previews report predicted_duration_seconds. A live output probe must establish any actual realized duration.",
+    "prompt_limit": "Product requirement is strictly below 7000 MiniMax characters; implement the adapter limit. Never truncate silently.",
+    "identity": "job_id is application durable identity; prompt_id is exact reserved ComfyUI identity; output asset_id is stable library identity.",
+    "reconnect": "GET/reconcile only; never submit automatically. Unknown remote outcome is not safe to retry until exact prompt_id is reconciled.",
+    "workflow_path": "Proposed target is backend/story_builder/workflows/api/minimax_h3_t2v_api.json, preserving compiler PROJECT_ROOT/workflows/api path.",
+    "runtime_placeholders": "Only runtime-generated IDs and content hashes may be symbolic; all request parameters and compiler-derived outputs in examples are concrete.",
+    "fixture_mode": "All examples are mock contract fixtures. Runtime-generated IDs/hashes are symbolic; the completed sample output is explicitly mock and is not evidence of an actual asset or render.",
+    "retake_retention": "The keep/delete decision applies to the previous generated video candidate only. Deleting a candidate must not delete shared/referenced source assets; retain any asset still referenced by another take and report deletion disposition. Retake copies every original setting/reference and preserves seed unless the user explicitly edits it."
+  },
+  "examples": [
+    {
+      "name": "capability_validation",
+      "request": {
+        "method": "GET",
+        "path": "/api/video/capabilities?workflow_id=minimax_h3_t2v_local_v1"
+      },
+      "response": {
+        "workflow_id": "minimax_h3_t2v_local_v1",
+        "workflow_version": 1,
+        "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+        "available": true,
+        "checks": [
+          {
+            "id": "graph_present",
+            "ok": true
+          },
+          {
+            "id": "graph_node_contract",
+            "ok": true
+          },
+          {
+            "id": "required_models",
+            "ok": true
+          },
+          {
+            "id": "comfy_object_info_nodes",
+            "ok": true
+          },
+          {
+            "id": "STORY_BUILDER_ENABLE_H3_T2V",
+            "ok": true
+          },
+          {
+            "id": "hash_verified_video_audio_smoke",
+            "ok": true
+          }
+        ],
+        "settings": {
+          "duration_seconds": {
+            "min": 5,
+            "max": 10
+          },
+          "fps": 24,
+          "aspect_ratio": [
+            "16:9"
+          ],
+          "resolution_presets": {
+            "0.98": {
+              "width": 1344,
+              "height": 768
+            },
+            "0.4": {
+              "width": 864,
+              "height": 480
+            }
+          },
+          "steps": {
+            "default": 20,
+            "policy": "fixed in first isolated slice"
+          },
+          "seed": {
+            "default": 1,
+            "policy": "fixed in first isolated slice"
+          }
+        },
+        "disabled_reason": null
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "validation_request",
+      "request": {
+        "method": "POST",
+        "path": "/api/video/validations",
+        "body": {
+          "workflow_id": "minimax_h3_t2v_local_v1",
+          "workflow_version": 1,
+          "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+          "prompt": "A slow dolly toward a rain-streaked window as amber city lights shimmer outside.",
+          "duration_seconds": 6,
+          "aspect_ratio": "16:9",
+          "resolution_preset": 0.98,
+          "steps": 20,
+          "seed": 1,
+          "references": []
+        }
+      },
+      "response": {
+        "validation_id": "<runtime-validation-id>",
+        "valid": true,
+        "workflow_id": "minimax_h3_t2v_local_v1",
+        "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+        "request_hash": "<runtime-canonical-request-sha256>",
+        "normalized_request": {
+          "workflow_id": "minimax_h3_t2v_local_v1",
+          "workflow_version": 1,
+          "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+          "prompt": "A slow dolly toward a rain-streaked window as amber city lights shimmer outside.",
+          "duration_seconds": 6,
+          "aspect_ratio": "16:9",
+          "resolution_preset": 0.98,
+          "steps": 20,
+          "seed": 1,
+          "references": []
+        },
+        "compiled": {
+          "width": 1344,
+          "height": 768,
+          "frame_count": 158,
+          "predicted_duration_seconds": 6.583333333333333,
+          "duration_kind": "predicted_from_compiled_frames"
+        },
+        "issues": []
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "validation_failure",
+      "request": {
+        "method": "POST",
+        "path": "/api/video/validations",
+        "body": {
+          "workflow_id": "minimax_h3_t2v_local_v1",
+          "prompt": "A clip",
+          "duration_seconds": 12,
+          "aspect_ratio": "16:9",
+          "references": [
+            {
+              "asset_id": "asset_7"
+            }
+          ]
+        }
+      },
+      "response": {
+        "validation_id": "val_bad_01",
+        "valid": false,
+        "issues": [
+          {
+            "code": "invalid_duration",
+            "field": "duration_seconds",
+            "message": "Local H3 T2V duration must be between 5 and 10 seconds."
+          },
+          {
+            "code": "t2v_references_unsupported",
+            "field": "references",
+            "message": "H3 T2V accepts no reference assets; choose a supported workflow."
+          }
+        ],
+        "job_created": false
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "accepted_durable_job",
+      "request": {
+        "method": "POST",
+        "path": "/api/video/jobs",
+        "headers": {
+          "Idempotency-Key": "client-generated-stable-key"
+        },
+        "body": {
+          "validation_id": "<same-runtime-validation-id>",
+          "request": {
+            "workflow_id": "minimax_h3_t2v_local_v1",
+            "workflow_version": 1,
+            "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+            "prompt": "A slow dolly toward a rain-streaked window as amber city lights shimmer outside.",
+            "duration_seconds": 6,
+            "aspect_ratio": "16:9",
+            "resolution_preset": 0.98,
+            "steps": 20,
+            "seed": 1,
+            "references": []
+          }
+        }
+      },
+      "response": {
+        "job_id": "<runtime-job-id>",
+        "status": "queued",
+        "submission_state": "not_submitted",
+        "request_hash": "<same-runtime-canonical-request-sha256>",
+        "workflow_id": "minimax_h3_t2v_local_v1",
+        "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+        "attempt": 1,
+        "request_snapshot": {
+          "workflow_id": "minimax_h3_t2v_local_v1",
+          "workflow_version": 1,
+          "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+          "prompt": "A slow dolly toward a rain-streaked window as amber city lights shimmer outside.",
+          "duration_seconds": 6,
+          "aspect_ratio": "16:9",
+          "resolution_preset": 0.98,
+          "steps": 20,
+          "seed": 1,
+          "references": []
+        },
+        "progress_url": "/api/video/jobs/<runtime-job-id>",
+        "prompt_id": null
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "progress",
+      "request": {
+        "method": "GET",
+        "path": "/api/video/jobs/job_01J..."
+      },
+      "response": {
+        "job_id": "job_01J...",
+        "status": "running",
+        "submission_state": "submitted",
+        "prompt_id": "comfy-prompt-uuid",
+        "progress": {
+          "phase": "running",
+          "fraction": null,
+          "source": "comfy-history"
+        },
+        "request_hash": "sha256:<canonical-request-hash>",
+        "outputs": []
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "reconnect_resume",
+      "request": {
+        "method": "GET",
+        "path": "/api/video/jobs/job_01J..."
+      },
+      "response": {
+        "job_id": "job_01J...",
+        "status": "recovery_required",
+        "submission_state": "unknown",
+        "prompt_id": "comfy-prompt-uuid",
+        "reconciliation": {
+          "status": "checking_exact_prompt",
+          "retry_allowed": false
+        },
+        "client_action": "Continue polling/reconciliation; do not POST a new job."
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "completed_output_take",
+      "request": {
+        "method": "GET",
+        "path": "/api/video/jobs/job_01J..."
+      },
+      "response": {
+        "job_id": "job_01J...",
+        "status": "completed",
+        "prompt_id": "comfy-prompt-uuid",
+        "take": {
+          "take_id": "take_01J...",
+          "attempt": 1,
+          "candidate_status": "unreviewed",
+          "request_hash": "sha256:<canonical-request-hash>",
+          "workflow_id": "minimax_h3_t2v_local_v1",
+          "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+          "requested_duration_seconds": 6,
+          "frame_count": 158,
+          "prompt": "A slow dolly toward a rain-streaked window as amber city lights shimmer outside.",
+          "outputs": [
+            {
+              "asset_id": "<runtime-asset-id>",
+              "kind": "video",
+              "playback_url": "/api/mock-assets/<runtime-asset-id>/content",
+              "sha256": "<runtime-output-sha256>",
+              "mock": true
+            }
+          ],
+          "input_snapshot": {
+            "workflow_id": "minimax_h3_t2v_local_v1",
+            "workflow_version": 1,
+            "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+            "prompt": "A slow dolly toward a rain-streaked window as amber city lights shimmer outside.",
+            "duration_seconds": 6,
+            "aspect_ratio": "16:9",
+            "resolution_preset": 0.98,
+            "steps": 20,
+            "seed": 1,
+            "references": []
+          },
+          "predicted_duration_seconds": 6.583333333333333,
+          "duration_kind": "predicted_from_compiled_frames"
+        }
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "uncertain_submission",
+      "response": {
+        "job_id": "job_01J...",
+        "status": "recovery_required",
+        "submission_state": "unknown",
+        "prompt_id": "comfy-prompt-uuid",
+        "error": {
+          "code": "comfy_submit_outcome_unknown",
+          "message": "Transport ended after submission attempt; remote state must be reconciled."
+        },
+        "retry_allowed": false
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "failed_job",
+      "response": {
+        "job_id": "job_fail_01J...",
+        "status": "failed",
+        "submission_state": "submitted",
+        "prompt_id": "comfy-prompt-uuid",
+        "error": {
+          "code": "comfy_execution_failed",
+          "message": "<sanitized actionable engine error>"
+        },
+        "retry_allowed": true,
+        "request_snapshot_retained": true
+      },
+      "fixture_mode": "mock"
+    },
+    {
+      "name": "retake_preserves_original_parameters",
+      "request": {
+        "method": "POST",
+        "path": "/api/video/jobs/job_01J.../retakes",
+        "headers": {
+          "Idempotency-Key": "retake-client-key"
+        },
+        "body": {
+          "base_take_id": "<completed-runtime-take-id>",
+          "retention_decision": "keep",
+          "changes": {
+            "prompt": "A slow dolly toward the rain-streaked window; amber lights pulse softly."
+          }
+        }
+      },
+      "response": {
+        "job_id": "job_retake_01J...",
+        "status": "queued",
+        "attempt": 2,
+        "parent_take_id": "take_01J...",
+        "request": {
+          "workflow_id": "minimax_h3_t2v_local_v1",
+          "workflow_version": 1,
+          "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+          "prompt": "A slow dolly toward the rain-streaked window; amber lights pulse softly.",
+          "duration_seconds": 6,
+          "aspect_ratio": "16:9",
+          "resolution_preset": 0.98,
+          "steps": 20,
+          "seed": 1,
+          "references": []
+        },
+        "original_take_retained": true,
+        "prompt_id": null,
+        "workflow_sha256": "4735e3662333493d488bc2ba6970810e620c13196ccac15b1155010e8cf3e1f9",
+        "retention_decision": "keep",
+        "asset_deletion": {
+          "candidate": "retained",
+          "referenced_assets": "never deleted by candidate decision"
+        },
+        "seed_policy": "preserved unless explicitly edited"
+      },
+      "fixture_mode": "mock"
+    }
+  ]
+}

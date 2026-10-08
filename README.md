@@ -13,3 +13,7 @@ Older `migration_plan/`, `PLAN.md`, `REUSE_AUDIT.md` and `My idea/` retain histo
 Set a product-owned `VIBE_DIRECTOR_DATA_DIR`, then start the API from `backend/` with `PYTHONPATH=. python -m story_builder.isolated_server`. From `frontend/`, install the pinned dependencies with `npm ci` and run `npm run dev`; the UI is at `http://127.0.0.1:8082/`, with API proxy to port 3020. See [backend runtime configuration](backend/README.md) and [UI scope](frontend/README.md).
 
 The API starts no render worker. A separate explicitly enabled worker, external ComfyUI/models, verified readiness and GPU admission are required for generation. Uncovered live acceptance waits for the user's Generate click. FFLF, R2V, story editing, asset preparation and Media Prep are not yet integrated.
+
+## UI design handoff
+
+Ashu retains UI design ownership. See [the current implementation and UI handoff](plans/ASHU_UI_HANDOFF.md) and draft PR #15; its engineering UI is provisional. Implementation is paused pending the owner’s explicit resume.

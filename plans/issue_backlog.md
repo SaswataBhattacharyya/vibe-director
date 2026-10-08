@@ -17,7 +17,7 @@ Models/ComfyUI are not required for wireframes, mocked UI or API contract work. 
 ## Working rules for Ashu and LLM implementers
 
 - Read [README.md](README.md) and the linked stage plan for the issue. Older migration documents and upstream app flows are reuse evidence, not current requirements.
-- Ashu is the proposed design lead for D issues, with Saswata reviewing. Backend tasks have a proposed implementer, not a permanently exclusive owner. Either collaborator can contribute to either area.
+- Ashu owns UI design for D issues, with Saswata reviewing. The provisional engineering UI does not transfer that ownership; only Saswata’s explicit decision can do so. Backend tasks have a proposed implementer, not a permanently exclusive owner. Either collaborator can contribute to either area.
 - **Design issue:** answer its open questions, provide annotated wireframes/prototype, record decisions and API/state requirements in a PR, and propose bounded implementation follow-ups. Close only after the other collaborator accepts the design. Closing a design issue does not imply production functionality exists.
 - **Implementation issue:** use the accepted design/contracts, identify reused/adapted/new files and demonstrate the user-visible behavior. Split broad work into bounded PRs rather than claim one huge task is surgical.
 - Link each PR to its issue. Either person can merge after the other reviews under the agreed collaboration rule. Keep disagreements and alternatives visible in the issue.
@@ -91,3 +91,7 @@ Repository: [SaswataBhattacharyya/vibe-director](https://github.com/SaswataBhatt
 | F1 | [#14: [F1] Define final clip assembly, sound and export before selecting tools](https://github.com/SaswataBhattacharyya/vibe-director/issues/14) | Later design |
 
 Ashu currently has read access as checked during publication. The owner should invite `ashucodesbio` as a collaborator for the requested write/merge participation; public cloning does not require that invitation. Start with #1–#4, then #5 once its designs/contracts are accepted. Do not treat all open issues as simultaneously ready.
+
+## Current implementation and UI ownership
+
+The initial isolated T2V implementation is published in draft PR #15 on `issue-2-isolated-t2v-reuse`; main remains the planning baseline. Read [Ashu UI handoff](ASHU_UI_HANDOFF.md) for actual files, behavior, evidence and unfinished features. All D issues remain open. Historical planning-only publication statements above describe the initial publication, not the current draft branch.

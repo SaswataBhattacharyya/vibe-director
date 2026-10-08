@@ -20,8 +20,18 @@ Prepare live tests in UI with exact prompt/settings/references and visible GPU s
 
 ## Next work
 
-UI producer/consumer fixes and canonical application are complete for this bounded slice. Publish draft PR update after final changed-file check. Keep generation unavailable under current GPU admission. Then extend the shared workflow/Status foundation and reuse story/canvas/V2 source services for the readable screenplay and knowledge graph. Do not mistake this initial slice for complete #2/#5 or full product completion. Actual candidate deletion/reference-aware GC, workflow duration/output validation, fully integrated reasoning/microedit, regular context and remaining stages need implementation. Final assembly journey and covered OpenMontage imports still require explicit decisions.
+UI producer/consumer fixes and canonical application are complete for this bounded slice. Draft PR #15 is published at commit `6bcdd3d130994f8c5352e77954097f2d0f350991`; local branch matches. Preview dependency symlink is locally excluded from Git. This handoff publication update is a local pending documentation change. Keep generation unavailable under current GPU admission. Then extend the shared workflow/Status foundation and reuse story/canvas/V2 source services for the readable screenplay and knowledge graph. Do not mistake this initial slice for complete #2/#5 or full product completion. Actual candidate deletion/reference-aware GC, workflow duration/output validation, fully integrated reasoning/microedit, regular context and remaining stages need implementation. Final assembly journey and covered OpenMontage imports still require explicit decisions.
 
 ## Permissions and collaboration
 
 The user authorizes implementation, public GitHub issue/PR updates and Luna coding delegation. Ashu write access remains owner setup unless confirmed separately. Source apps/runtimes stay read-only. Environment still names a nonexistent Vibe Director 2 writable root, so canonical writes/git changes need justified sandbox escalation; `/tmp` staging is writable. No new paid/provider/live generation is authorized by tests.
+
+User authorization added: reuse existing Story Builder audio, images and videos for the few focused tests. Preserve originals; selectively reference/copy into ignored local storage, record source/hash/role, and retain the user-click live-generation gate. See `runtime_and_providers.md`.
+
+## User-requested pause and UI ownership (2026-10-08)
+
+Goal paused at the user's explicit request. Stop implementation until the user explicitly resumes. Ashu owns UI design and his related issues; the current working UI is provisional. Do not reassign UI ownership to the parent unless the user explicitly says they are taking care of the UI.
+
+Two Luna additions are staged only in `/tmp/vibe-director-implementation`, not applied to canonical or published: Status workflow catalog/page and B2 story revision foundation. Parent review began but is incomplete. Status agent reported build/typecheck and direct projection check passed; its browser test still needs an escalated launcher. B2 agent reported four focused tests passed; parent review still needs revision immutability/collision handling and chronological revision ordering checks. Do not present these as integrated or accepted. Source writer/chunker provenance and existing process handles remain as recorded above. No live generation/provider submission occurred.
+
+User explicitly authorized publishing completed work and updating Ashu’s UI issues while the goal stays paused. `ASHU_UI_HANDOFF.md` documents the published baseline, provisional UI, design ownership and unpublished staging boundary. No staged implementation was integrated by this publication.

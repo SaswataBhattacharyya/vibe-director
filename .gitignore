@@ -1,0 +1,33 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and generated build/runtime state
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.log
+*.sqlite
+*.sqlite3
+
+# Reference clones, model storage and generated media
+reference_sources/
+models/
+checkpoints/
+outputs/
+generated_media/
+local_data/
+*.safetensors
+*.ckpt
+*.pt
+*.pth

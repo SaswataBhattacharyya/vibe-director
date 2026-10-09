@@ -1,6 +1,6 @@
 # Vibe Director agent entrypoint
 
-Read `plans/README.md` first. It indexes current product requirements. Read `plans/issue_backlog.md` and the stage plan linked by your issue before designing or implementing. Older `migration_plan/`, `My idea/`, `PLAN.md` and `REUSE_AUDIT.md` are historical evidence; their conflicting journeys do not override current plans.
+Read `plans/README.md` and `plans/development_workflow.md` first. It indexes current product requirements. Read `plans/issue_backlog.md` and the stage plan linked by your issue before designing or implementing. Older `migration_plan/`, `My idea/`, `PLAN.md` and `REUSE_AUDIT.md` are historical evidence; their conflicting journeys do not override current plans.
 
 ## Collaboration and source reuse
 
@@ -13,13 +13,17 @@ Use one durable execution service and one shared asset identity/library. OpenMon
 ## Runtime, provider and acceptance boundaries
 
 - Before authorized generation, inspect the actual ComfyUI graph, nodes, models and runtime; reuse Story Builder `gpu_runtime.py`, `gpu_watchdog.py` and `media_jobs.py` safeguards, including independent monitoring through browser work and recovery. Existing code enforces an 83°C cutoff and 2100 MHz ceiling; 85°C is legacy operator guidance, not the code cutoff. Confirm hardware-specific policy. Never alter clocks.
-- For uncovered adapter/workflow acceptance, prepare the exact prompt/settings/references, graph readiness, queue and monitor first, then have the user click Generate. Do not automate submission behind the scenes. This test gate does not change an explicitly user-started Manual/Semi/Full run. Keep mocks explicit and show/reload changed usable UI in Codex from the intended branch/backend.
-- Reasoning-provider choices are separate from ComfyUI workflow choices. Codex CLI is the initial end-to-end app completion/acceptance baseline. Do not make OpenCode/direct APIs/flexible models or weaker Ollama/Qwen support completion gates; existing Ollama may remain unchanged. Preserve provider_exec_guard and typed JSON parsing. Defer future providers/models until the Codex app works; validate capabilities per adapter/model because one Qwen/API success does not prove others. App model choices do not change Luna coding delegation.
+- For uncovered adapter/workflow acceptance, prepare the exact prompt/settings/references, graph readiness, queue and monitor first, then have the user click Generate. Do not automate submission behind the scenes. This test gate does not change an explicitly user-started Assisted manual/Fully automated run. Keep mocks explicit and show/reload changed usable UI in Codex from the intended branch/backend.
+- Reasoning-provider choices are separate from ComfyUI workflow choices. Codex CLI is the initial end-to-end app completion/acceptance baseline. Do not make OpenCode/direct APIs/flexible models or weaker Ollama/Qwen support completion gates; existing Ollama may remain unchanged. Preserve provider_exec_guard and typed JSON parsing. Defer future providers/models until the Codex app works; validate capabilities per adapter/model because one Qwen/API success does not prove others. App model choices are independent of Luna-led implementation and Sol milestone review.
 
 ## Verification and scope
 
-Read the current Manual/Semi/Full rules in `plans/automation.md`; avoid parallel controllers or retired-page navigation. Human-readable screenplay precedes derived production prompts. Direct isolated generation uses the same screens without story prerequisites.
+Read the current Assisted manual/Fully automated rules in `plans/automation.md`; avoid parallel controllers or retired-page navigation. Human-readable screenplay precedes derived production prompts. Direct isolated generation uses the same screens without story prerequisites.
 
 Design and source inspection do not authorize paid/provider or GPU generation. Actual generation checks need bounded authorization and existing runtime supervision. Mocked UI, CPU tests and a real usable render are distinct evidence. Prefer focused producer-to-consumer and recovery checks for the changed behavior.
 
 Keep `plans/HANDOFF.md` concise and current at meaningful milestones: objective, authoritative files, completed evidence, pending work, blockers/permissions and live job/process handles. Runtime compaction follows configured settings; do not invent usage percentages or claim a written handoff compacted runtime context.
+
+## Implementation leadership
+
+Ponytail full is active. Luna implements directly from issues and reference files; GPT-6.1 Sol reviews the three milestones in `plans/development_workflow.md` and concrete earlier blockers. Do not use routine Sol-to-Luna delegation for every task. Read the source reuse table before adding new code.

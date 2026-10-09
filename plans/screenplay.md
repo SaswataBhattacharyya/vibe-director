@@ -34,12 +34,12 @@ Human or configured Director review and acceptance
           ↓
 Validated scene / shot / dialogue / audio records
           ↓
-Automation & Parameters (Manual / Semi / Full; confirm settings)
+Automation & Parameters (Assisted manual / Fully automated; confirm settings)
           ↓
 Workflow-specific prompt preparation and generation
 ```
 
-Manual, semi-automatic, and fully automatic are execution wrappers on this same journey, defined in `automation.md`. Manual means the user clicks Generate and moves forward at each step. Semi-automatic means the user checks which steps should execute automatically. Fully automatic starts with the story, skips image generation, generates the first clip of each scene with text-to-video, and then uses the previous clip as the reference for each continuation. Wrapper policy determines advancement and review; no unrequested default wrapper is assumed.
+Assisted manual and Fully automated use this same journey; see `automation.md`. Assisted manual exposes five automation checkboxes: none means manual Generate/Next, some means mixed operation, and all means automatic asset preparation plus video. Fully automated skips image preparation and uses the style-aware T2V/R2V continuation route. Both record the same screenplay context; no extra Manual mode is shown.
 
 ## 3. Unified story workspace
 
@@ -159,7 +159,7 @@ Generation models may help draft or enrich the screenplay and fill defined produ
 - Preserve major source events, causal order, motivations, and ending unless the user explicitly requests a rewrite. Show proposed omissions/additions and their evidence.
 - Divide the story into chunks for processing only; chunks are not scenes. Determine scene boundaries by dramatic action, location, and time changes.
 - Maintain source-to-screenplay coverage at event/beat level: represented, intentionally omitted, inferred, or unresolved. A coverage score alone does not establish faithfulness.
-- Allow scene-level edits and bind generation to a clearly identified usable screenplay revision. In Manual/Semi, advancement follows the configured manual/automatic step; Full records the revision it automatically used without waiting for a separate human acceptance click.
+- Allow scene-level edits and bind generation to a clearly identified usable screenplay revision. In Assisted manual, advancement follows the configured manual/automatic step; Fully automated records the revision it automatically used without waiting for a separate human acceptance click.
 - If story source changes after a screenplay is accepted, flag the screenplay and dependent production plans as stale; offer reconciliation rather than silently reusing mismatched outputs.
 - Make revision diffs, undo/restore, validation findings, and approval status easy to find.
 
@@ -185,7 +185,7 @@ Use a structured internal screenplay model that can render as normal text and pr
 3. Implement the long-story chunk/source index and versioned knowledge graph, including entity and fact provenance.
 4. Replace the fake focused-edit placeholder with a conversational collaborator that proposes real diffs, applies accepted edits as revisions, and preserves unrelated text.
 5. Add story analysis and graph-backed continuity checks with passage links; make findings actionable through chat or direct edit.
-6. Draft and edit the readable screenplay from accepted story and graph revisions; support manual, semi-automatic, and automatic modes on this same path.
+6. Draft and edit the readable screenplay from accepted story and graph revisions; use the same path for Assisted manual and Fully automated; execution settings come after the screenplay.
 7. Add inline direction fields at project, scene, beat, shot, and dialogue levels; keep each decision readable and editable in the screenplay before compilation.
 8. Build the screenplay compiler and validators; generate scene/cut/shot/dialogue/audio JSON after the applicable revision/readiness checks and approvals required by the configured execution policy.
 9. Connect compiled records to existing V2 visual/audio/video production stages, retaining lineage and invalidation on edits.
@@ -197,7 +197,7 @@ Use a structured internal screenplay model that can render as normal text and pr
 - **Graph technology:** choose an implementation based on query, versioning, provenance, and deployment needs; the product requirement is the versioned graph model, not a particular database vendor.
 - **Screenplay conventions:** choose the default display/export conventions and whether users can configure slugline and dialogue formatting.
 - **Technical limits:** define transparent per-request/provider limits and chunking behavior without imposing an arbitrary maximum story length or silently dropping text.
-- **Revision granularity:** allow scene-level revisions and preserve unaffected clip work. Generation must name the source revision it used. Manual, Semi and Full advancement follow `automation.md`; a whole-story human approval is not an unconditional gate for all modes.
+- **Revision granularity:** allow scene-level revisions and preserve unaffected clip work. Generation must name the source revision it used. Assisted manual and Fully automated advancement follow `automation.md`; a whole-story human approval is not an unconditional gate for all modes.
 
 ## 11. Planning boundary
 
@@ -214,7 +214,7 @@ When a prompt change alters screenplay direction (camera, lighting, mood, action
 
 Wording changes needed to suit a model do not require a screenplay edit when the intended direction is preserved. Fully automatic prompt adaptation preserves the story/creative intent and records technical adaptation and take overrides without silently rewriting canon.
 
-Clip planning must account for dialogue, pauses, actions and the selected workflow's duration bounds. If a shot is too long, split it into ordered clips with explicit continuation state. Do not shorten or omit story content merely to fit one request. Manual/Semi show these divisions in the readable screenplay/production view; Full derives them automatically with source coverage recorded.
+Clip planning must account for dialogue, pauses, actions and the selected workflow's duration bounds. If a shot is too long, split it into ordered clips with explicit continuation state. Do not shorten or omit story content merely to fit one request. Assisted manual show these divisions in the readable screenplay/production view; Fully automated derives them automatically with source coverage recorded.
 
 ## 13. Setup placement and standalone scope
 

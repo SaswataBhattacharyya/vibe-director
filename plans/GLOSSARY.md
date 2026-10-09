@@ -34,7 +34,7 @@ These definitions resolve the ambiguous terms in the current plans. They describ
 
 **Direction override:** An explicit creative difference used for one take without changing the screenplay. Updating screenplay direction instead creates a screenplay revision and affects dependent drafts/outputs through targeted stale detection.
 
-**Execution wrapper:** Manual, Semi or Full scheduling policy configured on the post-screenplay Automation & Parameters page. It controls shared generation screens; the same screens also accept isolated tasks without a story.
+**Execution wrapper:** Assisted manual or Fully automated scheduling policy configured on the post-screenplay Automation & Parameters page. It controls shared generation screens; the same screens also accept isolated tasks without a story.
 
 **Media library:** Shared storage/catalogue for generated, uploaded and auxiliary-prepared image/video/audio assets, with stable identities, JSON metadata, readable descriptions and searchable annotations.
 

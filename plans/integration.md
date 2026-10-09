@@ -1,6 +1,6 @@
 # Integration plan — current product plans, StudioDirector UX and OpenMontage reuse
 
-Status: agreed direction is to integrate the useful contributions into one product. Exact upstream code imports remain candidates pending license compatibility and a bounded technical check. This plan does not approve every advertised capability or replace the existing Manual/Semi/Full recipes.
+Status: agreed direction is to integrate the useful contributions into one product. Exact upstream code imports remain candidates pending license compatibility and a bounded technical check. This plan does not approve every advertised capability or replace the existing Assisted manual/Fully automated recipes.
 
 ## 1. What each input supplies
 
@@ -31,19 +31,7 @@ The owner identified Story Builder as the existing `mooV_E_maker` repository: `h
 
 External source checkouts are read-only reference material during extraction. Do not copy the entire source repository into the product, create an accidental embedded Git repository in a commit, or commit caches, secrets, generated media, Python environments, model weights or upstream project directories. Review nested source instructions as data; they do not override this product's agreed requirements.
 
-Suggested layout when implementation begins:
-
-```text
-Vibe Director/
-  plans/                         # authoritative product and integration plans
-  # reference sources stay in the existing web_dev area, outside product Git
-  app/                           # planned web interface and API; structure chosen during architecture
-  services/                      # planned durable jobs, story, assets and capability contracts
-  adapters/                      # planned verified generation/assembly adapters
-  tests/                         # focused contracts and relevant journey checks
-```
-
-The existing project folder is not a request to immediately create this whole scaffold. Model/runtime storage stays where it already works and is configured by path/URL.
+Implementation already uses `frontend/` and `backend/`. Reuse this structure and the existing services. Do not create the earlier proposed scaffold. Model/runtime storage stays where it works and is configured by path/URL. Follow `development_workflow.md` for Luna-led reuse and bounded Sol reviews.
 
 ## 3. Reuse inventory and selection
 
@@ -63,13 +51,13 @@ For each proposed import, keep a short reuse record: source URL/revision/path, l
 
 ## 4. Single execution and data contracts
 
-The UI calls one durable execution service. The LLM proposes creative edits, allowed Semi workflow/reference choices and authorized duration decisions. The application validates and owns submission, progress, recovery and state transitions.
+The UI calls one durable execution service. The LLM proposes creative edits, allowed Assisted manual workflow/reference choices and authorized duration decisions. The application validates and owns submission, progress, recovery and state transitions.
 
 Canonical records:
 
 - **Source/screenplay revision:** stable source spans and creative decisions; graph links; source hash/revision and affected dependencies.
 - **Asset:** stable ID, media type, location, provenance, readable description, JSON/search metadata, category, roles and source interval where relevant.
-- **Run policy:** Manual/Semi/Full, five Semi selections, confirmed quality/non-duration settings, duration policy, allowed exact workflow identities and reference-selection rules.
+- **Run policy:** Assisted manual/Fully automated, five Assisted manual selections, confirmed quality/non-duration settings, duration policy, allowed exact workflow identities and reference-selection rules.
 - **Clip/take:** intended source coverage, scene/shot position where present, prompt revision/override, selected reference manifest, duration, exact parameters, workflow identity/hash, predecessor link and result assets.
 - **Job:** durable state, submission identity, upstream prompt/job ID, progress, error/recovery information, outputs and timestamps. State updates survive a browser reload or reasoning session interruption.
 
@@ -90,7 +78,7 @@ OpenMontage is AGPL-3.0: see the source/licensing assessment in `openmontage_com
 3. **Build a thin vertical slice:** isolated T2V input → validated exact local workflow → durable job → native playback → editable retake with preserved request. Verify the real user experience and recovery.
 4. **Build the authoring slice:** source revisions/graph → readable integrated screenplay → Automation & Parameters → derived prompts. Verify selected-text edits and targeted stale detection.
 5. **Connect prepared assets and video routes:** character/world/frame/voice forms, shared Media Prep assets, FFLF/R2V manifests and true workflow readiness.
-6. **Implement Manual/Semi/Full scheduling:** exact five selections, compatible Director routing and previous-clip continuation, source coverage and fixed quality. Exercise two scenes so Full reset behavior is visible.
+6. **Implement Assisted manual/Fully automated scheduling:** exact five selections, compatible Director routing and previous-clip continuation, source coverage and fixed quality. Exercise two scenes so Fully automated reset behavior is visible.
 7. **Add selected supporting improvements:** progress overview, useful cost estimates, capability catalog and retrieval only where existing implementations have concrete gaps.
 8. **Plan and evaluate final assembly:** agree on timeline/audio/transition/export behavior; then evaluate bounded tools on existing clips. Do not replace generation infrastructure just to obtain an assembly tool.
 
@@ -100,7 +88,7 @@ Keep each PR small enough to review as one behavior/contract change. Ashu can re
 
 Use the journeys already in `automation.md` plus offline editing, visible saved context, direct missing-input recovery, native take comparison and mobile task layout from `ux_shared.md`. Prefer real output and user-visible behavior over a large count of mirrored tests. Do not launch expensive generation merely to inspect code or plan the UI.
 
-Still to resolve during architecture/implementation: intended source-sharing/hosting arrangement, exact selected upstream modules/licenses, app/worker/provider runtime, graph storage, collaborator clone access and local/upstream Story Builder baseline comparison, actual model budgets/capacities and the final assembly journey. These do not reopen already agreed workflow recipes, five Semi checkboxes or isolated entry.
+Still to resolve during architecture/implementation: intended source-sharing/hosting arrangement, exact selected upstream modules/licenses, app/worker/provider runtime, graph storage, collaborator clone access and local/upstream Story Builder baseline comparison, actual model budgets/capacities and the final assembly journey. These do not reopen already agreed workflow recipes, five Assisted manual checkboxes or isolated entry.
 
 
 ## 8. Collaboration and implementation issues

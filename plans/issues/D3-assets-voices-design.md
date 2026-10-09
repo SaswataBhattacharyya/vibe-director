@@ -21,7 +21,7 @@ Reference Story Builder `pages/ProductionWorkspace.tsx`, `pages/AudioStudio.tsx`
 ## Acceptance evidence
 
 - Prototype includes skip, first/last frame metadata, shared voice binding and prompt/reference annotation.
-- Manual recommended image/voice refs are shown first but remain unselected until chosen.
+- Assisted manual recommended image/voice refs are shown first but remain unselected until chosen.
 - Model prompt budgets and unavailable workflows have explicit states.
 - UI requirements/API needs feed bounded implementation tickets rather than recreating the old workspace wholesale.
 

@@ -24,9 +24,9 @@ If ComfyUI is offline, continue editing and saving prompts/story/selection where
 
 ## 4. Progress and take review
 
-Provide a single production overview: stage/item, source coverage where present, duration/output settings, workflow, selected refs, exact submitted prompt, job state, generated takes and next action. Show a specific manual stop in Semi. Workflow completion and human acceptance are separate states.
+Provide a single production overview: stage/item, source coverage where present, duration/output settings, workflow, selected refs, exact submitted prompt, job state, generated takes and next action. Show a specific manual stop in Assisted manual. Workflow completion and human acceptance are separate states.
 
-Use native playback and candidate comparison. Manual keeps Generate/Next and review/retake; automatic selected stages advance under their policy without compulsory acceptance. Preserve requests on retake. Manual keep/discard choices follow `video_gen.md`; Full retains every clip. Do not delete assets shared by other tasks when discarding a take.
+Use native playback and candidate comparison. Unchecked steps in Assisted manual keep Generate/Next and review/retake; automatic selected stages advance under their policy without compulsory acceptance. Preserve requests on retake. Manual keep/discard choices follow `video_gen.md`; Fully automated retains every clip. Do not delete assets shared by other tasks when discarding a take.
 
 Reload/reopen restores drafts, selections, policy, progress and known outputs. Reconnect to the existing upstream job instead of resubmitting. Story/screenplay changes mark affected dependent work stale and offer targeted reconciliation while retaining existing outputs/history.
 
@@ -34,4 +34,4 @@ Reload/reopen restores drafts, selections, policy, progress and known outputs. R
 
 Use a compact context header, collapsible navigation and one task column. Put the next action near the task and make readiness/reference sections expandable. Complex editing may need more space, but small screens must expose state, recovery and playback clearly.
 
-Before declaring the UX complete, walk through regular Manual, mixed Semi, Full across two scenes, isolated generation, silent/reference-free generation, offline edit/save, prompt-budget recovery, retake, reload/resume and small-screen navigation. Reuse `automation.md`'s concrete routing checks. A static mockup or passing backend tests alone do not prove the implemented UI is usable.
+Before declaring the UX complete, walk through regular Assisted manual with none/some/all checked, Fully automated across two scenes, isolated generation, silent/reference-free generation, offline edit/save, prompt-budget recovery, retake, reload/resume and small-screen navigation. Reuse `automation.md`'s concrete routing checks. A static mockup or passing backend tests alone do not prove the implemented UI is usable.

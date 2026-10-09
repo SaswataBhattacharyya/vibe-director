@@ -1,3 +1,5 @@
+> These cards record the initial isolated T2V slice. They are evidence and specific contracts, not the whole-project task order. Current Luna leadership, reuse instructions and Sol review points are in `../development_workflow.md`; check the current branch and handoff before treating old “Next”/readiness statements as current.
+
 # Luna implementation work packages: isolated T2V
 
 These cards implement the accepted isolated-video contract after architecture/Ashu UI review. Product requirements are frozen by `plans/README.md`, `plans/video_gen.md`, `plans/ux_shared.md` and the published G2/B1 issues; these cards add no navigation choice. No live generation is authorized here.

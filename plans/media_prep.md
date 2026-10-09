@@ -152,7 +152,7 @@ An annotation describes what an asset contains. A reference instruction describe
 
 Bound character images and voices appear as top recommendations in compatible selectors, without automatic selection. Frame selectors use first/last role and scene/shot/clip links to filter eligible images; R2V can browse the wider image catalogue. These rules remain those of `char_world.md` and `video_gen.md`.
 
-Preparing media does not run the story pipeline. Generated story clips/images and auxiliary outputs can register in the shared library with provenance and appropriate retention; the Full wrapper continues to retain all generated clips.
+Preparing media does not run the story pipeline. Generated story clips/images and auxiliary outputs can register in the shared library with provenance and appropriate retention; the Fully automated wrapper continues to retain all generated clips.
 
 ## 8. UI and routing plan
 

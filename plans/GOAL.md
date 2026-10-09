@@ -8,7 +8,7 @@ Follow `README.md` and the stage plans. Reuse existing code first, then wire it 
 
 There are exactly two production modes. In **Assisted manual**, zero of the five automation boxes means the user runs each used step, some boxes make a mixed run, and all five automate the asset-based route. **Fully automated** is a separate image-free route with T2V at each scene start (or style-video R2V when selected) and previous-clip R2V continuation within the scene. Never turn “all five checked” into Fully automated.
 
-Keep PR22's UI foundation and all three themes. Connect every working control to real behavior. Ashu refines layout and visual details through the issue/PR loop; do not block backend work on polish.
+Keep PR22's UI foundation and all three themes. The initial UI setup is in place; now complete the usable product UI and wire every control to real behavior alongside the backend. Ashu refines finer design and layout details through reviewable issue/PR increments. Do not pause product work while waiting for polish.
 
 ## Work efficiently
 
@@ -26,6 +26,6 @@ Codex is the initial app reasoning provider. Alternative API/provider and weaker
 
 ## Current execution focus
 
-The runtime goal is active. Resume from the current implementation and `HANDOFF.md`; its latest checkpoint identifies what is done and the next issue. Keep the UI usable on Ashu's foundation while wiring the backend. Push coherent, issue-linked increments for Ashu to refine and review his incoming changes at milestones. Do not repeat completed work or the retained 600+ test suite.
+The runtime goal is active. The initial setup and Ashu's UI foundation are in place; the project is not complete. Finish the usable UI and wire every agreed product journey to the backend. Backend and end-to-end functionality are the current focus. Keep the existing UI structure and all three themes; Ashu owns fine design and detail changes. Push coherent, issue-linked working increments so Ashu can refine them, and review his incoming changes at milestones. Resume from `HANDOFF.md`; its latest checkpoint identifies completed work and the next issue. Do not repeat completed work or the retained 600+ test suite.
 
 The goal is complete only when the agreed journeys work, remaining acceptance checks pass, and implementation/evidence are pushed. A mock or installed workflow alone does not prove generation works. Continue the issue/PR loop with Ashu for UI refinement while completing the backend and product.

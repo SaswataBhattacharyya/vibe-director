@@ -141,6 +141,28 @@ GPT-6.1 Sol reviewed the current screenplay acceptance slice. It found two UI ri
 
 `get_goal` confirms the runtime goal is active; it was not deleted. The owner reaffirmed that the project scope is to finish the complete product, including usable UI and backend wiring, and clarified the priority: backend/product flows now, on the existing UI foundation. Keep Ashu as UI design owner and send him coherent, issue-linked increments for finer design/detail refinement; periodically review his changes before integration. `plans/GOAL.md` is the durable scope. Continue from the current screenplay acceptance checkpoint and use current repository/issues as authority. No new implementation or test work began in this handoff update.
 
+## 2026-10-09 scope and graph-search follow-up
+
+The runtime goal remains active. The initial Ashu UI setup is in place; complete the functional UI and backend journeys, then push coherent issue-linked increments for Ashu's finer detailing and review. `plans/GOAL.md`, `plans/README.md` and `plans/development_workflow.md` remain authoritative.
+
+Added bounded literal graph search and one-hop entity/relation context to the Story UI. Results identify themselves as literal keyword matches, not semantic answers. Graph retrieval validates evidence quotes against the pinned revision/hash and reports cited source-span coverage with bounded uncited previews; it makes no semantic-completeness claim. This partial query/review behavior advances #21 but does not close its cross-chunk reconciliation requirements.
+
+After reconciling with PR head `2461343`, focused graph/screenplay backend tests pass 10/10; frontend typecheck and production build pass; the mocked Story graph→screenplay Playwright journey passes 1/1; `git diff --check` passes. Playwright required an escalated run because Chromium launch is blocked in the sandbox. No provider/GPU/media call or broad legacy rerun. The host already has the preview ports 8082/3020 in use; duplicate servers were not started, and the Story route was reopened in Codex. Cross-chunk entity reconciliation, chronology/contradiction synthesis, semantic coverage, source-edit graph refresh/invalidation and downstream workflow wiring remain open.
+
+Commit `513f616` contains the graph-search increment and this handoff. The local branch is two commits ahead of PR #15's head. `git push` was attempted but rejected because this shell has no GitHub username/credential; GitHub still needs the push before Ashu can see this increment. Keep both commits and continue from the current branch; do not mistake the local commits for published changes.
+
+## 2026-10-09 cross-chunk entity review slice
+
+Graph reads now expose at most 20 deterministic, same-type possible name-variant pairs when entity names differ by whole-token subset and their evidence occurs in separate source chunks. A token index caps comparisons at 10,000. The Story graph panel shows both exact supporting quotes and marks each suggestion unreviewed. This is explicitly a suggestion only: it does not merge nodes, alter relation endpoints, persist a decision, or claim coreference resolution. This avoids unsafe schema semantics while making cross-chunk identity candidates visible. See `plans/implementation/v2_graph_screenplay_reuse.md` for limits and the next schema decision.
+
+Focused `test_story_graph.py` passes 12/12, including cross-chunk-only matching, same-chunk exclusion, matching entity type and no ID merge. Frontend typecheck passes; Vite production build succeeds to `/tmp/vibe-director-identity-build`; `git diff --check` passes. Existing SQLite ResourceWarnings remain in the style/screenplay test. No provider, media or GPU calls; no commits or push. Issue #21 remains open for durable accept-alias/keep-distinct decisions, alias-aware retrieval, chronology and contradiction analysis, source-edit refresh/invalidation and semantic coverage.
+
+Compatibility follow-up: `identity_candidates` is optional in the frontend type and defaults to an empty list for older graph API responses. Saving a graph-record review clears the current derived suggestions, then reloads the graph to fetch candidates based on the changed record. The focused Playwright graph journey keeps its initial response without `identity_candidates`, then verifies candidate display on refresh and removal after an edit; 1/1 passes. Frontend typecheck/build and diff check pass. A first restricted Chromium launch failed with a sandbox permission error; the same focused test passed on the authorized escalated run. No additional backend test rerun or publication.
+
+Sol's follow-up found that refreshing after saving one graph row reset unsaved drafts in other rows. The save handler now preserves all other row drafts while accepting the saved row's refreshed server value. The same focused Playwright journey edits another record, saves the first, and verifies the second draft remains; 1/1 passes. Typecheck, Vite build to `/tmp/vibe-director-graph-draft-build`, and `git diff --check` pass. No commit or push.
+
+During the async graph refresh, Record/Notes/Review status controls are now disabled, preventing new edits in the brief window before restored drafts are applied. The focused browser fixture delays that graph read; it verifies controls disable during the delay, waits for the saved notice before checking the preserved unsaved row and refreshed candidate list, then confirms controls re-enable. Story graph journey passes 1/1; frontend typecheck and `git diff --check` pass. No commit/push.
+
 
 ## 2026-10-09 pinned style to screenplay slice
 

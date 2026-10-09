@@ -318,6 +318,13 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         source_revision_id=payload.get("source_revision_id"),
                         idempotency_key=payload.get("idempotency_key"), provider_call=graph_provider)
                     return _json_response(start_response, "200 OK" if result["status"] == "complete" else "202 Accepted", result)
+                if len(parts) == 3 and parts[1:] == ["graph", "search"] and method == "GET":
+                    query = parse_qs(environ.get("QUERY_STRING", ""))
+                    result = story.search_story_graph(workspace_id=workspace_id,
+                        source_revision_id=(query.get("revision_id") or [None])[0],
+                        query=(query.get("q") or [""])[0],
+                        limit=int((query.get("limit") or [10])[0]))
+                    return _json_response(start_response, "200 OK", result)
                 if len(parts) == 2 and parts[1] == "graph" and method == "GET":
                     query = parse_qs(environ.get("QUERY_STRING", ""))
                     revision_id = (query.get("revision_id") or [None])[0]

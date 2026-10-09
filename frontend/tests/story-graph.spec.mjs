@@ -6,6 +6,7 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   let graph = null;
   let screenplay = null;
   let screenplayHistory = [];
+  let delayGraphRefresh = false;
   const source = 'Mira keeps the key.\n' + '😀'.repeat(200);
   const revision = { revision_id: 'story-canon-abcdef123456', source_text: source, source_sha256: 'source-hash' };
   const calls = [];
@@ -15,7 +16,12 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
     if (path === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ workspace_id: 'story-graph', title: 'Graph me', current_revision_id: revision.revision_id, initialized: true, status: 'ready' }]) });
     if (path === '/api/story/workspaces/story-graph' && req.method() === 'GET') return route.fulfill({ json: { workspace_id: 'story-graph', title: 'Graph me', current_revision: revision, current_revision_id: revision.revision_id, initialized: true, status: 'ready' } });
     if (path === '/api/story/workspaces/story-graph/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: revision.revision_id, source_sha256: 'source-hash', revision_number: 1 }]) });
-    if (path === '/api/story/workspaces/story-graph/graph' && req.method() === 'GET') return graph && new URL(req.url()).searchParams.get('revision_id') === graph.source_revision_id ? route.fulfill({ json: graph }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No graph' } } });
+    if (path === '/api/story/workspaces/story-graph/graph' && req.method() === 'GET') {
+      if (!graph || new URL(req.url()).searchParams.get('revision_id') !== graph.source_revision_id) return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No graph' } } });
+      if (delayGraphRefresh) { delayGraphRefresh = false; await new Promise(resolve => setTimeout(resolve, 350)); }
+      return route.fulfill({ json: graph });
+    }
+    if (path === '/api/story/workspaces/story-graph/graph/search' && req.method() === 'GET') return route.fulfill({ json: { snapshot_id: graph.snapshot_id, source_revision_id: revision.revision_id, query: url.searchParams.get('q'), kind: 'literal_keyword_search', match_count: 1, matches: [graph.records[0]], neighborhoods: [{ match_record_id: graph.records[0].record_id, records: [graph.records[1]] }] } });
     if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'GET') return screenplay && new URL(req.url()).searchParams.get('revision_id') === screenplay.source_revision_id ? route.fulfill({ json: screenplay }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No screenplay' } } });
     if (path === '/api/story/workspaces/story-graph/screenplay/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf(screenplayHistory.map(item => ({ ...item, stale: item.source_revision_id !== revision.revision_id, accepted: item.accepted === true && item.source_revision_id === revision.revision_id && screenplayHistory.find(candidate => candidate.source_revision_id === item.source_revision_id)?.screenplay_revision_id === item.screenplay_revision_id }))) });
     if (path.startsWith('/api/story/workspaces/story-graph/screenplay/revisions/') && req.method() === 'GET') return route.fulfill({ json: screenplayHistory.find(item => item.screenplay_revision_id === path.split('/').at(-1)) });
@@ -28,6 +34,8 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
     }
     if (path === '/api/story/workspaces/story-graph/graph/records/record-1' && req.method() === 'PATCH') {
       const body = req.postDataJSON(); graph.records[0] = { ...graph.records[0], ...body, user_modified: true };
+      graph.identity_candidates = [];
+      delayGraphRefresh = true;
       return route.fulfill({ json: { record_id: 'record-1', ...body, user_modified: true } });
     }
     if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'POST') {
@@ -40,14 +48,31 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await page.goto('/#/story');
   await page.getByRole('button', { name: 'Generate graph' }).click();
   await expect(page.getByText('story_chunk_0001: complete')).toBeVisible();
+  // Older graph API payloads have no identity_candidates field.
+  expect(graph.identity_candidates).toBeUndefined();
+  graph.identity_candidates = [{ left_record_id: 'record-1', left_name: 'Mira', left_type: 'character', left_evidence: [{ ...graph.records[0].evidence[0] }], right_record_id: 'record-other', right_name: 'Mira Sen', right_type: 'character', right_evidence: [{ ...graph.records[0].evidence[0], chunk_id: 'story_chunk_0002' }], kind: 'possible_name_variant' }];
+  await page.getByRole('button', { name: 'Refresh graph' }).click();
+  await expect(page.getByRole('region', { name: 'Possible cross-chunk name variants' })).toContainText('Mira ↔ Mira Sen');
+  await page.getByLabel('Find a person, event or fact').fill('Mira');
+  await page.getByRole('button', { name: 'Search graph' }).click();
+  await expect(page.getByText('1 keyword matches')).toBeVisible();
+  await expect(page.getByText('Connected: Mira keeps the key')).toBeVisible();
   await page.getByText('Review uncited passages').click();
   const uncitedPreview = page.locator('.story-graph details blockquote').first();
   await expect(uncitedPreview).toBeVisible();
   expect(await uncitedPreview.evaluate(node => Array.from(node.textContent || '').at(-1))).toBe('…');
+  await page.getByLabel('Record').nth(1).fill('Unsaved event draft');
   await page.getByLabel('Record').first().fill('Mira, the keeper');
   await page.getByLabel('Notes').first().fill('Reviewed by the writer.');
   await page.getByLabel('Review status').first().selectOption('user_authored');
   await page.getByRole('button', { name: 'Save review' }).first().click();
+  await expect(page.getByLabel('Record').first()).toBeDisabled();
+  await expect(page.getByLabel('Notes').first()).toBeDisabled();
+  await expect(page.getByLabel('Review status').first()).toBeDisabled();
+  await expect(page.getByRole('status').filter({ hasText: 'Graph record saved as user-authored review' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Possible cross-chunk name variants' })).toHaveCount(0);
+  await expect(page.getByLabel('Record').nth(1)).toHaveValue('Unsaved event draft');
+  await expect(page.getByLabel('Record').first()).toBeEnabled();
   await page.reload();
   await expect(page.getByLabel('Record').first()).toHaveValue('Mira, the keeper');
   await expect(page.getByLabel('Notes').first()).toHaveValue('Reviewed by the writer.');

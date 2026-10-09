@@ -1041,13 +1041,112 @@ class StoryAuthoring:
             "uncovered_ranges": [{"start_codepoint": start, "end_codepoint": end,
                 "preview": source_text[start:min(end, start + 160)]} for start, end in shown_gaps],
         }
+        identity_candidates = self._graph_identity_candidates(records)
         return {"snapshot_id": snapshot["snapshot_id"], "idempotency_key": snapshot["idempotency_key"], "workspace_id": workspace_id,
             "source_revision_id": snapshot["source_revision_id"], "source_sha256": snapshot["source_sha256"],
             "status": snapshot["status"], "coverage_state": snapshot["coverage_state"],
             "contradiction_state": snapshot["contradiction_state"], "chunk_total": snapshot["chunk_total"],
             "chunk_complete": snapshot["chunk_complete"], "provider": snapshot["provider"], "model": snapshot["model"],
             "semantic_coverage_claim": False, "source_span_coverage": span_coverage,
-            "chunks": [dict(row) for row in chunk_rows], "records": records}
+            "chunks": [dict(row) for row in chunk_rows], "records": records,
+            "identity_candidates": identity_candidates}
+
+    @staticmethod
+    def _graph_identity_candidates(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Suggest possible cross-chunk entity name variants without merging them.
+
+        This conservative lexical pass is a review aid, not coreference
+        resolution. It only proposes pairs of same-type entities whose names
+        differ by one name being a whole-token subset of the other and whose
+        evidence occurs in disjoint source chunks. Stable IDs and relations are
+        never rewritten here.
+        """
+        entities = [record for record in records if record.get("kind") == "entity"]
+        candidates: list[dict[str, Any]] = []
+        token_sets = [set(re.findall(r"[^\W_]+", row["name"].casefold(), flags=re.UNICODE)) for row in entities]
+        chunk_sets = [{evidence["chunk_id"] for evidence in row.get("evidence", [])} for row in entities]
+        token_index: dict[tuple[str, str], list[int]] = {}
+        for index, row in enumerate(entities):
+            for token in token_sets[index]:
+                token_index.setdefault((row.get("type", "").casefold(), token), []).append(index)
+        comparisons = 0
+        for index, left in enumerate(entities):
+            left_tokens = token_sets[index]
+            if not left_tokens or not chunk_sets[index]:
+                continue
+            possible: set[int] = set()
+            for token in left_tokens:
+                possible.update(token_index.get((left.get("type", "").casefold(), token), ()))
+            for other_index in sorted(candidate for candidate in possible if candidate > index):
+                comparisons += 1
+                if comparisons > 10000:
+                    return candidates
+                right = entities[other_index]
+                right_tokens = token_sets[other_index]
+                if left["name"].casefold() == right["name"].casefold():
+                    continue
+                if not chunk_sets[other_index] or chunk_sets[index] & chunk_sets[other_index]:
+                    continue
+                if not (left_tokens <= right_tokens or right_tokens <= left_tokens):
+                    continue
+                candidates.append({
+                    "left_record_id": left["record_id"], "left_name": left["name"],
+                    "left_type": left["type"], "left_evidence": left.get("evidence", [])[:3],
+                    "right_record_id": right["record_id"], "right_name": right["name"],
+                    "right_type": right["type"], "right_evidence": right.get("evidence", [])[:3],
+                    "kind": "possible_name_variant",
+                })
+                if len(candidates) >= 20:
+                    return candidates
+        return candidates
+
+    def search_story_graph(self, *, workspace_id: str, query: str,
+                           source_revision_id: str | None = None, limit: int = 10) -> dict[str, Any]:
+        """Find literal keyword matches and return their one-hop graph context."""
+        if type(query) is not str or not query.strip() or len(query) > 200:
+            raise ValueError("Search text must contain 1–200 characters.")
+        if type(limit) is not int or not 1 <= limit <= 20:
+            raise ValueError("Search result limit must be between 1 and 20.")
+        graph = self.get_story_graph(workspace_id=workspace_id, source_revision_id=source_revision_id)
+        terms = list(dict.fromkeys(re.findall(r"[^\W_]+", query.casefold(), flags=re.UNICODE)))
+        if not terms:
+            raise ValueError("Search text must include a letter or number.")
+        scored = []
+        for record in graph["records"]:
+            fields = [
+                (record["name"].casefold(), 6), (record["type"].casefold(), 3),
+                ((record.get("predicate") or "").casefold(), 4),
+                (record["detail"].casefold(), 2),
+                (" ".join(item["quote"] for item in record["evidence"]).casefold(), 1),
+                (self._canonical_json(record["properties"]).casefold(), 1),
+            ]
+            text = " ".join(value for value, _weight in fields)
+            if not all(term in text for term in terms):
+                continue
+            score = sum(weight for value, weight in fields if any(term in value for term in terms))
+            if query.strip().casefold() in record["name"].casefold():
+                score += 10
+            scored.append((score, record))
+        matches = [record for _score, record in sorted(scored,
+            key=lambda item: (-item[0], item[1]["kind"], item[1]["name"], item[1]["record_id"]))[:limit]]
+        records_by_id = {record["record_id"]: record for record in graph["records"]}
+        relation_records = [record for record in graph["records"] if record["kind"] == "relation"]
+        neighborhoods = []
+        for match in matches:
+            related_ids: set[str] = set()
+            if match["kind"] == "entity":
+                for relation in relation_records:
+                    if match["record_id"] in {relation.get("subject_id"), relation.get("object_id")}:
+                        related_ids.add(relation["record_id"])
+                        related_ids.update(value for value in (relation.get("subject_id"), relation.get("object_id")) if value)
+            elif match["kind"] == "relation":
+                related_ids.update(value for value in (match.get("subject_id"), match.get("object_id")) if value)
+            related_ids.discard(match["record_id"])
+            neighborhoods.append({"match_record_id": match["record_id"],
+                "records": [records_by_id[value] for value in sorted(related_ids) if value in records_by_id]})
+        return {"snapshot_id": graph["snapshot_id"], "source_revision_id": graph["source_revision_id"],
+            "query": query.strip(), "kind": "literal_keyword_search", "match_count": len(scored),
+            "matches": matches, "neighborhoods": neighborhoods}
 
     def update_story_graph_record(self, *, workspace_id: str, record_id: str,
                                   name: str, detail: str, status: str = "user_authored") -> dict[str, Any]:

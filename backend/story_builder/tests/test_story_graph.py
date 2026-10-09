@@ -61,6 +61,29 @@ class StoryGraphTests(unittest.TestCase):
         result = b"".join(self.app(environ, lambda status, headers: result_status.append(status)))
         return result_status[0], json.loads(result)
 
+    def test_cross_chunk_name_variant_is_suggested_without_merging_records(self):
+        def entity(record_id, name, chunk_id, quote):
+            return {"record_id": record_id, "kind": "entity", "type": "character", "name": name,
+                "evidence": [{"chunk_id": chunk_id, "quote": quote, "start_codepoint": 0, "end_codepoint": len(quote)}]}
+        records = [entity("e1", "Mira Sen", "chunk-1", "Mira Sen entered the room."),
+                   entity("e2", "Mira", "chunk-2", "Mira returned at dawn.")]
+        candidates = StoryAuthoring._graph_identity_candidates(records)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual((candidates[0]["left_record_id"], candidates[0]["right_record_id"]), ("e1", "e2"))
+        self.assertNotIn("decision", candidates[0])
+        self.assertEqual([record["record_id"] for record in records], ["e1", "e2"])
+
+    def test_name_variant_candidates_require_disjoint_chunks_and_matching_type(self):
+        def entity(record_id, name, entity_type, chunk_id):
+            return {"record_id": record_id, "kind": "entity", "type": entity_type, "name": name,
+                "evidence": [{"chunk_id": chunk_id, "quote": name}]}
+        records = [entity("e1", "Mira Sen", "character", "chunk-1"),
+                   entity("e2", "Mira", "character", "chunk-1"),
+                   entity("e3", "Mira", "location", "chunk-2"),
+                   entity("e4", "Mira", "character", "chunk-3")]
+        candidates = StoryAuthoring._graph_identity_candidates(records)
+        self.assertEqual([(item["left_record_id"], item["right_record_id"]) for item in candidates], [("e1", "e4")])
+
     def test_all_chunks_have_exact_durable_evidence_and_review_survives_reload(self):
         key = str(uuid.uuid4())
         path = f"/api/story/workspaces/{self.workspace}/graph"
@@ -110,6 +133,25 @@ class StoryGraphTests(unittest.TestCase):
         self.assertEqual(reviewed["name"], "Mira holds the key")
         self.assertTrue(reviewed["user_modified"])
         self.assertEqual(reviewed["evidence"], fact["evidence"])
+
+    def test_graph_keyword_search_returns_one_hop_relationship_context(self):
+        graph_path = f"/api/story/workspaces/{self.workspace}/graph"
+        _, graph = self.call("POST", graph_path, {"source_revision_id": self.revision,
+            "idempotency_key": str(uuid.uuid4())})
+        status, result = self.call("GET", f"{graph_path}/search?revision_id={self.revision}&q=Mira")
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(result["kind"], "literal_keyword_search")
+        self.assertEqual(result["snapshot_id"], graph["snapshot_id"])
+        entity = next(record for record in result["matches"]
+            if record["kind"] == "entity" and record["name"] == "Mira")
+        neighborhood = next(item["records"] for item in result["neighborhoods"]
+            if item["match_record_id"] == entity["record_id"])
+        self.assertTrue(any(record["kind"] == "relation" for record in neighborhood))
+        self.assertTrue(any(record["kind"] == "entity" and record["name"] == "key"
+            for record in neighborhood))
+        invalid_status, invalid = self.call("GET", f"{graph_path}/search?revision_id={self.revision}&q=%20%20")
+        self.assertEqual(invalid_status, "422 Unprocessable Entity")
+        self.assertIn("Search text", invalid["error"]["message"])
 
     def test_pinned_production_style_guides_screenplay_and_is_preserved_in_lineage(self):
         styles = ProductionStyleService(self.ledger)

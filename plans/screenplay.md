@@ -39,7 +39,7 @@ Automation & Parameters (Assisted manual / Fully automated; confirm settings)
 Workflow-specific prompt preparation and generation
 ```
 
-Assisted manual and Fully automated use this same journey; see `automation.md`. Assisted manual exposes five automation checkboxes: none means manual Generate/Next, some means mixed operation, and all means automatic asset preparation plus video. Fully automated skips image preparation and uses the style-aware T2V/R2V continuation route. Both record the same screenplay context; no extra Manual mode is shown.
+Assisted manual and Fully automated use this same journey; see `automation.md`. Assisted manual has five checkboxes: none checked means the user runs each step, some checked mixes user and automatic steps, and all checked automatically prepares assets and video. Fully automated skips image preparation and uses the style-aware T2V/R2V continuation route. These are the only modes.
 
 ## 3. Unified story workspace
 

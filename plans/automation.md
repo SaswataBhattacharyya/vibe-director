@@ -1,15 +1,23 @@
 # Automation & Parameters — one setup page and shared generation journey
 
-**Status:** Current product plan based on the user's clarification. It supersedes the broader checkbox proposals in `execution_modes.md`. This is planned UI behavior, not a claim that it is implemented.
+**Status:** Current product plan. This describes intended behavior; it does not claim every part is implemented.
+
+## Rules to follow
+
+- There are exactly two choices: **Assisted manual** and **Fully automated**. Do not show a separate Manual or Semi mode.
+- Assisted manual has five `Automate this step` checkboxes. None checked means the user runs each step; some checked means a mix; all checked automates the asset-based route.
+- Fully automated is separate: it skips image preparation and uses T2V for a scene's first clip, then R2V with the previous clip. A selected style video changes the first clip to R2V as described in `production_styles.md`.
+- Both choices use shared generation screens. Confirm settings before an automated run; do not ask again for every clip.
+- `Manual` can describe a user action or an old saved value. It is never a mode in the new UI. Translate old saved values using the compatibility rule at the end of this plan.
 
 ## Quick pathway
 
 ```text
 Screenplay → Automation & Parameters
   ├─ Assisted manual
-  │   ├─ None checked → prompt/edit → Generate → review/retake → Next
-  │   ├─ Some checked → checked steps run; unchecked used steps wait
-  │   └─ All checked → prepare assets/voices and generate videos automatically
+  │   ├─ None checked → user runs each step: edit → Generate → review → Next
+  │   ├─ Some checked → selected steps run automatically; others wait for user
+  │   └─ All checked → assets/voices and video run automatically
   │       Video automated → compatible FFLF or R2V, chosen by Director
   └─ Fully automated
       Skip image preparation and manual voice matching
@@ -80,9 +88,9 @@ A checkbox means **automate**, not **include**. An unchecked stage remains manua
 
 ## 4. Assisted manual — none, some or all stages automated
 
-There are two mode choices: **Assisted manual** and **Fully automated**. Remove the separate Manual and Semi buttons. Assisted manual contains the five automation checkboxes below.
+There are two mode choices: **Assisted manual** and **Fully automated**. Never add separate Manual or Semi buttons. In Assisted manual, checkbox selection alone determines how much the system does.
 
-- **None checked:** every used stage waits for the user. Show the prompt, allow editing/selected-text AI changes, then Generate → review/retake → Next. Optional image stages have Skip.
+- **None checked:** every used stage waits for the user. Show the prompt, allow editing/selected-text AI changes, then Generate → review/retake → Next. Optional image stages have Skip. This remains Assisted manual, not a third mode.
 - **Some checked:** checked stages run when their inputs are ready; unchecked used stages wait for manual action. Skip is separate from an unchecked box.
 - **All five checked:** character/world/frame generation, voice matching and video run automatically using confirmed policies. This is automation with prepared assets; it does not switch to the image-free Fully automated preset.
 

@@ -2,7 +2,7 @@
 
 ## Objective and authority
 
-Complete the entire product described by `plans/README.md`, including `production_styles.md`, merged story/knowledge graph/readable screenplay, optional assets/voices, three shared video workflows, Manual/Semi/Full, Media Prep, Status and resolved assembly/license decisions. Goal active at owner’s explicit resume. Do not mistake bounded foundations for completion. Ashu retains UI design; his approved structure and all three themes are now the implementation baseline. Codex first; later providers deferred.
+Complete the entire product described by `plans/README.md`: styles, story/knowledge graph/screenplay, assets/voices, three video workflows, Assisted manual/Fully automated, Media Prep, Status and ordered export. Goal active. Do not mistake foundations for completion. Ashu owns UI design; his approved structure and all three themes are the baseline. Codex first; other providers later.
 
 ## Canonical and publication
 
@@ -136,3 +136,14 @@ Limit: the downstream generation stages are not implemented in this slice, so ac
 ## 2026-10-09 screenplay acceptance review and UI safety fixes
 
 GPT-6.1 Sol reviewed the current screenplay acceptance slice. It found two UI risks: dirty edits could be lost by selecting history, and fields stayed editable while an acceptance response replaced the draft. Both are fixed: history navigation is disabled with a save-first hint while dirty; screenplay fields are disabled during requests and for stale/superseded revisions. The focused graph/screenplay Playwright test covers both. Luna reports 1 Playwright test passed, TypeScript typecheck passed, Vite build passed, and `git diff --check` passed. Backend acceptance remains transactionally bound to the current source, latest screenplay and its completed matching graph. No live provider/media/GPU request. Published to draft PR #15 as commit `8b1fb1847699040e91a7d1f2f1274d687c19e37c`.
+
+## 2026-10-09 goal confirmation and execution focus
+
+`get_goal` confirms the runtime goal is active; it was not deleted. The owner reaffirmed that the project scope is to finish the complete product, including usable UI and backend wiring, and clarified the priority: backend/product flows now, on the existing UI foundation. Keep Ashu as UI design owner and send him coherent, issue-linked increments for finer design/detail refinement; periodically review his changes before integration. `plans/GOAL.md` is the durable scope. Continue from the current screenplay acceptance checkpoint and use current repository/issues as authority. No new implementation or test work began in this handoff update.
+
+
+## 2026-10-09 pinned style to screenplay slice
+
+Current local work wires the frozen production-style selection into each screenplay chunk prompt as creative guidance, persists its snapshot ID on the immutable screenplay revision, carries it through edits/history, and displays it in the screenplay header. Guidance explicitly cannot add plot facts or override source evidence. Style-free request hashes remain byte-for-byte compatible with the prior input shape so in-progress/replayed drafts retain their idempotency identity. Added a SQLite migration for the nullable lineage field.
+
+Focused Story Graph module passes 9/9, including style prompt/lineage/edit coverage and a regression assertion for the prior style-free request hash. Frontend `npm run build` passes (TypeScript plus Vite); `git diff --check` passes. Existing ResourceWarnings about unclosed SQLite connections appear in test output but tests pass; they are outside this slice. No provider, asset, GPU or broad legacy suite was run. The implementation is committed locally as `d035d26`; publish the combined PR increment, then proceed with graph semantic completeness/reconciliation (#21) and selected-edit work (#20).

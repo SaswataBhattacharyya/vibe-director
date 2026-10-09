@@ -1,18 +1,18 @@
 # Active goal — complete Vibe Director
 
-The runtime goal is active. Current scope: complete Vibe Director end to end, including its full usable UI and backend wiring. The initial UI foundation is in place; finish the functional screens and journeys on that foundation, then push working changes for Ashu to refine the design and details. This file preserves the goal across sessions.
+The runtime goal is active. Finish backend wiring and every agreed product journey in the current UI, built on Ashu's PR22 foundation and all three themes. Ashu owns detailed UI design. Push working, issue-linked increments so he can refine them as the product takes shape.
 
 ## Finish the product
 
-Follow `README.md`, `automation.md` and the stage plans. Deliver styles/media references; story import/editing and knowledge graph; V2 readable holistic screenplay; editable, annotatable workflow prompts; characters/worlds/frames and voice binding; T2V/FFLF/R2V; Assisted manual (none/some/all checked); distinct image-free Fully automated; isolated generation; Media Prep and searchable shared libraries; Status; and ordered accepted-clip export with optional audio tracks.
+Follow `README.md` and the stage plans. Reuse existing code first, then wire it into complete user journeys. Deliver production styles/media references; story import/editing and knowledge graph; readable screenplay; editable workflow prompts; character/world/frame images and voice binding; T2V/FFLF/R2V; Assisted manual and Fully automated; isolated generation; Media Prep and searchable libraries; Status; and ordered clip export with optional audio tracks.
 
-Use the existing PR22 UI foundation and all three themes. Implement the screens, controls and backend wiring needed for these journeys now. Ashu owns subsequent finer design/detail refinement; pending cosmetic polish must not prevent implementing agreed functionality. Record functioning controls, pending behavior and design opportunities in the handoff/PRs for him.
+Keep PR22's UI foundation and all three themes. Connect every working control to real behavior. Ashu refines layout and visual details through the issue/PR loop; do not block backend work on polish.
 
 ## Work efficiently
 
-Luna leads implementation under Ponytail full. Read `development_workflow.md` for source paths and short issue task cards. Copy/adapt existing Story Builder code first; evaluate OpenMontage reuse within its recorded licensing boundaries. Keep one shared asset library and durable execution service.
+Luna implements each issue directly using Ponytail full. Copy/adapt from Story Builder first; inspect OpenMontage for useful code only within the recorded license boundary. Source paths and short task cards are in `development_workflow.md`. Keep one shared asset library and job service.
 
-GPT-6.1 Sol reviews the three milestones: story/screenplay, assets/video, automation/export. Earlier review is for a concrete risky change or blocker. Do not repeat whole-project reviews or the retained 600+ legacy test suite. Verify only changed risks and missing acceptance evidence.
+GPT-6.1 Sol reviews only three milestones: story/screenplay, assets/video, and automation/export. Sol can fix a bounded defect found in review; Luna then continues. Request an earlier review only for a concrete risky change or blocker. Do not repeat broad reviews or the retained 600+ legacy test suite.
 
 ## Delivery and acceptance
 
@@ -22,8 +22,8 @@ Reuse Story Builder audio/images/videos for focused checks. For remaining live g
 
 Codex is the initial app reasoning provider. Alternative API/provider and weaker-model work is deferred until this app works. Preserve validation, recovery, accessibility, GPU safeguards and licensing requirements.
 
-## Current next step
+## Current execution focus
 
-The goal is active and covers the complete Vibe Director product: finish the usable UI and wire its backend, using the initial PR22/Ashu foundation and preserving all three themes. Continue from the current screenplay acceptance checkpoint, then implement and verify the remaining story, assets, video, media, automation, and export journeys. Ashu remains the UI design owner: publish working issue-linked increments for his finer design/detail refinement, review his changes periodically, and integrate only after review. Keep current repo/issue state authoritative; do not repeat completed work or the retained 600+ test suite. Current implementation branch: `issue-2-isolated-t2v-reuse`, draft PR #15.
+The runtime goal is active. Resume from the current implementation and `HANDOFF.md`; its latest checkpoint identifies what is done and the next issue. Keep the UI usable on Ashu's foundation while wiring the backend. Push coherent, issue-linked increments for Ashu to refine and review his incoming changes at milestones. Do not repeat completed work or the retained 600+ test suite.
 
-The goal is complete only when the agreed journeys work, remaining acceptance checks are satisfied, and implementation/evidence are pushed. Mocks and installed workflows alone do not establish working generation.
+The goal is complete only when the agreed journeys work, remaining acceptance checks pass, and implementation/evidence are pushed. A mock or installed workflow alone does not prove generation works. Continue the issue/PR loop with Ashu for UI refinement while completing the backend and product.

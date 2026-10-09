@@ -1,6 +1,6 @@
-# Development workflow — Luna implements, Sol reviews milestones
+# Development workflow — Luna implements, Sol reviews three milestones
 
-Current owner instruction. Use Ponytail (full) for development: reuse working code, make the smallest complete change, and keep required validation, recovery, security and accessibility. This file controls how agents work; stage plans control product behavior.
+Use Ponytail full: reuse working code and make the smallest complete change, while keeping validation, recovery, security and accessibility. Luna is the implementation lead. This file says how to work; stage plans say what the product does.
 
 ## Start here
 
@@ -14,8 +14,8 @@ Current owner instruction. Use Ponytail (full) for development: reuse working co
 
 | Source | Local folder | Use |
 |---|---|---|
-| Story Builder / mooV_E_maker | `/home/riki/web_dev/story_builder` | First choice for ComfyUI compilers, jobs/recovery, GPU safeguards, providers, V2 source processing and existing media tools. Upstream: `https://github.com/SaswataBhattacharyya/mooV_E_maker.git` |
-| OpenMontage | `/home/riki/web_dev/OpenMontage` | Inspect useful retrieval, production visibility, recovery and assembly code. Upstream: `https://github.com/calesthio/OpenMontage.git`; last reviewed commit `9327439db69021ab4b0e2776729bf3b58fdb5a87`. Covered-source copying remains subject to the license decision in `openmontage_licensing.md`. |
+| Story Builder / mooV_E_maker | `/home/riki/web_dev/story_builder` | Copy/adapt first for ComfyUI workflows, jobs/recovery, GPU safeguards, V2 story processing and media tools. Upstream: `https://github.com/SaswataBhattacharyya/mooV_E_maker.git` |
+| OpenMontage | `/home/riki/web_dev/OpenMontage` | Inspect for useful retrieval, production status, recovery and assembly code. Upstream: `https://github.com/calesthio/OpenMontage.git`; last reviewed commit `9327439db69021ab4b0e2776729bf3b58fdb5a87`. Copy only if the license decision in `openmontage_licensing.md` allows it. |
 | ComfyUI setup | `/home/riki/web_dev/setup_comfy_and-stuff` | Reuse installed models/nodes/runtime through configured paths. Do not duplicate weights or environments. |
 
 References stay outside product Git and are read-only. Record the selected files' source commit/hash and relevant local differences. Reuse existing product copies first. Never import whole repos, source credentials, caches or media. Test assets from Story Builder can be used locally without committing them.
@@ -37,13 +37,13 @@ Avoid copying all plans into an agent prompt. Link the relevant files and give a
 
 ## GPT-6.1 Sol review points
 
-Request a bounded review using model `gpt-6.1-sol` after these milestones:
+Request a bounded review using `gpt-6.1-sol` at these three milestones only:
 
 1. **Story → screenplay:** source import/revisions, selected-text editing, graph/source coverage and readable screenplay work together.
 2. **Assets → video:** character/world/frame/voice and T2V/FFLF/R2V screens use the exact supported inputs and shared job/recovery service.
 3. **Automation → export:** both modes resume safely, preserve full screenplay coverage and clips, and produce the approved ordered export.
 
-For each review, give Sol the milestone goal, changed files/diff, source provenance, checks already done, known gaps and one specific review request. Sol reads relevant contracts, finds concrete defects or omissions, and may make bounded fixes. Luna continues afterward. Do not request an entire-project review every issue or rerun broad tests at each review.
+For each review, give Sol the goal, changed files/diff, source provenance, checks, known gaps and one review question. Sol checks for concrete defects and may make a small, bounded fix. Luna then continues. Do not request a whole-project review for every issue or rerun broad tests at each checkpoint.
 
 Request Sol earlier only for a concrete blocker, a risky shared contract/data change, an ambiguous submission/recovery defect or a genuine product contradiction. Review cost comes from a bounded diff and relevant files, not model choice alone.
 

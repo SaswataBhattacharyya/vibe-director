@@ -216,6 +216,7 @@ class StoryAuthoring:
                     parent_screenplay_revision_id TEXT,
                     screenplay_json TEXT NOT NULL,
                     idempotency_key TEXT NOT NULL UNIQUE,
+                    style_selection_snapshot_id TEXT,
                     accepted_at TEXT,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
@@ -257,6 +258,8 @@ class StoryAuthoring:
             screenplay_columns = {row["name"] for row in db.execute("PRAGMA table_info(story_screenplay_revisions)")}
             if "accepted_at" not in screenplay_columns:
                 db.execute("ALTER TABLE story_screenplay_revisions ADD COLUMN accepted_at TEXT")
+            if "style_selection_snapshot_id" not in screenplay_columns:
+                db.execute("ALTER TABLE story_screenplay_revisions ADD COLUMN style_selection_snapshot_id TEXT")
 
     def create_workspace(self, *, title: str, source_text: str,
                          source_metadata: dict[str, Any] | None = None,
@@ -991,6 +994,8 @@ class StoryAuthoring:
             rows = db.execute("SELECT * FROM story_graph_records WHERE snapshot_id=? ORDER BY kind,type,name,record_id", (snapshot["snapshot_id"],)).fetchall()
             evidence_rows = db.execute("SELECT * FROM story_graph_evidence WHERE record_id IN (SELECT record_id FROM story_graph_records WHERE snapshot_id=?) ORDER BY chunk_id,start_codepoint", (snapshot["snapshot_id"],)).fetchall()
             chunk_rows = db.execute("SELECT chunk_id,chunk_index,start_codepoint,end_codepoint,state,error_message FROM story_graph_chunks WHERE snapshot_id=? ORDER BY chunk_index", (snapshot["snapshot_id"],)).fetchall()
+        revision = self.get_revision(workspace_id, snapshot["source_revision_id"])
+        source_text = revision["source_text"]
         evidence: dict[str, list[dict[str, Any]]] = {}
         for row in evidence_rows:
             evidence.setdefault(row["record_id"], []).append({k: row[k] for k in ("source_revision_id","source_sha256","chunk_id","start_codepoint","end_codepoint","quote")})
@@ -1000,12 +1005,44 @@ class StoryAuthoring:
             value["properties"] = json.loads(row["properties_json"])
             value["evidence"] = evidence.get(row["record_id"], [])
             records.append(value)
+        # This reports only the source characters cited by graph evidence. It
+        # cannot prove that every event or meaning was extracted from the story.
+        evidence_ranges = sorted((row["start_codepoint"], row["end_codepoint"]) for row in evidence_rows)
+        merged: list[list[int]] = []
+        for start, end in evidence_ranges:
+            if not (0 <= start < end <= len(source_text)):
+                raise ValueError("Stored graph evidence has an invalid source span.")
+            if merged and start <= merged[-1][1]:
+                merged[-1][1] = max(merged[-1][1], end)
+            else:
+                merged.append([start, end])
+        uncovered = []
+        cursor = 0
+        for start, end in merged:
+            if cursor < start:
+                uncovered.append((cursor, start))
+            cursor = end
+        if cursor < len(source_text):
+            uncovered.append((cursor, len(source_text)))
+        covered_chars = sum(end - start for start, end in merged)
+        shown_gaps = uncovered[:20]
+        span_coverage = {
+            "kind": "cited_source_spans_only",
+            "source_chars": len(source_text),
+            "cited_chars": covered_chars,
+            "percent": round(covered_chars * 100 / len(source_text), 2) if source_text else 100.0,
+            "uncovered_range_count": len(uncovered),
+            "uncovered_ranges_omitted": max(0, len(uncovered) - len(shown_gaps)),
+            "uncovered_ranges": [{"start_codepoint": start, "end_codepoint": end,
+                "preview": source_text[start:min(end, start + 160)]} for start, end in shown_gaps],
+        }
         return {"snapshot_id": snapshot["snapshot_id"], "idempotency_key": snapshot["idempotency_key"], "workspace_id": workspace_id,
             "source_revision_id": snapshot["source_revision_id"], "source_sha256": snapshot["source_sha256"],
             "status": snapshot["status"], "coverage_state": snapshot["coverage_state"],
             "contradiction_state": snapshot["contradiction_state"], "chunk_total": snapshot["chunk_total"],
             "chunk_complete": snapshot["chunk_complete"], "provider": snapshot["provider"], "model": snapshot["model"],
-            "semantic_coverage_claim": False, "chunks": [dict(row) for row in chunk_rows], "records": records}
+            "semantic_coverage_claim": False, "source_span_coverage": span_coverage,
+            "chunks": [dict(row) for row in chunk_rows], "records": records}
 
     def update_story_graph_record(self, *, workspace_id: str, record_id: str,
                                   name: str, detail: str, status: str = "user_authored") -> dict[str, Any]:
@@ -1029,7 +1066,8 @@ class StoryAuthoring:
                          graph_snapshot_id: str, screenplay: dict[str, Any],
                          idempotency_key: str, parent_id: str | None = None,
                          expected_parent_id: str | None = None,
-                         require_current_source: bool = False) -> dict[str, Any]:
+                         require_current_source: bool = False,
+                         style_selection_snapshot_id: str | None = None) -> dict[str, Any]:
         key = _check_idempotency_key(idempotency_key)
         sid = f"screenplay-{hashlib.sha256(key.encode()).hexdigest()[:16]}"
         body = self._canonical_json(screenplay)
@@ -1043,6 +1081,8 @@ class StoryAuthoring:
                     raise LedgerConflict("Screenplay request key belongs to another source, graph, or parent revision.")
                 if row["screenplay_json"] != body:
                     raise LedgerConflict("Screenplay request key was already used for different screenplay content.")
+                if row["style_selection_snapshot_id"] != style_selection_snapshot_id:
+                    raise LedgerConflict("Screenplay request key was already used with different production style context.")
                 return self._screenplay_envelope(row, accepted=self._screenplay_is_currently_accepted(db, row))
             if require_current_source:
                 current = db.execute("SELECT current_revision_id FROM story_workspaces WHERE workspace_id=?", (workspace_id,)).fetchone()
@@ -1054,8 +1094,8 @@ class StoryAuthoring:
                 latest = db.execute("SELECT screenplay_revision_id FROM story_screenplay_revisions WHERE workspace_id=? AND source_revision_id=? ORDER BY rowid DESC LIMIT 1", (workspace_id, source_revision_id)).fetchone()
                 if latest is None or latest["screenplay_revision_id"] != expected_parent_id:
                     raise LedgerConflict("This screenplay revision is stale; reload the latest revision before saving.")
-            db.execute("INSERT INTO story_screenplay_revisions(screenplay_revision_id,workspace_id,source_revision_id,graph_snapshot_id,parent_screenplay_revision_id,screenplay_json,idempotency_key) VALUES(?,?,?,?,?,?,?)",
-                (sid, workspace_id, source_revision_id, graph_snapshot_id, parent_id, body, key))
+            db.execute("INSERT INTO story_screenplay_revisions(screenplay_revision_id,workspace_id,source_revision_id,graph_snapshot_id,parent_screenplay_revision_id,screenplay_json,idempotency_key,style_selection_snapshot_id) VALUES(?,?,?,?,?,?,?,?)",
+                (sid, workspace_id, source_revision_id, graph_snapshot_id, parent_id, body, key, style_selection_snapshot_id))
             row = db.execute("SELECT * FROM story_screenplay_revisions WHERE idempotency_key=?", (key,)).fetchone()
             if row is None or row["workspace_id"] != workspace_id or row["source_revision_id"] != source_revision_id or row["graph_snapshot_id"] != graph_snapshot_id:
                 raise LedgerConflict("Screenplay request key belongs to another source or graph revision.")
@@ -1068,6 +1108,7 @@ class StoryAuthoring:
         return {"screenplay_revision_id": row["screenplay_revision_id"],
             "workspace_id": row["workspace_id"], "source_revision_id": row["source_revision_id"],
             "graph_snapshot_id": row["graph_snapshot_id"],
+            "style_selection_snapshot_id": row["style_selection_snapshot_id"],
             "parent_screenplay_revision_id": row["parent_screenplay_revision_id"],
             "created_at": row["created_at"], "accepted_at": row["accepted_at"], "accepted": accepted,
             "screenplay": json.loads(row["screenplay_json"])}
@@ -1097,6 +1138,24 @@ class StoryAuthoring:
         graph = self.get_story_graph(workspace_id=workspace_id, snapshot_id=graph_snapshot_id)
         if graph["source_revision_id"] != source_revision_id or graph["status"] != "complete":
             raise LedgerConflict("A complete graph for this exact source revision is required.")
+        workspace = self.get_workspace(workspace_id, include_source=False)
+        style_selection = workspace["style_selection"]
+        style_selection_snapshot_id = workspace["style_selection_snapshot_id"]
+        style_guidance = None
+        if style_selection:
+            style_guidance = {
+                "production_type": style_selection["production_type"],
+                "style_version_id": style_selection["style_version_id"],
+                "narrative_guidance": {
+                    "story": style_selection["narrative_guidance"]["story"],
+                    "scene_direction": style_selection["narrative_guidance"]["scene_direction"],
+                },
+                "director_profile": style_selection["director_profile"],
+            }
+        style_prompt = ""
+        if style_guidance is not None:
+            style_prompt = ("Pinned production guidance is creative direction only: it must not add plot facts or override the supplied source.\n"
+                f"PINNED PRODUCTION GUIDANCE (JSON):\n{json.dumps(style_guidance, ensure_ascii=False)}\n")
         revision = self.get_revision(workspace_id, source_revision_id)
         source = revision["source_text"]
         chunks = [SourceChunk(c["chunk_id"], i + 1, c["start"], c["end"], source[c["start"]:c["end"]])
@@ -1104,6 +1163,8 @@ class StoryAuthoring:
         request = {"workspace_id": workspace_id, "source_revision_id": source_revision_id,
                    "source_sha256": revision["source_sha256"], "graph_snapshot_id": graph_snapshot_id,
                    "chunk_ids": [c.chunk_id for c in chunks]}
+        if style_selection_snapshot_id is not None:
+            request["style_selection_snapshot_id"] = style_selection_snapshot_id
         request_hash = hashlib.sha256(self._canonical_json(request).encode()).hexdigest()
         with _ledger_connection(self.ledger) as db:
             db.execute("BEGIN IMMEDIATE")
@@ -1159,6 +1220,7 @@ class StoryAuthoring:
                     "Use all relevant events/facts available here, preserve chronology and dialogue only when supported. Empty scenes is valid if this chunk has no screenplay-worthy event. "
                     "Every nonempty shot must cite one or more record IDs supplied below. Preserve action/dialogue/camera/lighting/mood/SFX/music together in the shot hierarchy. "
                     "Use prior screenplay context only for continuity; do not treat it as evidence for this chunk.\n"
+                    f"{style_prompt}"
                     f"PREVIOUS CHUNK CONTINUITY (JSON):\n{json.dumps(continuity, ensure_ascii=False)}\n"
                     f"CHUNK ID: {chunk.chunk_id} RANGE: {chunk.start}:{chunk.end}\nSOURCE TEXT (JSON):\n{json.dumps(chunk.text, ensure_ascii=False)}\nGRAPH RECORDS (JSON):\n{json.dumps(chunk_records, ensure_ascii=False)}")
                 result = provider_call(prompt=prompt)
@@ -1216,7 +1278,8 @@ class StoryAuthoring:
             db.commit()
         if status == "complete":
             saved = self._save_screenplay(workspace_id=workspace_id, source_revision_id=source_revision_id,
-                graph_snapshot_id=graph_snapshot_id, screenplay=screenplay, idempotency_key=key)
+                graph_snapshot_id=graph_snapshot_id, screenplay=screenplay, idempotency_key=key,
+                style_selection_snapshot_id=style_selection_snapshot_id)
             with _ledger_connection(self.ledger) as db:
                 db.execute("UPDATE story_screenplay_tasks SET screenplay_revision_id=?,updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=?", (saved["screenplay_revision_id"], key))
             saved.update({"task_status": status, "chunk_total": len(chunks), "chunk_complete": complete, "coverage_state": coverage})
@@ -1284,6 +1347,7 @@ class StoryAuthoring:
                 accepted = self._screenplay_is_currently_accepted(db, row)
                 items.append({"screenplay_revision_id": row["screenplay_revision_id"],
                     "source_revision_id": row["source_revision_id"], "graph_snapshot_id": row["graph_snapshot_id"],
+                    "style_selection_snapshot_id": row["style_selection_snapshot_id"],
                     "parent_screenplay_revision_id": row["parent_screenplay_revision_id"], "created_at": row["created_at"],
                     "accepted_at": row["accepted_at"], "stale": stale, "accepted": accepted})
         return {"items": items,
@@ -1320,4 +1384,5 @@ class StoryAuthoring:
         return self._save_screenplay(workspace_id=workspace_id, source_revision_id=parent["source_revision_id"],
             graph_snapshot_id=parent["graph_snapshot_id"], screenplay=screenplay,
             idempotency_key=idempotency_key, parent_id=screenplay_revision_id,
-            expected_parent_id=screenplay_revision_id, require_current_source=True)
+            expected_parent_id=screenplay_revision_id, require_current_source=True,
+            style_selection_snapshot_id=parent["style_selection_snapshot_id"])

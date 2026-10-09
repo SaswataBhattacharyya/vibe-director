@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import tempfile
@@ -11,6 +12,7 @@ from pathlib import Path
 
 from story_builder.isolated_server import create_app
 from story_builder.services.production_ledger import LedgerConflict, ProductionLedger
+from story_builder.services.production_styles import ProductionStyleService
 from story_builder.services.story_authoring import StoryAuthoring
 
 
@@ -90,6 +92,50 @@ class StoryGraphTests(unittest.TestCase):
         self.assertEqual(reviewed["name"], "Mira holds the key")
         self.assertTrue(reviewed["user_modified"])
         self.assertEqual(reviewed["evidence"], fact["evidence"])
+
+    def test_pinned_production_style_guides_screenplay_and_is_preserved_in_lineage(self):
+        styles = ProductionStyleService(self.ledger)
+        selection = styles.select(isolated_context_id="pre-story-style", production_type="informative")
+        created, _ = self.story.create_or_resume_workspace(
+            idempotency_key=str(uuid.uuid4()), action="create", title="Styled story",
+            source_text="Mira keeps the key.", style_selection_snapshot_id=selection["snapshot_id"],
+            style_selection_resolver=styles.get_selection)
+        workspace_id = created["workspace"]["workspace_id"]
+        revision_id = created["workspace"]["created_revision"]["revision_id"]
+
+        def graph_provider(*, prompt):
+            chunk = json.loads(prompt.split("CHUNK TEXT (JSON):\n", 1)[1])
+            quote = "Mira keeps the key."
+            start = chunk.index(quote)
+            return {"records": [{"kind": "event", "type": "action", "name": quote,
+                "detail": "Mira retains the key.", "start": start, "end": start + len(quote),
+                "quote": quote, "status": "source_supported"}]}
+
+        graph = self.story.build_story_graph(workspace_id=workspace_id, source_revision_id=revision_id,
+            idempotency_key=str(uuid.uuid4()), provider_call=graph_provider)
+        prompts = []
+
+        def screenplay_provider(*, prompt):
+            prompts.append(prompt)
+            records = json.loads(prompt.split("GRAPH RECORDS (JSON):\n", 1)[1])
+            record_id = records[0]["record_id"]
+            return {"scenes": [{"slugline": "INT. ROOM - DAY", "summary": "Mira keeps the key.",
+                "shots": [{"action": "Mira keeps the key.", "dialogue": "", "camera": "", "lighting": "",
+                    "mood": "", "sfx": "", "music": "", "evidence_record_ids": [record_id]}]}]}
+
+        draft = self.story.draft_screenplay(workspace_id=workspace_id, source_revision_id=revision_id,
+            graph_snapshot_id=graph["snapshot_id"], idempotency_key=str(uuid.uuid4()),
+            provider_call=screenplay_provider)
+        self.assertEqual(draft["style_selection_snapshot_id"], selection["snapshot_id"])
+        self.assertIn('"production_type": "informative"', prompts[0])
+        self.assertIn("explanatory framing", prompts[0])
+        self.assertIn("Define terms, mark uncertainty", prompts[0])
+        edited = json.loads(json.dumps(draft["screenplay"]))
+        edited["scenes"][0]["shots"][0]["camera"] = "A steady close shot."
+        child = self.story.edit_screenplay(workspace_id=workspace_id,
+            screenplay_revision_id=draft["screenplay_revision_id"], idempotency_key=str(uuid.uuid4()),
+            screenplay=edited)
+        self.assertEqual(child["style_selection_snapshot_id"], selection["snapshot_id"])
 
     def test_explicit_retry_retries_only_failed_chunks(self):
         calls = []
@@ -172,6 +218,17 @@ class StoryGraphTests(unittest.TestCase):
         self.assertEqual(status, "201 Created")
         self.assertEqual(draft["source_revision_id"], self.revision)
         self.assertEqual(draft["graph_snapshot_id"], graph["snapshot_id"])
+        self.assertIsNone(draft["style_selection_snapshot_id"])
+        revision = self.story.get_revision(self.workspace, self.revision)
+        legacy_request = {"workspace_id": self.workspace, "source_revision_id": self.revision,
+            "source_sha256": revision["source_sha256"], "graph_snapshot_id": graph["snapshot_id"],
+            "chunk_ids": [chunk["chunk_id"] for chunk in revision["source_chunks"]]}
+        expected_hash = hashlib.sha256(self.story._canonical_json(legacy_request).encode()).hexdigest()
+        with self.ledger._connect() as db:
+            stored_hash = db.execute("SELECT request_hash FROM story_screenplay_tasks WHERE idempotency_key=?", (draft_key,)).fetchone()["request_hash"]
+        self.assertEqual(stored_hash, expected_hash)
+        screenplay_prompt = next(prompt for prompt, _provider, _temperature in self.calls if "GRAPH RECORDS (JSON):\n" in prompt)
+        self.assertNotIn("Pinned production guidance", screenplay_prompt)
         self.assertGreaterEqual(len(draft["screenplay"]["scenes"]), 1)
         altered = json.loads(json.dumps(draft["screenplay"]))
         altered["scenes"][0]["shots"][0]["action"] = "Payload collision."

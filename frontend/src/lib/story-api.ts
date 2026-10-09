@@ -5,6 +5,7 @@ export type Page<T> = { items: T[]; limit: number; offset: number; total: number
 export type StoryImportPage = { number: number; start_codepoint: number; end_codepoint: number; line_start?: number; line_end?: number };
 export type StoryImport = { import_id: string; filename: string; source_type: string; source_sha256: string; text_sha256?: string; text: string; warnings: string[]; pages?: StoryImportPage[] | null };
 export type StoryCreation = { status: 'initializing' | 'ready'; idempotency_key: string; request_hash: string; workspace: StoryWorkspace & { created_revision?: StoryRevision } };
+export type StoryEditProposal = { proposal_id: string; workspace_id: string; base_revision_id: string; start_codepoint: number; end_codepoint: number; expected_text: string; replacement: string; instruction: string; status: string; provider?: string; model?: string; ai_generated?: boolean; resulting_revision_id?: string | null };
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init);
@@ -28,3 +29,8 @@ export const listStoryRevisions = (id: string, offset = 0, limit = 50) => json<P
 export const restoreStoryRevision = (id: string, revision_id: string, expected_current_revision_id: string) => json<StoryRevision>(`/api/story/workspaces/${encodeURIComponent(id)}/restore`, body({ revision_id, expected_current_revision_id }));
 export const uploadStoryFile = (file: File) => json<StoryImport>(`/api/story/imports?filename=${encodeURIComponent(file.name)}`, { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', Accept: 'application/json' }, body: file });
 export const applyStoryImport = (id: string, title: string, source_text: string, idempotency_key: string, style_selection_snapshot_id?: string) => json<StoryCreation>(`/api/story/imports/${encodeURIComponent(id)}/apply`, body({ title, source_text, idempotency_key, ...(style_selection_snapshot_id ? { style_selection_snapshot_id } : {}) }));
+export const proposeStoryEdit = (id: string, input: { base_revision_id: string; start_codepoint: number; end_codepoint: number; expected_text: string; instruction: string; idempotency_key: string }) => json<StoryEditProposal>(`/api/story/workspaces/${encodeURIComponent(id)}/edit-proposals`, body(input));
+export const getStoryEditRequest = (key: string) => json<{ status: string; workspace_id: string; proposal?: StoryEditProposal; recovery_message?: string }>(`/api/story/edit-requests/by-key/${encodeURIComponent(key)}`);
+export const getStoryEditProposal = (id: string, proposalId: string) => json<StoryEditProposal>(`/api/story/workspaces/${encodeURIComponent(id)}/edit-proposals?id=${encodeURIComponent(proposalId)}`);
+export const acceptStoryEdit = (id: string, proposal_id: string, expected_current_revision_id: string) => json<StoryRevision>(`/api/story/workspaces/${encodeURIComponent(id)}/edit-proposals/accept`, body({ proposal_id, expected_current_revision_id }));
+export const discardStoryEdit = (id: string, proposal_id: string) => json<StoryEditProposal>(`/api/story/workspaces/${encodeURIComponent(id)}/edit-proposals/discard`, body({ proposal_id }));

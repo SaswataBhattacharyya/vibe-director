@@ -116,13 +116,31 @@ class StoryAuthoring:
                     replacement TEXT NOT NULL,
                     instruction TEXT NOT NULL,
                     status TEXT NOT NULL DEFAULT 'pending',
+                    provider TEXT,
+                    model TEXT,
                     resulting_revision_id TEXT,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
                 CREATE INDEX IF NOT EXISTS story_edit_proposals_base_idx
                     ON story_edit_proposals(workspace_id, base_revision_id, status);
+                CREATE TABLE IF NOT EXISTS story_ai_edit_requests (
+                    idempotency_key TEXT PRIMARY KEY,
+                    workspace_id TEXT NOT NULL REFERENCES story_workspaces(workspace_id) ON DELETE CASCADE,
+                    request_hash TEXT NOT NULL,
+                    request_json TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    proposal_id TEXT,
+                    error_message TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
             """)
+            proposal_columns = {row["name"] for row in db.execute("PRAGMA table_info(story_edit_proposals)")}
+            if "provider" not in proposal_columns:
+                db.execute("ALTER TABLE story_edit_proposals ADD COLUMN provider TEXT")
+            if "model" not in proposal_columns:
+                db.execute("ALTER TABLE story_edit_proposals ADD COLUMN model TEXT")
             revision_columns = {row["name"] for row in db.execute("PRAGMA table_info(story_revision_index)")}
             if "revision_number" not in revision_columns:
                 db.execute("ALTER TABLE story_revision_index ADD COLUMN revision_number INTEGER NOT NULL DEFAULT 1")
@@ -594,4 +612,94 @@ class StoryAuthoring:
             raise LedgerNotFound("Selected edit proposal not found.")
         return {key: row[key] for key in ("proposal_id", "workspace_id", "base_revision_id",
                 "start_codepoint", "end_codepoint", "expected_text", "replacement",
-                "instruction", "status", "resulting_revision_id", "created_at", "updated_at")}
+                "instruction", "status", "resulting_revision_id", "created_at", "updated_at", "provider", "model")}
+
+    def discard_edit_proposal(self, *, workspace_id: str, proposal_id: str) -> dict[str, Any]:
+        proposal = self.get_edit_proposal(workspace_id=workspace_id, proposal_id=proposal_id)
+        if proposal["status"] != "pending":
+            raise LedgerConflict("Only a pending edit proposal can be discarded.")
+        with self.ledger._connect() as db:
+            changed = db.execute("UPDATE story_edit_proposals SET status='discarded',updated_at=CURRENT_TIMESTAMP WHERE workspace_id=? AND proposal_id=? AND status='pending'",
+                                 (workspace_id, proposal["proposal_id"]))
+            if changed.rowcount != 1:
+                raise LedgerConflict("Edit proposal is no longer pending.")
+        return self.get_edit_proposal(workspace_id=workspace_id, proposal_id=proposal_id)
+
+    def propose_ai_selected_edit(self, *, workspace_id: str, base_revision_id: str,
+                                 start_codepoint: int, end_codepoint: int,
+                                 expected_text: str, instruction: str,
+                                 idempotency_key: str, provider_call) -> dict[str, Any]:
+        """Create one keyed proposal; indeterminate requests are never retried."""
+        key = _check_idempotency_key(idempotency_key)
+        if type(instruction) is not str or not instruction.strip() or len(instruction) > 4000:
+            raise ValueError("Instruction must contain 1–4000 characters.")
+        # Validate exact codepoint span before any provider call.
+        workspace_id = _check_workspace_id(workspace_id)
+        base_revision_id = _check_revision_id(base_revision_id)
+        base = self.get_revision(workspace_id, base_revision_id)
+        if type(start_codepoint) is not int or type(end_codepoint) is not int or not 0 <= start_codepoint <= end_codepoint <= len(base["source_text"]):
+            raise ValueError("Edit offsets must be valid integer Unicode code-point indexes.")
+        if type(expected_text) is not str or base["source_text"][start_codepoint:end_codepoint] != expected_text:
+            raise LedgerConflict("Selected text does not match the exact quote in the base revision.")
+        request = {"workspace_id": workspace_id, "base_revision_id": base_revision_id,
+                   "start_codepoint": start_codepoint, "end_codepoint": end_codepoint,
+                   "expected_text": expected_text, "instruction": instruction}
+        request_json = self._canonical_json(request)
+        request_hash = hashlib.sha256(request_json.encode("utf-8")).hexdigest()
+        with self.ledger._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            prior = db.execute("SELECT * FROM story_ai_edit_requests WHERE idempotency_key=?", (key,)).fetchone()
+            if prior:
+                if prior["request_hash"] != request_hash:
+                    raise LedgerConflict("Edit request key was already used for different content.")
+                if prior["status"] == "complete":
+                    db.commit()
+                    return self.get_edit_proposal(workspace_id=workspace_id, proposal_id=prior["proposal_id"])
+                db.commit()
+                raise LedgerConflict("This edit request is already in progress or ended ambiguously; it will not be submitted again.")
+            db.execute("INSERT INTO story_ai_edit_requests(idempotency_key,workspace_id,request_hash,request_json,status) VALUES(?,?,?,?, 'in_progress')",
+                       (key, workspace_id, request_hash, request_json))
+            db.commit()
+        try:
+            result = provider_call(expected_text=expected_text, instruction=instruction)
+            if not isinstance(result, dict) or type(result.get("replacement")) is not str or not result["replacement"].strip():
+                raise ValueError("Reasoning provider returned no usable replacement text.")
+            proposal_id = str(uuid.uuid4())
+            provider_name = result.get("provider", "codex")
+            model_name = result.get("model")
+            # A durable result and its recovery pointer are one commit. A crash
+            # cannot leave a paid proposal orphaned behind an in-progress key.
+            with self.ledger._connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                request_row = db.execute("SELECT workspace_id,request_hash,status FROM story_ai_edit_requests WHERE idempotency_key=?", (key,)).fetchone()
+                if request_row is None or request_row["workspace_id"] != workspace_id or request_row["request_hash"] != request_hash or request_row["status"] != "in_progress":
+                    raise LedgerConflict("Edit request changed while the provider was processing it.")
+                db.execute("INSERT INTO story_edit_proposals(proposal_id,workspace_id,base_revision_id,start_codepoint,end_codepoint,expected_text,replacement,instruction,provider,model) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                           (proposal_id, workspace_id, base_revision_id, start_codepoint,
+                            end_codepoint, expected_text, result["replacement"], instruction,
+                            provider_name, model_name))
+                changed = db.execute("UPDATE story_ai_edit_requests SET status='complete',proposal_id=?,updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND status='in_progress'",
+                           (proposal_id, key))
+                if changed.rowcount != 1:
+                    raise LedgerConflict("Edit request was no longer in progress.")
+            proposal = self.get_edit_proposal(workspace_id=workspace_id, proposal_id=proposal_id)
+            proposal["ai_generated"] = True
+            return proposal
+        except Exception as exc:
+            with self.ledger._connect() as db:
+                db.execute("UPDATE story_ai_edit_requests SET status='failed',error_message=?,updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND status='in_progress'",
+                           (str(exc)[:500], key))
+            raise
+
+    def get_ai_edit_request(self, idempotency_key: str) -> dict[str, Any]:
+        key = _check_idempotency_key(idempotency_key)
+        with self.ledger._connect() as db:
+            row = db.execute("SELECT * FROM story_ai_edit_requests WHERE idempotency_key=?", (key,)).fetchone()
+        if row is None:
+            raise LedgerNotFound("Selected edit request not found.")
+        value = {"idempotency_key": key, "workspace_id": row["workspace_id"], "status": row["status"]}
+        if row["proposal_id"]:
+            value["proposal"] = self.get_edit_proposal(workspace_id=row["workspace_id"], proposal_id=row["proposal_id"])
+        if row["status"] in {"in_progress", "failed"}:
+            value["recovery_message"] = "Provider submission may have occurred. This key cannot be resubmitted; start a new request only after reviewing server status."
+        return value

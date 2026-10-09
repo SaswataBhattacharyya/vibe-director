@@ -49,6 +49,8 @@ Request Sol earlier only for a concrete blocker, a risky shared contract/data ch
 
 ## Delivery and UI ownership
 
+Complete the full functional UI and backend wiring now; see `GOAL.md`. Ashu refines finer design/details after working changes are pushed.
+
 Ashu owns UI design. Keep his PR22 foundation and all three themes; implement provisional controls in that structure. Record exactly what works and what still needs Ashu's design. Review/fetch Ashu's changes at milestones and before editing shared files; merging follows the owner's existing authorization and collaborator review agreement.
 
 Push completed, reviewed issue work periodically. Update issue/PR progress from actual evidence, not planned behavior. Keep `plans/HANDOFF.md` concise with the current goal, authoritative files, completed checks, pending work, blockers and live process/job handles.

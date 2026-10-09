@@ -1,3 +1,5 @@
+> Active completion scope: [GOAL.md](GOAL.md). Backend wiring and the full usable UI are in scope now; Ashu refines finer design/details afterward.
+
 > Current development instructions: [development_workflow.md](development_workflow.md). Luna implements from existing sources; GPT-6.1 Sol reviews at bounded milestones. Product modes are **Assisted manual** (none/some/all checkboxes) and **Fully automated** (image-free video chain). All checked remains the asset-based route, as confirmed by the owner.
 
 # Current Story Builder product plans

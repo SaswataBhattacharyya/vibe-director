@@ -201,6 +201,21 @@ class StoryGraphTests(unittest.TestCase):
         _, loaded = self.call("GET", f"{screenplay_path}?revision_id={self.revision}")
         self.assertEqual(loaded["screenplay_revision_id"], saved["screenplay_revision_id"])
         self.assertEqual(loaded["screenplay"]["scenes"][0]["shots"][0]["evidence"], first_shot["evidence"])
+        accept_path = f"{screenplay_path}/revisions/{saved['screenplay_revision_id']}/accept"
+        accept_status, accepted = self.call("POST", accept_path, {})
+        self.assertEqual(accept_status, "200 OK")
+        self.assertTrue(accepted["accepted"])
+        self.assertTrue(accepted["accepted_at"])
+        _, replayed_acceptance = self.call("POST", accept_path, {})
+        self.assertTrue(replayed_acceptance["accepted"])
+        post_accept_edit = json.loads(json.dumps(saved["screenplay"]))
+        post_accept_edit["scenes"][0]["shots"][0]["dialogue"] = "Mira: I found it."
+        _, child = self.call("PATCH", f"{screenplay_path}/revisions/{saved['screenplay_revision_id']}",
+            {"idempotency_key": str(uuid.uuid4()), "screenplay": post_accept_edit})
+        self.assertFalse(child["accepted"])
+        _, after_edit_history = self.call("GET", f"{screenplay_path}/revisions?limit=10&offset=0")
+        self.assertFalse(next(item for item in after_edit_history["items"] if item["screenplay_revision_id"] == saved["screenplay_revision_id"])["accepted"])
+        self.assertFalse(next(item for item in after_edit_history["items"] if item["screenplay_revision_id"] == child["screenplay_revision_id"])["accepted"])
         stale = json.loads(json.dumps(draft["screenplay"]))
         stale["scenes"][0]["shots"][0]["action"] = "A stale sibling edit."
         stale_status, stale_result = self.call("PATCH", f"{screenplay_path}/revisions/{draft['screenplay_revision_id']}",
@@ -213,6 +228,10 @@ class StoryGraphTests(unittest.TestCase):
         self.assertGreaterEqual(history["total"], 2)
         old = next(item for item in history["items"] if item["screenplay_revision_id"] == saved["screenplay_revision_id"])
         self.assertTrue(old["stale"])
+        self.assertFalse(old["accepted"])
+        stale_accept_status, stale_accept = self.call("POST", f"{screenplay_path}/revisions/{child['screenplay_revision_id']}/accept", {})
+        self.assertEqual(stale_accept_status, "409 Conflict")
+        self.assertIn("older story revision", stale_accept["error"]["message"])
         _, historical = self.call("GET", f"{screenplay_path}/revisions/{saved['screenplay_revision_id']}")
         self.assertEqual(historical["source_revision_id"], self.revision)
         stale_edit = json.loads(json.dumps(historical["screenplay"]))
@@ -247,4 +266,72 @@ class StoryGraphTests(unittest.TestCase):
         status, final = self.call_with_app(restarted_app, "POST", path, payload)
         self.assertEqual(status, "201 Created")
         self.assertEqual(final["task_status"], "complete")
-        self.assertEqual(len(calls), before + partial["chunk_
+        self.assertEqual(len(calls), before + partial["chunk_total"] - 1)
+        replay_app = create_app(data_root=self.root, reasoning_json_provider=provider,
+            capability_provider=lambda: {}, gpu_reader=lambda: {})
+        status, replay = self.call_with_app(replay_app, "POST", path, payload)
+        self.assertEqual(status, "201 Created")
+        self.assertEqual(replay["screenplay_revision_id"], final["screenplay_revision_id"])
+        self.assertEqual(len(calls), before + partial["chunk_total"] - 1)
+
+    def test_screenplay_uncertain_chunk_blocks_later_chunks_on_replay(self):
+        _, graph = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph", {
+            "source_revision_id": self.revision, "idempotency_key": str(uuid.uuid4())})
+        path = f"/api/story/workspaces/{self.workspace}/screenplay"
+        calls = []
+        def unavailable(*, prompt, provider, temperature):
+            calls.append(prompt)
+            raise RuntimeError("provider response status is unknown")
+        app = create_app(data_root=self.root, reasoning_json_provider=unavailable,
+            capability_provider=lambda: {}, gpu_reader=lambda: {})
+        payload = {"source_revision_id": self.revision, "graph_snapshot_id": graph["snapshot_id"],
+            "idempotency_key": str(uuid.uuid4())}
+        status, partial = self.call_with_app(app, "POST", path, payload)
+        self.assertEqual(status, "202 Accepted")
+        self.assertEqual(partial["chunks"][0]["state"], "uncertain")
+        self.assertTrue(all(chunk["state"] == "pending" for chunk in partial["chunks"][1:]))
+        self.assertEqual(len(calls), 1)
+        replay_status, replay = self.call_with_app(app, "POST", path, payload)
+        self.assertEqual(replay_status, "202 Accepted")
+        self.assertEqual(replay["chunks"][0]["state"], "uncertain")
+        self.assertTrue(all(chunk["state"] == "pending" for chunk in replay["chunks"][1:]))
+        self.assertEqual(len(calls), 1)
+
+    def test_concurrent_screenplay_siblings_allow_only_one_child(self):
+        _, graph = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph", {
+            "source_revision_id": self.revision, "idempotency_key": str(uuid.uuid4())})
+        path = f"/api/story/workspaces/{self.workspace}/screenplay"
+        _, draft = self.call("POST", path, {"source_revision_id": self.revision,
+            "graph_snapshot_id": graph["snapshot_id"], "idempotency_key": str(uuid.uuid4())})
+        parent_id = draft["screenplay_revision_id"]
+        original_save = self.story._save_screenplay
+        barrier = threading.Barrier(2)
+        def synchronized_save(**kwargs):
+            barrier.wait(timeout=5)
+            return original_save(**kwargs)
+        self.story._save_screenplay = synchronized_save
+        def save(action):
+            screenplay = json.loads(json.dumps(draft["screenplay"]))
+            screenplay["scenes"][0]["shots"][0]["action"] = action
+            return self.call("PATCH", f"{path}/revisions/{parent_id}", {
+                "idempotency_key": str(uuid.uuid4()), "screenplay": screenplay})
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(save, ("First sibling.", "Second sibling.")))
+        self.story._save_screenplay = original_save
+        self.assertEqual(sorted(status for status, _ in results), ["201 Created", "409 Conflict"])
+        _, latest = self.call("GET", f"{path}?revision_id={self.revision}")
+        self.assertEqual(latest["parent_screenplay_revision_id"], parent_id)
+
+    @staticmethod
+    def call_with_app(app, method, path, payload=None):
+        result_status = []
+        raw = json.dumps(payload or {}).encode()
+        environ = {"REQUEST_METHOD": method, "PATH_INFO": path.partition("?")[0],
+            "QUERY_STRING": path.partition("?")[2], "CONTENT_TYPE": "application/json",
+            "CONTENT_LENGTH": str(len(raw)), "wsgi.input": io.BytesIO(raw)}
+        result = b"".join(app(environ, lambda status, headers: result_status.append(status)))
+        return result_status[0], json.loads(result)
+
+
+if __name__ == "__main__":
+    unittest.main()

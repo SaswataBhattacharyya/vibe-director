@@ -305,6 +305,29 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         revision_id=payload.get("revision_id"),
                         expected_current_revision_id=payload.get("expected_current_revision_id"))
                     return _json_response(start_response, "201 Created", result)
+                if len(parts) == 2 and parts[1] == "graph" and method == "POST":
+                    payload = _read_story_json(environ, story_limit)
+                    def graph_provider(*, prompt):
+                        from story_builder.services.reasoning_provider import DEFAULT_CODEX_MODEL, generate_json
+                        generate = reasoning_json_provider or generate_json
+                        result = generate(prompt=prompt, provider="codex", temperature=0)
+                        if isinstance(result, dict):
+                            result.setdefault("model", DEFAULT_CODEX_MODEL)
+                        return result
+                    result = story.build_story_graph(workspace_id=workspace_id,
+                        source_revision_id=payload.get("source_revision_id"),
+                        idempotency_key=payload.get("idempotency_key"), provider_call=graph_provider)
+                    return _json_response(start_response, "200 OK" if result["status"] == "complete" else "202 Accepted", result)
+                if len(parts) == 2 and parts[1] == "graph" and method == "GET":
+                    query = parse_qs(environ.get("QUERY_STRING", ""))
+                    revision_id = (query.get("revision_id") or [None])[0]
+                    return _json_response(start_response, "200 OK", story.get_story_graph(
+                        workspace_id=workspace_id, source_revision_id=revision_id))
+                if len(parts) == 4 and parts[1:3] == ["graph", "records"] and method == "PATCH":
+                    payload = _read_story_json(environ, story_limit)
+                    return _json_response(start_response, "200 OK", story.update_story_graph_record(
+                        workspace_id=workspace_id, record_id=parts[3], name=payload.get("name"),
+                        detail=payload.get("detail", ""), status=payload.get("status", "user_authored")))
                 if len(parts) == 2 and parts[1] == "edit-proposals" and method == "POST":
                     payload = _read_story_json(environ, story_limit)
                     def selected_edit_provider(*, expected_text, instruction):

@@ -24,6 +24,6 @@ Codex is the initial app reasoning provider. Alternative API/provider and weaker
 
 ## Current next step
 
-Continue the unfinished selected-text Codex edit integration (#20), then source-coverage knowledge graph (#21) and readable screenplay. Temporary staged work is not delivered evidence. Use current issue/branch state rather than replaying already completed work. Current implementation branch: `issue-2-isolated-t2v-reuse`, draft PR #15.
+Selected-text Codex editing (#20) is published in `00b7a65`. Continue the active source-coverage knowledge-graph slice (#21) in the existing StoryAuthoring ledger, then build the readable screenplay from reviewed graph/story data. Keep implementation focused on backend wiring and working journeys inside Ashu’s PR22 shell/themes. Push completed issue-linked increments so Ashu can refine the UI; do not block functional progress on cosmetic polish. Temporary staged work is not delivered evidence. Use current issue/branch state rather than replaying completed work. Current implementation branch: `issue-2-isolated-t2v-reuse`, draft PR #15.
 
 The goal is complete only when the agreed journeys work, remaining acceptance checks are satisfied, and implementation/evidence are pushed. Mocks and installed workflows alone do not establish working generation.

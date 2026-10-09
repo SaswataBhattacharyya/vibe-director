@@ -28,3 +28,9 @@ Split implementation into revision/edit round-trip, graph/source linking and scr
 ## Handoff
 
 Link the design/implementation PR, decisions, changed-file provenance and demonstrated evidence. Record unresolved dependencies explicitly. Follow the authoritative plans; ask about a real contradiction instead of reintroducing legacy pages or changing agreed mode policies.
+
+## 2026-10-09 implementation checkpoint
+
+Issue #10 is in progress on the B2 graph/source-linking increment after the published #20 selected-edit commit. The current graph producer maps every exact source chunk independently into validated entity/fact/event/time/relation/open-question records, stores immutable revision/hash-bound snapshots and exact code-point evidence in the existing StoryAuthoring ledger, and exposes keyed replay/recovery plus inspect/review/edit/reload UI. This is a usable first producer-consumer slice, not a complete graph: chunk processing is not semantic coverage; cross-chunk alias/identity reconciliation and contradiction analysis remain unimplemented, and snapshot contradiction state is explicitly `not_assessed`. Screenplay derivation and dependent invalidation are still pending.
+
+Parent review added duplicate-request claim safety and explicit recovery semantics: same-key concurrent requests preserve recent processing claims; claims older than the five-minute Codex timeout plus a recovery margin become uncertain; the explicit UI retry reruns only validated-response failures, retaining complete chunks and never resubmitting uncertain calls. Regression checks cover duplicate POST, failed-chunk-only retry, and uncertain-call replay. Typecheck and production build pass. Mocked browser execution is still pending because Chromium launch was denied by the sandbox; backend journey checks use the fake provider only.

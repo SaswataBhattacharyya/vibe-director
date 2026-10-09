@@ -1,6 +1,6 @@
 import { ChangeEvent, DragEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, BookOpen, FileUp, History, RefreshCw, RotateCcw, Save, Sparkles } from 'lucide-react';
-import { acceptStoryEdit, applyStoryImport, createStoryWorkspace, discardStoryEdit, getStoryCreation, getStoryEditRequest, getStoryWorkspace, listStoryRevisions, listStoryWorkspaces, proposeStoryEdit, restoreStoryRevision, saveStoryRevision, StoryCreation, StoryEditProposal, StoryImport, StoryRevision, StoryRevisionSummary, StoryWorkspace, uploadStoryFile } from './lib/story-api';
+import { acceptStoryEdit, applyStoryImport, buildStoryGraph, createStoryWorkspace, discardStoryEdit, getStoryCreation, getStoryEditRequest, getStoryGraph, getStoryWorkspace, listStoryRevisions, listStoryWorkspaces, proposeStoryEdit, restoreStoryRevision, saveStoryRevision, StoryCreation, StoryEditProposal, StoryGraph, StoryGraphRecord, StoryImport, StoryRevision, StoryRevisionSummary, StoryWorkspace, updateStoryGraphRecord, uploadStoryFile } from './lib/story-api';
 import { getStyleSelections, StyleSelection } from './lib/styles-api';
 
 const LOCAL_KEY = 'vibe-story-draft-v1';
@@ -47,6 +47,9 @@ export default function StoryPage() {
   const [dragging, setDragging] = useState(false);
   const [selectedText, setSelectedText] = useState<{ start: number; end: number; quote: string }>({ start: 0, end: 0, quote: '' });
   const [editInstruction, setEditInstruction] = useState('');
+  const [storyGraph, setStoryGraph] = useState<StoryGraph | null>(null);
+  const [graphBusy, setGraphBusy] = useState(false);
+  const [graphDrafts, setGraphDrafts] = useState<Record<string, { name: string; detail: string; status: StoryGraphRecord['status'] }>>({});
   const sourceRef = useRef<HTMLTextAreaElement>(null);
   const currentRevision = workspace?.current_revision;
   const dirty = useMemo(() => !!workspace && !!currentRevision && text !== currentRevision.source_text, [workspace, currentRevision, text]);
@@ -101,6 +104,42 @@ export default function StoryPage() {
     const value = await getStoryWorkspace(id); installWorkspace(value, forceServer);
     if (value.current_revision) await loadHistory(id);
   }, [installWorkspace, loadHistory]);
+  const loadGraph = useCallback(async () => {
+    if (!workspace || !currentRevision) { setStoryGraph(null); return; }
+    try {
+      const graph = await getStoryGraph(idOf(workspace), currentRevision.revision_id);
+      setStoryGraph(graph);
+      setGraphDrafts(Object.fromEntries(graph.records.map(record => [record.record_id, { name: record.name, detail: record.detail, status: record.status }])));
+    } catch (e) {
+      if ((e as Error & { status?: number }).status === 404) setStoryGraph(null);
+      else setError(`Could not load the source graph: ${(e as Error).message}`);
+    }
+  }, [workspace?.workspace_id, currentRevision?.revision_id]);
+  useEffect(() => { void loadGraph(); }, [loadGraph]);
+  const generateGraph = async () => {
+    if (!workspace || !currentRevision || dirty || graphBusy) return;
+    setGraphBusy(true); setError('');
+    try {
+      const key = storyGraph?.source_revision_id === currentRevision.revision_id
+        ? storyGraph.idempotency_key : crypto.randomUUID();
+      const graph = await buildStoryGraph(idOf(workspace), currentRevision.revision_id, key);
+      setStoryGraph(graph);
+      setGraphDrafts(Object.fromEntries(graph.records.map(record => [record.record_id, { name: record.name, detail: record.detail, status: record.status }])));
+      setNotice(graph.status === 'complete' ? 'Every source chunk has a processed graph result. Semantic completeness and contradictions still need review.' : graph.status === 'processing' ? 'A graph request is still active. Check again later; an active provider call will not be replaced.' : 'Graph extraction is partial. Completed chunks are saved; uncertain provider calls will not be repeated with this key.');
+    } catch (e) { setError(`Graph extraction could not be confirmed: ${(e as Error).message}. Refresh the graph to recover its durable state.`); }
+    finally { setGraphBusy(false); }
+  };
+  const saveGraphRecord = async (recordId: string) => {
+    if (!workspace || !storyGraph) return;
+    const draft = graphDrafts[recordId]; if (!draft) return;
+    setGraphBusy(true);
+    try {
+      const saved = await updateStoryGraphRecord(idOf(workspace), recordId, draft);
+      setStoryGraph({ ...storyGraph, records: storyGraph.records.map(record => record.record_id === recordId ? { ...record, ...saved } : record) });
+      setNotice('Graph record saved as user-authored review. Its original evidence remains attached.');
+    } catch (e) { setError(`Could not save graph review: ${(e as Error).message}`); }
+    finally { setGraphBusy(false); }
+  };
   const finishCreation = useCallback(async (result: StoryCreation, pendingHint?: PendingCreate) => {
     const created = normalizeWorkspace(result.workspace);
     let installed = created;
@@ -325,6 +364,11 @@ export default function StoryPage() {
     <main className="main-content">
       <div className="content-wrap story-content"><div className="page-heading"><div><div className="eyebrow">WORKSPACE / STORY</div><h1>Story</h1></div><button className="quiet-button" onClick={() => void loadInitial().catch(e => setError((e as Error).message))} disabled={busy}><RefreshCw size={15}/> Refresh list</button></div>
         <div className="story-pending card"><Sparkles size={17}/><div><b>Selected passage editing</b><p>Select text in the story, enter an instruction and review the proposed replacement. Codex receives only that passage and instruction.</p></div></div>
+        <section className="card story-graph" aria-label="Source-linked story graph">
+          <div className="story-panel-title"><div><h2>Story graph</h2><p>{storyGraph ? `Snapshot ${storyGraph.snapshot_id} · source ${storyGraph.source_revision_id} · ${storyGraph.chunk_complete}/${storyGraph.chunk_total} chunks processed` : 'Extract reviewable entities, facts, events, time and relationships from every source chunk.'}</p></div><div className="story-editor-actions"><button className="quiet-button" onClick={() => void loadGraph()} disabled={!workspace || graphBusy}>Refresh graph</button><button className="generate-button" onClick={() => void generateGraph()} disabled={!workspace || !currentRevision || dirty || graphBusy}>{graphBusy ? 'Processing…' : storyGraph?.status === 'processing' ? 'Check/recover graph' : storyGraph?.chunks.some(chunk => chunk.state === 'failed') ? 'Retry failed chunks' : storyGraph?.status === 'partial' ? 'Check partial graph' : storyGraph ? 'Recheck graph' : 'Generate graph'}</button></div></div>
+          <p className="graph-disclosure">Graph records retain exact source quotes, code-point spans and revision hashes. Chunk processing is not proof of complete story meaning; contradictions are not assessed in this slice.</p>
+          {storyGraph && <><div className="story-editor-foot"><span>{storyGraph.status} · {storyGraph.coverage_state}</span><small>Contradictions: {storyGraph.contradiction_state} · {storyGraph.provider}{storyGraph.model ? ` / ${storyGraph.model}` : ''}</small></div><div className="graph-chunks">{storyGraph.chunks.map(chunk => <span key={chunk.chunk_id} title={chunk.error_message || ''}>{chunk.chunk_id}: {chunk.state}</span>)}</div><div className="graph-records">{storyGraph.records.map(record => { const draft = graphDrafts[record.record_id] || { name: record.name, detail: record.detail, status: record.status }; const entityLabel = (id?: string | null) => storyGraph.records.find(candidate => candidate.record_id === id)?.name || id; return <article className="graph-record" key={record.record_id}><div className="graph-record-heading"><b>{record.kind} · {record.type}</b><small>{record.status}{record.confidence == null ? '' : ` · ${Math.round(record.confidence * 100)}%`}</small></div><label>Record<input value={draft.name} onChange={event => setGraphDrafts(prev => ({ ...prev, [record.record_id]: { ...draft, name: event.target.value } }))}/></label><label>Notes<input value={draft.detail} onChange={event => setGraphDrafts(prev => ({ ...prev, [record.record_id]: { ...draft, detail: event.target.value } }))}/></label><label>Review status<select value={draft.status} onChange={event => setGraphDrafts(prev => ({ ...prev, [record.record_id]: { ...draft, status: event.target.value as StoryGraphRecord['status'] } }))}><option value="source_supported">Source supported</option><option value="inferred">Inferred</option><option value="user_authored">User authored</option><option value="unresolved">Unresolved</option></select></label>{record.predicate && <p>{entityLabel(record.subject_id)} —{record.predicate}→ {entityLabel(record.object_id)}</p>}{record.evidence.map((evidence, index) => <blockquote key={`${evidence.chunk_id}-${index}`}><q>{evidence.quote}</q><small>{evidence.source_revision_id} · {evidence.start_codepoint}:{evidence.end_codepoint} · {evidence.chunk_id}</small></blockquote>)}<button className="quiet-button" onClick={() => void saveGraphRecord(record.record_id)} disabled={graphBusy}>Save review</button></article>; })}{!storyGraph.records.length && storyGraph.status === 'complete' && <p>No graph records were returned for this revision.</p>}</div></>}
+        </section>
         {storageWarning && <div className="notice notice-warn" role="alert">Browser storage is unavailable or full. Drafts may not survive reload; download a text copy now. <button className="text-button" onClick={downloadDraft}>Download draft text</button></div>}
         {error && <div className="notice notice-warn" role="alert"><AlertTriangle size={15}/>{error}</div>}{notice && <div className="notice" role="status">{notice}</div>}
         {ui.pendingCreate && <div className="notice notice-warn" role="status"><div><b>{ui.pendingCreate.state === 'conflict' ? 'Creation key conflict' : 'Creation outcome needs recovery'}</b><p>{ui.pendingCreate.state === 'conflict' ? 'The server rejected this key for a different request. The original title, text, and style snapshot remain frozen; changed content cannot be sent with this key.' : ui.pendingCreate.state === 'not_found' ? 'A read-only lookup found no creation for this key. You may retry the exact frozen request.' : ui.pendingCreate.state === 'initializing' ? 'The server recorded this creation and is still initializing. Retry resumes the same frozen request.' : 'The POST outcome is unknown. Check server status before retrying.'}</p><small>Key {ui.pendingCreate.key} · {ui.pendingCreate.action} · frozen title “{ui.pendingCreate.title}” · {ui.pendingCreate.styleSelectionSnapshotId ? `style snapshot ${ui.pendingCreate.styleSelectionSnapshotId}` : 'no style selected'}</small></div><div className="creation-recovery-actions"><button className="quiet-button" onClick={() => void checkCreation()} disabled={busy || ui.pendingCreate.state === 'conflict'}>Check status</button>{(ui.pendingCreate.state === 'not_found' || ui.pendingCreate.state === 'initializing') && <button className="quiet-button" onClick={() => void submitCreation(ui.pendingCreate!)} disabled={busy}>Retry exact request</button>}</div></div>}

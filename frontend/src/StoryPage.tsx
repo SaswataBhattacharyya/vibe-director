@@ -1,5 +1,5 @@
 import { ChangeEvent, DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { Activity, AlertTriangle, BookOpen, Clapperboard, FileUp, Film, History, RefreshCw, RotateCcw, Save, Server, Sparkles, Workflow } from 'lucide-react';
+import { AlertTriangle, BookOpen, FileUp, History, RefreshCw, RotateCcw, Save, Sparkles } from 'lucide-react';
 import { applyStoryImport, createStoryWorkspace, getStoryWorkspace, listStoryRevisions, listStoryWorkspaces, restoreStoryRevision, saveStoryRevision, StoryImport, StoryRevision, StoryRevisionSummary, StoryWorkspace, uploadStoryFile } from './lib/story-api';
 
 const LOCAL_KEY = 'vibe-story-draft-v1';
@@ -158,11 +158,8 @@ export default function StoryPage() {
   const loadMoreHistory = async () => { if (!workspace || revisionOffset == null) return; try { const page = await listStoryRevisions(idOf(workspace), revisionOffset); setRevisions(prev => [...prev, ...(page.items || [])]); const next = page.offset + page.items.length; setRevisionOffset(next < page.total ? next : null); setRevisionTotal(page.total); } catch (e) { setError(`Could not load revision history: ${(e as Error).message}`); } };
   const downloadDraft = () => { const value = text || importPreview?.text || ui.newText; const blob = new Blob([value], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `${workspace?.title || ui.importTitle || ui.newTitle || 'story-draft'}.txt`; link.click(); URL.revokeObjectURL(url); };
 
-  return <div className="app-shell story-shell">
-    <aside className="sidebar"><div className="brand"><div className="brand-mark"><Clapperboard size={18}/></div><div><strong>Vibe Director</strong><span>LOCAL STUDIO</span></div></div><div className="workspace-label">WORKSPACE</div><nav aria-label="Main navigation">
-      <a className="nav-item" href="#/video"><Film size={17}/> Video</a><a className="nav-item" href="#/story" aria-current="page"><Workflow size={17}/> Story</a><a className="nav-item disabled" aria-disabled="true"><BookOpen size={17}/> Assets <span className="soon">Soon</span></a><a className="nav-item disabled" aria-disabled="true"><Server size={17}/> Media <span className="soon">Soon</span></a><a className="nav-item" href="#/status"><Activity size={17}/> Status</a>
-    </nav><div className="sidebar-spacer"/><div className="profile"><div className="avatar">VD</div><div><b>Local session</b><span>Drafts stay on this device</span></div></div></aside>
-    <main className="main-content"><header className="topbar"><div className="breadcrumbs"><span>Workspace</span><span className="crumb-divider">/</span><b>Story</b></div><div className="top-actions"><span className="local-pill">Local source text</span></div></header>
+  return <div className="app-shell story-shell legacy-inner">
+    <main className="main-content">
       <div className="content-wrap story-content"><div className="page-heading"><div><div className="eyebrow">WORKSPACE / STORY</div><h1>Story workspace</h1><p>Write and revise source text. Chat-assisted planning and production setup are still pending.</p></div><button className="quiet-button" onClick={() => void loadInitial().catch(e => setError((e as Error).message))} disabled={busy}><RefreshCw size={15}/> Refresh list</button></div>
         <div className="story-pending card"><Sparkles size={17}/><div><b>Planning setup is not connected</b><p>Codex chat, story graph, screenplay fields, and deferred style setup are not implemented in this slice. No annotations or setup values are inserted automatically. Production work requiring completed style setup remains blocked.</p></div></div>
         {storageWarning && <div className="notice notice-warn" role="alert">Browser storage is unavailable or full. Drafts may not survive reload; download a text copy now. <button className="text-button" onClick={downloadDraft}>Download draft text</button></div>}

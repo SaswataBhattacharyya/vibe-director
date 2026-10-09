@@ -9,7 +9,7 @@ Status: agreed direction is to integrate the useful contributions into one produ
 - **Existing Story Builder source:** working integrations and reusable services/components to extract and adapt. Its older competing pages are not the new navigation.
 - **OpenMontage:** selected implementation candidates for production visibility, capability reporting, recovery, retrieval and later assembly. Its pipeline framework and agent instructions are not a second controller.
 
-Existing product plans receive relevant additions; new cross-cutting contracts belong in `ux_shared.md` and this file. `openmontage_comparison.md` remains the evidence/recommendation record. Final editing/assembly needs its own future user journey; do not invent it while integrating generation.
+Existing product plans receive relevant additions; new cross-cutting contracts belong in `ux_shared.md` and this file. `openmontage_comparison.md` remains the evidence/recommendation record. The first assembly target is now screenplay-ordered accepted clips → one video with optional audio tracks; see assembly.md. Exact settings require contract review.
 
 ## 2. One working project and local source repositories
 
@@ -57,7 +57,7 @@ The existing project folder is not a request to immediately create this whole sc
 | Job recovery/events | Existing durable take/job services; selected upstream helpers | Preserve job IDs and exact request; reuse only missing functionality |
 | Cost estimates | OpenMontage cost-tracker candidate | Optional known-cost estimates; distinguish LLM/API from local runtime cost; avoid repeated automatic-run payment gates |
 | Reference search | Existing SEO/repertoire; OpenMontage corpus candidate | Supplement video/image retrieval; shared audio indexing remains required separately |
-| Assembly and audio mixing | OpenMontage stitch/compose/mixer/subtitle candidates or independently licensed tools | Evaluate later; user still needs to define the final editing/export journey |
+| Assembly and audio mixing | OpenMontage stitch/compose/mixer/subtitle candidates or independently licensed tools | First target agreed in assembly.md; evaluate compatible tools after export/audio settings review |
 
 For each proposed import, keep a short reuse record: source URL/revision/path, license/notices, dependencies, current runtime contract, target responsibility, adaptations, and acceptance evidence. Preserve notices and pin versions. General architectural ideas can be implemented independently; copied/adapted covered code and prose require their own license assessment.
 

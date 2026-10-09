@@ -39,3 +39,7 @@ Current implementation: a provisional single-screen sidebar and isolated Video f
 Start from branch `issue-2-isolated-t2v-reuse` / [draft PR #15](https://github.com/SaswataBhattacharyya/vibe-director/pull/15), rather than assuming main has the implementation. Read [Ashu's UI handoff](https://github.com/SaswataBhattacharyya/vibe-director/blob/issue-2-isolated-t2v-reuse/plans/ASHU_UI_HANDOFF.md) for exact files, API behavior, preserved recovery/GPU invariants and focused evidence. This issue remains open; provisional code and passing mocks are not design acceptance.
 
 For Codex/Claude: inspect those files and the linked stage plan; answer the issue's design questions, propose annotated layouts/states and API needs, then make bounded UI changes in a separate PR. Preserve saved requests, explicit generation and recovery behavior. Use mocked requests for UI verification; do not launch live generation or rerun the broad legacy test suite.
+
+## Owner-approved Ashu UI adaptation — 2026-10-09
+
+Accepted and adapted: shared shell, route map, mobile navigation and all three themes. Design issue #3 can close; real task-scoped drafts, context switching, resume and explicit linking are tracked in #18. This does not claim whole-product implementation. Read plans/implementation/ashu_ui_adaptation.md for changed files and focused evidence. Future UI work uses the shared shell and all three themes; earlier pending acceptance/provisional-shell notes are historical.

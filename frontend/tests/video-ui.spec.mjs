@@ -30,7 +30,7 @@ test('mocked T2V flow gates readiness, reviews output, accepts, and prepares a n
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
 
-  await page.goto('/');
+  await page.goto('/#/video');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await expect(page.getByRole('button', { name: /Generate video/ })).toBeDisabled();
@@ -71,7 +71,7 @@ test('lost create response preserves the frozen request and only reconciles on r
     if (url.pathname === '/api/video/jobs/job-recovered') return route.fulfill({ json: savedJob });
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload();
+  await page.goto('/#/video'); await page.evaluate(() => localStorage.clear()); await page.reload();
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await page.getByLabel('Shot prompt').fill('Frozen original prompt.');
   await page.getByRole('button', { name: /Generate video/ }).click();
@@ -83,4 +83,36 @@ test('lost create response preserves the frozen request and only reconciles on r
   await expect(page.getByText('Rendering your shot')).toBeVisible();
   expect(jobPosts).toBe(1);
   expect(calls.filter(call => call.startsWith('GET /api/video/jobs/by-idempotency/')).length).toBeGreaterThanOrEqual(1);
+});
+
+test('an active Video job stays mounted while visiting Status and returning to Create', async ({ page }) => {
+  let jobPosts = 0;
+  let job;
+  await page.route('**/api/**', async route => {
+    const request = route.request(); const url = new URL(request.url());
+    if (url.pathname === '/api/video/capabilities') return route.fulfill({ json: capability(true) });
+    if (url.pathname === '/api/video/validations') return route.fulfill({ json: { valid: true, request_hash: 'hash', normalized_request: request.postDataJSON().request, compiled_preview: {} } });
+    if (url.pathname === '/api/video/jobs' && request.method() === 'POST') {
+      jobPosts++;
+      const body = request.postDataJSON();
+      job = { job_id: 'job-stays-mounted', workspace_id: body.workspace_id, clip_id: body.clip_id, status: 'running', request: body.request, outputs: [], created_at: 'now', updated_at: 'now', attempt: 1 };
+      return route.fulfill({ json: job });
+    }
+    if (url.pathname === '/api/video/jobs/job-stays-mounted') return route.fulfill({ json: job });
+    if (url.pathname.startsWith('/api/status')) return route.fulfill({ status: 503, json: { error: { message: 'Status fixture offline' } } });
+    return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
+  });
+  await page.goto('/#/video');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.getByRole('button', { name: 'Check readiness' }).click();
+  await page.getByLabel('Shot prompt').fill('Keep this rendering job while I inspect status.');
+  await page.getByRole('button', { name: /Generate video/ }).click();
+  await expect(page.getByText('Rendering your shot')).toBeVisible();
+  await page.goto('/#/status');
+  await expect(page.getByRole('heading', { name: 'Connections & workflows' })).toBeVisible();
+  await page.goto('/#/take');
+  await expect(page.getByText('Rendering your shot')).toBeVisible();
+  await expect(page.getByText('job-stays-mounted')).toBeVisible();
+  expect(jobPosts).toBe(1);
 });

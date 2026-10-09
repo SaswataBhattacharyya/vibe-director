@@ -40,7 +40,7 @@ The staged reuse map, CPU-only isolated T2V slice, and dependent work cards are 
 
 ## What remains to be specified
 
-Media Prep implementation details, final clip assembly/audio mixing, deployment, exact per-model image prompt budgets and graph-specific settings/capacity verification remain later planning or implementation tasks. The initial integrated application completion and acceptance baseline uses the configured Codex CLI. Only after the complete app works with Codex should OpenCode/direct API adapters, flexible model discovery or weaker Ollama/Qwen support be considered as a separate provider-expansion stage; existing Ollama may remain unchanged and need not be tested for Codex acceptance. Existing catalogued capabilities do not automatically become required stages in the new journey.
+Media Prep implementation details, exact export/audio settings, deployment, exact per-model image prompt budgets and graph-specific settings/capacity verification remain later planning or implementation tasks. The initial integrated application completion and acceptance baseline uses the configured Codex CLI. Only after the complete app works with Codex should OpenCode/direct API adapters, flexible model discovery or weaker Ollama/Qwen support be considered as a separate provider-expansion stage; existing Ollama may remain unchanged and need not be tested for Codex acceptance. Existing catalogued capabilities do not automatically become required stages in the new journey.
 
 These are plans, not changes to the running Story Builder. Architecture and code reuse choices will follow these product contracts.
 
@@ -63,3 +63,11 @@ Current product behavior is retained. StudioDirector's useful UX guidance is inc
 ## Production setup before authoring
 
 [Production type, style and story import](production_styles.md) precedes the story/screenplay journey and specifies custom style/type creation and TXT/PDF ingestion. [Ashu handoff](ASHU_UI_HANDOFF.md) also records provisional implementation, publication and review-before-merge rules.
+
+## First assembly target
+
+Owner selected screenplay-ordered accepted clips → one exported video with optional audio tracks. See [assembly.md](assembly.md) for the accepted target and proposed contracts; a full timeline is not part of this first target. Exact export/audio settings and implementation remain pending in #14.
+
+## Accepted UI implementation baseline
+
+Ashu’s PR #16 structure/flow and all three palettes are approved and adopted. Future pages use the shared StudioShell and theme tokens; Ashu retains design ownership. See [adaptation evidence and remaining gaps](implementation/ashu_ui_adaptation.md). Navigation design #3 is accepted; task/context implementation is tracked separately in #18. Exact FFLF/R2V collation/annotation design #4 remains open.

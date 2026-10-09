@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Activity, Check, Clapperboard, Database, Film, Gauge, RefreshCw, Server, Workflow, XCircle } from 'lucide-react';
+import { Activity, Check, Gauge, RefreshCw, Server, Workflow, XCircle } from 'lucide-react';
 import { getRuntimeGuard, getWorkerDispatch, getWorkflowStatus, RuntimeGuard, StatusWorkflow, WorkflowStatus } from './lib/status-api';
 
 const groups = [
@@ -80,18 +80,9 @@ export default function StatusPage() {
     {workflow.reason && <p className="workflow-reason">{workflow.reason}</p>}
   </article>;
 
-  return <div className="app-shell status-shell">
-    <aside className="sidebar"><div className="brand"><div className="brand-mark"><Clapperboard size={18}/></div><div><strong>Vibe Director</strong><span>LOCAL STUDIO</span></div></div>
-      <div className="workspace-label">WORKSPACE</div><nav aria-label="Main navigation">
-        <a className="nav-item" href="#/video"><Film size={17}/> Video</a>
-        <a className="nav-item" href="#/story"><Workflow size={17}/> Story</a>
-        <a className="nav-item disabled" aria-disabled="true"><Database size={17}/> Assets <span className="soon">Soon</span></a>
-        <a className="nav-item disabled" aria-disabled="true"><Server size={17}/> Media <span className="soon">Soon</span></a>
-        <a className="nav-item" href="#/status" aria-current="page"><Activity size={17}/> Status <span className="nav-current"/></a>
-      </nav><div className="sidebar-spacer"/><div className="profile"><div className="avatar">VD</div><div><b>Local session</b><span>Drafts stay on this device</span></div></div>
-    </aside>
-    <main className="main-content"><header className="topbar"><div className="breadcrumbs"><span>Workspace</span><span className="crumb-divider">/</span><b>Status</b></div><div className="top-actions"><span className="local-pill"><span className={`status-dot ${status?.backend.connected ? 'green' : ''}`}/> {loading && !status ? 'Loading status' : stale ? 'Status stale' : status?.backend.connected ? 'Backend connected' : 'Backend unavailable'}</span><button className="quiet-button status-refresh" onClick={() => void refresh()} disabled={loading}><RefreshCw size={14} className={loading ? 'spin' : ''}/> Refresh status</button></div></header>
-      <div className="content-wrap status-content"><div className="page-heading"><div><div className="eyebrow">WORKSPACE / STATUS</div><h1>Connections & workflows</h1><p>Read-only view of workflow usability, configured limits, and current local runtime state.</p></div></div>
+  return <div className="app-shell status-shell legacy-inner">
+    <main className="main-content">
+      <div className="content-wrap status-content"><div className="page-heading"><div><div className="eyebrow">WORKSPACE / STATUS</div><h1>Connections & workflows</h1><p>Read-only view of workflow usability, configured limits, and current local runtime state.</p></div><div className="top-actions"><span className="local-pill"><span className={`status-dot ${status?.backend.connected ? 'green' : ''}`}/> {loading && !status ? 'Loading status' : stale ? 'Status stale' : status?.backend.connected ? 'Backend connected' : 'Backend unavailable'}</span><button className="quiet-button status-refresh" onClick={() => void refresh()} disabled={loading}><RefreshCw size={14} className={loading ? 'spin' : ''}/> Refresh status</button></div></div>
         {error && <div className="notice notice-warn" role="alert">{error}</div>}
         {!status && <div className="card status-empty" role="status">{loading ? <><RefreshCw size={20} className="spin"/><b>Loading status</b><span>Checking backend and local workflow state…</span></> : <><XCircle size={20}/><b>Backend unavailable</b><span>Status could not be loaded. Refresh to try again. No workflow is assumed ready.</span></>}</div>}
         {status && <>

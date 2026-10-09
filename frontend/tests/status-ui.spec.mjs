@@ -17,14 +17,14 @@ test('Status is read-only, shows catalog and runtime, and preserves the video dr
     if (url.pathname === '/api/video/worker') return route.fulfill({ json: worker });
     return route.fulfill({ status: 404, json: {} });
   });
-  await page.goto('/'); await page.evaluate(() => localStorage.clear()); await page.reload();
+  await page.goto('/#/video'); await page.evaluate(() => localStorage.clear()); await page.reload();
   await page.getByLabel('Shot prompt').fill('Keep this prompt while opening Status.');
   await page.getByRole('link', { name: 'Status' }).click();
   await expect(page.getByRole('heading', { name: 'Connections & workflows' })).toBeVisible();
   await expect(page.getByText('2,431 MHz')).toHaveCount(0); // value is rendered in the runtime facts with units
   await expect(page.getByText('2431 MHz')).toBeVisible();
   await expect(page.getByText('Not integrated in this application yet.').first()).toBeVisible();
-  await page.getByRole('link', { name: 'Video' }).click();
+  await page.getByRole('navigation', { name: 'Studio navigation' }).getByRole('link', { name: 'Create', exact:true }).click();
   await expect(page.getByLabel('Shot prompt')).toHaveValue('Keep this prompt while opening Status.');
   expect(calls.some(call => call.startsWith('POST '))).toBe(false);
   expect(calls.filter(call => call === 'GET /api/status').length).toBeGreaterThanOrEqual(1);

@@ -25,3 +25,7 @@ Final assembly has not been specified by the user. Gather the editing/export jou
 ## Handoff
 
 Link the design/implementation PR, decisions, changed-file provenance and demonstrated evidence. Record unresolved dependencies explicitly. Follow the authoritative plans; ask about a real contradiction instead of reintroducing legacy pages or changing agreed mode policies.
+
+## Owner decision — 2026-10-09
+
+First target: accepted clips ordered by screenplay, exported as one video, with optional audio tracks. See ../assembly.md. Do not reopen ordered export vs full timeline. Exact export settings, audio timing/mix and reuse/license decisions remain to be finalized before implementation.

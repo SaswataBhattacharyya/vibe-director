@@ -16,7 +16,7 @@ User can name and describe a new style or production type, enter guidance manual
 
 A new style variant under an existing type is supported by the source library. A genuinely new base production type needs an extensible catalog and a validated Director-profile schema: the source catalog requires exact equality of legacy packs and profile IDs, so adding only a picker label is insufficient. New type creation must supply compatible narrative/director rules and validation before execution. Unknown workflow settings remain unavailable rather than invented.
 
-Open clarification: whether custom-style reference uploads should initially support only documents or also image/audio/video analysis. Do not silently constrain the requested feature to existing document support; track the user's answer and extend the analysis adapter if required.
+Confirmed by the owner: custom-style reference inputs must support documents, images, audio and video. Offer mixed reference sets and per-reference intent (what style qualities to learn), extract modality-specific evidence, synthesize a readable style proposal, and require explicit review/save before use. Images can inform composition, lighting, palette and mood; video can also inform camera movement, cuts, pacing and sound; audio can inform delivery, rhythm, music/SFX texture. Cite image/region or audio/video timestamps and analysis uncertainty. Do not confuse a voice identity binding, specific content reference or search-weight preset with a reusable production style. No analyzer is assumed available merely because its source files exist.
 
 ## Story input
 
@@ -29,3 +29,9 @@ Scanned PDFs may have no extractable text; detect this and offer OCR or a clear 
 ## Issue mapping and acceptance
 
 D1/#3 adds the preceding setup destination and shared context; D2/#6 designs imported-story preview/correction and editor entry. G2/#2 documents catalog/import contracts; B2/#10 implements exact ingestion/revisions; D4/#4 consumes pinned style in derived prompts. The six bases, custom variant and genuine new-type creation need distinct UI states. Focused checks cover one text import, one PDF import, preserved source lineage and style-version changes. UI evidence and extraction fixtures do not prove live generation.
+
+## Existing Story Builder media/style boundary
+
+The narrative StyleLibrary upload path is document-only; it validates PDF/MD/TXT and cites text evidence. Image Detailer separately analyzes images into composition/camera/lighting/palette/mood and visual briefs using the vision analyzer. Video Repertoire separately submits audiovisual analysis and searches timestamped results/references. Audio reconstruction calibrates character voice/RVC and validates recorded dialogue with ASR; those are voice/performance operations, not publishing a production style. Media Composer SEO styles are manually named terms/avoid_terms/category-weight presets stored by `services/video_references.py`; they change retrieval ranking and are not inferred production profiles.
+
+Reuse appropriate media analysis outputs and source provenance, then add the missing adapter into the versioned style-proposal/publish pipeline. The existing narrative evidence schema expects text quotes/locators; extend it for media/time/region evidence rather than pretending all media are documents. Multimodal custom production style creation is therefore integration work, not a currently unified feature to copy unchanged.

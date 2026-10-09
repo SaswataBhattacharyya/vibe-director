@@ -2,7 +2,7 @@
 
 ## Ownership and starting point
 
-Ashu owns UI design. The current screen is a provisional engineering interface, not an accepted product design. Saswata reviews the designs; UI ownership changes only if he explicitly says he is taking care of it. Project implementation is paused; this publication does not resume the goal or authorize new generation.
+Ashu owns UI design. The current screen is a provisional engineering interface, not an accepted product design. Saswata reviews the designs; UI ownership changes only if he explicitly says he is taking care of it. Project implementation resumed on 2026-10-09 at Saswata’s request. UI design ownership remains with Ashu. Live uncovered render acceptance still requires Saswata to click Generate.
 
 Completed implementation is on branch `issue-2-isolated-t2v-reuse`, draft [PR #15](https://github.com/SaswataBhattacharyya/vibe-director/pull/15). Clone Vibe Director and check out that branch to inspect code; cloning main alone will not include the draft implementation. Keep design changes in your own branch/PR and link the relevant D issue. Read `plans/README.md`, the stage plan and the issue before implementation. This handoff is usable by Codex or Claude; give the agent the relevant issue plus these repository paths.
 
@@ -26,7 +26,7 @@ All six D issues remain open: #3 navigation/context; #4 three video forms and re
 
 20 focused backend tests, typecheck/build and two intercepted browser journeys passed for the published T2V slice. Real UI rendering was inspected; these checks do not prove a successful new live render. No live generation/provider call was performed. FFLF live acceptance is deferred to final implementation acceptance. Existing Story Builder release evidence is retained; do not rerun the broad legacy suites just to redesign UI. New live acceptance is prepared in the UI using suitable existing Story Builder media, with monitoring, and Saswata clicks Generate.
 
-Status/catalog and a B2 revision foundation are only locally staged in `/tmp/vibe-director-implementation`, unpublished with incomplete parent review. They are outside this published baseline. No OpenMontage source has been imported. Do not claim these additions, the full app, or any design issue is resolved.
+Status/catalog and the B2 source revision foundation are now reviewed and included in this draft branch; see the 2026-10-09 checkpoint below. No OpenMontage source has been imported. Do not claim these additions, the full app, or any design issue is resolved.
 
 ## Ongoing collaboration workflow (owner instruction, 2026-10-09)
 
@@ -35,3 +35,16 @@ Prepare working provisional UI with each backend slice and publish completed, re
 Fetch Ashu's branches/PRs for local review before merging. Compare against the actual PR base/common ancestor to avoid treating existing backend code as his new changes. Inspect product alignment, contracts, preserved state/recovery and visual interaction, then recommend merge or concrete fixes. Never automatically merge on fetch, green tests or authorship. Preserve his branch; use a separate review checkout when needed.
 
 New requirement: read `production_styles.md` before design work; production type/style precedes story and story accepts TXT/PDF uploads.
+
+
+## Active checkpoint — 2026-10-09
+
+Goal active. At meaningful completed slices: fetch collaborator branches/PRs, compare actual base, review requirements and focused evidence, publish reviewed implementation with issue updates, and record next work. Fetch does not authorize automatic merge.
+
+Ashu PR #16 was fetched and reviewed as a design-only prototype against its actual base. Simulated T2V generation/completion/acceptance survived reload; 10 sample routes at 390px had no horizontal overflow or browser errors. Review comment requests the newer production style/import/style-video rules. PR #16 remains unmerged; #3/#4 remain open and palette acceptance is pending. Review export/server: `/tmp/vibe-ashu-review`, local port 8093 (temporary review only).
+
+Published additions: read-only `/api/status`, `frontend/src/StatusPage.tsx` and `#/status` with model/workflow catalog, prompt limits and GPU/worker telemetry. Failed refresh withdraws readiness and marks cached readings stale. Video draft stays mounted/preserved. Two fully intercepted Status browser checks passed; one focused backend catalog test passed, plus typecheck/build. Cataloged image/audio/FFLF/R2V rows are explicitly not integrated, with unknown unverified budgets.
+
+B2 foundation: `services/story_authoring.py` uses the existing ledger DB plus unchanged V2 revision writer and extracted exact source chunk utilities. Exact Unicode edits, hash/chunk integrity, revision history/restore, concurrency checks, monotonic revision order, collision reservations and interrupted initialization recovery have seven focused CPU tests. This is a service foundation, not an exposed authoring page/API, AI editing, knowledge graph or screenplay generator. B2 stays open.
+
+Ashu can design Status presentation against the read-only contract and continue story/screenplay design against the plans; do not invent functional graph/edit endpoints from these foundations. Next backend work is bounded story authoring API/import integration, followed by grounded Codex editing/graph/screenplay contracts. Native output playback, FFLF/R2V generation and full automation remain pending. No live rendering was started.

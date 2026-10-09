@@ -14,4 +14,8 @@ Adapted visually from Story Builder `/home/riki/web_dev/story_builder/frontend/a
 
 ## Focused browser checks
 
-`npm run test:ui` runs two Playwright journeys with every `/api/**` call intercepted: readiness gating through review/accept/draft-only retake, and a simulated lost create response followed by idempotency lookup after reload. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` only when using a locally provisioned Chromium binary. These checks never call a live Generate endpoint.
+`npm run test:ui` includes two Video and two Status Playwright journeys with every `/api/**` call intercepted: readiness gating through review/accept/draft-only retake, and a simulated lost create response followed by idempotency lookup after reload. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` only when using a locally provisioned Chromium binary. These checks never call a live Generate endpoint.
+
+## Shared Status page
+
+The `#/status` page is a read-only overview of the established MiniMax H3 T2V capability, ComfyUI reachability, worker dispatch, and GPU safety telemetry. Opening/refreshing Status issues GET requests only. The full workflow evidence snapshot is requested on entry and by the Refresh status button; while open, only lightweight runtime and worker reads refresh every five seconds. Video remains mounted while navigating to Status so its draft and active job state survive the route change. The catalog lists first/last-frame and reference-to-video as not integrated. Image and audio rows are source-catalog labels only, also not integrated; their prompt limits are explicitly unknown. See `../plans/implementation/status_catalog.md` for provenance and scope.

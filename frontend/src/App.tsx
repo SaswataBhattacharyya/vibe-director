@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, ArrowRight, Check, ChevronDown, Clapperboard, Clock3, Film, FolderOpen, Gauge, Image, LoaderCircle, MoreHorizontal, Play, RefreshCw, Settings2, Sparkles, WandSparkles, X } from 'lucide-react';
 import { acceptJob, ApiError, Capability, createJob, findJobByIdempotency, getCapability, getJob, Job, prepareRetake, validateRequest, VideoRequest, WORKFLOW_ID, WORKFLOW_SHA256 } from './lib/video-api';
+import StatusPage from './StatusPage';
 
 type Draft = { prompt: string; duration: number; resolution: 0.98 | 0.4; workspaceId: string; clipId: string; pendingKey?: string; pendingRequest?: VideoRequest; retakeOf?: string; keepOriginal?: boolean };
 const DRAFT_KEY = 'vibe-video-draft-v1';
@@ -17,7 +18,7 @@ const isTerminalStatus = (status?: string) => !!status && TERMINAL_STATUSES.has(
 const isReviewable = (status?: string) => status === 'needs_review' || status === 'accepted';
 const readHistory = () => { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') as { job: Job; snapshot: VideoRequest }[]; } catch { return []; } };
 
-export default function App() {
+function VideoWorkspace() {
   const [draft, setDraftState] = useState<Draft>(readDraft);
   const [active, setActive] = useState<{ job: Job; snapshot: VideoRequest; retakeOf?: string; keepOriginal?: boolean } | null>(null);
   const [history, setHistory] = useState<{ job: Job; snapshot: VideoRequest }[]>(readHistory);
@@ -102,10 +103,11 @@ export default function App() {
   return <div className="app-shell">
     <aside className="sidebar"><div className="brand"><div className="brand-mark"><Clapperboard size={18}/></div><div><strong>Vibe Director</strong><span>LOCAL STUDIO</span></div></div>
       <div className="workspace-label">WORKSPACE</div><nav aria-label="Main navigation">
-        <a className="nav-item"><Film size={17}/> Video <span className="nav-current"/></a>
+        <a className="nav-item" href="#/video"><Film size={17}/> Video <span className="nav-current"/></a>
         <a className="nav-item disabled" aria-disabled="true"><WandSparkles size={17}/> Story <span className="soon">Soon</span></a>
         <a className="nav-item disabled" aria-disabled="true"><Image size={17}/> Assets <span className="soon">Soon</span></a>
         <a className="nav-item disabled" aria-disabled="true"><FolderOpen size={17}/> Media <span className="soon">Soon</span></a>
+        <a className="nav-item" href="#/status"><Activity size={17}/> Status</a>
       </nav>
       <div className="sidebar-spacer"/><div className="sidebar-status"><div className="small-heading">LOCAL ENGINE <span className={`status-dot ${capState==='ready'?'green':capState==='unavailable'?'red':''}`}/></div><p>{capState==='ready' ? 'Workflow + GPU + worker ready' : capState==='loading' ? 'Checking readiness…' : capState==='unavailable' ? 'Unsafe or unavailable' : 'Not checked'}</p><button className="text-button" onClick={refreshCapability} disabled={capState==='loading'}><Activity size={14}/> Check readiness</button></div>
       <div className="profile"><div className="avatar">VD</div><div><b>Local session</b><span>Drafts stay on this device</span></div><MoreHorizontal size={17}/></div>
@@ -138,4 +140,16 @@ export default function App() {
     </main>
     {retakeDialog && <div className="dialog-backdrop" role="presentation"><section className="dialog" role="dialog" aria-modal="true" aria-labelledby="retake-title"><button className="dialog-close" onClick={() => setRetakeDialog(false)} aria-label="Close"><X size={17}/></button><div className="dialog-icon"><RefreshCw size={20}/></div><h2 id="retake-title">Prepare a retake</h2><p>The prompt and settings return to the editor. This only records candidate retention intent; it does not start a job or delete anything.</p><fieldset><legend>Current candidate</legend><label className="radio-option"><input type="radio" checked={retakeKeep} onChange={() => setRetakeKeep(true)}/> Keep this take</label><label className="radio-option"><input type="radio" checked={!retakeKeep} onChange={() => setRetakeKeep(false)}/> Request deletion of this generated candidate only</label><small className="dialog-footnote">The backend reports candidate disposition after retake. Shared and source assets are not candidates for deletion.</small></fieldset><div className="dialog-actions"><button className="quiet-button" onClick={() => setRetakeDialog(false)}>Cancel</button><button className="generate-button" onClick={startRetake} disabled={busy}>Return to editor <ArrowRight size={15}/></button></div></section></div>}
   </div>;
+}
+
+export default function App() {
+  const [route, setRoute] = useState(() => window.location.hash === '#/status' ? 'status' : 'video');
+  useEffect(() => {
+    const onHashChange = () => setRoute(window.location.hash === '#/status' ? 'status' : 'video');
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+  // Keep the video workspace mounted while Status is open so a running job,
+  // pending recovery key, and editor state continue untouched in memory.
+  return <><div style={{ display: route === 'video' ? 'contents' : 'none' }}><VideoWorkspace/></div>{route === 'status' && <StatusPage/>}</>;
 }

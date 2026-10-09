@@ -20,6 +20,7 @@ from story_builder.services.isolated_video_jobs import (
     IsolatedJobConflict, IsolatedVideoJobs,
 )
 from story_builder.services.production_ledger import LedgerConflict, LedgerNotFound, ProductionLedger
+from story_builder.services.workflow_status import build_workflow_status
 from story_builder.services.gpu_runtime import (
     GPU_RENDER_CLOCK_CEILING_MHZ, GPU_RENDER_TEMP_CUTOFF, read_gpu_operating_point,
 )
@@ -103,6 +104,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         result = provider()
         guard = _runtime_guard(gpu_reader)
         dispatch = dispatch_status()
+        result["workflow_available"] = bool(result.get("available"))
         result["runtime_guard"] = guard
         result["dispatch"] = dispatch
         result["available"] = bool(result.get("available") and guard["safe_to_submit"] and dispatch["available"])
@@ -121,6 +123,11 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
             if method == "GET" and path == "/api/video/capabilities":
                 # Explicit capability request; never probed at server startup.
                 return _json_response(start_response, "200 OK", capability_snapshot())
+            if method == "GET" and path == "/api/status":
+                # A single explicit status read reuses the existing fail-closed
+                # workflow and GPU/worker snapshot; no new execution path runs.
+                return _json_response(start_response, "200 OK",
+                    build_workflow_status(capability_snapshot(), backend_connected=True))
             if method == "GET" and path == "/api/video/runtime":
                 return _json_response(start_response, "200 OK", _runtime_guard(gpu_reader))
             if method == "GET" and path == "/api/video/worker":

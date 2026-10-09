@@ -56,3 +56,12 @@ The reference checkout was a local read-only tree without Git metadata; parent s
 Current CPU checks establish request validation, deterministic compilation, durable idempotent identity, service restart/concurrency behavior, atomic facade metadata, retake snapshot preservation, output retention metadata, API no-consumer/runtime gating and no-resubmit handling with injected fakes. They do not establish successful Comfy rendering, actual media collection/playback, recovery through a real backend restart, user-browser usability, or operator-safe GPU generation. Current real host snapshot reported by parent was 48 C / 2431 MHz; because this exceeds the preserved 2100 MHz ceiling, live T2V availability is currently blocked. Do not change GPU clocks. The independent watchdog retains its source behavior and only exists during an explicitly started real worker prompt.
 
 Next work: integrate the UI API client with the agreed product screen, configure product data/runtime paths, separately enable a supervised worker only after readiness and GPU guard pass, and perform user-clicked supervised media acceptance. Do not broaden to story canon, reference workflows, provider adapters or final assembly in this card. GitHub #2/#5 remain open; this backend slice is not an issue-completion claim.
+
+
+## Reviewed foundations added 2026-10-09
+
+`GET /api/status` is a read-only projection of the existing capability/runtime/worker snapshot. It lists unintegrated workflows honestly and never enables a worker. See `../plans/implementation/status_catalog.md`.
+
+`services/story_authoring.py` adds a CPU-only V2 source revision foundation over the same ledger DB, exact reused revision writer and extracted source chunk primitives. It is not wired into HTTP or a story editor yet. See `../plans/implementation/story_revision_reuse.md`.
+
+Focused checks for these new slices only: `PYTHONPATH=. python -m unittest story_builder.tests.test_workflow_status story_builder.tests.test_story_authoring -v` (1 catalog test and 7 revision tests). The prior 20 video tests remain recorded evidence; no broad source suite rerun was needed.

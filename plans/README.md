@@ -71,3 +71,7 @@ Owner selected screenplay-ordered accepted clips → one exported video with opt
 ## Accepted UI implementation baseline
 
 Ashu’s PR #16 structure/flow and all three palettes are approved and adopted. Future pages use the shared StudioShell and theme tokens; Ashu retains design ownership. See [adaptation evidence and remaining gaps](implementation/ashu_ui_adaptation.md). Navigation design #3 is accepted; task/context implementation is tracked separately in #18. Exact FFLF/R2V collation/annotation design #4 remains open.
+
+## PR #22 design foundation
+
+Ashu’s [design foundation](../design/VIBE_DIRECTOR_FOUNDATION.md), pinned to d7bf40489eefe377a1cec01d04def0ed04177c23, supersedes the PR #16 visual shell reference. Adapt its typography, palette roles, profile settings, navigation, Clapper and contextual taskbar to real functionality. Retain Quiet comic alongside Concrete & ink and Midnight mixtape under the owner’s explicit three-theme requirement. Prototype simulations do not replace production behavior; unavailable project/workflow features must remain honest. Ashu retains design ownership.

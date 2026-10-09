@@ -44,3 +44,54 @@
 .styles-outcome-lock{border-left:3px solid var(--studio-warn);padding:8px 10px;background:color-mix(in srgb,var(--studio-warn),var(--studio-bg) 92%);color:var(--studio-text);font-size:12px}
 .story-style-choice{display:grid;gap:7px;padding:10px;margin:8px 0 12px;border:1px solid var(--studio-line);border-radius:8px;background:var(--studio-field)}.story-style-choice>label{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;color:var(--studio-text);font-size:12px}.story-style-choice>label span,.story-style-choice small{color:var(--studio-muted);font-size:11px;line-height:1.45}.story-style-choice select{width:100%;min-height:38px;padding:8px;border-radius:6px}.story-style-pin{display:block;margin-top:7px;color:var(--studio-muted);font-size:11px;line-height:1.5}.story-style-pin b{color:var(--studio-text)}
 .story-style-pin{overflow-wrap:anywhere}
+
+/* PR22 shell foundation: profile palette popover, resources/projects affordance,
+   neutral hello mascot, and a navigation-only workspace taskbar. */
+.studio-shell{padding-bottom:60px}
+.studio-brand-row{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.profile-settings{position:relative;flex:none}
+.profile-trigger{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--studio-line);border-radius:50%;background:var(--studio-surface);color:var(--studio-muted)}
+.profile-trigger:hover,.profile-trigger[aria-expanded="true"]{color:var(--studio-text);border-color:var(--studio-accent)}
+.profile-popover{position:absolute;top:calc(100% + 9px);right:0;z-index:8;width:min(270px,calc(100vw - 32px));padding:14px;background:var(--studio-surface);border:1px solid var(--studio-line);border-radius:var(--studio-radius);box-shadow:0 14px 35px #0006}
+.profile-popover h2{font-size:13px;margin:0 0 10px;color:var(--studio-text)}
+.profile-popover .palette-switcher{display:block;border:0;padding:0;margin:0}
+.profile-popover .palette-switcher legend{display:flex;align-items:center;gap:6px;color:var(--studio-muted);font-size:10px;margin-bottom:7px}
+.profile-popover .palette-options{display:grid;gap:3px;max-width:none}
+.profile-popover .palette-option{justify-content:flex-start;width:100%;font-size:11px;padding:8px}
+.profile-popover .palette-swatch i{width:10px;height:10px}
+.studio-projects>small{padding:3px 10px 0 35px;color:var(--studio-muted);font-size:9px}
+.studio-mascot{margin-top:auto;display:flex;justify-content:center;align-items:flex-end;min-height:106px;padding-top:8px}
+.clapper-replay{display:block;width:100px;max-width:100%;padding:0;border:0;background:transparent;color:var(--studio-text)}
+.mascot{display:block;width:100%;height:auto;overflow:visible}
+.mascot .body-group,.mascot .lid-group,.mascot .eye-group,.mascot .gaze{transform-box:view-box}
+.mascot .body-group{transform-origin:160px 180px}
+.mascot .lid-group{transform-origin:64px 113px}
+.mascot .eye-group{transform-origin:160px 199px}
+.mascot .gaze{transition:transform .18s ease}
+.mascot .mascot-shadow{fill:var(--studio-field);opacity:.8}
+.mascot .mascot-body{fill:var(--studio-chrome);stroke:var(--studio-text);stroke-width:7}
+.mascot .mascot-top{fill:var(--studio-accent)}
+.mascot .mascot-stripe{fill:var(--studio-field)}
+.mascot .mascot-seam{stroke:var(--studio-text);stroke-width:7}
+.mascot .mascot-eye{fill:var(--studio-text)}
+.mascot .pupil{fill:var(--studio-bg)}
+.mascot .mascot-glint{fill:var(--studio-text)}
+.mascot .mascot-lid{fill:var(--studio-text);stroke:var(--studio-text);stroke-width:7;stroke-linejoin:round}
+.mascot .mascot-print{fill:var(--studio-accent);stroke:var(--studio-text);stroke-width:5}
+.mascot.is-playing[data-pose="neutral"] .body-group{animation:hello .95s ease-in-out both}
+.mascot.is-playing[data-pose="neutral"] .lid-group{animation:hello-hinge .95s ease-in-out both}
+.mascot.is-playing[data-pose="neutral"] .gaze{animation:hello-gaze .95s ease-in-out both}
+@keyframes hello{0%,100%{transform:rotate(0deg)}28%{transform:rotate(-15deg)}62%{transform:rotate(10deg)}}
+@keyframes hello-hinge{0%,100%{transform:rotate(-8deg)}28%{transform:rotate(-27deg)}62%{transform:rotate(-3deg)}}
+@keyframes hello-gaze{0%,100%{transform:translate(0,0)}28%{transform:translate(3px,-1px)}62%{transform:translate(-2px,0)}}
+.studio-taskbar{position:fixed;z-index:4;left:248px;right:0;bottom:0;min-height:60px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px clamp(12px,3vw,34px);background:color-mix(in srgb,var(--studio-chrome),var(--studio-bg) 20%);border-top:1px solid var(--studio-line)}
+.taskbar-location{min-width:0;display:flex;align-items:center;gap:10px;color:var(--studio-muted);font-size:11px}
+.taskbar-location small{font-size:8px;letter-spacing:1px;color:var(--studio-accent)}
+.taskbar-location strong{color:var(--studio-text);font-size:11px}
+.taskbar-location>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.studio-taskbar nav{display:flex;align-items:center;gap:6px}
+.studio-taskbar nav a{min-height:36px;display:inline-flex;align-items:center;gap:7px;padding:0 11px;border:1px solid var(--studio-line);border-radius:var(--studio-radius);color:var(--studio-muted);font-size:10px;text-decoration:none;white-space:nowrap}
+.studio-taskbar nav a:hover,.studio-taskbar nav a[aria-current="page"]{color:var(--studio-text);border-color:var(--studio-accent);background:var(--studio-selected)}
+@media(prefers-reduced-motion:reduce){.mascot.is-playing .body-group,.mascot.is-playing .lid-group,.mascot.is-playing .eye-group,.mascot.is-playing .gaze{animation:none!important}.mascot .gaze{transition:none!important}.studio-sidebar,.entry-card{transition:none!important}}
+@media(max-width:900px){.studio-taskbar{left:210px}}
+@media(max-width:680px){.studio-shell{padding-bottom:58px}.studio-sidebar{padding-bottom:76px}.studio-mascot{min-height:83px}.clapper-replay{width:78px}.studio-taskbar{left:0;min-height:56px;padding:5px 8px;gap:6px}.taskbar-location{gap:6px;font-size:9px}.taskbar-location small{font-size:7px}.taskbar-location strong{font-size:10px}.studio-taskbar nav{gap:4px}.studio-taskbar nav a{min-height:34px;padding:0 8px;font-size:9px}.profile-popover{right:-1px}}

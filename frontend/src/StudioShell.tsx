@@ -1,5 +1,6 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { Activity, BookOpen, Clapperboard, Film, FolderOpen, Home, Image, Layers3, Palette, PenLine, Settings2 } from 'lucide-react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { Activity, BookOpen, Clapperboard as BrandIcon, Film, FolderOpen, Home, Image, Layers3, Palette, PenLine, Settings2, UserRound } from 'lucide-react';
+import Clapper from './Clapper';
 
 export type StudioRoute = 'home'|'styles'|'story'|'screenplay'|'setup'|'prompts'|'video'|'take'|'assets'|'media'|'status';
 const paletteOptions = [
@@ -12,7 +13,25 @@ const titles: Record<StudioRoute,string> = { home:'Home',styles:'Production Type
 function PalettePicker() {
   const [palette,setPalette] = useState(() => { try { return validPalette(localStorage.getItem('vibe-studio-palette')); } catch { return 'quiet'; } });
   useEffect(() => { document.documentElement.dataset.palette = palette; try { localStorage.setItem('vibe-studio-palette',palette); } catch { /* Theme still applies in this tab. */ } },[palette]);
-  return <fieldset className="palette-switcher"><legend><Palette size={14}/> Theme</legend><div className="palette-options">{paletteOptions.map(item=><button key={item.id} type="button" className="palette-option" data-palette={item.id} aria-pressed={palette===item.id} onClick={()=>setPalette(item.id)}><span className="palette-swatch">{item.colors.map((color,index)=><i key={index} style={{'--swatch':color} as React.CSSProperties}/>)}</span>{item.title}</button>)}</div></fieldset>;
+  return <fieldset className="palette-switcher"><legend><Palette size={14}/> Theme</legend><div className="palette-options">{paletteOptions.map(item=><button key={item.id} type="button" className="palette-option" data-palette={item.id} aria-pressed={palette===item.id} onClick={()=>setPalette(item.id)}><span className="palette-swatch" aria-hidden="true">{item.colors.map((color,index)=><i key={index} style={{'--swatch':color} as React.CSSProperties}/>)}</span><span>{item.title}</span></button>)}</div></fieldset>;
+}
+function ProfileSettings() {
+  const [open,setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    panel.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const onPointer = (event: PointerEvent) => { if (!panel.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node)) setOpen(false); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { setOpen(false); trigger.current?.focus(); } };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('pointerdown', onPointer); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+  return <div className="profile-settings">
+    <button ref={trigger} className="profile-trigger" type="button" aria-label="Open appearance settings" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(value => !value)}><UserRound size={17}/></button>
+    <div ref={panel} className="profile-popover" hidden={!open} role="dialog" aria-labelledby="profile-settings-title"><h2 id="profile-settings-title">Appearance</h2><PalettePicker/></div>
+  </div>;
 }
 function NavLink({ route, current, children, disabled=false, onNavigate }: { route:StudioRoute;current:StudioRoute;children:ReactNode;disabled?:boolean;onNavigate?:()=>void }) {
   return disabled ? <span className="studio-nav-disabled" aria-disabled="true">{children}<small>Not integrated</small></span> : <a className="studio-nav-link" href={`#/${route}`} aria-current={route===current?'page':undefined} onClick={onNavigate}>{children}</a>;
@@ -22,20 +41,22 @@ export default function StudioShell({ route, children, context='Direct creation'
   const activeStage: StudioRoute = route==='take'?'video':route;
   const stages: StudioRoute[] = ['styles','story','screenplay','setup','prompts','video'];
   return <div className={`studio-shell route-${route}`}>
-    <aside className={`studio-sidebar ${mobileOpen?'mobile-open':''}`}><a className="studio-brand" href="#/home"><span className="studio-brand-mark"><Clapperboard size={18}/></span><span><b>Vibe Director</b><small>LOCAL STUDIO</small></span></a>
+    <aside className={`studio-sidebar ${mobileOpen?'mobile-open':''}`}><div className="studio-brand-row"><a className="studio-brand" href="#/home"><span className="studio-brand-mark"><BrandIcon size={18}/></span><span><b>Vibe Director</b><small>LOCAL STUDIO</small></span></a><ProfileSettings/></div>
       <nav aria-label="Studio navigation" className="studio-navigation">
         <div className="studio-nav-group"><b>HOME</b><NavLink route="home" current={route} onNavigate={()=>setMobileOpen(false)}><Home size={16}/>Home</NavLink></div>
         <div className="studio-nav-group"><b>STORY WORKFLOW</b><NavLink route="styles" current={route} onNavigate={()=>setMobileOpen(false)}><Palette size={16}/>Production Type & Style</NavLink><NavLink route="story" current={route} onNavigate={()=>setMobileOpen(false)}><BookOpen size={16}/>Story</NavLink><NavLink route="screenplay" current={route} onNavigate={()=>setMobileOpen(false)}><PenLine size={16}/>Screenplay</NavLink><NavLink route="setup" current={route} onNavigate={()=>setMobileOpen(false)}><Settings2 size={16}/>Automation & Parameters</NavLink><NavLink route="prompts" current={route} onNavigate={()=>setMobileOpen(false)}><Layers3 size={16}/>Prompts</NavLink></div>
         <div className="studio-nav-group"><b>VIDEO</b><NavLink route="video" current={route} onNavigate={()=>setMobileOpen(false)}><Film size={16}/>Create</NavLink><NavLink route="take" current={route} onNavigate={()=>setMobileOpen(false)}><Activity size={16}/>Current Take</NavLink></div>
-        <div className="studio-nav-group"><b>LIBRARY</b><NavLink route="assets" current={route} onNavigate={()=>setMobileOpen(false)}><Image size={16}/>Assets</NavLink><NavLink route="media" current={route} onNavigate={()=>setMobileOpen(false)}><FolderOpen size={16}/>Media Prep & Library</NavLink></div>
+        <div className="studio-nav-group"><b>RESOURCES</b><NavLink route="assets" current={route} onNavigate={()=>setMobileOpen(false)}><Image size={16}/>Assets</NavLink><NavLink route="media" current={route} onNavigate={()=>setMobileOpen(false)}><FolderOpen size={16}/>Media Prep & Library</NavLink></div>
+        <div className="studio-nav-group studio-projects"><b>PROJECTS</b><NavLink route="story" current={route} onNavigate={()=>setMobileOpen(false)}><BookOpen size={16}/>Start a story</NavLink><small>Open the Story workspace</small></div>
         <div className="studio-nav-group"><b>SYSTEM</b><NavLink route="status" current={route} onNavigate={()=>setMobileOpen(false)}><Activity size={16}/>Status</NavLink></div>
-      </nav><div className="studio-sidebar-foot"><span className="studio-local-dot"/> Local source text and drafts</div>
+      </nav><div className="studio-sidebar-foot"><span className="studio-local-dot"/> Local source text and drafts</div><div className="studio-mascot"><Clapper route={route}/></div>
     </aside>
     <main className={`studio-main ${route==='take'?'video-view-take':route==='video'?'video-view-create':''}`}>
-      <header className="studio-topbar"><button className="studio-menu-button" aria-expanded={mobileOpen} aria-label={mobileOpen?'Close navigation menu':'Open navigation menu'} onClick={()=>setMobileOpen(open=>!open)}>{mobileOpen?'Close':'Menu'}</button><div><div className="studio-crumb">Workspace <span>/</span> {titles[route]}</div><strong>{route==='video'||route==='take'?context:titles[route]}</strong></div><div className="studio-top-actions"><span className="local-pill"><span className="status-dot"/> Local mode</span><PalettePicker/></div></header>
+      <header className="studio-topbar"><button className="studio-menu-button" aria-expanded={mobileOpen} aria-label={mobileOpen?'Close navigation menu':'Open navigation menu'} onClick={()=>setMobileOpen(open=>!open)}>{mobileOpen?'Close':'Menu'}</button><div><div className="studio-crumb">Workspace <span>/</span> {titles[route]}</div><strong>{route==='video'||route==='take'?context:titles[route]}</strong></div><div className="studio-top-actions"><span className="local-pill"><span className="status-dot"/> Local mode</span></div></header>
       {['styles','story','screenplay','setup','prompts','video','take'].includes(route) && <nav className="stage-rail" aria-label="Story to video stages">{stages.map((stage,index)=><a key={stage} href={`#/${stage}`} aria-current={stage===activeStage?'step':undefined} className={stage==='screenplay'||stage==='setup'||stage==='prompts'?'stage-not-integrated':''}><span>{index+1}</span>{titles[stage]}{['screenplay','setup','prompts'].includes(stage)&&<small>Unavailable</small>}</a>)}</nav>}
       {(route==='video'||route==='take') && <nav className="video-tabs" aria-label="Video views"><a href="#/video" aria-current={route==='video'?'page':undefined}><Film size={15}/> Create</a><a href="#/take" aria-current={route==='take'?'page':undefined}><Activity size={15}/> Current Take</a></nav>}
       <div className="studio-page-content">{children}</div>
     </main>
+    <footer className="studio-taskbar" aria-label="Workspace navigation"><span className="taskbar-location"><small>OPEN</small><strong>{titles[route]}</strong>{(route==='video'||route==='take')&&<span>{context}</span>}</span><nav aria-label="Quick navigation"><a href="#/story" aria-current={route==='story'?'page':undefined}><BookOpen size={15}/>Story</a><a href="#/video" aria-current={route==='video'?'page':undefined}><Film size={15}/>Video Create</a></nav></footer>
   </div>;
 }

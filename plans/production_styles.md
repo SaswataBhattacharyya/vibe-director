@@ -75,3 +75,7 @@ The mandatory style video and predecessor may exceed a graph's video-reference c
 ## Focused acceptance additions
 
 Check default two-frame export, zero-frame/video-only behavior, user-adjusted timestamps and no whole-video frame flooding. Verify top recommendations remain unselected in Manual/Semi manual steps, and style audio appears in compatible R2V selectors. A mocked automatic recipe must demonstrate no-style T2V start, style-video R2V start, next-scene reset retaining style, predecessor/style role separation and capacity conflicts. These are planning/contract checks until integrated; live generation stays subject to the user's acceptance click and GPU safeguards. This change does not claim current R2V support is available.
+
+## Implementation checkpoint — 2026-10-09
+
+Basic Type & Style setup is integrated into Ashu’s shared UI: six verified bundled types, readable narrative/Director guidance, manual validated custom-type publication and immutable explicit selections with GET-only recovery. See implementation/style_setup_foundation.md for exact source provenance and focused evidence. Issue #19 tracks completion of this plan; style-media uploads/analysis, variants, controlled frame exports, generation recommendations and downstream pin/staleness are still pending. Stable pre-story setup context is not yet a Story/video relationship (#18).

@@ -66,3 +66,7 @@ You retain UI design ownership and can refine spacing, components and flows on t
 ## Story recovery checkpoint — 2026-10-09
 
 StoryPage now has a creation recovery notice with read-only Check status and, only after missing/initializing confirmation, Retry exact request. The submitted title/text/import ID is frozen separately from editable inputs. Keep these semantics when refining the UI; reload must never automatically POST a creation. All three themes and the shared shell remain unchanged. See implementation/story_creation_recovery.md and issue #17.
+
+## Type & Style setup checkpoint — 2026-10-09
+
+ProductionStylesPage now replaces the unavailable setup destination in your shell, preserving all three themes. Six copied production types show readable guidance; custom types have manual editable fields, explicit Publish and separate Save selection. Retain saved version/recovery behavior when redesigning: publishing never silently selects, catalog advancement never rewrites a frozen selection, page mount/reload never POSTs, unknown POST outcomes require read-only refresh. Improve arrangement/visual design through the same components; issue #19 tracks reference/media and complete style behavior. The pre-story setup is visibly not connected to Story/video yet; #18 owns real context linkage.

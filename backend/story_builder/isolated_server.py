@@ -20,6 +20,7 @@ from story_builder.services.isolated_video_jobs import (
     IsolatedJobConflict, IsolatedVideoJobs,
 )
 from story_builder.services.production_ledger import LedgerConflict, LedgerNotFound, ProductionLedger
+from story_builder.services.production_styles import ProductionStyleError, ProductionStyleService
 from story_builder.services.story_authoring import StoryAuthoring
 from story_builder.services.story_imports import StoryImportError, StoryImports
 from story_builder.services.workflow_status import build_workflow_status
@@ -114,6 +115,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
     jobs = IsolatedVideoJobs(ledger, graph_path=graph_path)
     story = StoryAuthoring(ledger, data_root=root)
     imports = StoryImports(ledger, root)
+    styles = ProductionStyleService(ledger)
     story_limit = (int(os.environ.get("VIBE_DIRECTOR_STORY_BODY_MAX_BYTES", str(_DEFAULT_STORY_BODY_MAX)))
                    if story_body_max_bytes is None else story_body_max_bytes)
     if type(story_limit) is not int or story_limit < 1:
@@ -169,6 +171,53 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
             if method == "POST" and environ.get("CONTENT_TYPE", "").split(";", 1)[0].strip().lower() != "application/json":
                 if not path.startswith("/api/story/imports"):
                     return _json_response(start_response, "415 Unsupported Media Type", {"error": {"code": "content_type_required", "message": "Send application/json."}})
+            if method == "GET" and path == "/api/styles/catalog":
+                return _json_response(start_response, "200 OK", styles.list_catalog())
+            if method == "POST" and path == "/api/styles/types":
+                payload = _read_json(environ)
+                result = styles.publish_custom_type(
+                    production_type=payload.get("production_type"),
+                    narrative_guidance=payload.get("narrative_guidance"),
+                    director_profile=payload.get("director_profile"))
+                return _json_response(start_response, "201 Created", result)
+            if method == "POST" and path == "/api/styles/selections":
+                payload = _read_json(environ)
+                workspace_id = payload.get("workspace_id")
+                isolated_context_id = payload.get("isolated_context_id")
+                if workspace_id is not None and (type(workspace_id) is not str or not workspace_id):
+                    raise ProductionStyleError("workspace_id must be a non-empty string or null.")
+                if isolated_context_id is not None and (type(isolated_context_id) is not str or not isolated_context_id):
+                    raise ProductionStyleError("isolated_context_id must be a non-empty string or null.")
+                if (workspace_id is None) == (isolated_context_id is None):
+                    raise ProductionStyleError("Supply exactly one of workspace_id or isolated_context_id.")
+                if workspace_id is not None:
+                    story.get_workspace(workspace_id, include_source=False)
+                result = styles.select(workspace_id=workspace_id,
+                    isolated_context_id=isolated_context_id,
+                    production_type=payload.get("production_type"),
+                    style_version_id=payload.get("style_version_id"))
+                return _json_response(start_response, "201 Created", result)
+            if method == "GET" and path == "/api/styles/selections":
+                query = parse_qs(environ.get("QUERY_STRING", ""), keep_blank_values=True)
+                if set(query) != {"workspace_id"} and set(query) != {"isolated_context_id"}:
+                    raise ProductionStyleError("Supply exactly one workspace_id or isolated_context_id query parameter.")
+                if any(len(values) != 1 for values in query.values()):
+                    raise ProductionStyleError("Each selection context query parameter must appear once.")
+                workspace_id = query.get("workspace_id", [None])[0]
+                isolated_context_id = query.get("isolated_context_id", [None])[0]
+                if workspace_id is not None:
+                    story.get_workspace(workspace_id, include_source=False)
+                return _json_response(start_response, "200 OK", {"selections": styles.list_selections(
+                    workspace_id=workspace_id, isolated_context_id=isolated_context_id)})
+            if method == "GET" and path.startswith("/api/styles/selections/"):
+                snapshot_id = path.removeprefix("/api/styles/selections/")
+                if not snapshot_id or "/" in snapshot_id:
+                    return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Style selection not found."}})
+                try:
+                    selection = styles.get_selection(snapshot_id)
+                except KeyError:
+                    return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Style selection not found."}})
+                return _json_response(start_response, "200 OK", selection)
             if method == "GET" and path == "/api/story/workspaces":
                 query = parse_qs(environ.get("QUERY_STRING", ""))
                 limit = int((query.get("limit") or ["50"])[0])
@@ -325,16 +374,22 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         except RuntimeNotReady as exc:
             return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "runtime_not_ready", "message": str(exc)}, "capability": exc.capability})
         except LedgerNotFound:
-            message = "Story workspace, revision, or import not found." if path.startswith("/api/story/") else "Isolated video job not found."
+            message = ("Story workspace, revision, or import not found." if path.startswith("/api/story/") else
+                       "Style selection or workspace not found." if path.startswith("/api/styles/") else
+                       "Isolated video job not found.")
             return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": message}})
         except StoryImportError as exc:
             status = {400: "400 Bad Request", 413: "413 Payload Too Large", 422: "422 Unprocessable Entity", 404: "404 Not Found"}.get(exc.status, "422 Unprocessable Entity")
             return _json_response(start_response, status, {"error": {"code": exc.code, "message": str(exc)}})
         except RequestBodyTooLarge as exc:
             return _json_response(start_response, "413 Payload Too Large", {"error": {"code": "payload_too_large", "message": str(exc)}})
+        except ProductionStyleError as exc:
+            return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_style_request", "message": str(exc)}})
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
             if path.startswith("/api/story/"):
                 return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_story_request", "message": str(exc)}})
+            if path.startswith("/api/styles/"):
+                return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_style_request", "message": str(exc)}})
             return _json_response(start_response, "400 Bad Request", {"error": {"code": "invalid_request", "message": str(exc)}})
         except Exception:
             return _json_response(start_response, "500 Internal Server Error", {"error": {"code": "internal_error", "message": "The isolated video request could not be completed."}})

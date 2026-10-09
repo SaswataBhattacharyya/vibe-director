@@ -342,6 +342,14 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     revision_id = (query.get("revision_id") or [None])[0]
                     return _json_response(start_response, "200 OK", story.get_screenplay(
                         workspace_id=workspace_id, source_revision_id=revision_id))
+                if len(parts) == 3 and parts[1:3] == ["screenplay", "revisions"] and method == "GET":
+                    query = parse_qs(environ.get("QUERY_STRING", ""))
+                    limit = int((query.get("limit") or [50])[0]); offset = int((query.get("offset") or [0])[0])
+                    return _json_response(start_response, "200 OK", story.list_screenplay_revisions(
+                        workspace_id=workspace_id, limit=limit, offset=offset))
+                if len(parts) == 4 and parts[1:3] == ["screenplay", "revisions"] and method == "GET":
+                    return _json_response(start_response, "200 OK", story.get_screenplay_revision(
+                        workspace_id=workspace_id, screenplay_revision_id=parts[3]))
                 if len(parts) == 4 and parts[1:3] == ["screenplay", "revisions"] and method == "PATCH":
                     payload = _read_story_json(environ, story_limit)
                     return _json_response(start_response, "201 Created", story.edit_screenplay(
@@ -440,133 +448,4 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
             if path.startswith("/api/video/retakes/") and method == "POST":
                 job_id = path.removeprefix("/api/video/retakes/")
                 if not _JOB_ID.fullmatch(job_id):
-                    return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Job not found."}})
-                payload = _read_json(environ)
-                result = jobs.retake_draft(job_id, keep_original=payload.get("keep_original"))
-                return _json_response(start_response, "200 OK", result)
-            if path.startswith("/api/video/assets/") and method == "GET":
-                asset_id = path.removeprefix("/api/video/assets/")
-                if not _ASSET_ID.fullmatch(asset_id):
-                    return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Asset not found."}})
-                record = _asset_record(ledger, asset_id)
-                if record is None:
-                    return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Asset not found."}})
-                metadata = record["metadata"]
-                media_path = (root / metadata["relative_path"]).resolve()
-                try:
-                    media_path.relative_to(root)
-                except ValueError:
-                    return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Asset not found."}})
-                if not media_path.is_file():
-                    return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Asset not found."}})
-                return _serve_asset(environ, start_response, media_path)
-            return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Route not found."}})
-        except IsolatedVideoContractError as exc:
-            return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": exc.code, "message": str(exc)}})
-        except (IsolatedJobConflict, LedgerConflict) as exc:
-            return _json_response(start_response, "409 Conflict", {"error": {"code": "conflict", "message": str(exc)}})
-        except RuntimeNotReady as exc:
-            return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "runtime_not_ready", "message": str(exc)}, "capability": exc.capability})
-        except LedgerNotFound:
-            message = ("Story workspace, revision, or import not found." if path.startswith("/api/story/") else
-                       "Style selection or workspace not found." if path.startswith("/api/styles/") else
-                       "Isolated video job not found.")
-            return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": message}})
-        except StoryImportError as exc:
-            status = {400: "400 Bad Request", 413: "413 Payload Too Large", 422: "422 Unprocessable Entity", 404: "404 Not Found"}.get(exc.status, "422 Unprocessable Entity")
-            return _json_response(start_response, status, {"error": {"code": exc.code, "message": str(exc)}})
-        except RequestBodyTooLarge as exc:
-            return _json_response(start_response, "413 Payload Too Large", {"error": {"code": "payload_too_large", "message": str(exc)}})
-        except ProductionStyleError as exc:
-            return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_style_request", "message": str(exc)}})
-        except (ValueError, TypeError, json.JSONDecodeError) as exc:
-            if path.startswith("/api/story/"):
-                return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_story_request", "message": str(exc)}})
-            if path.startswith("/api/styles/"):
-                return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_style_request", "message": str(exc)}})
-            return _json_response(start_response, "400 Bad Request", {"error": {"code": "invalid_request", "message": str(exc)}})
-        except Exception:
-            return _json_response(start_response, "500 Internal Server Error", {"error": {"code": "internal_error", "message": "The isolated video request could not be completed."}})
-    return app
-
-
-def _asset_record(ledger: ProductionLedger, asset_id: str):
-    with ledger._connect() as db:
-        row = db.execute("SELECT * FROM isolated_video_assets WHERE asset_id=?", (asset_id,)).fetchone()
-    if not row:
-        return None
-    return {"asset_id": row["asset_id"], "metadata": json.loads(row["metadata_json"])}
-
-
-def _runtime_guard(reader):
-    try:
-        point = reader()
-        safe = (point["temperature_c"] < GPU_RENDER_TEMP_CUTOFF
-                and point["graphics_clock_mhz"] <= GPU_RENDER_CLOCK_CEILING_MHZ)
-        reason = None if safe else (f"GPU operating limit reached: temperature must stay below {GPU_RENDER_TEMP_CUTOFF} C "
-            f"and graphics clock at or below {GPU_RENDER_CLOCK_CEILING_MHZ} MHz.")
-        return {"monitor_available": True, "safe_to_submit": safe,
-            "temperature_cutoff_c": GPU_RENDER_TEMP_CUTOFF,
-            "graphics_clock_ceiling_mhz": GPU_RENDER_CLOCK_CEILING_MHZ,
-            "operating_point": point, "reason": reason}
-    except Exception as exc:
-        return {"monitor_available": False, "safe_to_submit": False,
-            "temperature_cutoff_c": GPU_RENDER_TEMP_CUTOFF,
-            "graphics_clock_ceiling_mhz": GPU_RENDER_CLOCK_CEILING_MHZ,
-            "operating_point": None,
-            "reason": f"GPU monitoring unavailable ({type(exc).__name__}); generation is blocked."}
-
-
-def _serve_asset(environ, start_response, path: Path):
-    size = path.stat().st_size
-    start, end, status = 0, max(0, size - 1), "200 OK"
-    headers = []
-    range_header = environ.get("HTTP_RANGE")
-    if range_header:
-        match = re.fullmatch(r"bytes=(\d*)-(\d*)", range_header.strip())
-        if not match or size == 0:
-            return _json_response(start_response, "416 Range Not Satisfiable", {"error": {"code": "invalid_range", "message": "Invalid byte range."}}, [("Content-Range", f"bytes */{size}")])
-        a, b = match.groups()
-        if a:
-            start = int(a)
-            end = min(int(b), size - 1) if b else size - 1
-        else:
-            suffix = int(b or 0)
-            start = max(0, size - suffix)
-        if start > end or start >= size:
-            return _json_response(start_response, "416 Range Not Satisfiable", {"error": {"code": "invalid_range", "message": "Invalid byte range."}}, [("Content-Range", f"bytes */{size}")])
-        status = "206 Partial Content"
-        headers.append(("Content-Range", f"bytes {start}-{end}/{size}"))
-    length = max(0, end - start + 1)
-    headers += [("Content-Type", mimetypes.guess_type(path.name)[0] or "application/octet-stream"),
-        ("Content-Length", str(length)), ("Accept-Ranges", "bytes"), ("Cache-Control", "private, no-store")]
-    start_response(status, headers)
-    def chunks():
-        with path.open("rb") as handle:
-            handle.seek(start)
-            remaining = length
-            while remaining:
-                chunk = handle.read(min(64 * 1024, remaining))
-                if not chunk:
-                    break
-                remaining -= len(chunk)
-                yield chunk
-    return chunks()
-
-
-def main() -> None:
-    data_root = os.environ.get("VIBE_DIRECTOR_DATA_DIR")
-    if not data_root:
-        raise SystemExit("Set VIBE_DIRECTOR_DATA_DIR to a product-owned data directory before startup.")
-    db_path = os.environ.get("VIBE_DIRECTOR_LEDGER_PATH")
-    graph_path = os.environ.get("VIBE_DIRECTOR_GRAPH_PATH")
-    port = int(os.environ.get("VIBE_DIRECTOR_PORT", "3020"))
-    app = create_app(data_root=Path(data_root), ledger_path=Path(db_path) if db_path else None,
-                     graph_path=Path(graph_path) if graph_path else None)
-    with make_server("127.0.0.1", port, app, server_class=ThreadedWSGIServer) as server:
-        print(f"Vibe Director isolated API listening on http://127.0.0.1:{port}; no worker auto-started", flush=True)
-        server.serve_forever()
-
-
-if __name__ == "__main__":
-    main()
+                    return _json_response(start_response, "404 Not Found", {"error

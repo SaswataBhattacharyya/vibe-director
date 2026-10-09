@@ -5,6 +5,7 @@ const pageOf = items => ({ items, limit: 50, offset: 0, total: items.length });
 test('builds, reviews and reloads a revision-linked source graph without live provider calls', async ({ page }) => {
   let graph = null;
   let screenplay = null;
+  let screenplayHistory = [];
   const source = 'Mira keeps the key.';
   const revision = { revision_id: 'story-canon-abcdef123456', source_text: source, source_sha256: 'source-hash' };
   const calls = [];
@@ -14,8 +15,10 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
     if (path === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ workspace_id: 'story-graph', title: 'Graph me', current_revision_id: revision.revision_id, initialized: true, status: 'ready' }]) });
     if (path === '/api/story/workspaces/story-graph' && req.method() === 'GET') return route.fulfill({ json: { workspace_id: 'story-graph', title: 'Graph me', current_revision: revision, current_revision_id: revision.revision_id, initialized: true, status: 'ready' } });
     if (path === '/api/story/workspaces/story-graph/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: revision.revision_id, source_sha256: 'source-hash', revision_number: 1 }]) });
-    if (path === '/api/story/workspaces/story-graph/graph' && req.method() === 'GET') return graph ? route.fulfill({ json: graph }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No graph' } } });
-    if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'GET') return screenplay ? route.fulfill({ json: screenplay }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No screenplay' } } });
+    if (path === '/api/story/workspaces/story-graph/graph' && req.method() === 'GET') return graph && new URL(req.url()).searchParams.get('revision_id') === graph.source_revision_id ? route.fulfill({ json: graph }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No graph' } } });
+    if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'GET') return screenplay && new URL(req.url()).searchParams.get('revision_id') === screenplay.source_revision_id ? route.fulfill({ json: screenplay }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No screenplay' } } });
+    if (path === '/api/story/workspaces/story-graph/screenplay/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf(screenplayHistory.map(item => ({ ...item, stale: item.source_revision_id !== revision.revision_id }))) });
+    if (path.startsWith('/api/story/workspaces/story-graph/screenplay/revisions/') && req.method() === 'GET') return route.fulfill({ json: screenplayHistory.find(item => item.screenplay_revision_id === path.split('/').at(-1)) });
     if (path === '/api/story/workspaces/story-graph/graph' && req.method() === 'POST') {
       const body = req.postDataJSON(); calls.push(body);
       const evidence = { source_revision_id: revision.revision_id, source_sha256: 'source-hash', chunk_id: 'story_chunk_0001', start_codepoint: 0, end_codepoint: source.length, quote: source };
@@ -27,9 +30,9 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
       return route.fulfill({ json: { record_id: 'record-1', ...body, user_modified: true } });
     }
     if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'POST') {
-      const body = req.postDataJSON(); screenplay = { screenplay_revision_id: 'screenplay-1', workspace_id: 'story-graph', source_revision_id: revision.revision_id, graph_snapshot_id: body.graph_snapshot_id, screenplay: { title: 'Screenplay draft', coverage_note: 'Chunk processing does not establish semantic completeness.', scenes: [{ scene_number: 1, slugline: 'INTERIOR', summary: 'Mira keeps the key', shots: [{ shot_number: 1, action: 'Mira holds the key.', dialogue: '', direction: { camera: '', lighting: '', mood: '', sound: '', music: '' }, evidence: [graph.records[1].evidence[0]] }] }] } }; return route.fulfill({ status: 201, json: screenplay });
+      const body = req.postDataJSON(); screenplay = { screenplay_revision_id: 'screenplay-1', workspace_id: 'story-graph', source_revision_id: revision.revision_id, graph_snapshot_id: body.graph_snapshot_id, screenplay: { title: 'Screenplay draft', coverage_note: 'Chunk processing does not establish semantic completeness.', scenes: [{ scene_number: 1, slugline: 'INTERIOR', summary: 'Mira keeps the key', shots: [{ shot_number: 1, action: 'Mira holds the key.', dialogue: '', direction: { camera: '', lighting: '', mood: '', sound: '', music: '' }, evidence: [graph.records[1].evidence[0]] }] }] } }; screenplayHistory = [screenplay]; return route.fulfill({ status: 201, json: screenplay });
     }
-    if (path === '/api/story/workspaces/story-graph/screenplay/revisions/screenplay-1' && req.method() === 'PATCH') { const body = req.postDataJSON(); screenplay = { ...screenplay, screenplay_revision_id: 'screenplay-2', parent_screenplay_revision_id: 'screenplay-1', screenplay: body.screenplay }; return route.fulfill({ status: 201, json: screenplay }); }
+    if (path === '/api/story/workspaces/story-graph/screenplay/revisions/screenplay-1' && req.method() === 'PATCH') { const body = req.postDataJSON(); screenplay = { ...screenplay, screenplay_revision_id: 'screenplay-2', parent_screenplay_revision_id: 'screenplay-1', screenplay: body.screenplay }; screenplayHistory = [screenplay, ...screenplayHistory]; return route.fulfill({ status: 201, json: screenplay }); }
     return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: `Unexpected ${req.method()} ${path}` } } });
   });
   await page.goto('/#/story');
@@ -50,7 +53,4 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await expect(page.getByText('Shot 1')).toBeVisible();
   await expect(page.getByText(source)).toBeVisible();
   await page.getByLabel('Action').fill('Mira locks the key away.');
-  await page.getByRole('button', { name: 'Save edits' }).click();
-  await page.reload();
-  await expect(page.getByLabel('Action')).toHaveValue('Mira locks the key away.');
-});
+  await page

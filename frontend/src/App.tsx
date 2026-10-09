@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, ArrowRight, Check, ChevronDown, Clapperboard, Clock3, Film, FolderOpen, Gauge, Image, LoaderCircle, MoreHorizontal, Play, RefreshCw, Settings2, Sparkles, WandSparkles, X } from 'lucide-react';
 import { acceptJob, ApiError, Capability, createJob, findJobByIdempotency, getCapability, getJob, Job, prepareRetake, validateRequest, VideoRequest, WORKFLOW_ID, WORKFLOW_SHA256 } from './lib/video-api';
 import StatusPage from './StatusPage';
+import StoryPage from './StoryPage';
 
 type Draft = { prompt: string; duration: number; resolution: 0.98 | 0.4; workspaceId: string; clipId: string; pendingKey?: string; pendingRequest?: VideoRequest; retakeOf?: string; keepOriginal?: boolean };
 const DRAFT_KEY = 'vibe-video-draft-v1';
@@ -143,13 +144,13 @@ function VideoWorkspace() {
 }
 
 export default function App() {
-  const [route, setRoute] = useState(() => window.location.hash === '#/status' ? 'status' : 'video');
+  const [route, setRoute] = useState(() => window.location.hash === '#/status' ? 'status' : window.location.hash === '#/story' ? 'story' : 'video');
   useEffect(() => {
-    const onHashChange = () => setRoute(window.location.hash === '#/status' ? 'status' : 'video');
+    const onHashChange = () => setRoute(window.location.hash === '#/status' ? 'status' : window.location.hash === '#/story' ? 'story' : 'video');
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
   // Keep the video workspace mounted while Status is open so a running job,
   // pending recovery key, and editor state continue untouched in memory.
-  return <><div style={{ display: route === 'video' ? 'contents' : 'none' }}><VideoWorkspace/></div>{route === 'status' && <StatusPage/>}</>;
+  return <><div style={{ display: route === 'video' ? 'contents' : 'none' }}><VideoWorkspace/></div>{route === 'status' && <StatusPage/>}{route === 'story' && <StoryPage/>}</>;
 }

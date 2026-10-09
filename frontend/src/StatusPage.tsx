@@ -84,7 +84,7 @@ export default function StatusPage() {
     <aside className="sidebar"><div className="brand"><div className="brand-mark"><Clapperboard size={18}/></div><div><strong>Vibe Director</strong><span>LOCAL STUDIO</span></div></div>
       <div className="workspace-label">WORKSPACE</div><nav aria-label="Main navigation">
         <a className="nav-item" href="#/video"><Film size={17}/> Video</a>
-        <a className="nav-item disabled" aria-disabled="true"><Workflow size={17}/> Story <span className="soon">Soon</span></a>
+        <a className="nav-item" href="#/story"><Workflow size={17}/> Story</a>
         <a className="nav-item disabled" aria-disabled="true"><Database size={17}/> Assets <span className="soon">Soon</span></a>
         <a className="nav-item disabled" aria-disabled="true"><Server size={17}/> Media <span className="soon">Soon</span></a>
         <a className="nav-item" href="#/status" aria-current="page"><Activity size={17}/> Status <span className="nav-current"/></a>

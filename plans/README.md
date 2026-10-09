@@ -4,6 +4,8 @@
 
 ## Reading order
 
+Start with `production_styles.md`: Production Type & Style precedes story authoring/import; direct generation may select style without a story. Then follow the stage references below.
+
 1. `GLOSSARY.md` — scene, beat, shot, cut, clip, take, references and direction overrides.
 2. `screenplay.md` — merged story/canvas authoring, knowledge graph, readable screenplay and derived production records.
 3. `rectifications.md` — one preparation path using V2 source/revision principles, with no competing legacy pipeline.

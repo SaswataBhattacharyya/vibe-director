@@ -62,6 +62,10 @@ Next work: integrate the UI API client with the agreed product screen, configure
 
 `GET /api/status` is a read-only projection of the existing capability/runtime/worker snapshot. It lists unintegrated workflows honestly and never enables a worker. See `../plans/implementation/status_catalog.md`.
 
-`services/story_authoring.py` adds a CPU-only V2 source revision foundation over the same ledger DB, exact reused revision writer and extracted source chunk primitives. It is not wired into HTTP or a story editor yet. See `../plans/implementation/story_revision_reuse.md`.
+`services/story_authoring.py` adds a CPU-only V2 source revision foundation over the same ledger DB, exact reused revision writer and extracted source chunk primitives. The reviewed source import/revision API and provisional story editor now connect this foundation; Codex chat, graph and screenplay remain pending. See `../plans/implementation/story_revision_reuse.md`.
 
 Focused checks for these new slices only: `PYTHONPATH=. python -m unittest story_builder.tests.test_workflow_status story_builder.tests.test_story_authoring -v` (1 catalog test and 7 revision tests). The prior 20 video tests remain recorded evidence; no broad source suite rerun was needed.
+
+## Reviewed source import/editor slice — 2026-10-09
+
+See `../plans/implementation/story_import_api.md` and `story_ui.md` for routes, provenance and boundaries. Six focused import/API tests passed, including local pdftotext; four mocked browser checks passed (the initialization fixture was corrected for StrictMode duplicate initial reads). A real HTTP browser journey on disposable data passed upload → explicit preview apply → edit/save → restore-as-child → reload with no POST, zero browser errors and no horizontal overflow at 390 px. Build/typecheck passed. No provider or GPU generation was invoked. Source originals remain immutable; PDF OCR is unavailable and reading order requires preview. Operational transport limit is configurable, never truncating story text. Workspace creation/import apply are not idempotent; after a lost response, check the workspace list before retrying.

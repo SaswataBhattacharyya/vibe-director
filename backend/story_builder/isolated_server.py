@@ -20,6 +20,8 @@ from story_builder.services.isolated_video_jobs import (
     IsolatedJobConflict, IsolatedVideoJobs,
 )
 from story_builder.services.production_ledger import LedgerConflict, LedgerNotFound, ProductionLedger
+from story_builder.services.story_authoring import StoryAuthoring
+from story_builder.services.story_imports import StoryImportError, StoryImports
 from story_builder.services.workflow_status import build_workflow_status
 from story_builder.services.gpu_runtime import (
     GPU_RENDER_CLOCK_CEILING_MHZ, GPU_RENDER_TEMP_CUTOFF, read_gpu_operating_point,
@@ -28,6 +30,26 @@ from story_builder.services.gpu_runtime import (
 _JOB_ID = re.compile(r"^[0-9a-f-]{36}$")
 _ASSET_ID = re.compile(r"^video_[0-9a-f]{32}$")
 _MAX_BODY = 2 * 1024 * 1024
+_DEFAULT_STORY_BODY_MAX = 64 * 1024 * 1024
+
+
+class RequestBodyTooLarge(ValueError):
+    pass
+
+
+class ContentLengthReader:
+    """Prevent raw-upload reads from extending past the declared WSGI body."""
+    def __init__(self, stream, length: int):
+        self.stream = stream
+        self.remaining = length
+
+    def read(self, size: int = -1) -> bytes:
+        if self.remaining <= 0:
+            return b""
+        requested = self.remaining if size is None or size < 0 else min(size, self.remaining)
+        chunk = self.stream.read(requested)
+        self.remaining -= len(chunk)
+        return chunk
 
 
 class ThreadedWSGIServer(ThreadingMixIn, WSGIServer):
@@ -61,10 +83,25 @@ def _read_json(environ) -> dict[str, Any]:
     return value
 
 
+def _read_story_json(environ, maximum: int) -> dict[str, Any]:
+    try:
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+    except ValueError as exc:
+        raise ValueError("Content-Length is invalid.") from exc
+    if length < 1:
+        raise ValueError("Request body must not be empty.")
+    if length > maximum:
+        raise RequestBodyTooLarge(f"Story request exceeds the configured {maximum}-byte transport limit; no text was truncated.")
+    value = json.loads(environ["wsgi.input"].read(length).decode("utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("Request body must be a JSON object.")
+    return value
+
+
 def create_app(*, data_root: Path, ledger_path: Path | None = None,
                graph_path: Path | None = None,
                gpu_reader=read_gpu_operating_point, capability_provider=None,
-               worker_status_provider=None):
+               worker_status_provider=None, story_body_max_bytes: int | None = None):
     root = Path(data_root).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     configured_db = Path(ledger_path).expanduser().resolve() if ledger_path else root / "storage/production/ledger.sqlite3"
@@ -75,6 +112,12 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         raise ValueError("Ledger path must remain under VIBE_DIRECTOR_DATA_DIR.") from exc
     ledger = ProductionLedger(configured_db)
     jobs = IsolatedVideoJobs(ledger, graph_path=graph_path)
+    story = StoryAuthoring(ledger, data_root=root)
+    imports = StoryImports(ledger, root)
+    story_limit = (int(os.environ.get("VIBE_DIRECTOR_STORY_BODY_MAX_BYTES", str(_DEFAULT_STORY_BODY_MAX)))
+                   if story_body_max_bytes is None else story_body_max_bytes)
+    if type(story_limit) is not int or story_limit < 1:
+        raise ValueError("Story request byte limit must be a positive integer.")
 
     def dispatch_status():
         if worker_status_provider is not None:
@@ -118,8 +161,76 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         method = environ.get("REQUEST_METHOD", "GET").upper()
         path = unquote(environ.get("PATH_INFO", ""))
         try:
+            if method == "POST" and path.startswith("/api/story/"):
+                content_type = environ.get("CONTENT_TYPE", "").split(";", 1)[0].strip().lower()
+                required = "application/octet-stream" if path == "/api/story/imports" else "application/json"
+                if content_type != required:
+                    return _json_response(start_response, "415 Unsupported Media Type", {"error": {"code": "content_type_required", "message": f"Send {required}."}})
             if method == "POST" and environ.get("CONTENT_TYPE", "").split(";", 1)[0].strip().lower() != "application/json":
-                return _json_response(start_response, "415 Unsupported Media Type", {"error": {"code": "content_type_required", "message": "Send application/json."}})
+                if not path.startswith("/api/story/imports"):
+                    return _json_response(start_response, "415 Unsupported Media Type", {"error": {"code": "content_type_required", "message": "Send application/json."}})
+            if method == "GET" and path == "/api/story/workspaces":
+                query = parse_qs(environ.get("QUERY_STRING", ""))
+                limit = int((query.get("limit") or ["50"])[0])
+                offset = int((query.get("offset") or ["0"])[0])
+                return _json_response(start_response, "200 OK", story.list_workspaces(limit=limit, offset=offset))
+            if method == "POST" and path == "/api/story/workspaces":
+                payload = _read_story_json(environ, story_limit)
+                result = story.create_workspace(title=payload.get("title"), source_text=payload.get("source_text"))
+                return _json_response(start_response, "201 Created", result)
+            if path == "/api/story/imports" and method == "POST":
+                try:
+                    length = int(environ.get("CONTENT_LENGTH") or 0)
+                except ValueError as exc:
+                    raise ValueError("Content-Length is invalid.") from exc
+                if length < 1:
+                    raise ValueError("Upload body must not be empty.")
+                if length > story_limit:
+                    raise RequestBodyTooLarge(f"Upload exceeds the configured {story_limit}-byte transport limit; no bytes were stored.")
+                query = parse_qs(environ.get("QUERY_STRING", ""))
+                filename = (query.get("filename") or [""])[0]
+                result = imports.import_stream(filename=filename,
+                    source_stream=ContentLengthReader(environ["wsgi.input"], length), max_bytes=story_limit)
+                return _json_response(start_response, "201 Created", result)
+            if path.startswith("/api/story/imports/"):
+                tail = path.removeprefix("/api/story/imports/")
+                if method == "GET" and tail:
+                    return _json_response(start_response, "200 OK", imports.get(tail))
+                if method == "POST" and tail.endswith("/apply"):
+                    import_id = tail[:-len("/apply")].rstrip("/")
+                    preview = imports.get(import_id)
+                    payload = _read_story_json(environ, story_limit)
+                    lineage = {"kind": "source_import", "import_id": import_id,
+                        "original_filename": preview["filename"], "original_sha256": preview["source_sha256"],
+                        "source_type": preview["source_type"],
+                        "extractor_version": preview["extraction"]["extractor_version"],
+                        "extracted_text_sha256": preview["text_sha256"],
+                        "corrected_source_sha256": __import__("hashlib").sha256(payload.get("source_text", "").encode("utf-8")).hexdigest() if type(payload.get("source_text")) is str else None}
+                    result = story.create_workspace(title=payload.get("title"), source_text=payload.get("source_text"), source_metadata=lineage)
+                    return _json_response(start_response, "201 Created", result)
+            if path.startswith("/api/story/workspaces/"):
+                tail = path.removeprefix("/api/story/workspaces/")
+                parts = tail.split("/")
+                workspace_id = parts[0]
+                if method == "GET" and len(parts) == 1:
+                    return _json_response(start_response, "200 OK", story.get_workspace(workspace_id))
+                if len(parts) == 2 and parts[1] == "revisions" and method == "GET":
+                    query = parse_qs(environ.get("QUERY_STRING", ""))
+                    return _json_response(start_response, "200 OK", story.list_revisions(workspace_id,
+                        limit=int((query.get("limit") or ["50"])[0]), offset=int((query.get("offset") or ["0"])[0])))
+                if len(parts) == 2 and parts[1] == "revisions" and method == "POST":
+                    payload = _read_story_json(environ, story_limit)
+                    result = story.write_revision(workspace_id=workspace_id,
+                        source_text=payload.get("source_text"),
+                        expected_current_revision_id=payload.get("expected_current_revision_id"),
+                        metadata=payload.get("metadata"))
+                    return _json_response(start_response, "201 Created", result)
+                if len(parts) == 2 and parts[1] == "restore" and method == "POST":
+                    payload = _read_story_json(environ, story_limit)
+                    result = story.restore_revision(workspace_id=workspace_id,
+                        revision_id=payload.get("revision_id"),
+                        expected_current_revision_id=payload.get("expected_current_revision_id"))
+                    return _json_response(start_response, "201 Created", result)
             if method == "GET" and path == "/api/video/capabilities":
                 # Explicit capability request; never probed at server startup.
                 return _json_response(start_response, "200 OK", capability_snapshot())
@@ -198,8 +309,16 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         except RuntimeNotReady as exc:
             return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "runtime_not_ready", "message": str(exc)}, "capability": exc.capability})
         except LedgerNotFound:
-            return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Isolated video job not found."}})
+            message = "Story workspace, revision, or import not found." if path.startswith("/api/story/") else "Isolated video job not found."
+            return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": message}})
+        except StoryImportError as exc:
+            status = {400: "400 Bad Request", 413: "413 Payload Too Large", 422: "422 Unprocessable Entity", 404: "404 Not Found"}.get(exc.status, "422 Unprocessable Entity")
+            return _json_response(start_response, status, {"error": {"code": exc.code, "message": str(exc)}})
+        except RequestBodyTooLarge as exc:
+            return _json_response(start_response, "413 Payload Too Large", {"error": {"code": "payload_too_large", "message": str(exc)}})
         except (ValueError, TypeError, json.JSONDecodeError) as exc:
+            if path.startswith("/api/story/"):
+                return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_story_request", "message": str(exc)}})
             return _json_response(start_response, "400 Bad Request", {"error": {"code": "invalid_request", "message": str(exc)}})
         except Exception:
             return _json_response(start_response, "500 Internal Server Error", {"error": {"code": "internal_error", "message": "The isolated video request could not be completed."}})

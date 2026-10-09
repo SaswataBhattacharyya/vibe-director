@@ -113,7 +113,8 @@ class StoryAuthoring:
             db.execute("CREATE INDEX IF NOT EXISTS story_revision_workspace_idx ON story_revision_index(workspace_id,revision_number)")
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS story_revision_number_idx ON story_revision_index(workspace_id,revision_number)")
 
-    def create_workspace(self, *, title: str, source_text: str) -> dict[str, Any]:
+    def create_workspace(self, *, title: str, source_text: str,
+                         source_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         if type(title) is not str or not title.strip():
             raise ValueError("Workspace title must contain non-whitespace text.")
         # Validate before making the workspace row; there is no story-length cap.
@@ -125,7 +126,8 @@ class StoryAuthoring:
             db.execute("INSERT INTO story_workspaces(workspace_id,title,authoring_uuid) VALUES(?,?,?)",
                        (workspace_id, title, authoring_uuid))
             db.commit()
-        revision = self.initialize_workspace(workspace_id=workspace_id, source_text=source_text)
+        revision = self.initialize_workspace(workspace_id=workspace_id, source_text=source_text,
+            metadata=source_metadata)
         return {"workspace_id": workspace_id, "title": title,
                 "authoring_uuid": authoring_uuid, "current_revision": revision}
 
@@ -144,7 +146,8 @@ class StoryAuthoring:
                             "created_at": row["created_at"]} for row in rows],
                 "limit": limit, "offset": offset, "total": total}
 
-    def initialize_workspace(self, *, workspace_id: str, source_text: str) -> dict[str, Any]:
+    def initialize_workspace(self, *, workspace_id: str, source_text: str,
+                             metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         workspace_id = _check_workspace_id(workspace_id)
         with self.ledger._connect() as db:
             row = db.execute("SELECT current_revision_id FROM story_workspaces WHERE workspace_id=?",
@@ -156,7 +159,7 @@ class StoryAuthoring:
         if row["current_revision_id"] is not None or count:
             raise LedgerConflict("Story workspace is already initialized.")
         return self.write_revision(workspace_id=workspace_id, source_text=source_text,
-            expected_current_revision_id=None, metadata={"kind": "source_import"})
+            expected_current_revision_id=None, metadata=metadata or {"kind": "source_import"})
 
     def _reserve_revision_id(self, *, workspace_id: str, authoring_uuid: str) -> str:
         directory = revision_root(self.data_root, workspace_id, authoring_uuid)

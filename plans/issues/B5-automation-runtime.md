@@ -10,7 +10,7 @@ Status: published as [GitHub issue #13](https://github.com/SaswataBhattacharyya/
 
 Adapt Story Builder `services/production_stage_tasks.py`, `production_reconciliation.py`, `production_job_worker.py`, `production_take_runtime.py`, `production_video_director.py` and capability services, retaining only compatible logic. Implement policy-driven scheduling over the same jobs/forms used manually; no second controller. Freeze confirmed quality/non-duration settings and bounded duration policy.
 
-Full: bypass images/binding, scene first clip T2V, later R2V with immediate predecessor, reset on each new scene, retain all clips. Semi: exactly five selections; unchecked used stages wait for manual action; selected video uses Director-chosen compatible FFLF/R2V and authorized refs. Required voice conditioning cannot use the current FFLF graph. No silent fallback.
+Full: bypass image generation/required voice binding. Without a selected direct style video, each scene starts T2V; later clips use predecessor R2V. With a confirmed selected style video, the first clip uses R2V style video + text and later clips retain style plus predecessor continuity. Reset predecessor per scene, retain style and every generated clip. Validate combined reference counts/durations first; conflicts block without silent reference dropping or T2V fallback. Zero exported style frames still allows the original video. Read production_styles.md. Semi: exactly five selections; unchecked used stages wait for manual action; selected video uses Director-chosen compatible FFLF/R2V and authorized refs. Required voice conditioning cannot use the current FFLF graph. No silent fallback.
 
 ## Questions to resolve in this issue
 

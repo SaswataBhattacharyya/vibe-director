@@ -149,3 +149,64 @@ test('lost import-apply response recovers by key after reload without a second P
   expect(applyPosts).toBe(1);
   expect(calls.filter(call => call.includes('/creations/by-idempotency/')).every(call => call.startsWith('GET '))).toBeTruthy();
 });
+
+test('story creation freezes an explicit style snapshot across lost-response recovery', async ({ page }) => {
+  const context = 'setup-12345678-1234-1234-1234-123456789abc';
+  const selection = (snapshotId, version, purpose) => ({
+    snapshot_id: snapshotId, isolated_context_id: context, production_type: 'short_film',
+    style_version_id: `short_film-v${version}`, style_version: version,
+    narrative_guidance: { story: `Guidance ${version}` }, narrative_hash: `hash-${version}`,
+    director_profile: { display_name: 'Short Film', purpose, behavior: ['Keep it grounded'], review_priorities: ['Clarity'] },
+    director_profile_hash: `profile-${version}`, custom: true,
+  });
+  const original = selection('a'.repeat(32), 1, 'Original pinned purpose');
+  const latest = selection('b'.repeat(32), 2, 'New setup purpose');
+  let currentSelections = [original];
+  let frozenCreation = null;
+  let workspace = null;
+  let createPosts = 0;
+  await page.addInitScript(({ context }) => localStorage.setItem('vibe-style-setup-context-v1', context), { context });
+  await page.route('**/api/styles/selections**', route => route.fulfill({ json: { selections: currentSelections } }));
+  await page.route('**/api/story/**', async route => {
+    const req = route.request(), url = new URL(req.url()), path = url.pathname;
+    if (path === '/api/story/workspaces' && req.method() === 'GET') {
+      const items = workspace ? [{ workspace_id: workspace.workspace_id, title: workspace.title, current_revision_id: workspace.current_revision_id, initialized: true, status: 'ready', style_selection_snapshot_id: workspace.style_selection_snapshot_id }] : [];
+      return route.fulfill({ json: pageOf(items) });
+    }
+    if (path === '/api/story/workspaces' && req.method() === 'POST') {
+      createPosts++;
+      const body = req.postDataJSON();
+      workspace = {
+        workspace_id: 'story-pinned', title: body.title, current_revision_id: 'rev-pinned', initialized: true, status: 'ready',
+        style_selection_snapshot_id: body.style_selection_snapshot_id,
+        style_selection: body.style_selection_snapshot_id === original.snapshot_id ? original : null,
+        current_revision: { revision_id: 'rev-pinned', source_text: body.source_text },
+      };
+      frozenCreation = { status: 'ready', idempotency_key: body.idempotency_key, request_hash: 'hash-request', workspace: { ...workspace, current_revision: undefined, created_revision: workspace.current_revision } };
+      return route.abort('connectionreset');
+    }
+    if (path.startsWith('/api/story/creations/by-idempotency/')) return frozenCreation ? route.fulfill({ json: frozenCreation }) : route.fulfill({ status: 404, json: { error: { code: 'not_found' } } });
+    if (path === '/api/story/workspaces/story-pinned' && req.method() === 'GET') return route.fulfill({ json: workspace });
+    if (path === '/api/story/workspaces/story-pinned/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: 'rev-pinned', source_sha256: 'sha', revision_number: 1 }]) });
+    return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: `Unexpected ${req.method()} ${path}` } } });
+  });
+
+  await page.goto('/#/story');
+  await page.getByLabel('Title').fill('Pinned story');
+  await page.getByLabel('Source text', {exact:true}).fill('Story source');
+  await page.getByLabel('Production type & style').selectOption(original.snapshot_id);
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page.getByText('Creation outcome needs recovery')).toBeVisible();
+  expect(frozenCreation.workspace.style_selection_snapshot_id).toBe(original.snapshot_id);
+  await page.reload();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Story source');
+  await expect(page.locator('.story-style-pin')).toContainText('Style pinned at original creation');
+  await expect(page.locator('.story-style-pin')).toContainText('Short Film · v1');
+  expect(createPosts).toBe(1);
+
+  currentSelections = [latest];
+  await page.getByRole('button', { name: 'Refresh saved styles' }).first().click();
+  await page.getByLabel('Production type & style').selectOption(latest.snapshot_id);
+  await expect(page.locator('.story-style-pin')).toContainText('Short Film · v1');
+  expect(createPosts).toBe(1);
+});

@@ -83,13 +83,14 @@ export default function ProductionStylesPage() {
     } finally { setLoading(false); }
   };
   useEffect(() => {
-    let context = contextId;
+    let context = contextId || initialContext();
     if (!context) {
       try { if (!crypto?.randomUUID) throw new Error('Secure random IDs are unavailable'); context = `setup-${crypto.randomUUID()}`; }
       catch { setStorageWarning('This browser cannot create a safe setup context ID. Style selection cannot be saved safely here.'); setLoading(false); return; }
       try { localStorage.setItem(CONTEXT_KEY, context); setContextId(context); }
       catch { setStorageWarning('This browser cannot persist the setup context. Style selection cannot be saved safely here.'); setLoading(false); return; }
     }
+    setContextId(context);
     void load(context);
   // Load once per setup context; a Refresh button is explicit.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -127,7 +128,7 @@ export default function ProductionStylesPage() {
     <div className="page-heading styles-heading"><div><div className="eyebrow">STORY WORKFLOW · SETUP</div><h1>Production Type &amp; Style</h1><p>Choose reusable direction before writing a story. This selection is versioned within a local setup context.</p></div><button className="quiet-button styles-refresh" type="button" onClick={refresh} disabled={loading}><RefreshCw size={15}/> Refresh catalog</button></div>
     {storageWarning && <div className="notice notice-warn" role="alert">{storageWarning}</div>}
     {notice && <div className="notice styles-notice" role="status">{notice}</div>}
-    <section className="card style-context-card"><div><span className="styles-kicker"><Palette size={15}/> PRODUCTION SETUP</span><p>Saved selections stay available when you return.</p><small>Applying this setup to Story and video is still pending.</small><details><summary>Setup details</summary><code>{contextId || 'not persisted'}</code></details></div>{saved && <div className="pinned-style"><Check size={15}/><span>Saved version pinned<strong>{saved.production_type} · {saved.style_version_id}</strong></span></div>}</section>
+    <section className="card style-context-card"><div><span className="styles-kicker"><Palette size={15}/> PRODUCTION SETUP</span><p>Saved selections stay available when you return.</p><small>Choose a saved version when creating a story. Video conditioning is still pending.</small><details><summary>Setup details</summary><code>{contextId || 'not persisted'}</code></details></div>{saved && <div className="pinned-style"><Check size={15}/><span>Saved version pinned<strong>{saved.production_type} · {saved.style_version_id}</strong></span></div>}</section>
 
     <section className="styles-section" aria-labelledby="catalog-title"><div className="styles-section-heading"><div><span className="styles-kicker">VERSIONED CATALOG {catalogVersion && `· ${catalogVersion}`}</span><h2 id="catalog-title">Choose a production type</h2><p>Changing the choice below does not change the saved selection. Save it explicitly to pin a version.</p></div></div>
       {loading ? <div className="card styles-loading"><LoaderCircle className="spin" size={18}/> Loading catalog and saved selection…</div> : catalog.length === 0 ? <div className="card styles-empty">No catalog data is available. Refresh to retry; there is no fallback list presented as backend data.</div> : <>

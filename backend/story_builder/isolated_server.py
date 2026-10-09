@@ -228,8 +228,12 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 if payload.get("idempotency_key") is not None:
                     result, created = story.create_or_resume_workspace(
                         idempotency_key=payload.get("idempotency_key"), action="create",
-                        title=payload.get("title"), source_text=payload.get("source_text"))
+                        title=payload.get("title"), source_text=payload.get("source_text"),
+                        style_selection_snapshot_id=payload.get("style_selection_snapshot_id"),
+                        style_selection_resolver=styles.get_selection)
                     return _json_response(start_response, "201 Created" if created else "200 OK", result)
+                if payload.get("style_selection_snapshot_id") is not None:
+                    raise ValueError("style_selection_snapshot_id requires an idempotency_key.")
                 result = story.create_workspace(title=payload.get("title"), source_text=payload.get("source_text"))
                 return _json_response(start_response, "201 Created", result)
             if method == "GET" and path.startswith("/api/story/creations/by-idempotency/"):
@@ -268,8 +272,12 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         result, created = story.create_or_resume_workspace(
                             idempotency_key=payload.get("idempotency_key"), action="apply",
                             title=payload.get("title"), source_text=payload.get("source_text"),
-                            import_id=import_id, source_metadata_factory=lineage_factory)
+                            import_id=import_id, source_metadata_factory=lineage_factory,
+                            style_selection_snapshot_id=payload.get("style_selection_snapshot_id"),
+                            style_selection_resolver=styles.get_selection)
                         return _json_response(start_response, "201 Created" if created else "200 OK", result)
+                    if payload.get("style_selection_snapshot_id") is not None:
+                        raise ValueError("style_selection_snapshot_id requires an idempotency_key.")
                     lineage = lineage_factory()
                     result = story.create_workspace(title=payload.get("title"), source_text=payload.get("source_text"), source_metadata=lineage)
                     return _json_response(start_response, "201 Created", result)

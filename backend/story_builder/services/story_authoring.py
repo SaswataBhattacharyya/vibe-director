@@ -164,11 +164,22 @@ class StoryAuthoring:
     def _canonical_json(value: Any) -> str:
         return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
+    @staticmethod
+    def _style_pin_from_columns(snapshot_id: Any, selection_json: str | None = None) -> dict[str, Any]:
+        if snapshot_id is None:
+            return {"style_selection_snapshot_id": None, "style_selection": None}
+        selection = json.loads(selection_json) if selection_json else None
+        if not isinstance(selection, dict) or selection.get("snapshot_id") != snapshot_id:
+            raise ValueError("Frozen story style selection metadata is inconsistent.")
+        return {"style_selection_snapshot_id": snapshot_id, "style_selection": selection}
+
     def create_or_resume_workspace(self, *, idempotency_key: str, action: str,
                                    title: str, source_text: str,
                                    import_id: str | None = None,
                                    source_metadata: dict[str, Any] | None = None,
-                                   source_metadata_factory=None) -> tuple[dict[str, Any], bool]:
+                                   source_metadata_factory=None,
+                                   style_selection_snapshot_id: str | None = None,
+                                   style_selection_resolver=None) -> tuple[dict[str, Any], bool]:
         """Durably bind a keyed create/apply request to one workspace.
 
         The client identity is compared before any metadata re-resolution. The
@@ -180,6 +191,8 @@ class StoryAuthoring:
         client_payload = {"title": title, "source_text": source_text}
         if action == "apply":
             client_payload["import_id"] = import_id
+        if style_selection_snapshot_id is not None:
+            client_payload["style_selection_snapshot_id"] = style_selection_snapshot_id
         client_json = self._canonical_json(client_payload)
 
         with self.ledger._connect() as db:
@@ -205,6 +218,17 @@ class StoryAuthoring:
                 resolved_metadata = {"kind": "source_import"} if action == "create" else {}
             if not isinstance(resolved_metadata, dict):
                 raise ValueError("Source metadata must be an object.")
+            if style_selection_snapshot_id is not None:
+                if style_selection_resolver is None:
+                    raise ValueError("A style selection resolver is required when style_selection_snapshot_id is supplied.")
+                try:
+                    style_selection = style_selection_resolver(style_selection_snapshot_id)
+                except KeyError as exc:
+                    raise LedgerNotFound("Production style selection snapshot not found.") from exc
+                if (not isinstance(style_selection, dict) or
+                        style_selection.get("snapshot_id") != style_selection_snapshot_id):
+                    raise ValueError("Style selection resolver returned a mismatched snapshot.")
+                resolved_metadata = {**resolved_metadata, "style_selection": style_selection}
             request_value = {"action": action, "client_payload": client_payload,
                              "source_metadata": resolved_metadata}
             request_json = self._canonical_json(request_value)
@@ -280,14 +304,15 @@ class StoryAuthoring:
             raise ValueError("Pagination requires limit 1–100 and a nonnegative integer offset.")
         with self.ledger._connect() as db:
             total = db.execute("SELECT COUNT(*) FROM story_workspaces").fetchone()[0]
-            rows = db.execute("SELECT w.*, (w.current_revision_id IS NOT NULL) AS initialized FROM story_workspaces w ORDER BY w.created_at DESC,w.workspace_id DESC LIMIT ? OFFSET ?",
+            rows = db.execute("SELECT w.*, (w.current_revision_id IS NOT NULL) AS initialized, json_extract(c.request_json, '$.client_payload.style_selection_snapshot_id') AS style_selection_snapshot_id FROM story_workspaces w LEFT JOIN story_creation_requests c ON c.workspace_id=w.workspace_id ORDER BY w.created_at DESC,w.workspace_id DESC LIMIT ? OFFSET ?",
                               (limit, offset)).fetchall()
         return {"items": [{"workspace_id": row["workspace_id"], "title": row["title"],
                             "authoring_uuid": row["authoring_uuid"],
                             "current_revision_id": row["current_revision_id"],
                             "initialized": bool(row["initialized"]),
                             "status": "ready" if row["initialized"] else "initializing",
-                            "created_at": row["created_at"]} for row in rows],
+                            "created_at": row["created_at"],
+                            "style_selection_snapshot_id": row["style_selection_snapshot_id"]} for row in rows],
                 "limit": limit, "offset": offset, "total": total}
 
     def initialize_workspace(self, *, workspace_id: str, source_text: str,
@@ -337,14 +362,19 @@ class StoryAuthoring:
         workspace_id = _check_workspace_id(workspace_id)
         with self.ledger._connect() as db:
             row = db.execute("SELECT * FROM story_workspaces WHERE workspace_id=?", (workspace_id,)).fetchone()
+            creation = db.execute("SELECT json_extract(request_json, '$.client_payload.style_selection_snapshot_id') AS style_selection_snapshot_id, json_extract(request_json, '$.source_metadata.style_selection') AS style_selection_json FROM story_creation_requests WHERE workspace_id=?", (workspace_id,)).fetchone()
         if row is None:
             raise LedgerNotFound("Story workspace not found.")
+        style_pin = self._style_pin_from_columns(
+            creation["style_selection_snapshot_id"], creation["style_selection_json"]
+        ) if creation else self._style_pin_from_columns(None)
         result = {"workspace_id": row["workspace_id"], "title": row["title"],
                   "authoring_uuid": row["authoring_uuid"],
                   "current_revision_id": row["current_revision_id"],
                   "initialized": row["current_revision_id"] is not None,
                   "status": "ready" if row["current_revision_id"] is not None else "initializing",
-                  "created_at": row["created_at"], "updated_at": row["updated_at"]}
+                  "created_at": row["created_at"], "updated_at": row["updated_at"],
+                  **style_pin}
         if include_source and row["current_revision_id"]:
             result["current_revision"] = self.get_revision(workspace_id, row["current_revision_id"])
         return result

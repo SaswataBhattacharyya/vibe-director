@@ -231,4 +231,4 @@ Apply `ux_shared.md`: show saved source/screenplay revision and the next unfinis
 
 ## Preceding production setup and file import
 
-Regular authoring follows Production Type & Style, with pinned direction/style guidance. The same story workspace accepts writing/paste, TXT/Markdown and PDF extraction with readable preview/correction and exact revision provenance. See [production style and story import plan](production_styles_and_import.md); imported story is distinct from style-reference material.
+Regular authoring follows Production Type & Style, with pinned direction/style guidance. The same story workspace accepts writing/paste, TXT/Markdown and PDF extraction with readable preview/correction and exact revision provenance. See [production style and story import plan](production_styles.md); imported story is distinct from style-reference material.

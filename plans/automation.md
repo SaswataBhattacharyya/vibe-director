@@ -101,15 +101,15 @@ Checking Video Generation authorizes the Director to choose **first/last-frame (
 
 ## 6. Full — configure once, then generate the story's clips
 
-Full skips character/world/frame image generation and does not require manual voice assignment. The user explicitly reconfirmed the original continuation loop: **the first clip of each scene is T2V; later clips are R2V using the immediately preceding video**. Configure quality and duration policy once, then retain every generated clip. Full does not use FFLF or require prepared character/world/voice assets.
+Full skips character/world/frame image generation and does not require manual voice assignment. The user explicitly reconfirmed the original continuation loop: **without selected direct style videos, the first clip of each scene is T2V; later clips are R2V using the immediately preceding video**. The later owner-approved exception uses R2V from the first clip when a selected style video is supplied; see `production_styles.md`. Configure quality and duration policy once, then retain every generated clip. Full does not use FFLF or require prepared character/world/voice assets.
 
 Confirmed Full sequence:
 
-1. Start the first planned clip of each scene with text-to-video.
-2. Use the immediately preceding completed clip as the video reference for each following clip in that scene's R2V request.
+1. Start the first planned clip of each scene with T2V when no direct style video is selected; otherwise use R2V with the selected style video and an explicit style-use instruction.
+2. Use the immediately preceding completed clip as the continuity reference for following R2V clips; retain selected style videos as distinct style references. Validate combined reference capacity before starting.
 3. Derive each continuation prompt from the next screenplay action/dialogue, shot/camera direction and predecessor continuity state. Include the actual reference label matching the selected previous clip.
 4. Retain every generated clip and its exact request/history. A replacement never automatically deletes the old output.
-5. Reset the chain at the next scene and start again with text-to-video.
+5. Reset predecessor continuity at each new scene. Start again with T2V absent selected style video, or style-video R2V when present.
 6. Finish with ordered scene/clip results and source coverage. Film assembly/audio mixing remains a later step.
 
 When entering Full through the regular path, confirm setup once on this page after screenplay generation. If a future story-only start uses an already confirmed saved Full preset, it may pass through this same setup state without another stop. “Fully automatic” describes execution after configuration; it does not authorize guessing unconfirmed quality settings.
@@ -203,7 +203,7 @@ Validate the intended behavior through a small set of end-to-end UI walkthroughs
 1. **Manual regular path:** screenplay → setup Manual → edit/annotate a prompt → Generate → review → Next; no next generation starts before the user's action.
 2. **Semi mixed path:** check character images and video only → confirm their settings/reference policy → automatic characters → manual remaining steps or explicit skips → Director selects viable FFLF/R2V and compatible refs; the page clearly explains each upcoming stop.
 3. **Semi defaults:** check each of the five stages → each opens its appropriate settings/policy → accept defaults → summary accurately lists what will run; no extra repeated parameter gates.
-4. **Full fixed duration:** confirm quality/duration → skip images → first scene starts T2V, later clips use predecessor R2V → second scene resets to T2V → retain all clips; no human generation/acceptance clicks mid-run.
+4. **Full fixed duration:** confirm quality/duration → skip images → with no selected style video, first scene starts T2V, later clips use predecessor R2V → second scene resets to T2V → retain all clips; no human generation/acceptance clicks mid-run.
 5. **Full dynamic duration:** confirm quality and allowed duration range → differing clip durations appear with recorded decisions → quality stays fixed and complete story coverage remains visible.
 6. **Isolated FLF:** directly open the video form → supply two uploaded/library images and prompt → generate/review without a story or screenplay.
 7. **Isolated image/R2V:** directly open a shared stage → edit/annotate prompt, choose compatible references/settings → save results with no fabricated scene links.
@@ -222,3 +222,7 @@ Apply `ux_shared.md` for saved context, clear next actions, mobile arrangement a
 One durable application service owns state transitions, submission identity, job IDs and resume; the LLM supplies authorized creative/workflow/duration decisions. Do not depend on an active coding-agent chat alone to keep background production alive. Upstream creative gates/selectors are adapted to this policy rather than copied as a competing controller. See `integration.md`.
 
 Known-cost estimates may be displayed before starting a configured run, identifying uncertain/local/LLM costs separately. Do not import repeated per-clip approval thresholds as new mandatory gates. Any future budget policy requires an explicit run-level contract.
+
+## Selected production-style references
+
+`production_styles.md` defines the selected style-video exception for automated video: Full starts a scene with R2V when a direct style video is selected, even when its frame-export count is zero. Semi automated Video also uses compatible R2V with the selected style video. The policy includes explicit style intent, selected assets and graph-capacity validation; subsequent style/continuity references remain distinct. In Manual/Semi manual steps images/audio/video are top recommendations and remain unselected. Default video frame export is two; never export all frames into image pickers.

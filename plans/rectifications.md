@@ -71,7 +71,7 @@ This is a product direction for future work, not a claim that the V2 user interf
 - `screenplay.md` governs authoring, compilation and screenplay-versus-take direction changes.
 - `char_world.md` makes visual preparation skippable and makes character/voice bindings recommended video references rather than automatic selections.
 - `video_gen.md` governs model-specific prompt adaptation, duration/output controls, limits, reference preparation and review.
-- `automation.md` defines the wrappers, including story-only Full mode with a new T2V start for each scene and previous-clip R2V continuation within it.
+- `automation.md` defines the wrappers, including story-only Full mode with a T2V start absent direct style videos, the selected-style-video R2V exception in production_styles.md, and previous-clip R2V continuation within each scene.
 
 ## New navigation and scheduling rectification
 

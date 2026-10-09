@@ -34,4 +34,4 @@ Prepare working provisional UI with each backend slice and publish completed, re
 
 Fetch Ashu's branches/PRs for local review before merging. Compare against the actual PR base/common ancestor to avoid treating existing backend code as his new changes. Inspect product alignment, contracts, preserved state/recovery and visual interaction, then recommend merge or concrete fixes. Never automatically merge on fetch, green tests or authorship. Preserve his branch; use a separate review checkout when needed.
 
-New requirement: read `production_styles_and_import.md` before design work; production type/style precedes story and story accepts TXT/PDF uploads.
+New requirement: read `production_styles.md` before design work; production type/style precedes story and story accepts TXT/PDF uploads.

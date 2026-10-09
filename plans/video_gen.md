@@ -200,7 +200,7 @@ Uploads selected directly on the video page enter that same managed library/stor
 
 `automation.md` controls which steps run automatically. The wrappers use the same scene/shot/clip records, prompt compiler, reference validator, job state and output store.
 
-Full skips image generation and required manual asset-binding/review gates. Its confirmed recipe starts each scene's first clip with T2V, then uses the immediately preceding generated video as an R2V reference for subsequent clips within that scene. Reset to T2V at every new scene. Initial quality remains fixed; duration is fixed or Director-selected under the confirmed policy. Retain all outputs for the complete story.
+Full skips image generation and required manual asset-binding/review gates. Without a selected direct style video, its recipe starts each scene with T2V and follows with predecessor R2V. With a selected style video, the first clip is R2V using that style reference and later clips retain both style and predecessor roles where the graph supports them. Reset predecessor continuity at every new scene; retain the style selection. See production_styles.md for capacity conflicts and zero-frame video-only behavior. Initial quality remains fixed; duration is fixed or Director-selected under the confirmed policy. Retain all outputs for the complete story.
 
 Keep every generated clip, including a replaced/failed-quality candidate that exists as playable media. Completion does not claim human approval. Record the ordered scene/clip outputs and predecessor links so the complete story has traceable video coverage. Full produces the complete collection of story clips; final-film stitching/mixing is a separate subsequent plan.
 
@@ -222,3 +222,7 @@ Apply `ux_shared.md`: native playback/candidate comparison, preserved prompts/re
 For previous-video continuation, record completed source spans, intended next action/dialogue, character/location state and what the reference should contribute. Distinguish visual continuity from use of its soundtrack so previous dialogue/action is not unintentionally repeated. Inspect available duration/resolution/audio metadata before using a predecessor; these checks do not guarantee creative continuity. Missing/unusable predecessor pauses with a clear remedy; never silently reset to T2V inside the Full scene chain.
 
 Follow `integration.md` for selected tool reuse. Final assembly/composition is a later stage with its own future plan; it does not add prerequisites to the present isolated or story-linked generation forms.
+
+## Production-style reference recommendations
+
+Use `production_styles.md` for selected style image/audio/video recommendations, controlled video-frame extraction (default two, zero allowed), and the automated style-video R2V exception. Manual/Semi manual pickers rank compatible selected-style assets highest without auto-selecting them. R2V audio selectors include style audio. Compile actual reference labels and per-reference style intent into the submitted prompt and retain its manifest.

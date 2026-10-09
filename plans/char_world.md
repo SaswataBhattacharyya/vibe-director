@@ -201,3 +201,7 @@ Each image page is also reachable directly for isolated creation. Accept a user-
 Apply `ux_shared.md` to the character/world/frame/voice pages: persistent saved context, thumbnails/playback, prompt/ref details, direct recovery from missing inputs and distinct empty/offline/failed states. Keep manual fields editable/saveable while the generation engine is unavailable. Clearly distinguish optional skipped preparation from missing inputs required by a selected video workflow.
 
 Use `integration.md` for extraction of working Story Builder services and any verified supporting helpers. Retain a single asset library and canonical voice-binding map; do not create an upstream-specific second library or required preparation funnel.
+
+## Style-reference imagery
+
+Recommend selected style images and explicitly exported style-video frames at the top of compatible image-reference selectors; never populate all decoded frames. Export count defaults to two and may be zero. Preserve parent video/timestamp provenance, leave manual recommendations unselected, and distinguish style frames from generated first/last scene endpoints. See `production_styles.md`.

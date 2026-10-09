@@ -35,3 +35,9 @@ Goal paused at the user's explicit request. Stop implementation until the user e
 Two Luna additions are staged only in `/tmp/vibe-director-implementation`, not applied to canonical or published: Status workflow catalog/page and B2 story revision foundation. Parent review began but is incomplete. Status agent reported build/typecheck and direct projection check passed; its browser test still needs an escalated launcher. B2 agent reported four focused tests passed; parent review still needs revision immutability/collision handling and chronological revision ordering checks. Do not present these as integrated or accepted. Source writer/chunker provenance and existing process handles remain as recorded above. No live generation/provider submission occurred.
 
 User explicitly authorized publishing completed work and updating Ashu’s UI issues while the goal stays paused. `ASHU_UI_HANDOFF.md` documents the published baseline, provisional UI, design ownership and unpublished staging boundary. No staged implementation was integrated by this publication.
+
+## Planning update while paused (2026-10-09)
+
+User authorizes documenting provisional UI → publish reviewed completed work → Ashu refinement → fetch/review before merge. Ashu retains UI design ownership. See `ASHU_UI_HANDOFF.md`. New `production_styles_and_import.md` adds production type/style before story and TXT/PDF import; reference upload modalities are pending clarification. This planning/review activity does not resume implementation.
+
+Fetched `origin/design/shared-creation-video-ux-3-4` at `f6c7f1e`: Ashutosh Ojha's additions relative to current HEAD are five design/prototype/font/license files, no app/backend edits. Read design record; full prototype interaction review remains pending. No merge decision or merge performed. Compare against current implementation baseline, not main, which would include our earlier work. Locally staged Luna additions remain unpublished.

@@ -57,3 +57,7 @@ Both routing decisions are confirmed: Full uses a T2V scene start followed by pr
 ## Integrated planning direction
 
 Current product behavior is retained. StudioDirector's useful UX guidance is incorporated through `ux_shared.md` and the stage-plan additions. `integration.md` defines selective Story Builder/OpenMontage reuse without another controller or media store. Exact covered-source imports remain conditional on license compatibility and bounded technical verification. Final assembly still needs a separate user-approved journey.
+
+## Production setup before authoring
+
+[Production type, style and story import](production_styles_and_import.md) precedes the story/screenplay journey and specifies custom style/type creation and TXT/PDF ingestion. [Ashu handoff](ASHU_UI_HANDOFF.md) also records provisional implementation, publication and review-before-merge rules.

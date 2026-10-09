@@ -228,3 +228,7 @@ The canonical screenplay/source rules in this document apply to story-linked pro
 Apply `ux_shared.md`: show saved source/screenplay revision and the next unfinished action; use readable direction/prose with optional technical disclosure. Direct editing and saving remain usable when generation is offline. Creative changes flag only affected downstream work; retain history and outputs. The story-linked journey and isolated generation use the same downstream forms.
 
 `integration.md` defines source reuse. V2 lineage/chunking and selected direction-vocabulary helpers support this screenplay authority; neither a legacy JSON editor nor an upstream script display becomes a second authoring surface.
+
+## Preceding production setup and file import
+
+Regular authoring follows Production Type & Style, with pinned direction/style guidance. The same story workspace accepts writing/paste, TXT/Markdown and PDF extraction with readable preview/correction and exact revision provenance. See [production style and story import plan](production_styles_and_import.md); imported story is distinct from style-reference material.

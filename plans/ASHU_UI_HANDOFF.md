@@ -27,3 +27,11 @@ All six D issues remain open: #3 navigation/context; #4 three video forms and re
 20 focused backend tests, typecheck/build and two intercepted browser journeys passed for the published T2V slice. Real UI rendering was inspected; these checks do not prove a successful new live render. No live generation/provider call was performed. FFLF live acceptance is deferred to final implementation acceptance. Existing Story Builder release evidence is retained; do not rerun the broad legacy suites just to redesign UI. New live acceptance is prepared in the UI using suitable existing Story Builder media, with monitoring, and Saswata clicks Generate.
 
 Status/catalog and a B2 revision foundation are only locally staged in `/tmp/vibe-director-implementation`, unpublished with incomplete parent review. They are outside this published baseline. No OpenMontage source has been imported. Do not claim these additions, the full app, or any design issue is resolved.
+
+## Ongoing collaboration workflow (owner instruction, 2026-10-09)
+
+Prepare working provisional UI with each backend slice and publish completed, reviewed work in issue-linked PRs. Ashu retains UI design ownership and can refine/replace provisional layouts and interactions within agreed contracts. Provisional implementation can resolve a bounded implementation issue once its criteria are demonstrated; it does not automatically resolve Ashu's design issue. Close design issues only when the design is accepted. Push resolved work and update the issue with files, behavior, evidence, limitations and Ashu's remaining task.
+
+Fetch Ashu's branches/PRs for local review before merging. Compare against the actual PR base/common ancestor to avoid treating existing backend code as his new changes. Inspect product alignment, contracts, preserved state/recovery and visual interaction, then recommend merge or concrete fixes. Never automatically merge on fetch, green tests or authorship. Preserve his branch; use a separate review checkout when needed.
+
+New requirement: read `production_styles_and_import.md` before design work; production type/style precedes story and story accepts TXT/PDF uploads.

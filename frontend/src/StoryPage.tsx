@@ -1,6 +1,6 @@
 import { ChangeEvent, DragEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, BookOpen, FileUp, History, RefreshCw, RotateCcw, Save, Sparkles } from 'lucide-react';
-import { acceptStoryEdit, applyStoryImport, buildStoryGraph, createStoryWorkspace, discardStoryEdit, getStoryCreation, getStoryEditRequest, getStoryGraph, getStoryWorkspace, listStoryRevisions, listStoryWorkspaces, proposeStoryEdit, restoreStoryRevision, saveStoryRevision, searchStoryGraph, StoryCreation, StoryEditProposal, StoryGraph, StoryGraphRecord, StoryGraphSearch, StoryImport, StoryRevision, StoryRevisionSummary, StoryWorkspace, updateStoryGraphRecord, uploadStoryFile } from './lib/story-api';
+import { acceptStoryEdit, applyStoryImport, buildStoryGraph, createStoryWorkspace, decideStoryGraphIdentity, discardStoryEdit, getStoryCreation, getStoryEditRequest, getStoryGraph, getStoryWorkspace, listStoryRevisions, listStoryWorkspaces, proposeStoryEdit, restoreStoryRevision, saveStoryRevision, searchStoryGraph, StoryCreation, StoryEditProposal, StoryGraph, StoryGraphRecord, StoryGraphSearch, StoryImport, StoryRevision, StoryRevisionSummary, StoryWorkspace, updateStoryGraphRecord, uploadStoryFile } from './lib/story-api';
 import { getStyleSelections, StyleSelection } from './lib/styles-api';
 
 const LOCAL_KEY = 'vibe-story-draft-v1';
@@ -52,9 +52,13 @@ export default function StoryPage() {
   const [graphQuery, setGraphQuery] = useState('');
   const [graphSearch, setGraphSearch] = useState<StoryGraphSearch | null>(null);
   const [graphSearchBusy, setGraphSearchBusy] = useState(false);
+  const graphSearchVersion = useRef(0);
   const [graphDrafts, setGraphDrafts] = useState<Record<string, { name: string; detail: string; status: StoryGraphRecord['status'] }>>({});
   const sourceRef = useRef<HTMLTextAreaElement>(null);
   const currentRevision = workspace?.current_revision;
+  const identityReviewReady = storyGraph?.status === 'complete'
+    && storyGraph.chunk_complete === storyGraph.chunk_total
+    && storyGraph.chunks.every(chunk => chunk.state === 'complete');
   const dirty = useMemo(() => !!workspace && !!currentRevision && text !== currentRevision.source_text, [workspace, currentRevision, text]);
   const importPreview = ui.importPreview;
   const retainedStyleOption = (snapshotId?: string) => snapshotId && !styleSelections.some(selection => selection.snapshot_id === snapshotId) ? <option value={snapshotId}>Previously selected snapshot · {snapshotId} · currently unavailable</option> : null;
@@ -107,12 +111,16 @@ export default function StoryPage() {
     const value = await getStoryWorkspace(id); installWorkspace(value, forceServer);
     if (value.current_revision) await loadHistory(id);
   }, [installWorkspace, loadHistory]);
-  const loadGraph = useCallback(async () => {
+  const loadGraph = useCallback(async (preserveDrafts = false) => {
+    graphSearchVersion.current += 1;
+    setGraphSearch(null);
     if (!workspace || !currentRevision) { setStoryGraph(null); return; }
     try {
       const graph = await getStoryGraph(idOf(workspace), currentRevision.revision_id);
       setStoryGraph(graph);
-      setGraphDrafts(Object.fromEntries(graph.records.map(record => [record.record_id, { name: record.name, detail: record.detail, status: record.status }])));
+      setGraphSearch(null);
+      setGraphDrafts(current => Object.fromEntries(graph.records.map(record => [record.record_id,
+        preserveDrafts && current[record.record_id] ? current[record.record_id] : { name: record.name, detail: record.detail, status: record.status }])));
     } catch (e) {
       if ((e as Error & { status?: number }).status === 404) setStoryGraph(null);
       else setError(`Could not load the source graph: ${(e as Error).message}`);
@@ -133,10 +141,14 @@ export default function StoryPage() {
     finally { setGraphBusy(false); }
   };
   const searchGraph = async () => {
-    if (!workspace || !currentRevision || !storyGraph || !graphQuery.trim() || graphSearchBusy) return;
+    if (!workspace || !currentRevision || !storyGraph || graphBusy || !graphQuery.trim() || graphSearchBusy) return;
+    const version = graphSearchVersion.current;
     setGraphSearchBusy(true); setError('');
-    try { setGraphSearch(await searchStoryGraph(idOf(workspace), currentRevision.revision_id, graphQuery)); }
-    catch (e) { setError(`Graph search failed: ${(e as Error).message}`); }
+    try {
+      const result = await searchStoryGraph(idOf(workspace), currentRevision.revision_id, graphQuery);
+      if (version === graphSearchVersion.current) setGraphSearch(result);
+    }
+    catch (e) { if (version === graphSearchVersion.current) setError(`Graph search failed: ${(e as Error).message}`); }
     finally { setGraphSearchBusy(false); }
   };
   const saveGraphRecord = async (recordId: string) => {
@@ -156,6 +168,29 @@ export default function StoryPage() {
       setNotice('Graph record saved as user-authored review. Its original evidence remains attached.');
     } catch (e) { setError(`Could not save graph review: ${(e as Error).message}`); }
     finally { setGraphBusy(false); }
+  };
+  const reviewIdentity = async (candidate: NonNullable<StoryGraph['identity_candidates']>[number], action: 'alias'|'distinct'|'undo') => {
+    if (!workspace || !storyGraph || graphBusy) return;
+    graphSearchVersion.current += 1;
+    setGraphSearch(null);
+    setGraphBusy(true); setError('');
+    try {
+      await decideStoryGraphIdentity(idOf(workspace), { snapshot_id: storyGraph.snapshot_id,
+        left_record_id: candidate.left_record_id, right_record_id: candidate.right_record_id,
+        action, idempotency_key: crypto.randomUUID(), expected_head: storyGraph.decision_head || 0,
+        left_fingerprint: candidate.left_fingerprint, right_fingerprint: candidate.right_fingerprint,
+        ...(action === 'undo' && candidate.review ? { target_decision_id: candidate.review.decision_id } : {}) });
+      const refreshed = await getStoryGraph(idOf(workspace), storyGraph.source_revision_id);
+      graphSearchVersion.current += 1;
+      setStoryGraph(refreshed);
+      setGraphDrafts(prev => Object.fromEntries(refreshed.records.map(record => [record.record_id,
+        prev[record.record_id] || { name: record.name, detail: record.detail, status: record.status }])));
+      setNotice(action === 'undo' ? 'Identity review undone.' : action === 'alias' ? 'Entities marked as the same; their records remain separate.' : 'Entities marked as distinct.');
+    } catch (e) {
+      const status = (e as Error & {status?:number}).status;
+      setError(status === 409 ? 'Identity review changed or became stale. Refresh the graph before trying again.' : `Identity review failed: ${(e as Error).message}`);
+      if (status === 409) await loadGraph(true);
+    } finally { setGraphBusy(false); }
   };
   const finishCreation = useCallback(async (result: StoryCreation, pendingHint?: PendingCreate) => {
     const created = normalizeWorkspace(result.workspace);
@@ -384,8 +419,28 @@ export default function StoryPage() {
         <section className="card story-graph" aria-label="Source-linked story graph">
           <div className="story-panel-title"><div><h2>Story graph</h2><p>{storyGraph ? `Snapshot ${storyGraph.snapshot_id} · source ${storyGraph.source_revision_id} · ${storyGraph.chunk_complete}/${storyGraph.chunk_total} chunks processed` : 'Extract reviewable entities, facts, events, time and relationships from every source chunk.'}</p></div><div className="story-editor-actions"><button className="quiet-button" onClick={() => void loadGraph()} disabled={!workspace || graphBusy}>Refresh graph</button><button className="generate-button" onClick={() => void generateGraph()} disabled={!workspace || !currentRevision || dirty || graphBusy}>{graphBusy ? 'Processing…' : storyGraph?.status === 'processing' ? 'Check/recover graph' : storyGraph?.chunks.some(chunk => chunk.state === 'failed') ? 'Retry failed chunks' : storyGraph?.status === 'partial' ? 'Check partial graph' : storyGraph ? 'Recheck graph' : 'Generate graph'}</button></div></div>
           <p className="graph-disclosure">Graph records retain exact source quotes and revision-bound spans. Cited character coverage helps locate uncited passages; it does not prove semantic completeness. Cross-chunk contradictions still need review.</p>
-          {storyGraph && (storyGraph.identity_candidates ?? []).length > 0 && <section className="graph-disclosure" aria-label="Possible cross-chunk name variants"><b>Possible name variants · suggestions only</b><p>These lexical suggestions come from different source chunks. They are not confirmed aliases; records, links and evidence have not been merged.</p><div className="graph-records">{(storyGraph.identity_candidates ?? []).map(candidate => <article className="graph-record" key={`${candidate.left_record_id}:${candidate.right_record_id}`}><b>{candidate.left_name} ↔ {candidate.right_name}</b><span>{candidate.left_type} · possible name variant</span>{candidate.left_evidence[0] && <blockquote><q>{candidate.left_evidence[0].quote}</q><small>{candidate.left_evidence[0].chunk_id} · {candidate.left_evidence[0].start_codepoint}:{candidate.left_evidence[0].end_codepoint}</small></blockquote>}{candidate.right_evidence[0] && <blockquote><q>{candidate.right_evidence[0].quote}</q><small>{candidate.right_evidence[0].chunk_id} · {candidate.right_evidence[0].start_codepoint}:{candidate.right_evidence[0].end_codepoint}</small></blockquote>}</article>)}</div></section>}
-          {storyGraph && <div className="graph-disclosure"><label htmlFor="graph-search-query">Find a person, event or fact</label><div className="story-editor-actions"><input id="graph-search-query" value={graphQuery} onChange={event => setGraphQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') void searchGraph(); }} placeholder="Search graph keywords" maxLength={200}/><button className="quiet-button" onClick={() => void searchGraph()} disabled={!graphQuery.trim() || graphSearchBusy}>{graphSearchBusy ? 'Searching…' : 'Search graph'}</button></div>{graphSearch?.snapshot_id === storyGraph.snapshot_id && <section className="graph-records" aria-live="polite"><b>{graphSearch.match_count} keyword matches</b><small>Literal keyword search · related records are one relationship hop away.</small>{graphSearch.matches.length ? graphSearch.matches.map(match => { const neighborhood = graphSearch.neighborhoods.find(item => item.match_record_id === match.record_id)?.records || []; return <article className="graph-record" key={match.record_id}><b>{match.kind} · {match.name}</b><span>{match.detail || match.predicate || match.type}</span>{match.evidence[0] && <q>{match.evidence[0].quote}</q>}{neighborhood.length > 0 && <small>Connected: {neighborhood.map(record => record.name).join(' · ')}</small>}</article>; }) : <p>No graph records match all search words.</p>}</section>}</div>}
+          {storyGraph && (storyGraph.identity_candidates ?? []).length > 0 && <section className="graph-disclosure" aria-label="Possible cross-chunk name variants"><b>Possible name variants · suggestions only</b><p>Review decisions apply to this source snapshot. Records, links and evidence remain separate.</p>{!identityReviewReady && <p role="status">Complete every graph chunk before reviewing identity suggestions.</p>}<div className="graph-records">{(storyGraph.identity_candidates ?? []).map(candidate => <article className="graph-record" key={`${candidate.left_record_id}:${candidate.right_record_id}`}><b>{candidate.left_name} ↔ {candidate.right_name}</b><span>{candidate.left_type} · {candidate.review ? `Reviewed: ${candidate.review.action}` : 'Suggested match'}</span>{candidate.left_evidence[0] && <blockquote><q>{candidate.left_evidence[0].quote}</q><small>{candidate.left_evidence[0].chunk_id} · {candidate.left_evidence[0].start_codepoint}:{candidate.left_evidence[0].end_codepoint}</small></blockquote>}{candidate.right_evidence[0] && <blockquote><q>{candidate.right_evidence[0].quote}</q><small>{candidate.right_evidence[0].chunk_id} · {candidate.right_evidence[0].start_codepoint}:{candidate.right_evidence[0].end_codepoint}</small></blockquote>}<div className="story-editor-actions"><button className="quiet-button" onClick={() => void reviewIdentity(candidate, 'alias')} disabled={graphBusy || !identityReviewReady}>Same person</button><button className="quiet-button" onClick={() => void reviewIdentity(candidate, 'distinct')} disabled={graphBusy || !identityReviewReady}>Different people</button>{candidate.review && <button className="text-button" onClick={() => void reviewIdentity(candidate, 'undo')} disabled={graphBusy || !identityReviewReady}>Undo review</button>}</div></article>)}</div></section>}
+          {storyGraph && <div className="graph-disclosure">
+            <label htmlFor="graph-search-query">Find a person, event or fact</label>
+            <div className="story-editor-actions">
+              <input id="graph-search-query" value={graphQuery} disabled={graphBusy} onChange={event => setGraphQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !graphBusy) void searchGraph(); }} placeholder="Search graph keywords" maxLength={200}/>
+              <button className="quiet-button" onClick={() => void searchGraph()} disabled={graphBusy || !graphQuery.trim() || graphSearchBusy}>{graphSearchBusy ? 'Searching…' : 'Search graph'}</button>
+            </div>
+            {graphSearch?.snapshot_id === storyGraph.snapshot_id && <section className="graph-records" aria-live="polite">
+              <b>{graphSearch.match_count} keyword matches</b><small>Literal keyword search · related records are one relationship hop away.</small>
+              {graphSearch.matches.length ? graphSearch.matches.map(match => {
+                const context = graphSearch.neighborhoods.find(item => item.match_record_id === match.record_id);
+                const neighborhood = context?.records || [];
+                const hasAcceptedAliases = (context?.alias_member_ids?.length || 0) > 1 && (context?.alias_provenance?.length || 0) > 0;
+                return <article className="graph-record" key={match.record_id}>
+                  <b>{match.kind} · {match.name}</b><span>{match.detail || match.predicate || match.type}</span>
+                  {match.evidence[0] && <q>{match.evidence[0].quote}</q>}
+                  {hasAcceptedAliases && <small>Accepted aliases: {context!.alias_member_ids!.map(id => storyGraph.records.find(row => row.record_id === id)?.name || id).join(' · ')} · evidence {context!.alias_provenance!.map(item => item.decision_id).join(', ')}</small>}
+                  {neighborhood.length > 0 && <small>Connected: {neighborhood.map(record => record.name).join(' · ')}</small>}
+                </article>;
+              }) : <p>No graph records match all search words.</p>}
+            </section>}
+          </div>}
           {storyGraph && <><div className="story-editor-foot"><span>{storyGraph.status} · {storyGraph.coverage_state}</span><small>Contradictions: {storyGraph.contradiction_state} · {storyGraph.provider}{storyGraph.model ? ` / ${storyGraph.model}` : ''}</small></div><div className="graph-disclosure">Source text with evidence: {storyGraph.source_span_coverage.cited_chars.toLocaleString()} / {storyGraph.source_span_coverage.source_chars.toLocaleString()} characters ({storyGraph.source_span_coverage.percent}%). {storyGraph.source_span_coverage.uncovered_range_count.toLocaleString()} uncited ranges.</div>{storyGraph.source_span_coverage.uncovered_ranges.length > 0 && <details><summary>Review uncited passages{storyGraph.source_span_coverage.uncovered_ranges_omitted ? ` · first ${storyGraph.source_span_coverage.uncovered_ranges.length} of ${storyGraph.source_span_coverage.uncovered_range_count}` : ''}</summary><ol>{storyGraph.source_span_coverage.uncovered_ranges.map(range => <li key={`${range.start_codepoint}-${range.end_codepoint}`}><small>{range.start_codepoint}:{range.end_codepoint}</small><blockquote>{range.preview}{range.end_codepoint - range.start_codepoint > Array.from(range.preview).length ? '…' : ''}</blockquote></li>)}</ol></details>}<div className="graph-chunks">{storyGraph.chunks.map(chunk => <span key={chunk.chunk_id} title={chunk.error_message || ''}>{chunk.chunk_id}: {chunk.state}</span>)}</div><div className="graph-records">{storyGraph.records.map(record => { const draft = graphDrafts[record.record_id] || { name: record.name, detail: record.detail, status: record.status }; const entityLabel = (id?: string | null) => storyGraph.records.find(candidate => candidate.record_id === id)?.name || id; return <article className="graph-record" key={record.record_id}><div className="graph-record-heading"><b>{record.kind} · {record.type}</b><small>{record.status}{record.confidence == null ? '' : ` · ${Math.round(record.confidence * 100)}%`}</small></div><label>Record<input disabled={graphBusy} value={draft.name} onChange={event => setGraphDrafts(prev => ({ ...prev, [record.record_id]: { ...draft, name: event.target.value } }))}/></label><label>Notes<input disabled={graphBusy} value={draft.detail} onChange={event => setGraphDrafts(prev => ({ ...prev, [record.record_id]: { ...draft, name: draft.name, detail: event.target.value } }))}/></label><label>Review status<select disabled={graphBusy} value={draft.status} onChange={event => setGraphDrafts(prev => ({ ...prev, [record.record_id]: { ...draft, status: event.target.value as StoryGraphRecord['status'] } }))}><option value="source_supported">Source supported</option><option value="inferred">Inferred</option><option value="user_authored">User authored</option><option value="unresolved">Unresolved</option></select></label>{record.predicate && <p>{entityLabel(record.subject_id)} —{record.predicate}→ {entityLabel(record.object_id)}</p>}{record.evidence.map((evidence, index) => <blockquote key={`${evidence.chunk_id}-${index}`}><q>{evidence.quote}</q><small>{evidence.source_revision_id} · {evidence.start_codepoint}:{evidence.end_codepoint} · {evidence.chunk_id}</small></blockquote>)}<button className="quiet-button" onClick={() => void saveGraphRecord(record.record_id)} disabled={graphBusy}>Save review</button></article>; })}{!storyGraph.records.length && storyGraph.status === 'complete' && <p>No graph records were returned for this revision.</p>}</div></>}
         </section>
         {storageWarning && <div className="notice notice-warn" role="alert">Browser storage is unavailable or full. Drafts may not survive reload; download a text copy now. <button className="text-button" onClick={downloadDraft}>Download draft text</button></div>}

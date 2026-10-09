@@ -61,6 +61,200 @@ class StoryGraphTests(unittest.TestCase):
         result = b"".join(self.app(environ, lambda status, headers: result_status.append(status)))
         return result_status[0], json.loads(result)
 
+    def graph_with_alias_pair(self):
+        graph = self.story.build_story_graph(workspace_id=self.workspace, source_revision_id=self.revision,
+            idempotency_key=str(uuid.uuid4()), provider_call=lambda **kwargs: self.app_provider(**kwargs))
+        rows = sorted(graph["chunks"], key=lambda row: row["chunk_index"])
+        quote = "Mira keeps the key."
+        db = self.ledger._connect()
+        try:
+            ids = ("entity-alias-long", "entity-alias-short", "entity-alias-full")
+            names = ("Mira Sen", "Mira", "Mira Sen Kapoor")
+            for record_id, name, chunk in zip(ids, names, rows[:3]):
+                start = self.source.find(quote, chunk["start_codepoint"], chunk["end_codepoint"])
+                db.execute("INSERT INTO story_graph_records(record_id,snapshot_id,kind,type,name,detail,status,properties_json) VALUES(?,?,?,?,?,?,?,?)",
+                    (record_id,graph["snapshot_id"],"entity","character",name,"", "source_supported", "{}"))
+                db.execute("INSERT INTO story_graph_evidence(record_id,source_revision_id,source_sha256,chunk_id,start_codepoint,end_codepoint,quote) VALUES(?,?,?,?,?,?,?)",
+                    (record_id,self.revision,graph["source_sha256"],chunk["chunk_id"],start,start+len(quote),quote))
+            original = next(row["record_id"] for row in graph["records"] if row["kind"] == "entity" and row["type"] == "object")
+            db.execute("INSERT INTO story_graph_records(record_id,snapshot_id,kind,type,name,detail,subject_id,object_id,predicate,status,properties_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                ("relation-alias-test",graph["snapshot_id"],"relation","story_relation","Mira Sen holds key","",ids[0],original,"holds","source_supported","{}"))
+            db.execute("INSERT INTO story_graph_records(record_id,snapshot_id,kind,type,name,detail,subject_id,object_id,predicate,status,properties_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                ("relation-alias-side",graph["snapshot_id"],"relation","story_relation","Mira returns key","",ids[1],original,"returns","source_supported","{}"))
+            db.commit()
+        finally: db.close()
+        return self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+
+    def app_provider(self, **kwargs):
+        # Use the fixture's deterministic provider without invoking a live model.
+        prompt = kwargs["prompt"]
+        if "GRAPH RECORDS (JSON):\n" in prompt:
+            records = json.loads(prompt.split("GRAPH RECORDS (JSON):\n",1)[1])
+            cited=[r["record_id"] for r in records if r["kind"] in {"event","fact"}]
+            return {"model":"fake-model","scenes":[]}
+        chunk=json.loads(prompt.split("CHUNK TEXT (JSON):\n",1)[1]); quote="Mira keeps the key."; start=chunk.index(quote); end=start+len(quote)
+        return {"model":"fake-model","records":[
+            {"kind":"entity","type":"character","name":"Mira","detail":"","start":start,"end":end,"quote":quote,"status":"source_supported"},
+            {"kind":"entity","type":"object","name":"key","detail":"","start":start,"end":end,"quote":quote,"status":"source_supported"},
+            {"kind":"fact","type":"possession","name":"Mira keeps the key","detail":"Mira possesses the key.","start":start,"end":end,"quote":quote,"status":"source_supported"},
+            {"kind":"event","type":"action","name":"Mira keeps the key","detail":"","start":start,"end":end,"quote":quote,"status":"source_supported"}]}
+
+    def test_identity_alias_persists_expands_search_and_undo_keeps_graph_rows(self):
+        graph = self.graph_with_alias_pair()
+        pair = next(item for item in graph["identity_candidates"] if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-long","entity-alias-short"})
+        before = {r["record_id"]:(r["evidence"],r["subject_id"],r["object_id"]) for r in graph["records"]}
+        body = {"snapshot_id":graph["snapshot_id"],"left_record_id":pair["left_record_id"],"right_record_id":pair["right_record_id"],"action":"alias","idempotency_key":str(uuid.uuid4()),"expected_head":0,"left_fingerprint":pair["left_fingerprint"],"right_fingerprint":pair["right_fingerprint"]}
+        distinct = dict(body,action="distinct",idempotency_key=str(uuid.uuid4()))
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",distinct)
+        self.assertEqual(status,"201 Created")
+        body["expected_head"] = 1
+        status, accepted = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",body)
+        self.assertEqual(status,"201 Created")
+        status, replay = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",body)
+        self.assertEqual(status,"201 Created"); self.assertTrue(replay["replayed"])
+        reloaded = self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+        self.assertEqual(reloaded["decision_head"],2)
+        search = self.story.search_story_graph(workspace_id=self.workspace,query="Mira Sen")
+        neighborhood = next(item for item in search["neighborhoods"] if item["match_record_id"]=="entity-alias-long")
+        self.assertIn("entity-alias-short",neighborhood["alias_member_ids"])
+        self.assertIn(accepted["decision_id"],[item["decision_id"] for item in neighborhood["alias_provenance"]])
+        self.assertIn("relation-alias-test",[item["record_id"] for item in neighborhood["records"]])
+        after = {r["record_id"]:(r["evidence"],r["subject_id"],r["object_id"]) for r in reloaded["records"]}
+        self.assertEqual(before,after)
+        undo = dict(body,action="undo",idempotency_key=str(uuid.uuid4()),expected_head=2,target_decision_id=accepted["decision_id"])
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",undo)
+        self.assertEqual(status,"201 Created")
+        after_undo = self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+        self.assertFalse(any("entity-alias-long" in group for group in after_undo["alias_groups"]))
+        self.assertEqual(before,{r["record_id"]:(r["evidence"],r["subject_id"],r["object_id"]) for r in after_undo["records"]})
+        stale_head = dict(body,idempotency_key=str(uuid.uuid4()),expected_head=0)
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",stale_head)
+        self.assertEqual(status,"409 Conflict")
+        self.story.update_story_graph_record(workspace_id=self.workspace,record_id="entity-alias-long",name="Mira Sen Renamed",detail="")
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",dict(body,idempotency_key=str(uuid.uuid4()),expected_head=3))
+        self.assertEqual(status,"409 Conflict")
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",dict(body,left_record_id="entity-alias-long",right_record_id="entity-alias-long",idempotency_key=str(uuid.uuid4()),expected_head=3))
+        self.assertEqual(status,"422 Unprocessable Entity")
+
+    def test_transitive_alias_group_rejects_conflicting_distinct_and_foreign_snapshot(self):
+        graph = self.graph_with_alias_pair()
+        candidates = graph["identity_candidates"]
+        ab = next(item for item in candidates if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-long","entity-alias-short"})
+        ac = next(item for item in candidates if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-long","entity-alias-full"})
+        bc = next(item for item in candidates if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-short","entity-alias-full"})
+        def payload(pair, action, head):
+            return {"snapshot_id":graph["snapshot_id"],"left_record_id":pair["left_record_id"],"right_record_id":pair["right_record_id"],"action":action,"idempotency_key":str(uuid.uuid4()),"expected_head":head,"left_fingerprint":pair["left_fingerprint"],"right_fingerprint":pair["right_fingerprint"]}
+        status,_=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",payload(ab,"alias",0)); self.assertEqual(status,"201 Created")
+        status,_=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",payload(ac,"alias",1)); self.assertEqual(status,"201 Created")
+        status,_=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",payload(bc,"distinct",2)); self.assertEqual(status,"409 Conflict")
+        foreign=payload(ab,"alias",2)
+        other=self.story.create_workspace(title="Other story",source_text="Different source.")["workspace_id"]
+        status,_=self.call("POST",f"/api/story/workspaces/{other}/graph/identity-decisions",foreign); self.assertEqual(status,"404 Not Found")
+
+    def test_undo_cannot_reactivate_distinct_pair_inside_transitive_alias_group(self):
+        graph = self.graph_with_alias_pair()
+        candidates = graph["identity_candidates"]
+        pairs = {frozenset((item["left_record_id"], item["right_record_id"])): item for item in candidates}
+        ab_ids = frozenset(("entity-alias-long", "entity-alias-short"))
+        ac_ids = frozenset(("entity-alias-long", "entity-alias-full"))
+        bc_ids = frozenset(("entity-alias-short", "entity-alias-full"))
+        def payload(pair, action, head, target=None):
+            return {"snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+                "right_record_id": pair["right_record_id"], "action": action,
+                "idempotency_key": str(uuid.uuid4()), "expected_head": head,
+                "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"],
+                **({"target_decision_id": target} if target else {})}
+        def send(body):
+            return self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", body)
+        status, distinct = send(payload(pairs[ab_ids], "distinct", 0)); self.assertEqual(status, "201 Created")
+        status, alias_ab = send(payload(pairs[ab_ids], "alias", 1)); self.assertEqual(status, "201 Created")
+        status, _ = send(payload(pairs[ac_ids], "alias", 2)); self.assertEqual(status, "201 Created")
+        status, _ = send(payload(pairs[bc_ids], "alias", 3)); self.assertEqual(status, "201 Created")
+        status, response = send(payload(pairs[ab_ids], "undo", 4, alias_ab["decision_id"]))
+        self.assertEqual(status, "409 Conflict")
+        self.assertIn("distinct decision", response["error"]["message"])
+        refreshed = self.story.get_story_graph(workspace_id=self.workspace, snapshot_id=graph["snapshot_id"])
+        self.assertEqual(refreshed["decision_head"], 4)
+        self.assertNotIn(distinct["decision_id"], [item["decision_id"] for item in refreshed["identity_decisions"] if item["active"]])
+
+    def test_search_provenance_keeps_active_alias_beyond_history_limit(self):
+        graph = self.graph_with_alias_pair()
+        pair = next(item for item in graph["identity_candidates"]
+            if {item["left_record_id"], item["right_record_id"]} == {"entity-alias-long", "entity-alias-short"})
+        status, accepted = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", {
+            "snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+            "right_record_id": pair["right_record_id"], "action": "alias", "idempotency_key": str(uuid.uuid4()),
+            "expected_head": 0, "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"]})
+        self.assertEqual(status, "201 Created")
+        db = self.ledger._connect()
+        try:
+            left_id, right_id = sorted((pair["left_record_id"], pair["right_record_id"]))
+            for index in range(100):
+                db.execute("INSERT INTO story_graph_identity_decisions(decision_id,workspace_id,snapshot_id,left_record_id,right_record_id,action,left_fingerprint,right_fingerprint,idempotency_key,request_hash,expected_head) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                    (f"irrelevant-{index}", self.workspace, graph["snapshot_id"], left_id, right_id,
+                     "distinct", "stale", "stale", f"unused-key-{index}", "stale", index + 1))
+            db.commit()
+        finally:
+            db.close()
+        search = self.story.search_story_graph(workspace_id=self.workspace, query="Mira Sen")
+        neighborhood = next(item for item in search["neighborhoods"] if item["match_record_id"] == "entity-alias-long")
+        self.assertIn("entity-alias-short", neighborhood["alias_member_ids"])
+        self.assertIn(accepted["decision_id"], [item["decision_id"] for item in neighborhood["alias_provenance"]])
+
+    def test_entity_edit_makes_prior_alias_stale_for_search(self):
+        graph=self.graph_with_alias_pair()
+        pair=next(item for item in graph["identity_candidates"] if {item["left_record_id"],item["right_record_id"]}=={"entity-alias-long","entity-alias-short"})
+        status,accepted=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",{
+            "snapshot_id":graph["snapshot_id"],"left_record_id":pair["left_record_id"],"right_record_id":pair["right_record_id"],
+            "action":"alias","idempotency_key":str(uuid.uuid4()),"expected_head":0,
+            "left_fingerprint":pair["left_fingerprint"],"right_fingerprint":pair["right_fingerprint"]})
+        self.assertEqual(status,"201 Created")
+        self.story.update_story_graph_record(workspace_id=self.workspace,record_id="entity-alias-long",name="Renamed entity",detail="")
+        refreshed=self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+        self.assertFalse(any("entity-alias-long" in group for group in refreshed["alias_groups"]))
+        stale=next(item for item in refreshed["identity_decisions"] if item["decision_id"]==accepted["decision_id"])
+        self.assertTrue(stale["stale"]); self.assertFalse(stale["active"])
+
+    def test_relation_search_expands_alias_endpoints_and_their_incident_relations(self):
+        graph = self.graph_with_alias_pair()
+        unreviewed = self.story.search_story_graph(workspace_id=self.workspace, query="holds")
+        ordinary = next(item for item in unreviewed["neighborhoods"] if item["match_record_id"] == "relation-alias-test")
+        self.assertEqual(ordinary["alias_member_ids"], [])
+        pair = next(item for item in graph["identity_candidates"]
+            if {item["left_record_id"], item["right_record_id"]} == {"entity-alias-long", "entity-alias-short"})
+        status, _ = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", {
+            "snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+            "right_record_id": pair["right_record_id"], "action": "alias",
+            "idempotency_key": str(uuid.uuid4()), "expected_head": 0,
+            "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"]})
+        self.assertEqual(status, "201 Created")
+        result = self.story.search_story_graph(workspace_id=self.workspace, query="holds")
+        neighborhood = next(item for item in result["neighborhoods"] if item["match_record_id"] == "relation-alias-test")
+        related = {item["record_id"] for item in neighborhood["records"]}
+        self.assertIn("entity-alias-short", related)
+        self.assertIn("relation-alias-side", related)
+
+    def test_identity_decision_rejects_partial_snapshot_and_malformed_ids(self):
+        graph = self.graph_with_alias_pair()
+        pair = next(item for item in graph["identity_candidates"]
+            if {item["left_record_id"], item["right_record_id"]} == {"entity-alias-long", "entity-alias-short"})
+        body = {"snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+            "right_record_id": pair["right_record_id"], "action": "alias", "idempotency_key": str(uuid.uuid4()),
+            "expected_head": 0, "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"]}
+        db = self.ledger._connect()
+        try:
+            db.execute("UPDATE story_graph_snapshots SET status='partial', chunk_complete=0 WHERE snapshot_id=?", (graph["snapshot_id"],))
+            db.execute("UPDATE story_graph_chunks SET state='pending' WHERE snapshot_id=? AND chunk_index=1", (graph["snapshot_id"],))
+            db.commit()
+        finally:
+            db.close()
+        status, response = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", body)
+        self.assertEqual(status, "409 Conflict")
+        self.assertIn("complete graph snapshot", response["error"]["message"])
+        malformed = dict(body, left_record_id=[])
+        status, _ = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", malformed)
+        self.assertEqual(status, "422 Unprocessable Entity")
+
     def test_cross_chunk_name_variant_is_suggested_without_merging_records(self):
         def entity(record_id, name, chunk_id, quote):
             return {"record_id": record_id, "kind": "entity", "type": "character", "name": name,

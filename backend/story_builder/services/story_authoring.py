@@ -208,6 +208,25 @@ class StoryAuthoring:
                     quote TEXT NOT NULL,
                     PRIMARY KEY(record_id,chunk_id,start_codepoint,end_codepoint)
                 );
+                CREATE TABLE IF NOT EXISTS story_graph_identity_decisions (
+                    sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                    decision_id TEXT NOT NULL UNIQUE,
+                    workspace_id TEXT NOT NULL REFERENCES story_workspaces(workspace_id) ON DELETE CASCADE,
+                    snapshot_id TEXT NOT NULL REFERENCES story_graph_snapshots(snapshot_id) ON DELETE CASCADE,
+                    left_record_id TEXT NOT NULL REFERENCES story_graph_records(record_id),
+                    right_record_id TEXT NOT NULL REFERENCES story_graph_records(record_id),
+                    action TEXT NOT NULL CHECK(action IN ('alias','distinct','undo')),
+                    left_fingerprint TEXT NOT NULL,
+                    right_fingerprint TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL UNIQUE,
+                    request_hash TEXT NOT NULL,
+                    expected_head INTEGER NOT NULL,
+                    target_decision_id TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    CHECK(left_record_id < right_record_id)
+                );
+                CREATE INDEX IF NOT EXISTS story_graph_identity_decision_snapshot_idx
+                    ON story_graph_identity_decisions(snapshot_id,sequence);
                 CREATE TABLE IF NOT EXISTS story_screenplay_revisions (
                     screenplay_revision_id TEXT PRIMARY KEY,
                     workspace_id TEXT NOT NULL REFERENCES story_workspaces(workspace_id) ON DELETE CASCADE,
@@ -994,6 +1013,7 @@ class StoryAuthoring:
             rows = db.execute("SELECT * FROM story_graph_records WHERE snapshot_id=? ORDER BY kind,type,name,record_id", (snapshot["snapshot_id"],)).fetchall()
             evidence_rows = db.execute("SELECT * FROM story_graph_evidence WHERE record_id IN (SELECT record_id FROM story_graph_records WHERE snapshot_id=?) ORDER BY chunk_id,start_codepoint", (snapshot["snapshot_id"],)).fetchall()
             chunk_rows = db.execute("SELECT chunk_id,chunk_index,start_codepoint,end_codepoint,state,error_message FROM story_graph_chunks WHERE snapshot_id=? ORDER BY chunk_index", (snapshot["snapshot_id"],)).fetchall()
+            decision_rows = db.execute("SELECT * FROM story_graph_identity_decisions WHERE snapshot_id=? ORDER BY sequence", (snapshot["snapshot_id"],)).fetchall()
         revision = self.get_revision(workspace_id, snapshot["source_revision_id"])
         source_text = revision["source_text"]
         evidence: dict[str, list[dict[str, Any]]] = {}
@@ -1041,7 +1061,17 @@ class StoryAuthoring:
             "uncovered_ranges": [{"start_codepoint": start, "end_codepoint": end,
                 "preview": source_text[start:min(end, start + 160)]} for start, end in shown_gaps],
         }
+        fingerprints = {record["record_id"]: self._graph_identity_fingerprint(record)
+                        for record in records if record["kind"] == "entity"}
+        active_decisions, alias_groups, identity_decisions = self._active_identity_decisions(records, decision_rows, fingerprints)
         identity_candidates = self._graph_identity_candidates(records)
+        for candidate in identity_candidates:
+            left_id, right_id = sorted((candidate["left_record_id"], candidate["right_record_id"]))
+            candidate["left_fingerprint"] = fingerprints[candidate["left_record_id"]]
+            candidate["right_fingerprint"] = fingerprints[candidate["right_record_id"]]
+            current = active_decisions.get((left_id, right_id))
+            candidate["review"] = ({"action": current["action"], "decision_id": current["decision_id"]}
+                                    if current else None)
         return {"snapshot_id": snapshot["snapshot_id"], "idempotency_key": snapshot["idempotency_key"], "workspace_id": workspace_id,
             "source_revision_id": snapshot["source_revision_id"], "source_sha256": snapshot["source_sha256"],
             "status": snapshot["status"], "coverage_state": snapshot["coverage_state"],
@@ -1049,7 +1079,194 @@ class StoryAuthoring:
             "chunk_complete": snapshot["chunk_complete"], "provider": snapshot["provider"], "model": snapshot["model"],
             "semantic_coverage_claim": False, "source_span_coverage": span_coverage,
             "chunks": [dict(row) for row in chunk_rows], "records": records,
-            "identity_candidates": identity_candidates}
+            "identity_candidates": identity_candidates,
+            "decision_head": max((row["sequence"] for row in decision_rows), default=0),
+            "identity_decisions": identity_decisions,
+            "active_identity_decisions": list(active_decisions.values()),
+            "alias_groups": alias_groups}
+
+    def decide_story_graph_identity(self, *, workspace_id: str, snapshot_id: str,
+            left_record_id: str, right_record_id: str, action: str,
+            idempotency_key: str, expected_head: int, left_fingerprint: str | None = None,
+            right_fingerprint: str | None = None, target_decision_id: str | None = None) -> dict[str, Any]:
+        """Append a snapshot-local identity review event; graph rows stay immutable."""
+        workspace_id = _check_workspace_id(workspace_id)
+        if type(snapshot_id) is not str or not snapshot_id or len(snapshot_id) > 200:
+            raise ValueError("snapshot_id must be a valid non-empty identifier.")
+        if (type(left_record_id) is not str or not left_record_id or len(left_record_id) > 200
+                or type(right_record_id) is not str or not right_record_id or len(right_record_id) > 200):
+            raise ValueError("Both record IDs must be valid non-empty identifiers.")
+        if type(action) is not str:
+            raise ValueError("Identity decision action must be text.")
+        if target_decision_id is not None and (type(target_decision_id) is not str or not target_decision_id or len(target_decision_id) > 200):
+            raise ValueError("target_decision_id must be a valid identifier.")
+        key = _check_idempotency_key(idempotency_key)
+        if action not in {"alias", "distinct", "undo"} or type(expected_head) is not int or expected_head < 0:
+            raise ValueError("Invalid identity decision action or expected head.")
+        if left_record_id == right_record_id:
+            raise ValueError("An entity cannot be reviewed against itself.")
+        if action != "undo":
+            if not isinstance(left_fingerprint, str) or not isinstance(right_fingerprint, str):
+                raise ValueError("Current entity fingerprints are required.")
+        fp_by_id = {left_record_id: left_fingerprint, right_record_id: right_fingerprint}
+        left_record_id, right_record_id = sorted((left_record_id, right_record_id))
+        left_fingerprint, right_fingerprint = fp_by_id[left_record_id], fp_by_id[right_record_id]
+        payload = {"workspace_id": workspace_id, "snapshot_id": snapshot_id,
+            "left_record_id": left_record_id, "right_record_id": right_record_id,
+            "action": action, "left_fingerprint": left_fingerprint,
+            "right_fingerprint": right_fingerprint, "expected_head": expected_head,
+            "target_decision_id": target_decision_id}
+        request_hash = hashlib.sha256(self._canonical_json(payload).encode()).hexdigest()
+        with _ledger_connection(self.ledger) as db:
+            db.execute("BEGIN IMMEDIATE")
+            replay = db.execute("SELECT * FROM story_graph_identity_decisions WHERE idempotency_key=?", (key,)).fetchone()
+            if replay:
+                if replay["request_hash"] != request_hash:
+                    raise LedgerConflict("Identity decision key was already used for another action.")
+                return {"decision_id": replay["decision_id"], "sequence": replay["sequence"], "replayed": True}
+            snapshot = db.execute("SELECT snapshot_id,status,chunk_total,chunk_complete FROM story_graph_snapshots WHERE snapshot_id=? AND workspace_id=?", (snapshot_id, workspace_id)).fetchone()
+            if not snapshot:
+                raise LedgerNotFound("Graph snapshot not found in this workspace.")
+            incomplete = db.execute("SELECT COUNT(*) FROM story_graph_chunks WHERE snapshot_id=? AND state!='complete'", (snapshot_id,)).fetchone()[0]
+            if snapshot["status"] != "complete" or snapshot["chunk_complete"] != snapshot["chunk_total"] or incomplete:
+                raise LedgerConflict("Identity decisions require a complete graph snapshot; finish or recover every chunk first.")
+            rows = db.execute("SELECT * FROM story_graph_records WHERE snapshot_id=? AND record_id IN (?,?)", (snapshot_id, left_record_id, right_record_id)).fetchall()
+            by_id = {row["record_id"]: dict(row) for row in rows}
+            if len(by_id) != 2 or any(row["kind"] != "entity" for row in by_id.values()) or by_id[left_record_id]["type"].casefold() != by_id[right_record_id]["type"].casefold():
+                raise ValueError("Choose two same-type entities from this graph snapshot.")
+            evidence_rows = db.execute("SELECT * FROM story_graph_evidence WHERE record_id IN (?,?) ORDER BY chunk_id,start_codepoint", (left_record_id, right_record_id)).fetchall()
+            evidence = {rid: [] for rid in by_id}
+            for ev in evidence_rows:
+                evidence[ev["record_id"]].append({k: ev[k] for k in ("source_revision_id","source_sha256","chunk_id","start_codepoint","end_codepoint","quote")})
+            for rid,row in by_id.items(): row["evidence"] = evidence[rid]
+            fingerprints = {rid:self._graph_identity_fingerprint(row) for rid,row in by_id.items()}
+            if action != "undo" and (fingerprints[left_record_id] != left_fingerprint or fingerprints[right_record_id] != right_fingerprint):
+                raise LedgerConflict("Entity changed since this review was prepared.")
+            head = db.execute("SELECT COALESCE(MAX(sequence),0) FROM story_graph_identity_decisions WHERE snapshot_id=?", (snapshot_id,)).fetchone()[0]
+            if head != expected_head: raise LedgerConflict("Identity decisions changed; refresh and review again.")
+            left, right = sorted((left_record_id, right_record_id))
+            if action == "undo":
+                target = db.execute("SELECT * FROM story_graph_identity_decisions WHERE decision_id=? AND snapshot_id=?", (target_decision_id, snapshot_id)).fetchone()
+                if not target or target["action"] == "undo" or (target["left_record_id"],target["right_record_id"]) != (left,right):
+                    raise ValueError("Undo must target a decision for this pair in this snapshot.")
+                if db.execute("SELECT 1 FROM story_graph_identity_decisions WHERE action='undo' AND target_decision_id=?", (target_decision_id,)).fetchone():
+                    raise LedgerConflict("That decision has already been undone.")
+                left_fingerprint, right_fingerprint = target["left_fingerprint"], target["right_fingerprint"]
+                all_rows = [dict(row) for row in db.execute(
+                    "SELECT * FROM story_graph_identity_decisions WHERE snapshot_id=? ORDER BY sequence", (snapshot_id,))]
+                records = []
+                for row in db.execute("SELECT * FROM story_graph_records WHERE snapshot_id=?", (snapshot_id,)):
+                    value = dict(row)
+                    value["evidence"] = [dict(ev) for ev in db.execute(
+                        "SELECT source_revision_id,source_sha256,chunk_id,start_codepoint,end_codepoint,quote FROM story_graph_evidence WHERE record_id=?", (row["record_id"],))]
+                    records.append(value)
+                current_fp = {r["record_id"]: self._graph_identity_fingerprint(r) for r in records if r["kind"] == "entity"}
+                decisions, _, _ = self._active_identity_decisions(records,
+                    all_rows + [{**dict(target), "sequence": head + 1, "decision_id": "pending-undo",
+                        "action": "undo", "target_decision_id": target_decision_id}], current_fp)
+                parent = {rid: rid for rid in current_fp}
+                def find(x):
+                    while parent[x] != x:
+                        parent[x] = parent[parent[x]]; x = parent[x]
+                    return x
+                for pair, item in decisions.items():
+                    if item["action"] == "alias":
+                        a, b = find(pair[0]), find(pair[1])
+                        if a != b: parent[max(a, b)] = min(a, b)
+                if any(item["action"] == "distinct" and find(pair[0]) == find(pair[1])
+                       for pair, item in decisions.items()):
+                    raise LedgerConflict("Undo would restore a distinct decision inside a transitive alias group.")
+            else:
+                all_rows = db.execute("SELECT * FROM story_graph_identity_decisions WHERE snapshot_id=? ORDER BY sequence", (snapshot_id,)).fetchall()
+                records = []
+                for row in db.execute("SELECT * FROM story_graph_records WHERE snapshot_id=?", (snapshot_id,)):
+                    value = dict(row)
+                    value["evidence"] = [dict(ev) for ev in db.execute("SELECT source_revision_id,source_sha256,chunk_id,start_codepoint,end_codepoint,quote FROM story_graph_evidence WHERE record_id=?", (row["record_id"],))]
+                    records.append(value)
+                current_fp = {r["record_id"]:self._graph_identity_fingerprint(r) for r in records if r["kind"]=="entity"}
+                # A new direct choice supersedes the previous choice for this pair.
+                filtered = [row for row in all_rows if (row["left_record_id"],row["right_record_id"]) != (left,right)]
+                decisions, _, _ = self._active_identity_decisions(records, filtered, current_fp)
+                parent = {rid:rid for rid in current_fp}
+                def find(x):
+                    while parent[x] != x: parent[x] = parent[parent[x]]; x = parent[x]
+                    return x
+                for pair,item in decisions.items():
+                    if item["action"] == "alias":
+                        a,b=find(pair[0]),find(pair[1])
+                        if a != b: parent[max(a,b)] = min(a,b)
+                connected = find(left)==find(right)
+                if action == "alias":
+                    a,b=find(left),find(right)
+                    if a != b: parent[max(a,b)] = min(a,b)
+                    conflict = any(item["action"] == "distinct" and find(pair[0]) == find(pair[1]) for pair,item in decisions.items())
+                else:
+                    conflict = connected
+                if conflict:
+                    raise LedgerConflict("This decision conflicts with the existing transitive alias group.")
+            decision_id = f"graph-id-{uuid.uuid4().hex}"
+            db.execute("INSERT INTO story_graph_identity_decisions(decision_id,workspace_id,snapshot_id,left_record_id,right_record_id,action,left_fingerprint,right_fingerprint,idempotency_key,request_hash,expected_head,target_decision_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                (decision_id,workspace_id,snapshot_id,left,right,action,
+                 left_fingerprint, right_fingerprint,
+                 key,request_hash,expected_head,target_decision_id))
+            sequence = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        return {"decision_id": decision_id, "sequence": sequence, "replayed": False}
+
+    @classmethod
+    def _graph_identity_fingerprint(cls, record: dict[str, Any]) -> str:
+        evidence = sorted((item["source_revision_id"], item["source_sha256"], item["chunk_id"],
+            item["start_codepoint"], item["end_codepoint"], item["quote"])
+            for item in record.get("evidence", []))
+        value = {"record_id": record["record_id"], "kind": record["kind"],
+                 "type": record["type"], "name": record["name"], "evidence": evidence}
+        return hashlib.sha256(cls._canonical_json(value).encode("utf-8")).hexdigest()
+
+    @classmethod
+    def _active_identity_decisions(cls, records, decision_rows, fingerprints):
+        by_id = {record["record_id"]: record for record in records}
+        undone = {row["target_decision_id"] for row in decision_rows if row["action"] == "undo"}
+        latest = {}
+        for row in decision_rows:
+            if row["action"] == "undo" or row["decision_id"] in undone:
+                continue
+            left, right = by_id.get(row["left_record_id"]), by_id.get(row["right_record_id"])
+            if (left is None or right is None or left["kind"] != "entity" or right["kind"] != "entity"
+                    or left["type"].casefold() != right["type"].casefold()
+                    or fingerprints.get(left["record_id"]) != row["left_fingerprint"]
+                    or fingerprints.get(right["record_id"]) != row["right_fingerprint"]):
+                continue
+            key = (row["left_record_id"], row["right_record_id"])
+            latest[key] = {"decision_id": row["decision_id"], "action": row["action"],
+                           "sequence": row["sequence"], "left_record_id": row["left_record_id"],
+                           "right_record_id": row["right_record_id"]}
+        parent = {record_id: record_id for record_id in fingerprints}
+        def find(value):
+            while parent[value] != value:
+                parent[value] = parent[parent[value]]
+                value = parent[value]
+            return value
+        for item in latest.values():
+            if item["action"] == "alias":
+                a, b = find(item["left_record_id"]), find(item["right_record_id"])
+                if a != b:
+                    parent[max(a, b)] = min(a, b)
+        components = {}
+        for record_id in sorted(parent):
+            components.setdefault(find(record_id), []).append(record_id)
+        groups = [members for members in components.values() if len(members) > 1]
+        history = []
+        for row in decision_rows[-100:]:
+            stale = (row["left_record_id"] not in fingerprints or row["right_record_id"] not in fingerprints
+                or fingerprints.get(row["left_record_id"]) != row["left_fingerprint"]
+                or fingerprints.get(row["right_record_id"]) != row["right_fingerprint"])
+            history.append({"decision_id": row["decision_id"], "sequence": row["sequence"],
+                "left_record_id": row["left_record_id"], "right_record_id": row["right_record_id"],
+                "action": row["action"], "target_decision_id": row["target_decision_id"],
+                "stale": stale, "undone": row["decision_id"] in undone,
+                "active": (not stale and not row["action"] == "undo" and row["decision_id"] not in undone
+                    and latest.get((row["left_record_id"], row["right_record_id"]), {}).get("decision_id") == row["decision_id"])})
+        active = {(left, right): item for (left, right), item in latest.items()}
+        return active, groups, history
 
     @staticmethod
     def _graph_identity_candidates(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1131,18 +1348,35 @@ class StoryAuthoring:
             key=lambda item: (-item[0], item[1]["kind"], item[1]["name"], item[1]["record_id"]))[:limit]]
         records_by_id = {record["record_id"]: record for record in graph["records"]}
         relation_records = [record for record in graph["records"] if record["kind"] == "relation"]
+        alias_groups = graph.get("alias_groups", [])
+        active_edges = [item for item in graph.get("active_identity_decisions", []) if item.get("action") == "alias"]
         neighborhoods = []
         for match in matches:
             related_ids: set[str] = set()
+            alias_members: list[str] = []
             if match["kind"] == "entity":
+                alias_members = next((group for group in alias_groups if match["record_id"] in group), [match["record_id"]])
+                related_ids.update(value for value in alias_members if value != match["record_id"])
                 for relation in relation_records:
-                    if match["record_id"] in {relation.get("subject_id"), relation.get("object_id")}:
+                    if {relation.get("subject_id"), relation.get("object_id")} & set(alias_members):
                         related_ids.add(relation["record_id"])
                         related_ids.update(value for value in (relation.get("subject_id"), relation.get("object_id")) if value)
             elif match["kind"] == "relation":
+                endpoints = [value for value in (match.get("subject_id"), match.get("object_id"))
+                    if value in records_by_id and records_by_id[value]["kind"] == "entity"]
+                alias_members = list(dict.fromkeys(member for endpoint in endpoints
+                    for group in alias_groups if endpoint in group for member in group))
                 related_ids.update(value for value in (match.get("subject_id"), match.get("object_id")) if value)
+                related_ids.update(alias_members)
+                for relation in relation_records:
+                    if relation["record_id"] != match["record_id"] and {relation.get("subject_id"), relation.get("object_id")} & set(alias_members):
+                        related_ids.add(relation["record_id"])
+                        related_ids.update(value for value in (relation.get("subject_id"), relation.get("object_id")) if value)
             related_ids.discard(match["record_id"])
-            neighborhoods.append({"match_record_id": match["record_id"],
+            provenance = [item for item in active_edges if item["left_record_id"] in alias_members and item["right_record_id"] in alias_members]
+            neighborhoods.append({"match_record_id": match["record_id"], "alias_member_ids": alias_members,
+                "alias_provenance": [{"decision_id": item["decision_id"], "left_record_id": item["left_record_id"],
+                    "right_record_id": item["right_record_id"]} for item in provenance],
                 "records": [records_by_id[value] for value in sorted(related_ids) if value in records_by_id]})
         return {"snapshot_id": graph["snapshot_id"], "source_revision_id": graph["source_revision_id"],
             "query": query.strip(), "kind": "literal_keyword_search", "match_count": len(scored),

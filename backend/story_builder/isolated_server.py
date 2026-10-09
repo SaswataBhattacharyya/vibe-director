@@ -325,6 +325,14 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         query=(query.get("q") or [""])[0],
                         limit=int((query.get("limit") or [10])[0]))
                     return _json_response(start_response, "200 OK", result)
+                if len(parts) == 3 and parts[1:] == ["graph", "identity-decisions"] and method == "POST":
+                    payload = _read_story_json(environ, story_limit)
+                    return _json_response(start_response, "201 Created", story.decide_story_graph_identity(
+                        workspace_id=workspace_id, snapshot_id=payload.get("snapshot_id"),
+                        left_record_id=payload.get("left_record_id"), right_record_id=payload.get("right_record_id"),
+                        action=payload.get("action"), idempotency_key=payload.get("idempotency_key"),
+                        expected_head=payload.get("expected_head"), left_fingerprint=payload.get("left_fingerprint"),
+                        right_fingerprint=payload.get("right_fingerprint"), target_decision_id=payload.get("target_decision_id")))
                 if len(parts) == 2 and parts[1] == "graph" and method == "GET":
                     query = parse_qs(environ.get("QUERY_STRING", ""))
                     revision_id = (query.get("revision_id") or [None])[0]

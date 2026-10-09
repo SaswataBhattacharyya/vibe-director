@@ -7,6 +7,10 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   let screenplay = null;
   let screenplayHistory = [];
   let delayGraphRefresh = false;
+  let delayGraphSearch = false;
+  let delayIdentityUndo = false;
+  const graphSearchRequests = [];
+  let forceDecisionConflict = false;
   const source = 'Mira keeps the key.\n' + '😀'.repeat(200);
   const revision = { revision_id: 'story-canon-abcdef123456', source_text: source, source_sha256: 'source-hash' };
   const calls = [];
@@ -21,7 +25,21 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
       if (delayGraphRefresh) { delayGraphRefresh = false; await new Promise(resolve => setTimeout(resolve, 350)); }
       return route.fulfill({ json: graph });
     }
-    if (path === '/api/story/workspaces/story-graph/graph/search' && req.method() === 'GET') return route.fulfill({ json: { snapshot_id: graph.snapshot_id, source_revision_id: revision.revision_id, query: url.searchParams.get('q'), kind: 'literal_keyword_search', match_count: 1, matches: [graph.records[0]], neighborhoods: [{ match_record_id: graph.records[0].record_id, records: [graph.records[1]] }] } });
+    if (path === '/api/story/workspaces/story-graph/graph/search' && req.method() === 'GET') {
+      graphSearchRequests.push(url.searchParams.get('q'));
+      const response = { snapshot_id: graph.snapshot_id, source_revision_id: revision.revision_id, query: url.searchParams.get('q'), kind: 'literal_keyword_search', match_count: 1, matches: [graph.records[0]], neighborhoods: [{ match_record_id: graph.records[0].record_id, records: [graph.records[1]], alias_member_ids: graph.alias_groups?.[0] || ['record-1'], alias_provenance: graph.identity_decisions?.filter(item=>item.active).map(item=>({decision_id:item.decision_id,left_record_id:item.left_record_id,right_record_id:item.right_record_id})) || [] }] };
+      if (delayGraphSearch) { delayGraphSearch = false; await new Promise(resolve => setTimeout(resolve, 350)); }
+      return route.fulfill({ json: response });
+    }
+    if (path === '/api/story/workspaces/story-graph/graph/identity-decisions' && req.method() === 'POST') {
+      const body = req.postDataJSON();
+      if (body.action === 'undo' && delayIdentityUndo) { delayIdentityUndo = false; await new Promise(resolve => setTimeout(resolve, 350)); }
+      if (forceDecisionConflict) { forceDecisionConflict = false; graph.decision_head = (graph.decision_head || 0) + 1; return route.fulfill({ status: 409, json: { error: { code: 'conflict', message: 'Changed elsewhere' } } }); }
+      graph.decision_head = (graph.decision_head || 0) + 1;
+      if (body.action === 'undo') { graph.identity_candidates[0].review = null; graph.alias_groups = []; graph.identity_decisions = []; }
+      else { const decision_id=`decision-${graph.decision_head}`; graph.identity_candidates[0].review = { action: body.action, decision_id }; graph.alias_groups = body.action === 'alias' ? [['record-1','record-other']] : []; graph.identity_decisions = [{decision_id,sequence:graph.decision_head,action:body.action,left_record_id:'record-1',right_record_id:'record-other',active:true}]; }
+      return route.fulfill({ status: 201, json: { decision_id: `decision-${graph.decision_head}`, sequence: graph.decision_head, replayed: false } });
+    }
     if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'GET') return screenplay && new URL(req.url()).searchParams.get('revision_id') === screenplay.source_revision_id ? route.fulfill({ json: screenplay }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No screenplay' } } });
     if (path === '/api/story/workspaces/story-graph/screenplay/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf(screenplayHistory.map(item => ({ ...item, stale: item.source_revision_id !== revision.revision_id, accepted: item.accepted === true && item.source_revision_id === revision.revision_id && screenplayHistory.find(candidate => candidate.source_revision_id === item.source_revision_id)?.screenplay_revision_id === item.screenplay_revision_id }))) });
     if (path.startsWith('/api/story/workspaces/story-graph/screenplay/revisions/') && req.method() === 'GET') return route.fulfill({ json: screenplayHistory.find(item => item.screenplay_revision_id === path.split('/').at(-1)) });
@@ -50,9 +68,50 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await expect(page.getByText('story_chunk_0001: complete')).toBeVisible();
   // Older graph API payloads have no identity_candidates field.
   expect(graph.identity_candidates).toBeUndefined();
-  graph.identity_candidates = [{ left_record_id: 'record-1', left_name: 'Mira', left_type: 'character', left_evidence: [{ ...graph.records[0].evidence[0] }], right_record_id: 'record-other', right_name: 'Mira Sen', right_type: 'character', right_evidence: [{ ...graph.records[0].evidence[0], chunk_id: 'story_chunk_0002' }], kind: 'possible_name_variant' }];
+  graph.decision_head = 0;
+  graph.identity_candidates = [{ left_record_id: 'record-1', left_name: 'Mira', left_type: 'character', left_fingerprint: 'fp-left', left_evidence: [{ ...graph.records[0].evidence[0] }], right_record_id: 'record-other', right_name: 'Mira Sen', right_type: 'character', right_fingerprint: 'fp-right', right_evidence: [{ ...graph.records[0].evidence[0], chunk_id: 'story_chunk_0002' }], kind: 'possible_name_variant', review: null }];
   await page.getByRole('button', { name: 'Refresh graph' }).click();
   await expect(page.getByRole('region', { name: 'Possible cross-chunk name variants' })).toContainText('Mira ↔ Mira Sen');
+  graph.status = 'partial'; graph.chunk_complete = 0; graph.chunks[0].state = 'pending';
+  await page.getByRole('button', { name: 'Refresh graph' }).click();
+  await expect(page.getByText('Complete every graph chunk before reviewing identity suggestions.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Same person' })).toBeDisabled();
+  graph.status = 'complete'; graph.chunk_complete = graph.chunk_total; graph.chunks[0].state = 'complete';
+  await page.getByRole('button', { name: 'Refresh graph' }).click();
+  await expect(page.getByRole('button', { name: 'Same person' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Same person' }).click();
+  await expect(page.getByText('Reviewed: alias')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Undo review' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Reviewed: alias')).toBeVisible();
+  await page.getByLabel('Find a person, event or fact').fill('Mira');
+  await page.getByRole('button', { name: 'Search graph' }).click();
+  await expect(page.getByText(/Accepted aliases: Mira · record-other · evidence decision-1/)).toBeVisible();
+  delayGraphSearch = true;
+  await page.getByLabel('Find a person, event or fact').fill('Mira stale search');
+  await page.getByRole('button', { name: 'Search graph' }).click();
+  await page.getByRole('button', { name: 'Undo review' }).click();
+  await expect(page.getByText('Suggested match')).toBeVisible();
+  await page.waitForTimeout(400);
+  await expect(page.getByText(/keyword matches/)).toHaveCount(0);
+  await expect(page.getByText(/Accepted aliases:/)).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('Suggested match')).toBeVisible();
+  await page.getByRole('button', { name: 'Same person' }).click();
+  await expect(page.getByText('Reviewed: alias')).toBeVisible();
+  await page.getByLabel('Find a person, event or fact').fill('before undo');
+  await page.getByRole('button', { name: 'Search graph' }).click();
+  await expect(page.getByText(/Accepted aliases:/)).toBeVisible();
+  const searchesBeforeUndo = graphSearchRequests.length;
+  delayIdentityUndo = true;
+  await page.getByRole('button', { name: 'Undo review' }).click();
+  await expect(page.getByLabel('Find a person, event or fact')).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Search graph' })).toBeDisabled();
+  expect(graphSearchRequests).toHaveLength(searchesBeforeUndo);
+  await expect(page.getByText('Suggested match')).toBeVisible();
+  await expect(page.getByText(/Accepted aliases:/)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Different people' }).click();
+  await expect(page.getByText('Reviewed: distinct')).toBeVisible();
   await page.getByLabel('Find a person, event or fact').fill('Mira');
   await page.getByRole('button', { name: 'Search graph' }).click();
   await expect(page.getByText('1 keyword matches')).toBeVisible();
@@ -65,6 +124,12 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await page.getByLabel('Record').first().fill('Mira, the keeper');
   await page.getByLabel('Notes').first().fill('Reviewed by the writer.');
   await page.getByLabel('Review status').first().selectOption('user_authored');
+  forceDecisionConflict = true;
+  await page.getByRole('button', { name: 'Undo review' }).click();
+  await expect(page.getByRole('alert')).toContainText('Identity review changed');
+  await expect(page.getByLabel('Record').nth(1)).toHaveValue('Unsaved event draft');
+  await expect(page.getByLabel('Record').first()).toHaveValue('Mira, the keeper');
+  await expect(page.getByLabel('Notes').first()).toHaveValue('Reviewed by the writer.');
   await page.getByRole('button', { name: 'Save review' }).first().click();
   await expect(page.getByLabel('Record').first()).toBeDisabled();
   await expect(page.getByLabel('Notes').first()).toBeDisabled();

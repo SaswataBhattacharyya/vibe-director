@@ -1,3 +1,5 @@
+> Current execution: Luna implements issue-sized changes; Sol reviews the milestones in `development_workflow.md`. Modes follow the latest `automation.md`: Assisted manual with none/some/all checked, plus the distinct image-free Fully automated preset.
+
 # Collaboration and issue backlog — Vibe Director
 
 Updated 2026-10-08. All 14 issue specifications are published on GitHub. G1/D1/B1 etc. remain planning IDs; the publication table maps them to GitHub issue numbers.
@@ -17,7 +19,7 @@ Models/ComfyUI are not required for wireframes, mocked UI or API contract work. 
 ## Working rules for Ashu and LLM implementers
 
 - Read [README.md](README.md) and the linked stage plan for the issue. Older migration documents and upstream app flows are reuse evidence, not current requirements.
-- Ashu is the proposed design lead for D issues, with Saswata reviewing. Backend tasks have a proposed implementer, not a permanently exclusive owner. Either collaborator can contribute to either area.
+- Ashu owns UI design for D issues, with Saswata reviewing. The provisional engineering UI does not transfer that ownership; only Saswata’s explicit decision can do so. Backend tasks have a proposed implementer, not a permanently exclusive owner. Either collaborator can contribute to either area.
 - **Design issue:** answer its open questions, provide annotated wireframes/prototype, record decisions and API/state requirements in a PR, and propose bounded implementation follow-ups. Close only after the other collaborator accepts the design. Closing a design issue does not imply production functionality exists.
 - **Implementation issue:** use the accepted design/contracts, identify reused/adapted/new files and demonstrate the user-visible behavior. Split broad work into bounded PRs rather than claim one huge task is surgical.
 - Link each PR to its issue. Either person can merge after the other reviews under the agreed collaboration rule. Keep disagreements and alternatives visible in the issue.
@@ -51,7 +53,7 @@ The old StudioDirector issue is design evidence. This backlog translates useful 
 | [B2: Adapt V2 revisions and build real story edits/graph/screenplay derivation](issues/B2-authoring-screenplay-backend.md) | Backend + UI integration | G2; D2 accepted; deliver in separate bounded PRs |
 | [B3: Adapt image/voice assets and exact FFLF/R2V request compilation](issues/B3-asset-workflow-adapters.md) | Backend + UI integration | G2; D3/D4 accepted; B1 durable execution boundary |
 | [B4: Reuse Media Prep services behind one searchable asset library](issues/B4-media-library-adaptation.md) | Backend + UI integration | G2; D6 accepted |
-| [B5: Implement the three wrappers using the shared execution service](issues/B5-automation-runtime.md) | Backend + UI integration | B1/B3 contracts; B2 screenplay coverage; D5 accepted |
+| [B5: Implement the two modes using the shared execution service](issues/B5-automation-runtime.md) | Backend + UI integration | B1/B3 contracts; B2 screenplay coverage; D5 accepted |
 | [F1: Define final clip assembly, sound and export before selecting tools](issues/F1-assembly-design-later.md) | Later design | Generation/take journey stable; user supplies assembly intent |
 
 ## First milestone and publication order
@@ -87,7 +89,11 @@ Repository: [SaswataBhattacharyya/vibe-director](https://github.com/SaswataBhatt
 | B2 | [#10: [B2] Adapt V2 revisions and build real story edits/graph/screenplay derivation](https://github.com/SaswataBhattacharyya/vibe-director/issues/10) | Pending design/contracts |
 | B3 | [#11: [B3] Adapt image/voice assets and exact FFLF/R2V request compilation](https://github.com/SaswataBhattacharyya/vibe-director/issues/11) | Pending design/contracts |
 | B4 | [#12: [B4] Reuse Media Prep services behind one searchable asset library](https://github.com/SaswataBhattacharyya/vibe-director/issues/12) | Pending design/contracts |
-| B5 | [#13: [B5] Implement the three wrappers using the shared execution service](https://github.com/SaswataBhattacharyya/vibe-director/issues/13) | Pending design/contracts |
+| B5 | [#13: [B5] Implement the two modes using the shared execution service](https://github.com/SaswataBhattacharyya/vibe-director/issues/13) | Pending design/contracts |
 | F1 | [#14: [F1] Define final clip assembly, sound and export before selecting tools](https://github.com/SaswataBhattacharyya/vibe-director/issues/14) | Later design |
 
 Ashu currently has read access as checked during publication. The owner should invite `ashucodesbio` as a collaborator for the requested write/merge participation; public cloning does not require that invitation. Start with #1–#4, then #5 once its designs/contracts are accepted. Do not treat all open issues as simultaneously ready.
+
+## Current implementation and UI ownership
+
+The initial isolated T2V implementation is published in draft PR #15 on `issue-2-isolated-t2v-reuse`; main remains the planning baseline. Read [Ashu UI handoff](ASHU_UI_HANDOFF.md) for actual files, behavior, evidence and unfinished features. All D issues remain open. Historical planning-only publication statements above describe the initial publication, not the current draft branch.

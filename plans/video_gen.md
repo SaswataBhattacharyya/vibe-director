@@ -1,7 +1,7 @@
 # Video generation planning for Story Builder
 
 **Status:** Current product and workflow plan. Use `README.md`, `GLOSSARY.md` and `automation.md` for authoritative decisions, terminology and wrapper behavior.  
-**Position in the journey:** Follows the usable screenplay/clip plan. Visual preparation in `char_world.md` is optional and skippable; Full skips image generation. Selected clip frames, character/world references and assets from the shared library feed compatible workflows when chosen.
+**Position in the journey:** Follows the usable screenplay/clip plan. Visual preparation in `char_world.md` is optional and skippable; Fully automated skips image generation. Selected clip frames, character/world references and assets from the shared library feed compatible workflows when chosen.
 
 ## 1. Goal
 
@@ -190,7 +190,7 @@ If a creative edit changes camera, lighting, mood, action, dialogue, SFX or musi
 
 ## 11. Recommended references and auxiliary library boundary
 
-Show bound character images and voice files at the top of compatible reference pickers as **Recommended**, with character identity and intended role. Manual pickers leave them unselected until explicitly chosen. Semi automated video may select them through its confirmed Director reference policy; voice binding alone does not attach media to a request. Respect the compiler's duplicate-asset constraints; represent one shared voice asset and its intended speaker mappings deliberately when multiple characters use it.
+Show bound character images and voice files at the top of compatible reference pickers as **Recommended**, with character identity and intended role. Assisted manual pickers leave them unselected until explicitly chosen. Assisted manual automated video may select them through its confirmed Director reference policy; voice binding alone does not attach media to a request. Respect the compiler's duplicate-asset constraints; represent one shared voice asset and its intended speaker mappings deliberately when multiple characters use it.
 
 The main Story Builder consumes searchable assets from one shared media library. `media_prep.md` defines the separate auxiliary video/audio/image preparation, annotation and SEO workspaces. Their output contract supplies stable asset ID, media type, playable file, timestamps/duration, JSON metadata, readable description, category/tags and searchable annotation. Store asset links with each take rather than copying shared files. This plan covers selection and compatible request preparation, not auxiliary analysis/training/repertoire workflows.
 
@@ -200,25 +200,29 @@ Uploads selected directly on the video page enter that same managed library/stor
 
 `automation.md` controls which steps run automatically. The wrappers use the same scene/shot/clip records, prompt compiler, reference validator, job state and output store.
 
-Full skips image generation and required manual asset-binding/review gates. Its confirmed recipe starts each scene's first clip with T2V, then uses the immediately preceding generated video as an R2V reference for subsequent clips within that scene. Reset to T2V at every new scene. Initial quality remains fixed; duration is fixed or Director-selected under the confirmed policy. Retain all outputs for the complete story.
+Fully automated skips image generation and required manual asset-binding/review gates. Without a selected direct style video, its recipe starts each scene with T2V and follows with predecessor R2V. With a selected style video, the first clip is R2V using that style reference and later clips retain both style and predecessor roles where the graph supports them. Reset predecessor continuity at every new scene; retain the style selection. See production_styles.md for capacity conflicts and zero-frame video-only behavior. Initial quality remains fixed; duration is fixed or Director-selected under the confirmed policy. Retain all outputs for the complete story.
 
-Keep every generated clip, including a replaced/failed-quality candidate that exists as playable media. Completion does not claim human approval. Record the ordered scene/clip outputs and predecessor links so the complete story has traceable video coverage. Full produces the complete collection of story clips; final-film stitching/mixing is a separate subsequent plan.
+Keep every generated clip, including a replaced/failed-quality candidate that exists as playable media. Completion does not claim human approval. Record the ordered scene/clip outputs and predecessor links so the complete story has traceable video coverage. Fully automated produces the complete collection of story clips; final-film stitching/mixing is a separate subsequent plan.
 
-Manual/Semi **Next** advances to the next planned clip, then the next scene, and finally the scene/clip completion overview; it does not imply a finished-film export. Mode pages support skipping unused image/frame stages, but first/last-frame generation still requires its two images when selected.
+For unchecked video steps in Assisted manual, **Next** advances to the next planned clip, then the next scene, and finally the scene/clip completion overview; it does not imply a finished-film export. Mode pages support skipping unused image/frame stages, but first/last-frame generation still requires its two images when selected.
 
 ## 13. Isolated entry and confirmed automation settings
 
 Directly open any video mode and generate without story, screenplay or previous production stages. Use a user-authored prompt and library/uploaded media; source scene/shot/clip links remain optional. FLF still needs its two images, and R2V still needs its compatible selected references. The backend may use a lightweight workspace identity for storage without imposing story setup. Do not create a separate Generate or Manual Director product page to handle isolated work.
 
-Regular story work passes through `automation.md` after screenplay generation and before final prompts. Manual steps show editable prompts with annotation/Codex microediting and wait for Generate/Next. Semi's Video Generation checkbox authorizes the Director to choose FFLF or R2V and compatible prepared frames/character/voice/world references. R2V can also use the preceding clip within the scene when useful. The existing FFLF graph has no direct voice-reference slot; required voice conditioning favors compatible R2V rather than claiming an unsupported FFLF input.
+Regular story work passes through `automation.md` after screenplay generation and before final prompts. Assisted manual steps show editable prompts with annotation/Codex microediting and wait for Generate/Next. Assisted manual's Video Generation checkbox authorizes the Director to choose FFLF or R2V and compatible prepared frames/character/voice/world references. R2V can also use the preceding clip within the scene when useful. The existing FFLF graph has no direct voice-reference slot; required voice conditioning favors compatible R2V rather than claiming an unsupported FFLF input.
 
-Automatic video confirms quality and all non-duration settings initially, across both workflows. The Director may vary only clip duration under an expressly selected dynamic-duration policy and supported bounds. Otherwise use the confirmed fixed-duration policy. No automatic per-clip quality change or silent downgrade is allowed. Manual generation settings remain editable per request. Status and generation/setup forms share the same verified prompt and parameter limits.
+Automatic video confirms quality and all non-duration settings initially, across both workflows. The Director may vary only clip duration under an expressly selected dynamic-duration policy and supported bounds. Otherwise use the confirmed fixed-duration policy. No automatic per-clip quality change or silent downgrade is allowed. Assisted manual generation settings remain editable per request. Status and generation/setup forms share the same verified prompt and parameter limits.
 
 
 ## 14. Integrated review, recovery and continuity
 
 Apply `ux_shared.md`: native playback/candidate comparison, preserved prompts/references on retake, saved context and direct recovery actions. An offline engine blocks submission while editing and saving remain available. Reopen reconnects to known job IDs; it must not repeat a submission. Optional provider details belong in Advanced, while useful duration/quality/ref controls stay visible.
 
-For previous-video continuation, record completed source spans, intended next action/dialogue, character/location state and what the reference should contribute. Distinguish visual continuity from use of its soundtrack so previous dialogue/action is not unintentionally repeated. Inspect available duration/resolution/audio metadata before using a predecessor; these checks do not guarantee creative continuity. Missing/unusable predecessor pauses with a clear remedy; never silently reset to T2V inside the Full scene chain.
+For previous-video continuation, record completed source spans, intended next action/dialogue, character/location state and what the reference should contribute. Distinguish visual continuity from use of its soundtrack so previous dialogue/action is not unintentionally repeated. Inspect available duration/resolution/audio metadata before using a predecessor; these checks do not guarantee creative continuity. Missing/unusable predecessor pauses with a clear remedy; never silently reset to T2V inside the Fully automated scene chain.
 
 Follow `integration.md` for selected tool reuse. Final assembly/composition is a later stage with its own future plan; it does not add prerequisites to the present isolated or story-linked generation forms.
+
+## Production-style reference recommendations
+
+Use `production_styles.md` for selected style image/audio/video recommendations, controlled video-frame extraction (default two, zero allowed), and the automated style-video R2V exception. Manual pickers in Assisted manual rank compatible selected-style assets highest without auto-selecting them. R2V audio selectors include style audio. Compile actual reference labels and per-reference style intent into the submitted prompt and retain its manifest.

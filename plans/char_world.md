@@ -134,7 +134,7 @@ Voices
   Character | Reference image | Description | Searchable voice selector | Preview | Status
 ```
 
-The three visual pages can be reached in sequence, skipped and revisited independently. Voice assignment is an optional single page after visual preparation, with a persistent character list and clear save state. Full does not wait at these skipped/manual asset stages.
+The three visual pages can be reached in sequence, skipped and revisited independently. Voice assignment is an optional single page after visual preparation, with a persistent character list and clear save state. Fully automated does not wait at these skipped/manual asset stages.
 
 ## 8. Implementation boundaries
 
@@ -179,19 +179,19 @@ This plan describes a clean Story Builder workflow for visual preparation and vo
 
 ## 12. Recommended video references and model-aware prompts
 
-For a character present in the current clip, show its bound voice asset and available character image at the top of compatible video reference pickers under **Recommended**, with the character name and reason. Recommend them together for appearance/voice consistency. Do not select or attach them merely because a binding exists. Semi automated video may select them under its explicitly confirmed reference policy; manual pickers still leave them unselected. The same voice file may remain bound to multiple characters.
+For a character present in the current clip, show its bound voice asset and available character image at the top of compatible video reference pickers under **Recommended**, with the character name and reason. Recommend them together for appearance/voice consistency. Do not select or attach them merely because a binding exists. Assisted manual automated video may select them under its explicitly confirmed reference policy; manual pickers still leave them unselected. The same voice file may remain bound to multiple characters.
 
 The video adapter must reconcile shared voice bindings with the local compiler's duplicate-asset/single-speaker assumptions: attach a shared media file once and represent the intended character mappings explicitly, or expose a supported alternative. Do not promise distinct vocal identities when characters share the same voice source. Unsupported multi-character mapping must be visible rather than silently duplicating the reference slot.
 
-Text-only and first/last workflows must not claim to use these references if they have no compatible input. Show recommendations as unavailable for that workflow with the reason, or let the user explicitly choose reference-to-video. Full mode uses the story-only route described in `automation.md` and does not require character image/voice selection.
+Text-only and first/last workflows must not claim to use these references if they have no compatible input. Show recommendations as unavailable for that workflow with the reason, or let the user explicitly choose reference-to-video. Fully automated mode uses the story-only route described in `automation.md` and does not require character image/voice selection.
 
 Build image prompts for the selected image model/workflow and actual references. Changing model, selected references or generation settings refreshes a reviewable prompt proposal, preserving accepted user edits and lineage. Enforce that model's documented/configured prompt budget (characters, tokens or encoder limit as appropriate); verify the exact model limit during integration rather than inventing one universal image limit. Show usage, and offer meaning-preserving refinement when over budget; never silently truncate. Prompt changes that alter screenplay direction offer **Update screenplay** or **This take only**, using the shared revision/override rules.
 
-## 13. Manual/Semi scheduling and isolated creation
+## 13. Assisted manual scheduling and isolated creation
 
-The post-screenplay Automation & Parameters page defines whether character images, world images, clip-frame images and character-to-audio selection execute manually or automatically. Every selected automatic stage confirms a concrete preset/policy before execution. Manual stages expose the exact editable prompt with annotation/microediting before Generate.
+The post-screenplay Automation & Parameters page defines whether character images, world images, clip-frame images and character-to-audio selection execute manually or automatically. Every selected automatic stage confirms a concrete preset/policy before execution. Assisted manual stages expose the exact editable prompt with annotation/microediting before Generate.
 
-Checking character-to-audio selection authorizes automatic voice binding according to the confirmed library/matching policy. This is distinct from automatically selecting the bound file as a video reference. Unchecked binding is manual; Full skips these image/binding steps. Semi automated video lets the Director choose FFLF or R2V using available prepared assets. Frames support FFLF; character/voice/world references support compatible R2V, where the Director may also choose the preceding clip for continuity. Optional unused images/frames can be skipped.
+Checking character-to-audio selection authorizes automatic voice binding according to the confirmed library/matching policy. This is distinct from automatically selecting the bound file as a video reference. Unchecked binding is manual; Fully automated skips these image/binding steps. Assisted manual automated video lets the Director choose FFLF or R2V using available prepared assets. Frames support FFLF; character/voice/world references support compatible R2V, where the Director may also choose the preceding clip for continuity. Optional unused images/frames can be skipped.
 
 Each image page is also reachable directly for isolated creation. Accept a user-authored character/world/frame description, selected compatible model/settings and optional uploaded/library references without requiring a story or screenplay. Save ordinary asset/prompt provenance; do not invent source scene/character IDs. Generic first/last images can be supplied to an isolated FLF task without a story association. Where no character records exist, voice selection can prepare/reuse voice assets through Media Prep rather than requiring a story character map.
 
@@ -201,3 +201,7 @@ Each image page is also reachable directly for isolated creation. Accept a user-
 Apply `ux_shared.md` to the character/world/frame/voice pages: persistent saved context, thumbnails/playback, prompt/ref details, direct recovery from missing inputs and distinct empty/offline/failed states. Keep manual fields editable/saveable while the generation engine is unavailable. Clearly distinguish optional skipped preparation from missing inputs required by a selected video workflow.
 
 Use `integration.md` for extraction of working Story Builder services and any verified supporting helpers. Retain a single asset library and canonical voice-binding map; do not create an upstream-specific second library or required preparation funnel.
+
+## Style-reference imagery
+
+Recommend selected style images and explicitly exported style-video frames at the top of compatible image-reference selectors; never populate all decoded frames. Export count defaults to two and may be zero. Preserve parent video/timestamp provenance, leave manual recommendations unselected, and distinguish style frames from generated first/last scene endpoints. See `production_styles.md`.

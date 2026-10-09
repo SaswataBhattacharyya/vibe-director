@@ -29,3 +29,14 @@ Inspect Story Builder `frontend/app/src/pages/StoryBuilder.tsx`, `StoryCanvas.ts
 ## Handoff
 
 Link the design/implementation PR, decisions, changed-file provenance and demonstrated evidence. Record unresolved dependencies explicitly. Follow the authoritative plans; ask about a real contradiction instead of reintroducing legacy pages or changing agreed mode policies.
+
+
+## Current implementation and Ashu's next work — 2026-10-08
+
+Ashu owns UI design; the current engineering UI is provisional. Saswata reviews. Design ownership changes only on Saswata's explicit instruction. The project goal is paused; this handoff publishes existing work and does not restart implementation.
+
+Current implementation: no story, graph, or screenplay UI/API is integrated. Story navigation is disabled. A revision/chunking foundation exists only in a local unpublished staging area and has incomplete parent review; do not depend on it as a published API. Ashu should design the merged story/canvas editor, real conversational edit/diff/revision states, graph fact inspection and human-readable holistic screenplay; propose the UI/state contracts for backend issue #10.
+
+Start from branch `issue-2-isolated-t2v-reuse` / [draft PR #15](https://github.com/SaswataBhattacharyya/vibe-director/pull/15), rather than assuming main has the implementation. Read [Ashu's UI handoff](https://github.com/SaswataBhattacharyya/vibe-director/blob/issue-2-isolated-t2v-reuse/plans/ASHU_UI_HANDOFF.md) for exact files, API behavior, preserved recovery/GPU invariants and focused evidence. This issue remains open; provisional code and passing mocks are not design acceptance.
+
+For Codex/Claude: inspect those files and the linked stage plan; answer the issue's design questions, propose annotated layouts/states and API needs, then make bounded UI changes in a separate PR. Preserve saved requests, explicit generation and recovery behavior. Use mocked requests for UI verification; do not launch live generation or rerun the broad legacy test suite.

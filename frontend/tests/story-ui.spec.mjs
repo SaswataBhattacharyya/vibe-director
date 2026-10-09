@@ -1,0 +1,212 @@
+import { test, expect } from '@playwright/test';
+
+const pageOf = (items, offset = 0, total = items.length) => ({ items, limit: 50, offset, total });
+
+test('import preview is editable, explicitly applied, saved as a revision, and reloads without a POST', async ({ page }) => {
+  let workspace = null;
+  const calls = [];
+  await page.route('**/api/story/**', async route => {
+    const req = route.request(), url = new URL(req.url()); calls.push(`${req.method()} ${url.pathname}`);
+    if (url.pathname === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf(workspace ? [{ workspace_id: workspace.workspace_id, title: workspace.title, current_revision_id: workspace.current_revision_id, initialized: true, status: 'ready' }] : []) });
+    if (url.pathname === '/api/story/imports' && req.method() === 'POST') return route.fulfill({ json: { import_id: 'imp-1', filename: 'draft.txt', source_type: 'text/plain', source_sha256: 'abc123', text_sha256: 'def456', text: 'Extracted original\r\ntext', warnings: [], pages: [] } });
+    if (url.pathname === '/api/story/imports/imp-1/apply') {
+      const body = req.postDataJSON();
+      workspace = { workspace_id: 'story-1', title: body.title, current_revision_id: 'rev-1', initialized: true, status: 'ready', current_revision: { revision_id: 'rev-1', source_text: body.source_text } };
+      return route.fulfill({ status: 201, json: { status: 'ready', idempotency_key: body.idempotency_key, request_hash: 'request-hash', workspace: { ...workspace, current_revision: undefined, created_revision: workspace.current_revision } } });
+    }
+    if (url.pathname === '/api/story/workspaces/story-1' && req.method() === 'GET') return route.fulfill({ json: workspace });
+    if (url.pathname === '/api/story/workspaces/story-1/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf(workspace ? [{ revision_id: workspace.current_revision.revision_id, source_sha256: 'sha', revision_number: 1, created_at: 'now' }] : []) });
+    if (url.pathname === '/api/story/workspaces/story-1/revisions' && req.method() === 'POST') {
+      workspace = { ...workspace, current_revision_id: 'rev-2', current_revision: { revision_id: 'rev-2', source_text: req.postDataJSON().source_text } };
+      return route.fulfill({ json: workspace.current_revision });
+    }
+    return route.fulfill({ status: 404, json: { detail: 'Unexpected story API request' } });
+  });
+  await page.goto('/#/story');
+  await page.locator('input[type="file"]').setInputFiles({ name: 'draft.txt', mimeType: 'text/plain', buffer: Buffer.from('fixture') });
+  await expect(page.getByLabel('Editable extracted text')).toHaveValue('Extracted original\ntext');
+  await expect(page.getByText('abc123')).toBeVisible();
+  await expect(page.getByText('def456')).toBeVisible();
+  await expect(page.getByText(/Browser text editing normalizes line endings to LF/)).toBeVisible();
+  expect(calls.some(call => call === 'POST /api/story/imports')).toBeTruthy();
+  expect(calls.some(call => call.includes('/apply'))).toBe(false);
+  await page.getByLabel('Editable extracted text').fill('Edited extracted text');
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('vibe-story-ui-draft-v1') || '{}').importPreview?.text === 'Edited extracted text');
+  await page.reload();
+  await expect(page.getByLabel('Editable extracted text')).toHaveValue('Edited extracted text');
+  expect(calls.some(call => call.includes('/apply'))).toBe(false);
+  await page.getByRole('button', { name: 'Apply import as new workspace' }).click();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Edited extracted text');
+  await page.getByLabel('Story source text').fill('Saved revision text');
+  await page.getByRole('button', { name: 'Save revision' }).click();
+  await expect(page.getByText('New story revision saved.')).toBeVisible();
+  const postsBeforeReload = calls.filter(call => call.startsWith('POST ')).length;
+  await page.reload();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Saved revision text');
+  expect(calls.filter(call => call.startsWith('POST ')).length).toBe(postsBeforeReload);
+});
+
+test('stale revision conflict keeps the local draft and does not overwrite server state', async ({ page }) => {
+  const workspace = { workspace_id: 'story-2', title: 'Concurrent story', current_revision_id: 'rev-server', initialized: true, status: 'ready', current_revision: { revision_id: 'rev-server', source_text: 'Server text' } };
+  await page.addInitScript(() => {
+    localStorage.setItem('vibe-story-selected-v1', 'story-2');
+    localStorage.setItem('vibe-story-draft-v1', JSON.stringify({ 'story-2': { workspaceId: 'story-2', sourceText: 'My preserved local draft', baseRevisionId: 'rev-old' } }));
+  });
+  const posts = [];
+  await page.route('**/api/story/**', async route => {
+    const req = route.request(), url = new URL(req.url());
+    if (url.pathname === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ workspace_id: 'story-2', title: workspace.title, current_revision_id: 'rev-server', initialized: true, status: 'ready' }]) });
+    if (url.pathname === '/api/story/workspaces/story-2' && req.method() === 'GET') return route.fulfill({ json: workspace });
+    if (url.pathname === '/api/story/workspaces/story-2/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: 'rev-server', source_sha256: 'sha', revision_number: 2, created_at: 'now' }]) });
+    if (url.pathname === '/api/story/workspaces/story-2/revisions' && req.method() === 'POST') { posts.push(req.postDataJSON()); return route.fulfill({ status: 409, json: { error: { code: 'stale_revision', message: 'revision conflict' } } }); }
+    return route.fulfill({ status: 404, json: {} });
+  });
+  await page.goto('/#/story');
+  await expect(page.getByLabel('Story source text')).toHaveValue('My preserved local draft');
+  await page.getByRole('button', { name: 'Save revision' }).click();
+  await expect(page.getByRole('alert')).toContainText('Your draft is preserved and was not overwritten');
+  await expect(page.getByLabel('Story source text')).toHaveValue('My preserved local draft');
+  expect(posts).toEqual([{ source_text: 'My preserved local draft', expected_current_revision_id: 'rev-old' }]);
+});
+
+
+test('initializing workspace is unavailable and can be checked again', async ({ page }) => {
+  let allowReady = false;
+  const ready = { workspace_id: 'story-pending', title: 'Pending', current_revision_id: 'rev-1', initialized: true, status: 'ready', current_revision: { revision_id: 'rev-1', source_text: 'Ready text' } };
+  await page.route('**/api/story/**', async route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === '/api/story/workspaces' && route.request().method() === 'GET') return route.fulfill({ json: pageOf([{ workspace_id: 'story-pending', title: 'Pending', current_revision_id: null, initialized: false, status: 'initializing' }]) });
+    if (url.pathname === '/api/story/workspaces/story-pending' && route.request().method() === 'GET') {
+      return route.fulfill({ json: allowReady ? ready : { workspace_id: 'story-pending', title: 'Pending', current_revision_id: null, initialized: false, status: 'initializing' } });
+    }
+    if (url.pathname === '/api/story/workspaces/story-pending/revisions') return route.fulfill({ json: pageOf([{ revision_id: 'rev-1', source_sha256: 'sha', revision_number: 1 }]) });
+    return route.fulfill({ status: 404, json: {} });
+  });
+  await page.addInitScript(() => { localStorage.setItem('vibe-story-selected-v1', 'story-pending'); });
+  await page.goto('/#/story');
+  await expect(page.getByText('This workspace is still initializing.', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Story source text')).toHaveCount(0);
+  allowReady = true;
+  await page.getByRole('button', { name: 'Refresh workspace' }).click();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Ready text');
+});
+
+
+test('storage failure keeps editing responsive and offers a downloadable draft', async ({ page }) => {
+  const workspace = { workspace_id: 'story-storage', title: 'Storage failure', initialized: true, status: 'ready', current_revision: { revision_id: 'rev-1', source_text: 'Start' } };
+  await page.addInitScript(() => {
+    localStorage.setItem('vibe-story-selected-v1', 'story-storage');
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(key, value) { if (key.startsWith('vibe-story-')) throw new DOMException('quota exceeded', 'QuotaExceededError'); return original.call(this, key, value); };
+  });
+  await page.route('**/api/story/**', async route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === '/api/story/workspaces' && route.request().method() === 'GET') return route.fulfill({ json: pageOf([{ workspace_id: workspace.workspace_id, title: workspace.title, current_revision_id: 'rev-1', initialized: true, status: 'ready' }]) });
+    if (url.pathname === '/api/story/workspaces/story-storage' && route.request().method() === 'GET') return route.fulfill({ json: workspace });
+    if (url.pathname === '/api/story/workspaces/story-storage/revisions') return route.fulfill({ json: pageOf([{ revision_id: 'rev-1', source_sha256: 'sha', revision_number: 1 }]) });
+    return route.fulfill({ status: 404, json: {} });
+  });
+  await page.goto('/#/story');
+  await page.getByLabel('Story source text').fill('Still editable without browser storage');
+  await expect(page.getByRole('alert')).toContainText('Drafts may not survive reload');
+  await expect(page.getByLabel('Story source text')).toHaveValue('Still editable without browser storage');
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download draft text' }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toContain('Storage failure');
+});
+
+test('lost import-apply response recovers by key after reload without a second POST', async ({ page }) => {
+  let creation;
+  let applyPosts = 0;
+  const calls = [];
+  await page.route('**/api/story/**', async route => {
+    const req = route.request(), url = new URL(req.url());
+    calls.push(`${req.method()} ${url.pathname}`);
+    if (url.pathname === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf(creation ? [{ workspace_id: creation.workspace.workspace_id, title: creation.workspace.title, current_revision_id: creation.workspace.current_revision_id, initialized: true, status: 'ready' }] : []) });
+    if (url.pathname === '/api/story/imports' && req.method() === 'POST') return route.fulfill({ json: { import_id: 'imp-recovery', filename: 'lost.md', source_type: 'text/markdown', source_sha256: 'abc', text_sha256: 'def', text: 'Frozen import text', warnings: [], pages: [] } });
+    if (url.pathname === '/api/story/imports/imp-recovery/apply' && req.method() === 'POST') {
+      applyPosts++;
+      const body = req.postDataJSON();
+      creation = { status: 'ready', idempotency_key: body.idempotency_key, request_hash: 'request-hash', workspace: { workspace_id: 'story-recovered', title: body.title, current_revision_id: 'rev-initial', initialized: true, status: 'ready', created_revision: { revision_id: 'rev-initial', source_text: body.source_text } } };
+      return route.abort('connectionreset');
+    }
+    if (url.pathname === `/api/story/creations/by-idempotency/${creation?.idempotency_key}`) return route.fulfill({ json: creation });
+    if (url.pathname === '/api/story/workspaces/story-recovered/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: 'rev-initial', source_sha256: 'sha', revision_number: 1 }]) });
+    return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'missing' } } });
+  });
+  await page.goto('/#/story');
+  await page.locator('input[type="file"]').setInputFiles({ name: 'lost.md', mimeType: 'text/markdown', buffer: Buffer.from('source') });
+  await page.getByRole('button', { name: 'Apply import as new workspace' }).click();
+  await expect(page.getByText(/Creation response was not confirmed/)).toBeVisible();
+  const frozen = await page.evaluate(() => JSON.parse(localStorage.getItem('vibe-story-ui-draft-v1')).pendingCreate);
+  expect(frozen.key).toBeTruthy();
+  expect(frozen.sourceText).toBe('Frozen import text');
+  await page.getByLabel('Editable extracted text').fill('Edited after response loss');
+  await page.reload();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Frozen import text');
+  await expect(page.getByText('Story workspace creation is confirmed.')).toBeVisible();
+  expect(applyPosts).toBe(1);
+  expect(calls.filter(call => call.includes('/creations/by-idempotency/')).every(call => call.startsWith('GET '))).toBeTruthy();
+});
+
+test('story creation freezes an explicit style snapshot across lost-response recovery', async ({ page }) => {
+  const context = 'setup-12345678-1234-1234-1234-123456789abc';
+  const selection = (snapshotId, version, purpose) => ({
+    snapshot_id: snapshotId, isolated_context_id: context, production_type: 'short_film',
+    style_version_id: `short_film-v${version}`, style_version: version,
+    narrative_guidance: { story: `Guidance ${version}` }, narrative_hash: `hash-${version}`,
+    director_profile: { display_name: 'Short Film', purpose, behavior: ['Keep it grounded'], review_priorities: ['Clarity'] },
+    director_profile_hash: `profile-${version}`, custom: true,
+  });
+  const original = selection('a'.repeat(32), 1, 'Original pinned purpose');
+  const latest = selection('b'.repeat(32), 2, 'New setup purpose');
+  let currentSelections = [original];
+  let frozenCreation = null;
+  let workspace = null;
+  let createPosts = 0;
+  await page.addInitScript(({ context }) => localStorage.setItem('vibe-style-setup-context-v1', context), { context });
+  await page.route('**/api/styles/selections**', route => route.fulfill({ json: { selections: currentSelections } }));
+  await page.route('**/api/story/**', async route => {
+    const req = route.request(), url = new URL(req.url()), path = url.pathname;
+    if (path === '/api/story/workspaces' && req.method() === 'GET') {
+      const items = workspace ? [{ workspace_id: workspace.workspace_id, title: workspace.title, current_revision_id: workspace.current_revision_id, initialized: true, status: 'ready', style_selection_snapshot_id: workspace.style_selection_snapshot_id }] : [];
+      return route.fulfill({ json: pageOf(items) });
+    }
+    if (path === '/api/story/workspaces' && req.method() === 'POST') {
+      createPosts++;
+      const body = req.postDataJSON();
+      workspace = {
+        workspace_id: 'story-pinned', title: body.title, current_revision_id: 'rev-pinned', initialized: true, status: 'ready',
+        style_selection_snapshot_id: body.style_selection_snapshot_id,
+        style_selection: body.style_selection_snapshot_id === original.snapshot_id ? original : null,
+        current_revision: { revision_id: 'rev-pinned', source_text: body.source_text },
+      };
+      frozenCreation = { status: 'ready', idempotency_key: body.idempotency_key, request_hash: 'hash-request', workspace: { ...workspace, current_revision: undefined, created_revision: workspace.current_revision } };
+      return route.abort('connectionreset');
+    }
+    if (path.startsWith('/api/story/creations/by-idempotency/')) return frozenCreation ? route.fulfill({ json: frozenCreation }) : route.fulfill({ status: 404, json: { error: { code: 'not_found' } } });
+    if (path === '/api/story/workspaces/story-pinned' && req.method() === 'GET') return route.fulfill({ json: workspace });
+    if (path === '/api/story/workspaces/story-pinned/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: 'rev-pinned', source_sha256: 'sha', revision_number: 1 }]) });
+    return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: `Unexpected ${req.method()} ${path}` } } });
+  });
+
+  await page.goto('/#/story');
+  await page.getByLabel('Title').fill('Pinned story');
+  await page.getByLabel('Source text', {exact:true}).fill('Story source');
+  await page.getByLabel('Production type & style').selectOption(original.snapshot_id);
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await expect(page.getByText('Creation outcome needs recovery')).toBeVisible();
+  expect(frozenCreation.workspace.style_selection_snapshot_id).toBe(original.snapshot_id);
+  await page.reload();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Story source');
+  await expect(page.locator('.story-style-pin')).toContainText('Style pinned at original creation');
+  await expect(page.locator('.story-style-pin')).toContainText('Short Film · v1');
+  expect(createPosts).toBe(1);
+
+  currentSelections = [latest];
+  await page.getByRole('button', { name: 'Refresh saved styles' }).first().click();
+  await page.getByLabel('Production type & style').selectOption(latest.snapshot_id);
+  await expect(page.locator('.story-style-pin')).toContainText('Short Film · v1');
+  expect(createPosts).toBe(1);
+});

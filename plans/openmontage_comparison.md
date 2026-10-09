@@ -4,6 +4,8 @@ Review date: 2026-10-08. Recommendation: retain the current product journey and 
 
 This is a comparative assessment and proposed reuse sequence, not an amendment to the agreed product behavior. No upstream code was copied into the product, dependencies installed or media generation launched.
 
+**Mode note:** This comparison predates the current two-mode decision. Any “Manual/Semi/Full” wording below is historical terminology; use only **Assisted manual** and **Fully automated** in product plans and UI. The five Assisted manual checkboxes and the separate image-free Fully automated route are defined in `automation.md`.
+
 ## 1. Evidence and limits
 
 Current OpenMontage `main` was fetched and verified at commit `9327439db69021ab4b0e2776729bf3b58fdb5a87`; local review checkout: `/tmp/openmontage-review-20261008`. GitHub source and local source were inspected. This was a source review, not a live run or certification of every advertised tool.
@@ -23,7 +25,7 @@ Only partly. The difference in intended interaction remains, but the capability 
 | Cinematography | Scene schema and prompt builder include shot size, movement, lens, lighting and intent | Holistic direction in screenplay, then workflow-specific compilation | Useful overlap; “OpenMontage has no direction controls” would be inaccurate |
 | Story structure | Timed script sections and ordered scene records; character-animation artifacts also exist | Source-linked long-story knowledge graph, revision lineage and scene → shot → clip → take relationships | Inspected schemas are not a replacement for the planned story model; JSON links alone do not establish that knowledge graph |
 | Generation | Multiple providers, MiniMax API modes and ComfyUI custom workflow support | Existing local H3 T2V/FFLF/dynamic R2V graphs, exact reference roles/labels, capacity and prompt checks | Generation overlap exists, but generic support is not a verified mapping to our installed graphs |
-| Automation | Pipeline manifests, stage checkpoints and creative approval gates | Post-screenplay setup; exactly five Semi checkboxes; Full T2V scene starts then predecessor R2V; fixed quality | Requires a custom policy adapter; named checkpoint modes are not equivalent to the agreed wrappers |
+| Automation | Pipeline manifests, stage checkpoints and creative approval gates | Post-screenplay setup; five Assisted manual checkboxes; Fully automated T2V scene starts then predecessor R2V; fixed quality | Requires a custom policy adapter; named checkpoint modes are not equivalent to the agreed wrappers |
 | Media library | Visual corpus with embeddings, tags and provenance; production-project library | Shared searchable image/video/audio assets, auxiliary Media Prep, voice/transcript/category relationships | Retrieval can help; visual corpus is not the complete shared three-media repository |
 | Progress and takes | Live board, checkpoints, events, assets/takes and cost display | Unified progress, exact prompt/ref history, retained clips and retake controls | Strong reuse/design candidate; interactive actions still require our backend |
 | Final delivery | Stitching, composition, audio mixing, captions and render tools | Current journey ends with ordered clips; final assembly remains to be planned | Especially useful for the next product stage |
@@ -78,14 +80,14 @@ The previous clip can accumulate identity drift, repeated action/dialogue or unw
 ```text
 Shared Story Builder screens + source/screenplay/asset/take records
     ↓
-One execution service enforcing Manual/Semi/Full policy
+One execution service enforcing Assisted manual/Fully automated policy
     ↓
 Existing local ComfyUI compilers/jobs + selected compatible tool adapters
     ↓
 Shared outputs, events and metadata → production overview / later assembly
 ```
 
-The LLM decides creative edits, Semi workflow/reference choices and authorized duration choices. Durable application services own job submission, state transitions, parameter validation and resumption. An active coding-agent chat alone should not be responsible for keeping a customer's background run alive.
+The LLM decides creative edits, Assisted manual workflow/reference choices and authorized duration choices. Durable application services own job submission, state transitions, parameter validation and resumption. An active coding-agent chat alone should not be responsible for keeping a customer's background run alive.
 
 Use OpenMontage independently as a reference/demo environment if useful, then evaluate bounded components. Do not load hundreds of upstream instruction files into every edit: select only the knowledge relevant to the stage to control context and token use. Do not import its full agent instructions as product authority.
 
@@ -108,7 +110,7 @@ This is not a blanket ban on commercial use or private development. Decide wheth
 
 Do not replace the website or migrate both frameworks at once. First assess one later assembly feature on existing clips: ordered clip preview/export with explicit audio handling and source-to-timeline links. Check the real output and editable behavior. Separately prototype the production overview and automatic-run policies in the planned screens.
 
-Decide reuse after these bounded checks and the license decision. This review does not authorize changing the agreed Manual/Semi/Full recipes or adopting a second production controller.
+Decide reuse after these bounded checks and the license decision. This review does not authorize changing the two agreed modes or adopting a second production controller.
 
 ## 9. Third input: Ashu's StudioDirector UI proposal
 
@@ -118,7 +120,7 @@ The open [StudioDirector design issue #1](https://github.com/SaswataBhattacharyy
 
 | Input | What it contributes | What it does not settle |
 |---|---|---|
-| Current user-agreed plans | Product behavior: merged story/canvas, knowledge graph, readable screenplay, shared generation screens, Manual/Semi/Full, references and Media Prep | Final assembly and remaining runtime/integration details |
+| Current user-agreed plans | Product behavior: merged story/canvas, knowledge graph, readable screenplay, shared generation screens, Assisted manual/Fully automated, references and Media Prep | Final assembly and remaining runtime/integration details |
 | Ashu's StudioDirector proposal | UI arrangement and recovery: visible project/saved state, clear next task, prose editors, conditional assets, shot/take review and mobile layout | Exact automation, isolated-generation path, full screenplay/graph authoring or final assembly |
 | OpenMontage | Existing production tools, event/checkpoint helpers, live board, retrieval and composition candidates | Our interactive product controls, exact execution wrappers or proven local graph compatibility |
 
@@ -137,7 +139,7 @@ These can complement each other without becoming three competing production syst
 
 1. Its story-led Project → Story → Scenes/shots → Assets → Generation → Review flow applies to regular production. Isolated generation must enter the same forms without story or screenplay prerequisites. A lightweight storage workspace can exist without a forced project-creation funnel.
 2. Insert our readable screenplay and Automation & Parameters in the agreed order. Setup stays after screenplay and before production prompts; scene/shot compilation is not a second editable screenplay authority.
-3. Its Manual/Assisted/Automated wording leaves policy unresolved. Use our five Semi checkboxes and confirmed defaults, fixed quality and duration policy. Full starts each scene T2V then continues with predecessor R2V; Semi Director chooses compatible FFLF/R2V. Do not re-open these settled questions.
+3. Its Manual/Assisted/Automated wording leaves policy unresolved. Use the five Assisted manual checkboxes and confirmed defaults, fixed quality and duration policy. Fully automated starts each scene with T2V then continues with predecessor R2V; Assisted manual's Director chooses compatible FFLF/R2V. Do not re-open these settled questions.
 4. Its Review & accept loop fits manual work. Checked automated stages and Full do not acquire compulsory human acceptance after every clip. Automatic completion is distinct from human approval, and all generated Full clips remain retained.
 5. Continued access to specialist capabilities means Media Prep and shared tools. It does not restore the retired Production V2/Generate/old Automation/Manual Director destinations. Status stays accessible.
 6. Preserve data validity, lineage and recovery; adapt older approval gates to the current wrapper. A general instruction to preserve old contracts cannot override the user's explicit new automatic-advancement rules.
@@ -146,4 +148,4 @@ These can complement each other without becoming three competing production syst
 
 The issue reports local verification of saving, Manual-run creation, story approval and reopening at commit `2023bf5bce1a808b2624fb5789b4b2a1e8b7b8db`. It explicitly says generation and take review were not locally tested, and final-film assembly is outside its scope. Reading its HTML is not a live test of the Story Builder UI.
 
-The recommendation remains: build the user-agreed journey using working Story Builder integrations, incorporate these UX fixes, and evaluate bounded OpenMontage tools where they reduce missing work. Initial UI acceptance should include a regular Manual journey, mixed Semi run, Full two-scene continuation, isolated generation, offline editing/save and resume. Passing backend tests alone is insufficient evidence that these journeys are usable.
+The recommendation remains: build the user-agreed journey using working Story Builder integrations, incorporate these UX fixes, and evaluate bounded OpenMontage tools where they reduce missing work. Acceptance should include Assisted manual with no boxes selected, a mixed checkbox run, all five boxes selected, the separate Fully automated two-scene continuation, isolated generation, offline editing/save and resume. Passing backend tests alone is insufficient evidence that these journeys are usable.

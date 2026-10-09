@@ -3,6 +3,8 @@ import { Activity, ArrowRight, BookOpen, Check, ChevronDown, Film, FolderOpen, G
 import { acceptJob, ApiError, Capability, createJob, findJobByIdempotency, getCapability, getJob, Job, prepareRetake, validateRequest, VideoRequest, WORKFLOW_ID, WORKFLOW_SHA256 } from './lib/video-api';
 import StatusPage from './StatusPage';
 import StoryPage from './StoryPage';
+import ScreenplayPage from './ScreenplayPage';
+import './screenplay.css';
 import ProductionStylesPage from './ProductionStylesPage';
 import StudioShell, { StudioRoute } from './StudioShell';
 
@@ -149,10 +151,11 @@ export default function App() {
   // Keep the video workspace mounted while Status is open so a running job,
   // pending recovery key, and editor state continue untouched in memory.
   const context = 'Video draft · no story linked';
-  const unavailable = route==='screenplay' ? ['Screenplay','Screenplay is not available yet.'] : route==='setup' ? ['Automation & Parameters','Automation is not available yet.'] : route==='prompts' ? ['Prompts','Prompt preparation is not available yet.'] : route==='assets' ? ['Assets','Assets are not available yet.'] : route==='media' ? ['Media Prep & Library','Media tools are not available yet.'] : null;
+  const unavailable = route==='setup' ? ['Automation & Parameters','Automation is not available yet.'] : route==='prompts' ? ['Prompts','Prompt preparation is not available yet.'] : route==='assets' ? ['Assets','Assets are not available yet.'] : route==='media' ? ['Media Prep & Library','Media tools are not available yet.'] : null;
   return <StudioShell route={route} context={context}>
     {route==='home' && <div className="content-wrap home-content"><div className="page-heading"><div><div className="eyebrow">LOCAL STUDIO</div><h1>What would you like to make?</h1></div></div><div className="entry-cards"><a className="entry-card" href="#/story"><span className="entry-icon"><BookOpen size={20}/></span><b>Develop a story</b><p>Write, upload, or edit your story.</p><span className="entry-cta">Open Story <span>→</span></span></a><a className="entry-card" href="#/video"><span className="entry-icon"><Film size={20}/></span><b>Create a video</b><p>Generate a video from a prompt.</p><span className="entry-cta">Open Video <span>→</span></span></a></div></div>}
     {route==='story' && <><StoryPage/><div className="content-wrap story-video-entry"><section className="card"><div><b>Create a separate video</b><p>This story is not linked to video generation yet.</p></div><a className="generate-button" href="#/video">Open Video <ArrowRight size={15}/></a></section></div></>}
+    {route==='screenplay' && <ScreenplayPage/>}
     {route==='status' && <StatusPage/>}
     {route==='styles' && <ProductionStylesPage/>}
     <div className="video-workspace-mount" style={{display:route==='video'||route==='take'?'contents':'none'}} aria-hidden={route==='video'||route==='take'?undefined:true}><VideoWorkspace view={route==='take'?'take':'create'}/></div>

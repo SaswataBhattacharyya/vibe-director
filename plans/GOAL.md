@@ -1,6 +1,6 @@
 # Active goal — complete Vibe Director
 
-Restored on 2026-10-09 after the runtime reported no saved goal. Current owner scope: finish backend wiring and the entire usable UI, then push working changes for Ashu to refine the design/details. The runtime goal is active; this file preserves scope across sessions.
+The runtime goal is active. Current scope: complete Vibe Director end to end, including its full usable UI and backend wiring. The initial UI foundation is in place; finish the functional screens and journeys on that foundation, then push working changes for Ashu to refine the design and details. This file preserves the goal across sessions.
 
 ## Finish the product
 
@@ -24,6 +24,6 @@ Codex is the initial app reasoning provider. Alternative API/provider and weaker
 
 ## Current next step
 
-Selected-text Codex editing (#20) is published in `00b7a65`. Continue the active source-coverage knowledge-graph slice (#21) in the existing StoryAuthoring ledger, then build the readable screenplay from reviewed graph/story data. Keep implementation focused on backend wiring and working journeys inside Ashu’s PR22 shell/themes. Push completed issue-linked increments so Ashu can refine the UI; do not block functional progress on cosmetic polish. Temporary staged work is not delivered evidence. Use current issue/branch state rather than replaying completed work. Current implementation branch: `issue-2-isolated-t2v-reuse`, draft PR #15.
+The current branch contains source-coverage graph and screenplay work. Finish reviewing and verifying that journey, then continue through the remaining product stages in the issue backlog. Keep the UI usable and connected while wiring its backend paths; retain the PR22 foundation and all three themes. Complete the functional UI as part of this goal, then push working issue-linked changes to Ashu for finer design/detail refinement. Temporary staged work is not delivered evidence. Use current issue/branch state rather than replaying completed work. Current implementation branch: `issue-2-isolated-t2v-reuse`, draft PR #15.
 
 The goal is complete only when the agreed journeys work, remaining acceptance checks are satisfied, and implementation/evidence are pushed. Mocks and installed workflows alone do not establish working generation.

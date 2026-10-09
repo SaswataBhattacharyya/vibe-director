@@ -3,12 +3,14 @@ from __future__ import annotations
 import io
 import json
 import tempfile
+import threading
 import unittest
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from story_builder.isolated_server import create_app
-from story_builder.services.production_ledger import ProductionLedger
+from story_builder.services.production_ledger import LedgerConflict, ProductionLedger
 from story_builder.services.story_authoring import StoryAuthoring
 
 
@@ -28,6 +30,10 @@ class StoryGraphTests(unittest.TestCase):
 
         def fake_provider(*, prompt, provider, temperature):
             self.calls.append((prompt, provider, temperature))
+            if "GRAPH RECORDS (JSON):\n" in prompt:
+                records = json.loads(prompt.split("GRAPH RECORDS (JSON):\n", 1)[1])
+                cited = [r["record_id"] for r in records if r["kind"] in {"event", "fact"}]
+                return {"model": "fake-model", "scenes": ([{"slugline": "INT. ROOM - DAY", "summary": "Mira keeps the key.", "shots": [{"action": "Mira keeps the key.", "dialogue": "", "camera": "", "lighting": "", "mood": "", "sfx": "", "music": "", "evidence_record_ids": cited}]}] if cited else [])}
             chunk = json.loads(prompt.split("CHUNK TEXT (JSON):\n", 1)[1])
             quote = "Mira keeps the key."
             start = chunk.index(quote)
@@ -155,6 +161,133 @@ class StoryGraphTests(unittest.TestCase):
         self.assertTrue(all(chunk["state"] == "uncertain" for chunk in first[1]["chunks"]))
         self.call_with_app(app, "POST", path, payload)
         self.assertEqual(len(calls), first[1]["chunk_total"])
+
+    def test_screenplay_draft_edit_and_reload_keep_source_and_graph_lineage(self):
+        graph_path = f"/api/story/workspaces/{self.workspace}/graph"
+        _, graph = self.call("POST", graph_path, {"source_revision_id": self.revision, "idempotency_key": str(uuid.uuid4())})
+        screenplay_path = f"/api/story/workspaces/{self.workspace}/screenplay"
+        draft_key = str(uuid.uuid4())
+        status, draft = self.call("POST", screenplay_path, {"source_revision_id": self.revision,
+            "graph_snapshot_id": graph["snapshot_id"], "idempotency_key": draft_key})
+        self.assertEqual(status, "201 Created")
+        self.assertEqual(draft["source_revision_id"], self.revision)
+        self.assertEqual(draft["graph_snapshot_id"], graph["snapshot_id"])
+        self.assertGreaterEqual(len(draft["screenplay"]["scenes"]), 1)
+        altered = json.loads(json.dumps(draft["screenplay"]))
+        altered["scenes"][0]["shots"][0]["action"] = "Payload collision."
+        with self.assertRaises(LedgerConflict):
+            self.story._save_screenplay(workspace_id=self.workspace, source_revision_id=self.revision,
+                graph_snapshot_id=graph["snapshot_id"], screenplay=altered, idempotency_key=draft_key)
+        first_shot = draft["screenplay"]["scenes"][0]["shots"][0]
+        self.assertEqual(first_shot["action"], "Mira keeps the key.")
+        self.assertEqual(first_shot["evidence"][0]["source_revision_id"], self.revision)
+        self.assertEqual(draft["task_status"], "complete")
+        self.assertEqual(draft["chunk_complete"], draft["chunk_total"])
+        self.assertEqual(draft["coverage_state"], "all_source_chunks_planned_semantic_coverage_unverified")
+        edited = json.loads(json.dumps(draft["screenplay"]))
+        edited["scenes"][0]["shots"][0]["action"] = ""
+        edited["scenes"][0]["shots"][0]["dialogue"] = "Mira: I have it."
+        edit_key = str(uuid.uuid4())
+        edit_status, saved = self.call("PATCH", f"{screenplay_path}/revisions/{draft['screenplay_revision_id']}",
+            {"idempotency_key": edit_key, "screenplay": edited})
+        self.assertEqual(edit_status, "201 Created")
+        self.assertEqual(saved["parent_screenplay_revision_id"], draft["screenplay_revision_id"])
+        self.assertEqual(saved["screenplay"]["scenes"][0]["shots"][0]["action"], "")
+        self.assertEqual(saved["screenplay"]["scenes"][0]["shots"][0]["dialogue"], "Mira: I have it.")
+        replay_status, replayed_edit = self.call("PATCH", f"{screenplay_path}/revisions/{draft['screenplay_revision_id']}",
+            {"idempotency_key": edit_key, "screenplay": edited})
+        self.assertEqual(replay_status, "201 Created")
+        self.assertEqual(replayed_edit["screenplay_revision_id"], saved["screenplay_revision_id"])
+        _, loaded = self.call("GET", f"{screenplay_path}?revision_id={self.revision}")
+        self.assertEqual(loaded["screenplay_revision_id"], saved["screenplay_revision_id"])
+        self.assertEqual(loaded["screenplay"]["scenes"][0]["shots"][0]["evidence"], first_shot["evidence"])
+        stale = json.loads(json.dumps(draft["screenplay"]))
+        stale["scenes"][0]["shots"][0]["action"] = "A stale sibling edit."
+        stale_status, stale_result = self.call("PATCH", f"{screenplay_path}/revisions/{draft['screenplay_revision_id']}",
+            {"idempotency_key": str(uuid.uuid4()), "screenplay": stale})
+        self.assertEqual(stale_status, "409 Conflict")
+        self.assertIn("stale", stale_result["error"]["message"].lower())
+
+    def test_screenplay_invalid_evidence_rejected_then_same_key_recovers_failed_chunk_only(self):
+        _, graph = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph", {
+            "source_revision_id": self.revision, "idempotency_key": str(uuid.uuid4())})
+        path = f"/api/story/workspaces/{self.workspace}/screenplay"
+        key = str(uuid.uuid4()); calls = []
+        def provider(*, prompt, provider, temperature):
+            calls.append(prompt)
+            records = json.loads(prompt.split("GRAPH RECORDS (JSON):\n", 1)[1])
+            cited = [r["record_id"] for r in records if r["kind"] in {"event", "fact"}]
+            if len(calls) == 2:
+                self.assertIn("PREVIOUS CHUNK CONTINUITY (JSON)", prompt)
+                return {"scenes": [{"slugline": "INT. ROOM", "summary": "Mira", "shots": [{"action": "Mira", "evidence_record_ids": ["foreign-record"]}]}]}
+            return {"scenes": ([{"slugline": "INT. ROOM", "summary": "Mira", "shots": [{"action": "Mira keeps the key.", "dialogue": "", "camera": "", "lighting": "", "mood": "", "sfx": "", "music": "", "evidence_record_ids": cited}]}] if cited else [])}
+        app = create_app(data_root=self.root, reasoning_json_provider=provider, capability_provider=lambda: {}, gpu_reader=lambda: {})
+        payload = {"source_revision_id": self.revision, "graph_snapshot_id": graph["snapshot_id"], "idempotency_key": key}
+        status, partial = self.call_with_app(app, "POST", path, payload)
+        self.assertEqual(status, "202 Accepted")
+        self.assertEqual(partial["task_status"], "partial")
+        self.assertEqual(sum(c["state"] == "complete" for c in partial["chunks"]), 1)
+        before = len(calls)
+        restarted_app = create_app(data_root=self.root, reasoning_json_provider=provider,
+            capability_provider=lambda: {}, gpu_reader=lambda: {})
+        status, final = self.call_with_app(restarted_app, "POST", path, payload)
+        self.assertEqual(status, "201 Created")
+        self.assertEqual(final["task_status"], "complete")
+        self.assertEqual(len(calls), before + partial["chunk_total"] - 1)
+        replay_app = create_app(data_root=self.root, reasoning_json_provider=provider,
+            capability_provider=lambda: {}, gpu_reader=lambda: {})
+        status, replay = self.call_with_app(replay_app, "POST", path, payload)
+        self.assertEqual(status, "201 Created")
+        self.assertEqual(replay["screenplay_revision_id"], final["screenplay_revision_id"])
+        self.assertEqual(len(calls), before + partial["chunk_total"] - 1)
+
+    def test_screenplay_uncertain_chunk_blocks_later_chunks_on_replay(self):
+        _, graph = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph", {
+            "source_revision_id": self.revision, "idempotency_key": str(uuid.uuid4())})
+        path = f"/api/story/workspaces/{self.workspace}/screenplay"
+        calls = []
+        def unavailable(*, prompt, provider, temperature):
+            calls.append(prompt)
+            raise RuntimeError("provider response status is unknown")
+        app = create_app(data_root=self.root, reasoning_json_provider=unavailable,
+            capability_provider=lambda: {}, gpu_reader=lambda: {})
+        payload = {"source_revision_id": self.revision, "graph_snapshot_id": graph["snapshot_id"],
+            "idempotency_key": str(uuid.uuid4())}
+        status, partial = self.call_with_app(app, "POST", path, payload)
+        self.assertEqual(status, "202 Accepted")
+        self.assertEqual(partial["chunks"][0]["state"], "uncertain")
+        self.assertTrue(all(chunk["state"] == "pending" for chunk in partial["chunks"][1:]))
+        self.assertEqual(len(calls), 1)
+        replay_status, replay = self.call_with_app(app, "POST", path, payload)
+        self.assertEqual(replay_status, "202 Accepted")
+        self.assertEqual(replay["chunks"][0]["state"], "uncertain")
+        self.assertTrue(all(chunk["state"] == "pending" for chunk in replay["chunks"][1:]))
+        self.assertEqual(len(calls), 1)
+
+    def test_concurrent_screenplay_siblings_allow_only_one_child(self):
+        _, graph = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph", {
+            "source_revision_id": self.revision, "idempotency_key": str(uuid.uuid4())})
+        path = f"/api/story/workspaces/{self.workspace}/screenplay"
+        _, draft = self.call("POST", path, {"source_revision_id": self.revision,
+            "graph_snapshot_id": graph["snapshot_id"], "idempotency_key": str(uuid.uuid4())})
+        parent_id = draft["screenplay_revision_id"]
+        original_save = self.story._save_screenplay
+        barrier = threading.Barrier(2)
+        def synchronized_save(**kwargs):
+            barrier.wait(timeout=5)
+            return original_save(**kwargs)
+        self.story._save_screenplay = synchronized_save
+        def save(action):
+            screenplay = json.loads(json.dumps(draft["screenplay"]))
+            screenplay["scenes"][0]["shots"][0]["action"] = action
+            return self.call("PATCH", f"{path}/revisions/{parent_id}", {
+                "idempotency_key": str(uuid.uuid4()), "screenplay": screenplay})
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(save, ("First sibling.", "Second sibling.")))
+        self.story._save_screenplay = original_save
+        self.assertEqual(sorted(status for status, _ in results), ["201 Created", "409 Conflict"])
+        _, latest = self.call("GET", f"{path}?revision_id={self.revision}")
+        self.assertEqual(latest["parent_screenplay_revision_id"], parent_id)
 
     @staticmethod
     def call_with_app(app, method, path, payload=None):

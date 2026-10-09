@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vibe Director · Clapperboard mascot study</title>
+<style>
+@font-face{font-family:Nunito;src:url('./nunito-400-prototype.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:Nunito;src:url('./nunito-700-prototype.ttf') format('truetype');font-weight:700;font-display:swap}
+:root{color-scheme:dark;--canvas:#090a0c;--surface:#191a1d;--raised:#292a2d;--field:#101113;--line:#96918a;--text:#f8f2e7;--muted:#c9c1b5;--accent:#f28e5d;--accent-ink:#17110e;--focus:#f8dc91;--print:#b9a795;--slate:#1b1d20;--eye:#f8f2e7;--pupil:#101113}
+*{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--text);font:400 16px/1.5 Nunito,'Trebuchet MS',sans-serif}
+button{font:700 15px/1.2 Nunito,'Trebuchet MS',sans-serif;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+h1,h2,h3,p{margin:0}h1,h2,h3{font-weight:700;line-height:1.12}h1{font-size:clamp(2.7rem,6vw,5.5rem);letter-spacing:-.055em}h2{font-size:clamp(1.55rem,2.7vw,2.2rem);letter-spacing:-.035em}h3{font-size:1.25rem}
+.wrap{width:min(1280px,100%);margin:auto;padding:0 30px}
+.review-bar{padding:9px 30px;text-align:center;background:var(--raised);border-bottom:1px solid var(--line);color:var(--muted);font-size:.83rem}
+.top{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 0;border-bottom:1px solid var(--line)}
+.brand{font-size:1.35rem;font-weight:700;letter-spacing:-.06em}.brand span{color:var(--accent)}.top a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(350px,.9fr);align-items:center;gap:30px;padding:50px 0 46px;border-bottom:1px solid var(--line)}
+.hero-copy{max-width:610px}.hero h1{margin:13px 0 19px}.hero h1 em{font-style:normal;color:var(--accent)}.hero-copy>p:last-child{max-width:47ch;color:var(--muted);font-size:1.07rem}
+.hero-art{min-height:395px;display:grid;place-items:center;position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.hero-art::before{content:"";position:absolute;width:335px;height:335px;border:1px dotted var(--print);border-radius:50%;opacity:.45}
+.hero-art .mascot-stage{width:min(86%,390px)}.hero-art .mascot{filter:drop-shadow(17px 19px 0 var(--field))}
+.hero-art .corner{position:absolute;top:18px;left:22px;font-size:.78rem;font-weight:700;letter-spacing:.04em;color:var(--muted)}
+.hero-art{cursor:default}.hero-art .mascot{transition:transform .22s ease}.hero-art:hover .mascot{transform:translateY(-4px)}
+.state-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.state-controls button,.pose-play{min-height:42px;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--raised);color:var(--text)}
+.state-controls button[aria-pressed=true]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.hero-status{margin-top:12px;min-height:2.8em;color:var(--muted);font-size:.92rem}
+.section{padding:40px 0;border-bottom:1px solid var(--line)}.section-head{display:flex;justify-content:space-between;gap:26px;align-items:end;margin-bottom:24px}.section-head p:last-child{max-width:52ch;color:var(--muted)}
+.switch{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.switch button{min-height:44px;padding:10px 14px;border-radius:9px;border:1px solid var(--line);background:var(--raised);color:var(--text)}
+.switch button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}.switch button::before{content:"";display:inline-block;width:10px;height:10px;margin-right:9px;border-radius:50%;background:var(--chip)}
+.switch .concrete{--chip:#f28e5d}.switch .midnight{--chip:#f5c65c}
+.pose-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.pose{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.pose-art{height:260px;display:grid;place-items:end center;padding-bottom:10px;background:radial-gradient(circle at 50% 60%,var(--raised),var(--surface) 65%)}.pose .mascot-stage{width:min(94%,210px)}
+.pose-copy{padding:16px;border-top:1px solid var(--line)}.pose-copy .eyebrow{margin-bottom:5px}.pose-copy h3{margin-bottom:8px}.pose-copy p:last-child{font-size:.9rem;color:var(--muted);line-height:1.45}
+.pose-copy p{font-size:.9rem;color:var(--muted);line-height:1.45}.pose-play{margin-top:14px;width:100%;border-color:var(--accent)}.pose-play:hover{background:var(--accent);color:var(--accent-ink)}
+.size-row{display:flex;align-items:center;gap:25px;flex-wrap:wrap}.size-item{display:flex;align-items:center;gap:14px;padding:15px 18px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.size-item .mascot{flex:none}.size-item p{font-size:.88rem;color:var(--muted);max-width:20ch}.size-item strong{display:block;color:var(--text)}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:24px 0 0}.rule{padding-top:15px;border-top:2px solid var(--accent)}.rule h3{margin-bottom:8px}.rule p{color:var(--muted)}
+.foot{padding:30px 0 55px;color:var(--muted);font-size:.9rem}.foot strong{color:var(--text)}
+.mascot-stage{position:relative;display:block;flex:none}.mascot{display:block;width:100%;height:auto;overflow:visible}.mascot .silhouette{stroke:var(--text);stroke-width:7;stroke-linejoin:round}.mascot .hinge{fill:var(--print);stroke:var(--text);stroke-width:5}.mascot .detail{stroke:var(--print);stroke-width:5;stroke-linecap:round}.mascot .pupil{fill:var(--pupil)}
+.state-icon{position:absolute;top:55%;right:2%;width:18%;min-width:37px;aspect-ratio:1;padding:0;border:0;background:transparent;color:var(--accent-ink);filter:drop-shadow(3px 4px 0 var(--field));transform:rotate(-7deg);transition:transform .18s ease;cursor:pointer}.state-icon>svg{display:block;width:100%;height:100%}.state-icon .icon-window{overflow:hidden}.state-icon:hover,.state-icon:focus-visible{transform:rotate(0deg) scale(1.13)}.state-icon .hourglass{transform-box:fill-box;transform-origin:center center}
+.mascot-stage.is-playing[data-mascot=waiting] .hourglass{animation:icon-wait 1.9s ease-in-out both}.mascot-stage.is-playing[data-mascot=ready] .state-icon{animation:icon-ready 1.05s ease-out both}.mascot-stage.is-playing[data-mascot=confirmed] .state-icon{animation:icon-confirmed .82s ease-out both}.mascot-stage.is-playing[data-mascot=confirmed] .check-path{stroke-dasharray:32;animation:draw-check .82s ease-out both}.mascot-stage.is-playing[data-mascot=attention] .state-icon{animation:icon-attention 1.25s ease-in-out both}
+@keyframes icon-wait{0%,27%{transform:rotate(0deg)}63%,100%{transform:rotate(180deg)}}
+@keyframes icon-ready{0%{transform:translateY(10px) rotate(-7deg) scale(.8)}55%{transform:translateY(-15px) rotate(4deg) scale(1.18)}100%{transform:translateY(0) rotate(-7deg) scale(1)}}
+@keyframes icon-confirmed{0%,42%{transform:rotate(-18deg) scale(.7);opacity:.35}61%{transform:rotate(8deg) scale(1.23);opacity:1}100%{transform:rotate(-7deg) scale(1);opacity:1}}
+@keyframes draw-check{0%,48%{stroke-dashoffset:32}72%,100%{stroke-dashoffset:0}}
+@keyframes icon-attention{0%{transform:rotate(-7deg) scale(1)}63%{transform:rotate(-17deg) scale(1.14)}73%{transform:rotate(4deg) scale(1.14)}83%{transform:rotate(-12deg) scale(1.08)}100%{transform:rotate(-7deg) scale(1)}}
+.mascot .body-group,.mascot .lid-group,.mascot .eye-group,.mascot .gaze{transform-box:view-box}.mascot .body-group{transform-origin:160px 180px}.mascot .lid-group{transform-origin:64px 113px}.mascot .eye-group{transform-origin:160px 199px}.mascot .gaze{transition:transform .18s ease}
+.mascot.is-playing[data-pose=neutral] .body-group{animation:hello .95s ease-in-out both}.mascot.is-playing[data-pose=neutral] .lid-group{animation:hello-hinge .95s ease-in-out both}.mascot.is-playing[data-pose=neutral] .gaze{animation:hello-gaze .95s ease-in-out both}
+.mascot.is-playing[data-pose=waiting] .body-group{animation:wait-lean 1.9s ease-in-out both}.mascot.is-playing[data-pose=waiting] .lid-group{animation:wait-hinge 1.9s ease-in-out both}.mascot.is-playing[data-pose=waiting] .gaze{animation:wait-scan 1.9s ease-in-out both}.mascot.is-playing[data-pose=waiting] .eye-group{animation:wait-blink 1.9s ease-in-out both}
+.mascot.is-playing[data-pose=ready] .lid-group{animation:ready-lift 1.05s cubic-bezier(.2,.85,.2,1) both}.mascot.is-playing[data-pose=ready] .body-group{animation:ready-lean 1.05s ease-out both}.mascot.is-playing[data-pose=ready] .eye-group{animation:ready-eyes 1.05s ease-out both}.mascot.is-playing[data-pose=ready] .gaze{animation:ready-look 1.05s ease-out both}
+.mascot.is-playing[data-pose=confirmed] .lid-group{animation:one-clap .82s cubic-bezier(.22,.8,.25,1) both}.mascot.is-playing[data-pose=confirmed] .body-group{animation:clap-settle .82s ease-out both}.mascot.is-playing[data-pose=confirmed] .confirmed-open{animation:eyes-open .82s steps(1,end) both}.mascot.is-playing[data-pose=confirmed] .confirmed-closed{animation:eyes-close .82s steps(1,end) both}
+.mascot.is-playing[data-pose=attention] .body-group{animation:attention-tilt 1.25s ease-in-out both}.mascot.is-playing[data-pose=attention] .lid-group{animation:attention-droop 1.25s ease-in-out both}.mascot.is-playing[data-pose=attention] .eye-group{animation:attention-eyes 1.25s ease-in-out both}.mascot.is-playing[data-pose=attention] .gaze{animation:attention-look 1.25s ease-in-out both}
+@keyframes hello{0%,100%{transform:rotate(0deg)}28%{transform:rotate(-15deg)}62%{transform:rotate(10deg)}}
+@keyframes hello-hinge{0%,100%{transform:rotate(-8deg)}28%{transform:rotate(-27deg)}62%{transform:rotate(-3deg)}}
+@keyframes hello-gaze{0%,100%{transform:translate(0,0)}28%{transform:translate(3px,-1px)}62%{transform:translate(-2px,0)}}
+@keyframes wait-lean{0%,100%{transform:rotate(9deg)}28%{transform:rotate(15deg)}72%{transform:rotate(5deg)}}
+@keyframes wait-hinge{0%,100%{transform:rotate(-23deg)}28%{transform:rotate(-38deg)}72%{transform:rotate(-15deg)}}
+@keyframes wait-scan{0%,100%{transform:translate(0,0)}28%{transform:translate(-6px,-2px)}72%{transform:translate(5px,-2px)}}
+@keyframes wait-blink{0%,77%,85%,100%{transform:scaleY(1)}81%{transform:scaleY(.12)}}
+@keyframes ready-lift{0%{transform:rotate(-8deg)}55%{transform:rotate(-66deg)}76%{transform:rotate(-48deg)}100%{transform:rotate(-53deg)}}
+@keyframes ready-lean{0%{transform:rotate(0deg)}55%{transform:rotate(-14deg)}100%{transform:rotate(-10deg)}}
+@keyframes ready-eyes{0%{transform:scale(1,1)}55%{transform:scale(1.06,1.13)}100%{transform:scale(1.04,1.08)}}
+@keyframes ready-look{0%{transform:translate(0,2px)}55%,100%{transform:translate(-2px,-3px)}}
+@keyframes one-clap{0%,32%{transform:rotate(-58deg)}49%{transform:rotate(13deg)}68%{transform:rotate(-6deg)}100%{transform:rotate(8deg)}}
+@keyframes clap-settle{0%,32%{transform:rotate(-10deg)}49%{transform:rotate(4deg)}68%{transform:rotate(-7deg)}100%{transform:rotate(-3deg)}}
+@keyframes eyes-open{0%,48%{opacity:1}49%,72%{opacity:0}73%,100%{opacity:1}}
+@keyframes eyes-close{0%,48%{opacity:0}49%,72%{opacity:1}73%,100%{opacity:0}}
+@keyframes attention-tilt{0%{transform:rotate(0deg)}72%{transform:rotate(18deg)}100%{transform:rotate(14deg)}}
+@keyframes attention-droop{0%{transform:rotate(-8deg)}72%{transform:rotate(17deg)}100%{transform:rotate(11deg)}}
+@keyframes attention-eyes{0%{transform:scaleY(1)}72%,100%{transform:scaleY(.9)}}
+@keyframes attention-look{0%{transform:translate(0,0)}58%{transform:translate(-2px,5px)}100%{transform:translate(0,-2px)}}
+@media(max-width:1100px){.pose-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.pose-art{height:260px}}
+@media(max-width:760px){.wrap{padding:0 18px}.hero{grid-template-columns:1fr;padding:35px 0}.hero-art{min-height:320px}.section-head{display:block}.section-head p:last-child{margin-top:12px}.pose-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rules{grid-template-columns:1fr}}
+@media(max-width:480px){.top{align-items:start}.top a{font-size:.86rem}.pose-grid{grid-template-columns:1fr}.pose-art{height:260px}.size-row{align-items:stretch;flex-direction:column}.size-item{width:100%}}
+@media(forced-colors:active){.hero-art .mascot{filter:none}.switch button[aria-pressed=true]{outline:2px solid Highlight}.pose,.hero-art,.size-item{border-color:CanvasText}}
+@media(prefers-reduced-motion:reduce){.mascot.is-playing .body-group,.mascot.is-playing .lid-group,.mascot.is-playing .eye-group,.mascot.is-playing .gaze,.mascot.is-playing .confirmed-open,.mascot.is-playing .confirmed-closed,.mascot-stage.is-playing .state-icon,.mascot-stage.is-playing .hourglass,.mascot-stage.is-playing .check-path{animation:none!important}.hero-art .mascot,.mascot .gaze,.state-icon{transition:none!important}.hero-art:hover .mascot,.state-icon:hover,.state-icon:focus-visible{transform:none}}
+@media(print){:root{color-scheme:light;--canvas:#fff;--surface:#fff;--raised:#f1f1f1;--field:#fff;--line:#333;--text:#111;--muted:#333;--accent:#a8471d;--accent-ink:#fff;--print:#555;--slate:#fff;--eye:#111;--pupil:#fff}.review-bar,.switch,.top a{display:none}.hero{padding:15px 0}.hero-art{min-height:300px}.pose-art{height:160px}.pose-grid{grid-template-columns:repeat(5,1fr)}.pose-copy p:last-child{font-size:.75rem}}
+</style>
+</head>
+<body>
+<div class="review-bar">Character study · local design specimen · no app state or generation is connected</div>
+<div class="wrap">
+<header class="top"><div class="brand">vibe<span>director</span></div><a href="vibe-director-type-colour.html">View the interface specimen</a></header>
+<main>
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-copy"><p class="eyebrow">Mascot study / 01</p><h1 id="hero-title">Meet the <em>clapper.</em></h1><p>Two eyes. One hinge. Choose a moment to play its gesture.</p><div class="switch" role="group" aria-label="Preview palette"><button class="concrete" type="button" data-theme="concrete" aria-pressed="true">Concrete &amp; ink</button><button class="midnight" type="button" data-theme="midnight" aria-pressed="false">Midnight mixtape</button></div><div class="state-controls" role="group" aria-label="Play a mascot moment"><button type="button" data-hero-pose="neutral" aria-pressed="true">Hello</button><button type="button" data-hero-pose="waiting" aria-pressed="false">Waiting</button><button type="button" data-hero-pose="ready" aria-pressed="false">Ready</button><button type="button" data-hero-pose="confirmed" aria-pressed="false">Take confirmed</button><button type="button" data-hero-pose="attention" aria-pressed="false">Needs attention</button></div><p class="hero-status" id="hero-status" aria-live="polite">Hello. The studio is ready when you are.</p></div>
+  <div class="hero-art"><span class="corner">MOVE / CHOOSE A MOMENT OR FOLLOW ITS EYES</span><div data-mascot="neutral" data-size="hero"></div></div>
+</section>
+<section class="section" aria-labelledby="poses-title"><div class="section-head"><div><p class="eyebrow">01 / character sheet</p><h2 id="poses-title">Five playable moments</h2></div><p>Use a replay button to watch each gesture. State symbols appear only where useful; the words still explain what happened.</p></div>
+  <div class="pose-grid">
+    <article class="pose"><div class="pose-art" data-mascot="neutral"></div><div class="pose-copy"><p class="eyebrow">Baseline</p><h3>Hello</h3><p>A quick side-to-side hello when the studio opens.</p><button class="pose-play" type="button" data-play="neutral">Play greeting</button></div></article>
+    <article class="pose"><div class="pose-art" data-mascot="waiting" data-state-icon="waiting"></div><div class="pose-copy"><p class="eyebrow">Actual job pending</p><h3>Waiting</h3><p>Looks both ways, then rests. No guessed progress.</p><button class="pose-play" type="button" data-play="waiting">Play waiting</button></div></article>
+    <article class="pose"><div class="pose-art" data-mascot="ready" data-state-icon="ready"></div><div class="pose-copy"><p class="eyebrow">Before submission</p><h3>Ready</h3><p>Opens wide and leans in. Starting is still your choice.</p><button class="pose-play" type="button" data-play="ready">Play ready</button></div></article>
+    <article class="pose"><div class="pose-art" data-mascot="confirmed" data-state-icon="confirmed"></div><div class="pose-copy"><p class="eyebrow">Verified result</p><h3>Take confirmed</h3><p>One sharp clap and recoil, only after a take exists.</p><button class="pose-play" type="button" data-play="confirmed">Play clap</button></div></article>
+    <article class="pose"><div class="pose-art" data-mascot="attention" data-state-icon="attention"></div><div class="pose-copy"><p class="eyebrow">Recovery</p><h3>Needs attention</h3><p>Hinge droops and gaze lowers, then settles. Explain how to recover.</p><button class="pose-play" type="button" data-play="attention">Play attention</button></div></article>
+  </div>
+</section>
+<section class="section" aria-labelledby="size-title"><div class="section-head"><div><p class="eyebrow">02 / scale check</p><h2 id="size-title">Recognizable when small</h2></div><p>The silhouette should work without relying on eye detail. These sizes test shape, not a final app icon.</p></div><div class="size-row"><div class="size-item"><div data-mascot="neutral" data-pixels="96"></div><p><strong>96 px</strong>Compact empty state or card.</p></div><div class="size-item"><div data-mascot="neutral" data-pixels="48"></div><p><strong>48 px</strong>Icon-size silhouette; expression may not read.</p></div></div></section>
+<section class="section" aria-labelledby="behavior-title"><div class="section-head"><div><p class="eyebrow">03 / behavior rules</p><h2 id="behavior-title">Personality with restraint</h2></div><p>Each gesture has a reason and can be replayed here. The product should trigger it only when the corresponding event happens.</p></div><div class="rules"><div class="rule"><h3>One action, one gesture</h3><p>A single clap may acknowledge a confirmed take. Do not clap for a submitted request or while work is pending.</p></div><div class="rule"><h3>Stillness is a state</h3><p>Waiting makes one small adjustment, then rests. Errors settle still. No endless bounce or fake progress.</p></div><div class="rule"><h3>Words stay in charge</h3><p>Every moment has a visible status message. Reduced-motion users get the same final posture without animation.</p></div></div></section>
+</main>
+<footer class="foot"><strong>For review:</strong> play the gestures and assess the eyes, timing, and posture before adding the mascot to the app. This sheet does not claim the mascot improves task completion or emotional response; that needs testing with creators.</footer>
+</div>
+<script>
+const themes={concrete:{canvas:'#090a0c',surface:'#191a1d',raised:'#292a2d',field:'#101113',line:'#96918a',text:'#f8f2e7',muted:'#c9c1b5',accent:'#f28e5d',accentInk:'#17110e',focus:'#f8dc91',print:'#b9a795',slate:'#1b1d20',eye:'#f8f2e7',pupil:'#101113'},midnight:{canvas:'#110c1e',surface:'#211831',raised:'#31253f',field:'#150f23',line:'#8c7ca0',text:'#f8f1ff',muted:'#d1c4e0',accent:'#f5c65c',accentInk:'#231608',focus:'#78d6ff',print:'#73d0ff',slate:'#211831',eye:'#f8f1ff',pupil:'#150f23'}};
+const poses={neutral:{tilt:0,hinge:-8,pupilX:0,pupilY:0},waiting:{tilt:9,hinge:-23,pupilX:1,pupilY:-1},ready:{tilt:-10,hinge:-53,pupilX:-2,pupilY:-2},confirmed:{tilt:-3,hinge:8,closed:true},attention:{tilt:14,hinge:11,pupilX:-2,pupilY:0}};
+const statusText={neutral:'Hello. The studio is ready when you are.',waiting:'Waiting for the current job. No progress is estimated here.',ready:'Ready to submit. You decide when to start.',confirmed:'Take confirmed. Show this only after a real result exists.',attention:'Needs attention. The product message must explain how to recover.'};
+const momentIcons={
+  waiting:'<g class="hourglass"><path d="M-8 -11H8M-8 11H8M-6 -10v3L0 -1 6 -7v-3M-6 10V7L0 1 6 7v3"/></g>',
+  ready:'<path d="M-9 7 0 -6 9 7M0 -6v17"/>',
+  confirmed:'<path class="check-path" d="M-10 0 -3 7 10 -8"/>',
+  attention:'<path d="M0 -10v12"/><circle cx="0" cy="9" r="2" fill="var(--accent-ink)" stroke="none"/>'
+};
+const momentNames={waiting:'waiting',ready:'ready',confirmed:'take confirmed',attention:'needs attention'};
+function badgeHtml(name){return `<button class="state-icon" type="button" data-replay-icon="${name}" aria-label="Replay ${momentNames[name]} gesture"><svg viewBox="-26 -26 52 52" aria-hidden="true" focusable="false"><rect x="-23" y="-21" width="46" height="46" rx="15" fill="var(--field)" opacity=".75"/><rect x="-23" y="-23" width="46" height="46" rx="15" fill="var(--accent)" stroke="var(--text)" stroke-width="3"/><svg class="icon-window" x="-16" y="-16" width="32" height="32" viewBox="-16 -16 32 32"><g fill="none" stroke="var(--accent-ink)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">${momentIcons[name]}</g></svg></svg></button>`}
+function mascotSvg(name,pixels){
+  const p=poses[name];
+  const eye=(x)=>`<ellipse cx="${x}" cy="199" rx="18" ry="20" fill="var(--eye)"/><g class="gaze"><circle class="pupil" cx="${x+p.pupilX}" cy="${199+p.pupilY}" r="8"/><circle cx="${x+p.pupilX-3}" cy="${195+p.pupilY}" r="2.7" fill="var(--eye)"/></g>`;
+  const eyes=p.closed?'<g class="confirmed-open"><ellipse cx="120" cy="199" rx="18" ry="20" fill="var(--eye)"/><circle class="pupil" cx="122" cy="197" r="8"/><ellipse cx="200" cy="199" rx="18" ry="20" fill="var(--eye)"/><circle class="pupil" cx="202" cy="197" r="8"/></g><path class="confirmed-closed" opacity="0" d="M102 198 Q120 213 138 198 M182 198 Q200 213 218 198" fill="none" stroke="var(--eye)" stroke-width="7" stroke-linecap="round"/>':eye(120)+eye(200);
+  return `<svg class="mascot" data-pose="${name}" width="${pixels||320}" height="${pixels||300}" viewBox="0 0 320 300" role="img" aria-label="Clapperboard mascot, ${name==='attention'?'needs attention':name==='confirmed'?'take confirmed':name} moment"><ellipse cx="162" cy="274" rx="105" ry="9" fill="var(--field)" opacity=".8"/><g class="body-group" transform="rotate(${p.tilt} 160 180)"><rect x="65" y="108" width="190" height="153" rx="13" fill="var(--slate)" stroke="var(--text)" stroke-width="7"/><path d="M65 108h190v43H65z" fill="var(--accent)"/><path d="M73 108h18l34 43h-18zM121 108h18l34 43h-18zM169 108h18l34 43h-18zM217 108h18l20 26v17h-6z" fill="var(--field)"/><path d="M65 151h190" stroke="var(--text)" stroke-width="7"/><g class="eye-group">${eyes}</g><g class="lid-group" transform="rotate(${p.hinge} 64 113)"><path d="M53 72L256 41l9 49L62 121z" fill="var(--eye)" stroke="var(--text)" stroke-width="7" stroke-linejoin="round"/><path d="M78 68l18-3 24 47-18 3zM129 60l18-3 24 47-18 3zM180 52l18-3 24 47-18 3zM231 44l18-3 16 31v18l-5 1z" fill="var(--field)"/></g><circle cx="65" cy="110" r="9" fill="var(--print)" stroke="var(--text)" stroke-width="5"/></g></svg>`;
+}
+function renderMascot(host,name){const pixels=host.dataset.pixels?Number(host.dataset.pixels):undefined;host.classList.add('mascot-stage');host.dataset.mascot=name;host.innerHTML=mascotSvg(name,pixels);if(pixels)host.style.width=pixels+'px'}
+function renderStateIcon(host){host.querySelector('.state-icon')?.remove();const name=host.dataset.stateIcon;if(name&&momentIcons[name]&&!host.dataset.pixels)host.insertAdjacentHTML('beforeend',badgeHtml(name))}
+function play(host){const svg=host.querySelector('.mascot');if(!svg)return;host.classList.remove('is-playing');svg.classList.remove('is-playing');void host.getBoundingClientRect().width;host.classList.add('is-playing');svg.classList.add('is-playing')}
+document.querySelectorAll('[data-mascot]').forEach(host=>{renderMascot(host,host.dataset.mascot);renderStateIcon(host)});
+const heroHost=document.querySelector('[data-size="hero"]');
+function showHero(name){renderMascot(heroHost,name);if(name==='neutral')delete heroHost.dataset.stateIcon;else heroHost.dataset.stateIcon=name;renderStateIcon(heroHost);document.querySelectorAll('[data-hero-pose]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.heroPose===name)));document.querySelector('#hero-status').textContent=statusText[name];play(heroHost)}
+document.querySelectorAll('[data-hero-pose]').forEach(button=>button.addEventListener('click',()=>showHero(button.dataset.heroPose)));
+document.querySelectorAll('[data-play]').forEach(button=>button.addEventListener('click',()=>play(button.closest('.pose').querySelector('[data-mascot]'))));
+document.addEventListener('click',event=>{const button=event.target.closest('[data-replay-icon]');if(button)play(button.closest('.mascot-stage'))});
+document.querySelectorAll('.pose').forEach(card=>card.addEventListener('pointerenter',()=>play(card.querySelector('[data-mascot]'))));
+const heroArt=document.querySelector('.hero-art');
+heroArt.addEventListener('pointermove',event=>{if(heroHost.dataset.mascot!=='neutral')return;const rect=heroArt.getBoundingClientRect();const x=Math.max(-4,Math.min(4,(event.clientX-rect.left-rect.width/2)/rect.width*9));const y=Math.max(-3,Math.min(3,(event.clientY-rect.top-rect.height/2)/rect.height*7));heroHost.querySelectorAll('.gaze').forEach(gaze=>gaze.style.transform=`translate(${x}px,${y}px)`)});
+heroArt.addEventListener('pointerleave',()=>heroHost.querySelectorAll('.gaze').forEach(gaze=>gaze.style.transform=''));
+function setTheme(name){const theme=themes[name]||themes.concrete;for(const [key,value] of Object.entries(theme)){document.documentElement.style.setProperty('--'+key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase()),value)}document.querySelectorAll('[data-theme]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.theme===name)))}
+document.querySelectorAll('[data-theme]').forEach(button=>button.addEventListener('click',()=>setTheme(button.dataset.theme)));
+setTheme('concrete');
+</script>
+</body>
+</html>

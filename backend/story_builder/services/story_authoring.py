@@ -1016,6 +1016,11 @@ class StoryAuthoring:
                 merged[-1][1] = max(merged[-1][1], end)
             else:
                 merged.append([start, end])
+        if any(row["source_revision_id"] != snapshot["source_revision_id"]
+               or row["source_sha256"] != snapshot["source_sha256"]
+               or source_text[row["start_codepoint"]:row["end_codepoint"]] != row["quote"]
+               for row in evidence_rows):
+            raise ValueError("Stored graph evidence no longer matches its source revision.")
         uncovered = []
         cursor = 0
         for start, end in merged:

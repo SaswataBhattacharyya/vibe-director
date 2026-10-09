@@ -2,6 +2,8 @@
 
 > Current development instructions: [development_workflow.md](development_workflow.md). Luna implements from existing sources; GPT-6.1 Sol reviews at bounded milestones. Product modes are **Assisted manual** (none/some/all checkboxes) and **Fully automated** (image-free video chain). All checked remains the asset-based route, as confirmed by the owner.
 
+Implementation handoff: Luna works directly from the relevant issue and these plans using Ponytail full. Sol reviews the three agreed milestones or a concrete risky blocker; Luna handles any bounded fixes. Reuse Story Builder first and OpenMontage only within the recorded license boundary. See `development_workflow.md` for source locations and task rules.
+
 # Current Story Builder product plans
 
 **Authority:** These are the current product plans, updated from the user's decisions on 2026-10-08. Earlier `migration_plan/`, `PLAN.md`, `REUSE_AUDIT.md` and their journeys/route matrices are historical analysis and implementation reuse evidence. Their product flow, required stages, authority gates and UX choices are superseded where they differ from these plans. Existing source code is reusable material to adapt; it is not an alternative product specification.

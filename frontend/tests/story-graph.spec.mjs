@@ -6,7 +6,7 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   let graph = null;
   let screenplay = null;
   let screenplayHistory = [];
-  const source = 'Mira keeps the key.';
+  const source = 'Mira keeps the key.\n' + '😀'.repeat(200);
   const revision = { revision_id: 'story-canon-abcdef123456', source_text: source, source_sha256: 'source-hash' };
   const calls = [];
   await page.addInitScript(() => localStorage.setItem('vibe-story-selected-v1', 'story-graph'));
@@ -21,8 +21,9 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
     if (path.startsWith('/api/story/workspaces/story-graph/screenplay/revisions/') && req.method() === 'GET') return route.fulfill({ json: screenplayHistory.find(item => item.screenplay_revision_id === path.split('/').at(-1)) });
     if (path === '/api/story/workspaces/story-graph/graph' && req.method() === 'POST') {
       const body = req.postDataJSON(); calls.push(body);
-      const evidence = { source_revision_id: revision.revision_id, source_sha256: 'source-hash', chunk_id: 'story_chunk_0001', start_codepoint: 0, end_codepoint: source.length, quote: source };
-      graph = { snapshot_id: 'graph-1', idempotency_key: body.idempotency_key, workspace_id: 'story-graph', source_revision_id: revision.revision_id, source_sha256: 'source-hash', status: 'complete', coverage_state: 'all_chunks_processed_semantic_coverage_unverified', contradiction_state: 'not_assessed', chunk_total: 1, chunk_complete: 1, provider: 'codex', model: 'fake', semantic_coverage_claim: false, chunks: [{ chunk_id: 'story_chunk_0001', chunk_index: 1, state: 'complete' }], records: [{ record_id: 'record-1', kind: 'entity', type: 'character', name: 'Mira', detail: '', status: 'source_supported', confidence: 1, user_modified: false, properties: {}, evidence: [evidence] }, { record_id: 'event-1', kind: 'event', type: 'interior', name: 'Mira keeps the key', detail: 'Mira holds the key.', status: 'source_supported', confidence: 1, user_modified: false, properties: {}, evidence: [evidence] }] };
+      const quote = 'Mira keeps the key.';
+      const evidence = { source_revision_id: revision.revision_id, source_sha256: 'source-hash', chunk_id: 'story_chunk_0001', start_codepoint: 0, end_codepoint: quote.length, quote };
+      graph = { snapshot_id: 'graph-1', idempotency_key: body.idempotency_key, workspace_id: 'story-graph', source_revision_id: revision.revision_id, source_sha256: 'source-hash', status: 'complete', coverage_state: 'all_chunks_processed_semantic_coverage_unverified', contradiction_state: 'not_assessed', chunk_total: 1, chunk_complete: 1, provider: 'codex', model: 'fake', semantic_coverage_claim: false, source_span_coverage: { kind: 'cited_source_spans_only', source_chars: Array.from(source).length, cited_chars: quote.length, percent: Math.round(quote.length * 10000 / Array.from(source).length) / 100, uncovered_range_count: 1, uncovered_ranges_omitted: 0, uncovered_ranges: [{ start_codepoint: quote.length, end_codepoint: Array.from(source).length, preview: '\n' + '😀'.repeat(159) }] }, chunks: [{ chunk_id: 'story_chunk_0001', chunk_index: 1, state: 'complete' }], records: [{ record_id: 'record-1', kind: 'entity', type: 'character', name: 'Mira', detail: '', status: 'source_supported', confidence: 1, user_modified: false, properties: {}, evidence: [evidence] }, { record_id: 'event-1', kind: 'event', type: 'interior', name: 'Mira keeps the key', detail: 'Mira holds the key.', status: 'source_supported', confidence: 1, user_modified: false, properties: {}, evidence: [evidence] }] };
       return route.fulfill({ json: graph });
     }
     if (path === '/api/story/workspaces/story-graph/graph/records/record-1' && req.method() === 'PATCH') {
@@ -39,7 +40,10 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await page.goto('/#/story');
   await page.getByRole('button', { name: 'Generate graph' }).click();
   await expect(page.getByText('story_chunk_0001: complete')).toBeVisible();
-  await expect(page.getByLabel('Source-linked story graph').getByText(source).first()).toBeVisible();
+  await page.getByText('Review uncited passages').click();
+  const uncitedPreview = page.locator('.story-graph details blockquote').first();
+  await expect(uncitedPreview).toBeVisible();
+  expect(await uncitedPreview.evaluate(node => Array.from(node.textContent || '').at(-1))).toBe('…');
   await page.getByLabel('Record').first().fill('Mira, the keeper');
   await page.getByLabel('Notes').first().fill('Reviewed by the writer.');
   await page.getByLabel('Review status').first().selectOption('user_authored');
@@ -52,7 +56,7 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await expect(page.locator('.stage-rail a[href="#/screenplay"]')).not.toContainText('Unavailable');
   await page.getByRole('button', { name: 'Generate draft' }).click();
   await expect(page.getByText('Shot 1')).toBeVisible();
-  await expect(page.getByText(source)).toBeVisible();
+  await expect(page.getByText('Mira keeps the key.')).toBeVisible();
   await page.getByLabel('Action').fill('Mira locks the key away.');
   await expect(page.getByRole('button', { name: 'Review & accept' })).toBeDisabled();
   await expect(page.getByRole('status').filter({ hasText: 'Save your screenplay edits' })).toBeVisible();

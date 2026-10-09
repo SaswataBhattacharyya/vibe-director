@@ -6,6 +6,8 @@ The runtime goal is active. Finish backend wiring and every agreed product journ
 
 Follow `README.md` and the stage plans. Reuse existing code first, then wire it into complete user journeys. Deliver production styles/media references; story import/editing and knowledge graph; readable screenplay; editable workflow prompts; character/world/frame images and voice binding; T2V/FFLF/R2V; Assisted manual and Fully automated; isolated generation; Media Prep and searchable libraries; Status; and ordered clip export with optional audio tracks.
 
+There are exactly two production modes. In **Assisted manual**, zero of the five automation boxes means the user runs each used step, some boxes make a mixed run, and all five automate the asset-based route. **Fully automated** is a separate image-free route with T2V at each scene start (or style-video R2V when selected) and previous-clip R2V continuation within the scene. Never turn “all five checked” into Fully automated.
+
 Keep PR22's UI foundation and all three themes. Connect every working control to real behavior. Ashu refines layout and visual details through the issue/PR loop; do not block backend work on polish.
 
 ## Work efficiently

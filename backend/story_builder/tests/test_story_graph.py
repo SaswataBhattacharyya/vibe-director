@@ -70,6 +70,24 @@ class StoryGraphTests(unittest.TestCase):
         self.assertEqual(graph["chunk_complete"], graph["chunk_total"])
         self.assertFalse(graph["semantic_coverage_claim"])
         self.assertEqual(graph["contradiction_state"], "not_assessed")
+        span_coverage = graph["source_span_coverage"]
+        self.assertEqual(span_coverage["kind"], "cited_source_spans_only")
+        evidence_ranges = sorted({(e["start_codepoint"], e["end_codepoint"])
+            for record in graph["records"] for e in record["evidence"]})
+        merged = []
+        for start, end in evidence_ranges:
+            if merged and start <= merged[-1][1]:
+                merged[-1][1] = max(merged[-1][1], end)
+            else:
+                merged.append([start, end])
+        self.assertEqual(span_coverage["cited_chars"], sum(end - start for start, end in merged))
+        self.assertLess(span_coverage["percent"], 100)
+        self.assertGreater(span_coverage["uncovered_range_count"], 0)
+        for gap in span_coverage["uncovered_ranges"]:
+            self.assertEqual(self.source[gap["start_codepoint"]:gap["start_codepoint"] + len(gap["preview"])], gap["preview"])
+        loaded_via_api_status, loaded_via_api = self.call("GET", f"{path}?revision_id={self.revision}")
+        self.assertEqual(loaded_via_api_status, "200 OK")
+        self.assertEqual(loaded_via_api["source_span_coverage"], span_coverage)
         self.assertEqual({call[1:] for call in self.calls}, {("codex", 0)})
         self.assertEqual(graph["source_sha256"], self.story.get_revision(self.workspace, self.revision)["source_sha256"])
         fact = next(record for record in graph["records"] if record["kind"] == "fact")

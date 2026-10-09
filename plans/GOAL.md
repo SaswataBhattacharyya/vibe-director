@@ -8,7 +8,7 @@ Follow `README.md` and the stage plans. Reuse existing code first, then wire it 
 
 There are exactly two production modes. In **Assisted manual**, zero of the five automation boxes means the user runs each used step, some boxes make a mixed run, and all five automate the asset-based route. **Fully automated** is a separate image-free route with T2V at each scene start (or style-video R2V when selected) and previous-clip R2V continuation within the scene. Never turn “all five checked” into Fully automated.
 
-Keep PR22's UI foundation and all three themes. Connect every working control to real behavior. Ashu refines layout and visual details through the issue/PR loop; do not block backend work on polish.
+Keep PR22's UI foundation and all three themes. The initial UI setup is in place; now complete the usable product UI and wire every control to real behavior alongside the backend. Ashu refines finer design and layout details through reviewable issue/PR increments. Do not pause product work while waiting for polish.
 
 ## Work efficiently
 

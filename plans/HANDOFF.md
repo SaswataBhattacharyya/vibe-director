@@ -141,6 +141,16 @@ GPT-6.1 Sol reviewed the current screenplay acceptance slice. It found two UI ri
 
 `get_goal` confirms the runtime goal is active; it was not deleted. The owner reaffirmed that the project scope is to finish the complete product, including usable UI and backend wiring, and clarified the priority: backend/product flows now, on the existing UI foundation. Keep Ashu as UI design owner and send him coherent, issue-linked increments for finer design/detail refinement; periodically review his changes before integration. `plans/GOAL.md` is the durable scope. Continue from the current screenplay acceptance checkpoint and use current repository/issues as authority. No new implementation or test work began in this handoff update.
 
+## 2026-10-09 scope and graph-search follow-up
+
+The runtime goal remains active. The initial Ashu UI setup is in place; complete the functional UI and backend journeys, then push coherent issue-linked increments for Ashu's finer detailing and review. `plans/GOAL.md`, `plans/README.md` and `plans/development_workflow.md` remain authoritative.
+
+Added bounded literal graph search and one-hop entity/relation context to the Story UI. Results identify themselves as literal keyword matches, not semantic answers. Graph retrieval validates evidence quotes against the pinned revision/hash and reports cited source-span coverage with bounded uncited previews; it makes no semantic-completeness claim. This partial query/review behavior advances #21 but does not close its cross-chunk reconciliation requirements.
+
+After reconciling with PR head `2461343`, focused graph/screenplay backend tests pass 10/10; frontend typecheck and production build pass; the mocked Story graph→screenplay Playwright journey passes 1/1; `git diff --check` passes. Playwright required an escalated run because Chromium launch is blocked in the sandbox. No provider/GPU/media call or broad legacy rerun. The host already has the preview ports 8082/3020 in use; duplicate servers were not started, and the Story route was reopened in Codex. Cross-chunk entity reconciliation, chronology/contradiction synthesis, semantic coverage, source-edit graph refresh/invalidation and downstream workflow wiring remain open.
+
+Commit `513f616` contains the graph-search increment and this handoff. The local branch is two commits ahead of PR #15's head. `git push` was attempted but rejected because this shell has no GitHub username/credential; GitHub still needs the push before Ashu can see this increment. Keep both commits and continue from the current branch; do not mistake the local commits for published changes.
+
 
 ## 2026-10-09 pinned style to screenplay slice
 
@@ -151,7 +161,3 @@ Focused Story Graph module passes 9/9, including style prompt/lineage/edit cover
 ## 2026-10-09 graph evidence coverage follow-up
 
 Added server-side validation that each stored graph evidence span still matches the pinned source revision/hash/quote; the graph view reports cited character-span coverage and shows up to 20 bounded uncited previews. This is a navigation/review aid only and makes no semantic-completeness claim. Sol's focused review found no remaining issue after the UI switched to Unicode code-point counts for preview truncation. Focused graph backend tests: 9 passed; TypeScript check and production build passed; the graph→screenplay Playwright journey passed after updating its uncited-preview fixture/assertions. No provider/media/GPU calls or broad legacy suite. Cross-chunk reconciliation, contradiction analysis, semantic coverage, source-edit refresh/invalidation and downstream stages remain open. The remote PR head was checked against local HEAD: all paths match except `story_authoring.py`, whose remote copy already includes the graph coverage logic; publication is based on that verified remote head and adds the missing validation/UI/tests/plans without dropping its code. Local `.git` is read-only, so publication uses the connected GitHub API.
-
-## 2026-10-09 pinned style to screenplay slice
-
-The screenplay draft now receives the frozen production-style snapshot as creative guidance without allowing it to add plot facts or replace source evidence. The snapshot ID is stored on the immutable screenplay revision and retained through edits and history. Style-free request hashes remain unchanged for in-flight replay compatibility. A SQLite migration adds the nullable lineage field. Focused graph/screenplay tests and frontend build passed before branch reconciliation; rerun focused checks after rebase. No live provider, asset, GPU or broad legacy suite was run.

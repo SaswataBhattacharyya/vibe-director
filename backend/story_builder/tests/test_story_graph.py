@@ -111,6 +111,25 @@ class StoryGraphTests(unittest.TestCase):
         self.assertTrue(reviewed["user_modified"])
         self.assertEqual(reviewed["evidence"], fact["evidence"])
 
+    def test_graph_keyword_search_returns_one_hop_relationship_context(self):
+        graph_path = f"/api/story/workspaces/{self.workspace}/graph"
+        _, graph = self.call("POST", graph_path, {"source_revision_id": self.revision,
+            "idempotency_key": str(uuid.uuid4())})
+        status, result = self.call("GET", f"{graph_path}/search?revision_id={self.revision}&q=Mira")
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(result["kind"], "literal_keyword_search")
+        self.assertEqual(result["snapshot_id"], graph["snapshot_id"])
+        entity = next(record for record in result["matches"]
+            if record["kind"] == "entity" and record["name"] == "Mira")
+        neighborhood = next(item["records"] for item in result["neighborhoods"]
+            if item["match_record_id"] == entity["record_id"])
+        self.assertTrue(any(record["kind"] == "relation" for record in neighborhood))
+        self.assertTrue(any(record["kind"] == "entity" and record["name"] == "key"
+            for record in neighborhood))
+        invalid_status, invalid = self.call("GET", f"{graph_path}/search?revision_id={self.revision}&q=%20%20")
+        self.assertEqual(invalid_status, "422 Unprocessable Entity")
+        self.assertIn("Search text", invalid["error"]["message"])
+
     def test_pinned_production_style_guides_screenplay_and_is_preserved_in_lineage(self):
         styles = ProductionStyleService(self.ledger)
         selection = styles.select(isolated_context_id="pre-story-style", production_type="informative")

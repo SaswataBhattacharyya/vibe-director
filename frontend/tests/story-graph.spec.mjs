@@ -16,6 +16,7 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
     if (path === '/api/story/workspaces/story-graph' && req.method() === 'GET') return route.fulfill({ json: { workspace_id: 'story-graph', title: 'Graph me', current_revision: revision, current_revision_id: revision.revision_id, initialized: true, status: 'ready' } });
     if (path === '/api/story/workspaces/story-graph/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: revision.revision_id, source_sha256: 'source-hash', revision_number: 1 }]) });
     if (path === '/api/story/workspaces/story-graph/graph' && req.method() === 'GET') return graph && new URL(req.url()).searchParams.get('revision_id') === graph.source_revision_id ? route.fulfill({ json: graph }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No graph' } } });
+    if (path === '/api/story/workspaces/story-graph/graph/search' && req.method() === 'GET') return route.fulfill({ json: { snapshot_id: graph.snapshot_id, source_revision_id: revision.revision_id, query: url.searchParams.get('q'), kind: 'literal_keyword_search', match_count: 1, matches: [graph.records[0]], neighborhoods: [{ match_record_id: graph.records[0].record_id, records: [graph.records[1]] }] } });
     if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'GET') return screenplay && new URL(req.url()).searchParams.get('revision_id') === screenplay.source_revision_id ? route.fulfill({ json: screenplay }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No screenplay' } } });
     if (path === '/api/story/workspaces/story-graph/screenplay/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf(screenplayHistory.map(item => ({ ...item, stale: item.source_revision_id !== revision.revision_id, accepted: item.accepted === true && item.source_revision_id === revision.revision_id && screenplayHistory.find(candidate => candidate.source_revision_id === item.source_revision_id)?.screenplay_revision_id === item.screenplay_revision_id }))) });
     if (path.startsWith('/api/story/workspaces/story-graph/screenplay/revisions/') && req.method() === 'GET') return route.fulfill({ json: screenplayHistory.find(item => item.screenplay_revision_id === path.split('/').at(-1)) });
@@ -40,6 +41,10 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await page.goto('/#/story');
   await page.getByRole('button', { name: 'Generate graph' }).click();
   await expect(page.getByText('story_chunk_0001: complete')).toBeVisible();
+  await page.getByLabel('Find a person, event or fact').fill('Mira');
+  await page.getByRole('button', { name: 'Search graph' }).click();
+  await expect(page.getByText('1 keyword matches')).toBeVisible();
+  await expect(page.getByText('Connected: Mira keeps the key')).toBeVisible();
   await page.getByText('Review uncited passages').click();
   const uncitedPreview = page.locator('.story-graph details blockquote').first();
   await expect(uncitedPreview).toBeVisible();

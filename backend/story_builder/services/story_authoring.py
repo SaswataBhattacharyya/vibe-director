@@ -1049,6 +1049,54 @@ class StoryAuthoring:
             "semantic_coverage_claim": False, "source_span_coverage": span_coverage,
             "chunks": [dict(row) for row in chunk_rows], "records": records}
 
+    def search_story_graph(self, *, workspace_id: str, query: str,
+                           source_revision_id: str | None = None, limit: int = 10) -> dict[str, Any]:
+        """Find literal keyword matches and return their one-hop graph context."""
+        if type(query) is not str or not query.strip() or len(query) > 200:
+            raise ValueError("Search text must contain 1–200 characters.")
+        if type(limit) is not int or not 1 <= limit <= 20:
+            raise ValueError("Search result limit must be between 1 and 20.")
+        graph = self.get_story_graph(workspace_id=workspace_id, source_revision_id=source_revision_id)
+        terms = list(dict.fromkeys(re.findall(r"[^\W_]+", query.casefold(), flags=re.UNICODE)))
+        if not terms:
+            raise ValueError("Search text must include a letter or number.")
+        scored = []
+        for record in graph["records"]:
+            fields = [
+                (record["name"].casefold(), 6), (record["type"].casefold(), 3),
+                ((record.get("predicate") or "").casefold(), 4),
+                (record["detail"].casefold(), 2),
+                (" ".join(item["quote"] for item in record["evidence"]).casefold(), 1),
+                (self._canonical_json(record["properties"]).casefold(), 1),
+            ]
+            text = " ".join(value for value, _weight in fields)
+            if not all(term in text for term in terms):
+                continue
+            score = sum(weight for value, weight in fields if any(term in value for term in terms))
+            if query.strip().casefold() in record["name"].casefold():
+                score += 10
+            scored.append((score, record))
+        matches = [record for _score, record in sorted(scored,
+            key=lambda item: (-item[0], item[1]["kind"], item[1]["name"], item[1]["record_id"]))[:limit]]
+        records_by_id = {record["record_id"]: record for record in graph["records"]}
+        relation_records = [record for record in graph["records"] if record["kind"] == "relation"]
+        neighborhoods = []
+        for match in matches:
+            related_ids: set[str] = set()
+            if match["kind"] == "entity":
+                for relation in relation_records:
+                    if match["record_id"] in {relation.get("subject_id"), relation.get("object_id")}:
+                        related_ids.add(relation["record_id"])
+                        related_ids.update(value for value in (relation.get("subject_id"), relation.get("object_id")) if value)
+            elif match["kind"] == "relation":
+                related_ids.update(value for value in (match.get("subject_id"), match.get("object_id")) if value)
+            related_ids.discard(match["record_id"])
+            neighborhoods.append({"match_record_id": match["record_id"],
+                "records": [records_by_id[value] for value in sorted(related_ids) if value in records_by_id]})
+        return {"snapshot_id": graph["snapshot_id"], "source_revision_id": graph["source_revision_id"],
+            "query": query.strip(), "kind": "literal_keyword_search", "match_count": len(scored),
+            "matches": matches, "neighborhoods": neighborhoods}
+
     def update_story_graph_record(self, *, workspace_id: str, record_id: str,
                                   name: str, detail: str, status: str = "user_authored") -> dict[str, Any]:
         workspace_id = _check_workspace_id(workspace_id)

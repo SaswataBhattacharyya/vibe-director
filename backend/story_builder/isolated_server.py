@@ -176,8 +176,16 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 return _json_response(start_response, "200 OK", story.list_workspaces(limit=limit, offset=offset))
             if method == "POST" and path == "/api/story/workspaces":
                 payload = _read_story_json(environ, story_limit)
+                if payload.get("idempotency_key") is not None:
+                    result, created = story.create_or_resume_workspace(
+                        idempotency_key=payload.get("idempotency_key"), action="create",
+                        title=payload.get("title"), source_text=payload.get("source_text"))
+                    return _json_response(start_response, "201 Created" if created else "200 OK", result)
                 result = story.create_workspace(title=payload.get("title"), source_text=payload.get("source_text"))
                 return _json_response(start_response, "201 Created", result)
+            if method == "GET" and path.startswith("/api/story/creations/by-idempotency/"):
+                key = path.removeprefix("/api/story/creations/by-idempotency/")
+                return _json_response(start_response, "200 OK", story.get_creation_by_key(key))
             if path == "/api/story/imports" and method == "POST":
                 try:
                     length = int(environ.get("CONTENT_LENGTH") or 0)
@@ -198,14 +206,22 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     return _json_response(start_response, "200 OK", imports.get(tail))
                 if method == "POST" and tail.endswith("/apply"):
                     import_id = tail[:-len("/apply")].rstrip("/")
-                    preview = imports.get(import_id)
                     payload = _read_story_json(environ, story_limit)
-                    lineage = {"kind": "source_import", "import_id": import_id,
-                        "original_filename": preview["filename"], "original_sha256": preview["source_sha256"],
-                        "source_type": preview["source_type"],
-                        "extractor_version": preview["extraction"]["extractor_version"],
-                        "extracted_text_sha256": preview["text_sha256"],
-                        "corrected_source_sha256": __import__("hashlib").sha256(payload.get("source_text", "").encode("utf-8")).hexdigest() if type(payload.get("source_text")) is str else None}
+                    def lineage_factory():
+                        preview = imports.get(import_id)
+                        return {"kind": "source_import", "import_id": import_id,
+                            "original_filename": preview["filename"], "original_sha256": preview["source_sha256"],
+                            "source_type": preview["source_type"],
+                            "extractor_version": preview["extraction"]["extractor_version"],
+                            "extracted_text_sha256": preview["text_sha256"],
+                            "corrected_source_sha256": __import__("hashlib").sha256(payload.get("source_text", "").encode("utf-8")).hexdigest() if type(payload.get("source_text")) is str else None}
+                    if payload.get("idempotency_key") is not None:
+                        result, created = story.create_or_resume_workspace(
+                            idempotency_key=payload.get("idempotency_key"), action="apply",
+                            title=payload.get("title"), source_text=payload.get("source_text"),
+                            import_id=import_id, source_metadata_factory=lineage_factory)
+                        return _json_response(start_response, "201 Created" if created else "200 OK", result)
+                    lineage = lineage_factory()
                     result = story.create_workspace(title=payload.get("title"), source_text=payload.get("source_text"), source_metadata=lineage)
                     return _json_response(start_response, "201 Created", result)
             if path.startswith("/api/story/workspaces/"):

@@ -21,6 +21,7 @@ from story_builder.services.source_chunks import SourceChunk, split_source_text
 
 _WORKSPACE_ID = re.compile(r"^story-[a-f0-9]{12}$")
 _REVISION_ID = re.compile(r"^story-canon-[a-f0-9]{12}$")
+_IDEMPOTENCY_KEY = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 
 def _sha(text: str) -> str:
@@ -36,6 +37,17 @@ def _check_workspace_id(value: Any) -> str:
 def _check_revision_id(value: Any) -> str:
     if type(value) is not str or not _REVISION_ID.fullmatch(value):
         raise ValueError("Invalid story revision identifier.")
+    return value
+
+
+def _check_idempotency_key(value: Any) -> str:
+    if type(value) is not str or not _IDEMPOTENCY_KEY.fullmatch(value):
+        raise ValueError("idempotency_key must be a lowercase canonical UUID.")
+    try:
+        if str(uuid.UUID(value)) != value:
+            raise ValueError
+    except ValueError as exc:
+        raise ValueError("idempotency_key must be a lowercase canonical UUID.") from exc
     return value
 
 
@@ -56,6 +68,18 @@ class StoryAuthoring:
                     title TEXT NOT NULL,
                     authoring_uuid TEXT NOT NULL UNIQUE,
                     current_revision_id TEXT,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS story_creation_requests (
+                    idempotency_key TEXT PRIMARY KEY,
+                    action TEXT NOT NULL,
+                    client_payload_hash TEXT NOT NULL,
+                    request_hash TEXT NOT NULL,
+                    request_json TEXT NOT NULL,
+                    workspace_id TEXT NOT NULL UNIQUE REFERENCES story_workspaces(workspace_id) ON DELETE CASCADE,
+                    initial_revision_id TEXT,
+                    status TEXT NOT NULL DEFAULT 'initializing',
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
@@ -114,7 +138,12 @@ class StoryAuthoring:
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS story_revision_number_idx ON story_revision_index(workspace_id,revision_number)")
 
     def create_workspace(self, *, title: str, source_text: str,
-                         source_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+                         source_metadata: dict[str, Any] | None = None,
+                         idempotency_key: str | None = None) -> dict[str, Any]:
+        if idempotency_key is not None:
+            result, _created = self.create_or_resume_workspace(idempotency_key=idempotency_key,
+                action="create", title=title, source_text=source_text, source_metadata=source_metadata)
+            return result["workspace"]
         if type(title) is not str or not title.strip():
             raise ValueError("Workspace title must contain non-whitespace text.")
         # Validate before making the workspace row; there is no story-length cap.
@@ -130,6 +159,121 @@ class StoryAuthoring:
             metadata=source_metadata)
         return {"workspace_id": workspace_id, "title": title,
                 "authoring_uuid": authoring_uuid, "current_revision": revision}
+
+    @staticmethod
+    def _canonical_json(value: Any) -> str:
+        return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+    def create_or_resume_workspace(self, *, idempotency_key: str, action: str,
+                                   title: str, source_text: str,
+                                   import_id: str | None = None,
+                                   source_metadata: dict[str, Any] | None = None,
+                                   source_metadata_factory=None) -> tuple[dict[str, Any], bool]:
+        """Durably bind a keyed create/apply request to one workspace.
+
+        The client identity is compared before any metadata re-resolution. The
+        frozen request and workspace row are committed together; the initial
+        revision pointer is committed with its creation-request ready marker.
+        Returns `(envelope, request_row_was_created)`.
+        """
+        key = _check_idempotency_key(idempotency_key)
+        client_payload = {"title": title, "source_text": source_text}
+        if action == "apply":
+            client_payload["import_id"] = import_id
+        client_json = self._canonical_json(client_payload)
+
+        with self.ledger._connect() as db:
+            existing = db.execute("SELECT * FROM story_creation_requests WHERE idempotency_key=?", (key,)).fetchone()
+        created = False
+        if existing is None:
+            if action not in {"create", "apply"}:
+                raise ValueError("Unsupported story creation action.")
+            if type(title) is not str or not title.strip():
+                raise ValueError("Workspace title must contain non-whitespace text.")
+            if type(source_text) is not str or not source_text.strip():
+                raise ValueError("Story source must contain non-whitespace text.")
+            split_source_text(source_text, max_chars=self.chunk_chars)
+            if action == "apply" and (type(import_id) is not str or not re.fullmatch(r"import-[a-f0-9]{32}", import_id)):
+                raise ValueError("A valid import_id is required for an import application.")
+            # Resolve import evidence only for a new key. A replay is compared
+            # with the client payload and returns the frozen original lineage.
+            if source_metadata_factory is not None:
+                resolved_metadata = source_metadata_factory()
+            else:
+                resolved_metadata = source_metadata
+            if resolved_metadata is None:
+                resolved_metadata = {"kind": "source_import"} if action == "create" else {}
+            if not isinstance(resolved_metadata, dict):
+                raise ValueError("Source metadata must be an object.")
+            request_value = {"action": action, "client_payload": client_payload,
+                             "source_metadata": resolved_metadata}
+            request_json = self._canonical_json(request_value)
+            request_hash = hashlib.sha256(request_json.encode("utf-8")).hexdigest()
+            with self.ledger._connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                existing = db.execute("SELECT * FROM story_creation_requests WHERE idempotency_key=?", (key,)).fetchone()
+                if existing is None:
+                    workspace_id = f"story-{uuid.uuid4().hex[:12]}"
+                    authoring_uuid = str(uuid.uuid4())
+                    db.execute("INSERT INTO story_workspaces(workspace_id,title,authoring_uuid) VALUES(?,?,?)",
+                               (workspace_id, title, authoring_uuid))
+                    client_hash = hashlib.sha256(client_json.encode("utf-8")).hexdigest()
+                    db.execute("INSERT INTO story_creation_requests(idempotency_key,action,client_payload_hash,request_hash,request_json,workspace_id) VALUES(?,?,?,?,?,?)",
+                               (key, action, client_hash, request_hash, request_json, workspace_id))
+                    db.commit()
+                    created = True
+                    existing = db.execute("SELECT * FROM story_creation_requests WHERE idempotency_key=?", (key,)).fetchone()
+                else:
+                    db.rollback()
+            if existing is not None and not created:
+                self._assert_same_creation(existing, action, client_json)
+        else:
+            self._assert_same_creation(existing, action, client_json)
+
+        try:
+            if existing["status"] == "initializing":
+                frozen = json.loads(existing["request_json"])
+                self.initialize_workspace(workspace_id=existing["workspace_id"],
+                    source_text=frozen["client_payload"]["source_text"],
+                    metadata=frozen["source_metadata"], _creation_key=key)
+        except (LedgerConflict, sqlite3.IntegrityError):
+            # Another identical concurrent POST may have committed the same
+            # initial revision while this request was compiling/writing it.
+            with self.ledger._connect() as db:
+                winner = db.execute("SELECT * FROM story_creation_requests WHERE idempotency_key=?", (key,)).fetchone()
+            if winner is None or winner["status"] != "ready" or not winner["initial_revision_id"]:
+                raise
+        # The row fetched before filesystem work may still say initializing;
+        # the pointer and ready marker are atomically committed by write_revision.
+        with self.ledger._connect() as db:
+            current = db.execute("SELECT * FROM story_creation_requests WHERE idempotency_key=?", (key,)).fetchone()
+        if current is None:
+            raise LedgerNotFound("Story creation request disappeared during initialization.")
+        existing = current
+        return self._creation_envelope(existing), created
+
+    @staticmethod
+    def _assert_same_creation(row, action: str, client_json: str) -> None:
+        client_hash = hashlib.sha256(client_json.encode("utf-8")).hexdigest()
+        if row["action"] != action or row["client_payload_hash"] != client_hash:
+            raise LedgerConflict("Idempotency key was already used for a different story action or payload.")
+
+    def get_creation_by_key(self, idempotency_key: str) -> dict[str, Any]:
+        key = _check_idempotency_key(idempotency_key)
+        with self.ledger._connect() as db:
+            row = db.execute("SELECT * FROM story_creation_requests WHERE idempotency_key=?", (key,)).fetchone()
+        if row is None:
+            raise LedgerNotFound("No story creation exists for this idempotency key.")
+        return self._creation_envelope(row)
+
+    def _creation_envelope(self, row) -> dict[str, Any]:
+        workspace = self.get_workspace(row["workspace_id"], include_source=False)
+        created_revision = None
+        if row["initial_revision_id"]:
+            created_revision = self.get_revision(row["workspace_id"], row["initial_revision_id"])
+        return {"status": "ready" if row["status"] == "ready" and created_revision else "initializing",
+                "idempotency_key": row["idempotency_key"], "request_hash": row["request_hash"],
+                "workspace": {**workspace, "created_revision": created_revision}}
 
     def list_workspaces(self, *, limit: int = 50, offset: int = 0) -> dict[str, Any]:
         if type(limit) is not int or not 1 <= limit <= 100 or type(offset) is not int or offset < 0:
@@ -147,7 +291,8 @@ class StoryAuthoring:
                 "limit": limit, "offset": offset, "total": total}
 
     def initialize_workspace(self, *, workspace_id: str, source_text: str,
-                             metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+                             metadata: dict[str, Any] | None = None,
+                             _creation_key: str | None = None) -> dict[str, Any]:
         workspace_id = _check_workspace_id(workspace_id)
         with self.ledger._connect() as db:
             row = db.execute("SELECT current_revision_id FROM story_workspaces WHERE workspace_id=?",
@@ -159,7 +304,8 @@ class StoryAuthoring:
         if row["current_revision_id"] is not None or count:
             raise LedgerConflict("Story workspace is already initialized.")
         return self.write_revision(workspace_id=workspace_id, source_text=source_text,
-            expected_current_revision_id=None, metadata=metadata or {"kind": "source_import"})
+            expected_current_revision_id=None, metadata=metadata or {"kind": "source_import"},
+            _creation_key=_creation_key)
 
     def _reserve_revision_id(self, *, workspace_id: str, authoring_uuid: str) -> str:
         directory = revision_root(self.data_root, workspace_id, authoring_uuid)
@@ -206,7 +352,8 @@ class StoryAuthoring:
     def write_revision(self, *, workspace_id: str, source_text: str,
                        expected_current_revision_id: str | None,
                        metadata: dict[str, Any] | None = None,
-                       _accept_proposal_id: str | None = None) -> dict[str, Any]:
+                       _accept_proposal_id: str | None = None,
+                       _creation_key: str | None = None) -> dict[str, Any]:
         workspace_id = _check_workspace_id(workspace_id)
         if type(source_text) is not str or not source_text.strip():
             raise ValueError("Story source must contain non-whitespace text.")
@@ -266,6 +413,11 @@ class StoryAuthoring:
                                      (revision_id, workspace_id, expected_current_revision_id))
                 if updated.rowcount != 1:
                     raise LedgerConflict("Story changed since this edit was prepared; reload before applying it.")
+                if _creation_key is not None:
+                    keyed = db.execute("UPDATE story_creation_requests SET initial_revision_id=?,status='ready',updated_at=CURRENT_TIMESTAMP WHERE idempotency_key=? AND workspace_id=? AND status='initializing' AND initial_revision_id IS NULL",
+                                       (revision_id, _creation_key, workspace_id))
+                    if keyed.rowcount != 1:
+                        raise LedgerConflict("Story creation request was already initialized or no longer matches this workspace.")
                 if _accept_proposal_id is not None:
                     changed = db.execute("UPDATE story_edit_proposals SET status='accepted',resulting_revision_id=?,updated_at=CURRENT_TIMESTAMP WHERE proposal_id=? AND status='pending'",
                                          (revision_id, _accept_proposal_id))

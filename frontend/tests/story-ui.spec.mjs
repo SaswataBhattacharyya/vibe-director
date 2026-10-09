@@ -10,8 +10,9 @@ test('import preview is editable, explicitly applied, saved as a revision, and r
     if (url.pathname === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf(workspace ? [{ workspace_id: workspace.workspace_id, title: workspace.title, current_revision_id: workspace.current_revision_id, initialized: true, status: 'ready' }] : []) });
     if (url.pathname === '/api/story/imports' && req.method() === 'POST') return route.fulfill({ json: { import_id: 'imp-1', filename: 'draft.txt', source_type: 'text/plain', source_sha256: 'abc123', text_sha256: 'def456', text: 'Extracted original\r\ntext', warnings: [], pages: [] } });
     if (url.pathname === '/api/story/imports/imp-1/apply') {
-      workspace = { workspace_id: 'story-1', title: req.postDataJSON().title, initialized: true, status: 'ready', current_revision: { revision_id: 'rev-1', source_text: req.postDataJSON().source_text } };
-      return route.fulfill({ json: workspace });
+      const body = req.postDataJSON();
+      workspace = { workspace_id: 'story-1', title: body.title, current_revision_id: 'rev-1', initialized: true, status: 'ready', current_revision: { revision_id: 'rev-1', source_text: body.source_text } };
+      return route.fulfill({ status: 201, json: { status: 'ready', idempotency_key: body.idempotency_key, request_hash: 'request-hash', workspace: { ...workspace, current_revision: undefined, created_revision: workspace.current_revision } } });
     }
     if (url.pathname === '/api/story/workspaces/story-1' && req.method() === 'GET') return route.fulfill({ json: workspace });
     if (url.pathname === '/api/story/workspaces/story-1/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf(workspace ? [{ revision_id: workspace.current_revision.revision_id, source_sha256: 'sha', revision_number: 1, created_at: 'now' }] : []) });
@@ -113,4 +114,38 @@ test('storage failure keeps editing responsive and offers a downloadable draft',
   await page.getByRole('button', { name: 'Download draft text' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toContain('Storage failure');
+});
+
+test('lost import-apply response recovers by key after reload without a second POST', async ({ page }) => {
+  let creation;
+  let applyPosts = 0;
+  const calls = [];
+  await page.route('**/api/story/**', async route => {
+    const req = route.request(), url = new URL(req.url());
+    calls.push(`${req.method()} ${url.pathname}`);
+    if (url.pathname === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf(creation ? [{ workspace_id: creation.workspace.workspace_id, title: creation.workspace.title, current_revision_id: creation.workspace.current_revision_id, initialized: true, status: 'ready' }] : []) });
+    if (url.pathname === '/api/story/imports' && req.method() === 'POST') return route.fulfill({ json: { import_id: 'imp-recovery', filename: 'lost.md', source_type: 'text/markdown', source_sha256: 'abc', text_sha256: 'def', text: 'Frozen import text', warnings: [], pages: [] } });
+    if (url.pathname === '/api/story/imports/imp-recovery/apply' && req.method() === 'POST') {
+      applyPosts++;
+      const body = req.postDataJSON();
+      creation = { status: 'ready', idempotency_key: body.idempotency_key, request_hash: 'request-hash', workspace: { workspace_id: 'story-recovered', title: body.title, current_revision_id: 'rev-initial', initialized: true, status: 'ready', created_revision: { revision_id: 'rev-initial', source_text: body.source_text } } };
+      return route.abort('connectionreset');
+    }
+    if (url.pathname === `/api/story/creations/by-idempotency/${creation?.idempotency_key}`) return route.fulfill({ json: creation });
+    if (url.pathname === '/api/story/workspaces/story-recovered/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: 'rev-initial', source_sha256: 'sha', revision_number: 1 }]) });
+    return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'missing' } } });
+  });
+  await page.goto('/#/story');
+  await page.locator('input[type="file"]').setInputFiles({ name: 'lost.md', mimeType: 'text/markdown', buffer: Buffer.from('source') });
+  await page.getByRole('button', { name: 'Apply import as new workspace' }).click();
+  await expect(page.getByText(/Creation response was not confirmed/)).toBeVisible();
+  const frozen = await page.evaluate(() => JSON.parse(localStorage.getItem('vibe-story-ui-draft-v1')).pendingCreate);
+  expect(frozen.key).toBeTruthy();
+  expect(frozen.sourceText).toBe('Frozen import text');
+  await page.getByLabel('Editable extracted text').fill('Edited after response loss');
+  await page.reload();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Frozen import text');
+  await expect(page.getByText('Story workspace creation is confirmed.')).toBeVisible();
+  expect(applyPosts).toBe(1);
+  expect(calls.filter(call => call.includes('/creations/by-idempotency/')).every(call => call.startsWith('GET '))).toBeTruthy();
 });

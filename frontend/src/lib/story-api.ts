@@ -1,9 +1,10 @@
 export type StoryRevision = { revision_id: string; source_text: string; source_sha256?: string; created_at?: string; parent_revision_id?: string | null; revision_number?: number };
 export type StoryRevisionSummary = { revision_id: string; source_sha256: string; created_at?: string; parent_revision_id?: string | null; revision_number?: number; metadata?: Record<string, unknown> };
-export type StoryWorkspace = { workspace_id: string; title: string; current_revision_id?: string | null; current_revision?: StoryRevision; initialized?: boolean; status?: 'ready' | 'initializing' | string; updated_at?: string };
+export type StoryWorkspace = { workspace_id: string; title: string; current_revision_id?: string | null; current_revision?: StoryRevision; created_revision?: StoryRevision; initialized?: boolean; status?: 'ready' | 'initializing' | string; updated_at?: string };
 export type Page<T> = { items: T[]; limit: number; offset: number; total: number };
 export type StoryImportPage = { number: number; start_codepoint: number; end_codepoint: number; line_start?: number; line_end?: number };
 export type StoryImport = { import_id: string; filename: string; source_type: string; source_sha256: string; text_sha256?: string; text: string; warnings: string[]; pages?: StoryImportPage[] | null };
+export type StoryCreation = { status: 'initializing' | 'ready'; idempotency_key: string; request_hash: string; workspace: StoryWorkspace & { created_revision?: StoryRevision } };
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init);
@@ -19,10 +20,11 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
 }
 const body = (value: unknown) => ({ method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(value) });
 export const listStoryWorkspaces = (offset = 0, limit = 50) => json<Page<StoryWorkspace>>(`/api/story/workspaces?limit=${limit}&offset=${offset}`);
-export const createStoryWorkspace = (title: string, source_text: string) => json<StoryWorkspace>('/api/story/workspaces', body({ title, source_text }));
+export const createStoryWorkspace = (title: string, source_text: string, idempotency_key: string) => json<StoryCreation>('/api/story/workspaces', body({ title, source_text, idempotency_key }));
+export const getStoryCreation = (key: string) => json<StoryCreation>(`/api/story/creations/by-idempotency/${encodeURIComponent(key)}`);
 export const getStoryWorkspace = (id: string) => json<StoryWorkspace>(`/api/story/workspaces/${encodeURIComponent(id)}`);
 export const saveStoryRevision = (id: string, source_text: string, expected_current_revision_id: string) => json<StoryRevision>(`/api/story/workspaces/${encodeURIComponent(id)}/revisions`, body({ source_text, expected_current_revision_id }));
 export const listStoryRevisions = (id: string, offset = 0, limit = 50) => json<Page<StoryRevisionSummary>>(`/api/story/workspaces/${encodeURIComponent(id)}/revisions?limit=${limit}&offset=${offset}`);
 export const restoreStoryRevision = (id: string, revision_id: string, expected_current_revision_id: string) => json<StoryRevision>(`/api/story/workspaces/${encodeURIComponent(id)}/restore`, body({ revision_id, expected_current_revision_id }));
 export const uploadStoryFile = (file: File) => json<StoryImport>(`/api/story/imports?filename=${encodeURIComponent(file.name)}`, { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', Accept: 'application/json' }, body: file });
-export const applyStoryImport = (id: string, title: string, source_text: string) => json<StoryWorkspace>(`/api/story/imports/${encodeURIComponent(id)}/apply`, body({ title, source_text }));
+export const applyStoryImport = (id: string, title: string, source_text: string, idempotency_key: string) => json<StoryCreation>(`/api/story/imports/${encodeURIComponent(id)}/apply`, body({ title, source_text, idempotency_key }));

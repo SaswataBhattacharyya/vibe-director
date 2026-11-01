@@ -69,7 +69,7 @@ def _safe_filename(value: str) -> str:
 class StoryImports:
     def __init__(self, ledger: ProductionLedger, data_root: Path):
         self.ledger = ledger
-        self.root = (Path(data_root).expanduser().resolve() / "story_imports").resolve()
+        self.root = (Path(data_root).expanduser().resolve() / "services/production/story-imports").resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         with ledger._connect() as db:
             db.execute("""CREATE TABLE IF NOT EXISTS story_imports (

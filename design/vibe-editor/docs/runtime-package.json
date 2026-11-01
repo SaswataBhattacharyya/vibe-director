@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@hyperframes/shader-transitions": "0.8.199",
+    "hyperframes": "0.8.199"
+  }
+}

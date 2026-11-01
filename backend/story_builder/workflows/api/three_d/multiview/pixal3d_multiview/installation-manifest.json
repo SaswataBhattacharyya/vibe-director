@@ -1,0 +1,95 @@
+{
+  "backend": "ComfyUI native Pixal3D multi-view",
+  "comfy_revision": "7de99222f06e1b6cddb1868859319010bd7ac878",
+  "template_commit": "86ce86e92ec77e3c3c6d4a754e69cfce37886542",
+  "model_revision": "f37641be376725d324c56626007cc477f1249a69",
+  "model": {
+    "path": "ComfyUI/models/diffusion_models/pixal3d_multiview_int8_convrot.safetensors",
+    "bytes": 5584555824,
+    "sha256": "6b1eb3328930d921d3b57508d9c46cceec1c174dcedeebc14f176ab67d49f477"
+  },
+  "reused": [
+    {
+      "path": "ComfyUI/models/vae/trellis_2_shape_vae_bf16.safetensors",
+      "bytes": 1095844024,
+      "sha256": "de0cb4949a76c59ee5c091a995a69bcc8c51d5aeda939f0c641a50d2a72341f4"
+    },
+    {
+      "path": "ComfyUI/models/vae/trellis_2_texture_vae_bf16.safetensors",
+      "bytes": 948461364,
+      "sha256": "714e5ebf094a610e12a8e3b5175c18a62f37f6ea4218acb6073644456b73ab0e"
+    },
+    {
+      "path": "ComfyUI/models/clip_vision/dino_v3_L_naf_fp32.safetensors",
+      "bytes": 1215214176,
+      "sha256": "4ad2ec4e0879a5b5b04cd97325cc37da954a7b6edca5170b86510f17f2b2290f"
+    }
+  ],
+  "workflows": [
+    {
+      "path": "workflows/ricky/3d_stuff/pixal3d_multiview/3d_pixal3d_multi_views.upstream.ui.json",
+      "bytes": 85059,
+      "sha256": "6a6a42b5d6e40e758ded2cd6aa541281b5bf082a179816daf76466a370d9d252"
+    },
+    {
+      "path": "workflows/ricky/3d_stuff/pixal3d_multiview/Pixal3D_MV_four_views_bounded.api.json",
+      "bytes": 11603,
+      "sha256": "031f12b10bdb18e429c6f01c30ec08326c7ea41250e130ccbc246c9ef866d530"
+    },
+    {
+      "path": "workflows/ricky/3d_stuff/pixal3d_multiview/Pixal3D_MV_four_views_bounded.ui.json",
+      "bytes": 47241,
+      "sha256": "a04bf9d2ee996fe648e8b4eae2991e456bd3fe1a95cb3c195eaac0215a84064c"
+    },
+    {
+      "path": "workflows/ricky/3d_stuff/pixal3d_multiview/Pixal3D_MV_front_back_bounded.api.json",
+      "bytes": 11102,
+      "sha256": "adcb5751e0f0bad9964daddd27fab82cdfa149bd783f7951b7f27a65755cf1a4"
+    },
+    {
+      "path": "workflows/ricky/3d_stuff/pixal3d_multiview/Pixal3D_MV_front_back_bounded.ui.json",
+      "bytes": 45683,
+      "sha256": "2909381a6ea1dd611af06a845bad0bd26ab7433b843363064da75ab04502dcc7"
+    }
+  ],
+  "cpu_validation": {
+    "Pixal3D_MV_front_back_bounded.api.json": {
+      "valid": true,
+      "error": null,
+      "outputs": [
+        "235",
+        "164",
+        "226",
+        "207",
+        "208",
+        "372"
+      ],
+      "node_errors": {}
+    },
+    "Pixal3D_MV_four_views_bounded.api.json": {
+      "valid": true,
+      "error": null,
+      "outputs": [
+        "235",
+        "164",
+        "226",
+        "207",
+        "208",
+        "372"
+      ],
+      "node_errors": {}
+    }
+  },
+  "gpu_acceptance": "NOT RUN",
+  "inputs": "technical placeholders; actual owner views required",
+  "dependencies_changed": false,
+  "settings": {
+    "target_resolution": 1024,
+    "texture_resolution": 1024,
+    "normal_resolution": 1024,
+    "remesh_resolution": 256,
+    "max_precluster_vertices": 2000000,
+    "final_faces": 100000,
+    "fov_degrees": 20
+  }
+}

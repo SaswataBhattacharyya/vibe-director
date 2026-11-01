@@ -1,5 +1,23 @@
 # Character, world, frame, and voice planning for Story Builder
 
+## Assisted manual shot references — owner correction 2026-10-16
+
+Video Create uses the accepted screenplay's shot design and saved asset selections. Director attaches current character masters for visible cast, current world masters for cited locations, and assigned voices only for speakers in that shot, preserving stable character–voice IDs in the request. Show action, dialogue, camera, lighting, mood and duration beside the reference controls; prepare an editable workflow-specific shot prompt automatically. Ambiguous cast/location/speaker matches or missing selected assets are explained rather than guessed. Standalone creation remains available.
+
+User may remove, replace or add image/audio/video references with separate identity, location, style, motion or sound instructions. These are per-shot overrides; global masters and voice assignments remain unchanged. Persist prompt, references and review decisions by workspace/revision/setup/workflow/shot; restore on switching/reloading. Rebuild Director choices is explicit and warns before replacing edits.
+
+Automatic and extra references share workflow capacity (currently R2V: 9 images, 3 videos, 3 audio including paired soundtracks). Keep every proposal visible; when over capacity, ask which to retain and block submission until resolved. Never silently truncate. Show possible instruction conflicts near reference review, explain the affected identity/clothing/location scope and offer narrower instructions or a visible retained override. Do not claim visual/semantic inspection where only instruction scope was checked. Preparing a shot never queues generation; Assisted manual Generate remains owner-clicked.
+
+This applies when video automation is unchecked in Assisted manual. Checked video automation continues through the saved automated clip plan. This supersedes earlier recommendation-only wording for story-linked Assisted manual R2V. Optional style-library recommendations and isolated creation still require user selection. Fully automated behavior is unchanged.
+
+
+## Notes-integrated correction — 2026-10-11
+
+Use three direct generation pages: Characters & Voices together, Worlds, and First/Last Frames. Character image and voice assignment stay separate automation boxes. Manual: four distinct-seed candidates per character/world base, and four first plus four last candidates per clip. Automatic: one per target/role. Selected world base produces four labelled directional views, optionally eight total. Verify multi-angle support; generic Qwen Edit is not proof. Explicit voice enrollment/discovery feeds the canonical eligible voice catalog.
+
+Read [remaining_app.md](remaining_app.md) for task order/reuse and [OWNER_DUMMY_RUNS.md](OWNER_DUMMY_RUNS.md) for owner-clicked acceptance. This correction overrides conflicting older sections below; historical implementation checkpoints are not completion evidence.
+
+
 **Status:** Current product plan; planned workflow. Use `README.md`, `GLOSSARY.md`, and `automation.md` for authority, terminology and execution wrappers.  
 **Position in the journey:** Follows the accepted, readable screenplay and its validated production breakdown. This plan organizes image asset creation and character-to-voice assignment into a small number of focused pages rather than reproducing Story Builder's scattered legacy controls.
 
@@ -27,7 +45,7 @@ Story + knowledge graph
   → Shot-level image/video/audio generation
 ```
 
-Each stage should show its screenplay and production references so the user knows why an asset is needed and where it will be used. Generated assets remain candidates until explicitly accepted.
+Each stage should show its screenplay and production references so the user knows why an asset is needed and where it will be used. Unchecked Assisted manual and isolated generation candidates require the user's explicit selection. For a checked Assisted manual stage, the saved automation policy authorizes the Director to select one candidate per target; preserve the other candidates as history and do not wait for a separate human acceptance click. That Director decision must be durable and tied to the exact candidate bytes, prompt, workflow/settings, target, screenplay revision and graph snapshot. An inconclusive review or unavailable provider pauses the stage with a clear recovery path. It must never select multiple masters for one target or silently replace a previously selected master.
 
 ## 3. Visual asset pages
 
@@ -49,9 +67,15 @@ Character images establish visual identity. They do not automatically determine 
 
 ### Page 2 — World and scene backgrounds
 
+#### Owner clarification — 2026-10-15: one master per established setting
+
+The Director must resolve world identity before asking for asset generation. Aliases, a landmark within the same established setting, exterior scene labels and camera framings must not independently require world masters. For example, a harbour/lighthouse exterior, the lighthouse and tower exterior can share one canonical setting when supported by the story. Keep landmark facts under that setting. A distinct interior (such as its lantern room) may have its own master with an established parent-setting relationship. Different angles, lighting, weather and time are scene/shot variations, not new identities. Do not merge genuinely different places or guess ambiguous relationships; retain an open question for review. Reuse canonical names across source chunks and keep selected architecture/layout consistent in downstream prompts. These instructions apply to every reasoning-provider adapter; do not rely on stronger-model inference. Existing accepted stories and saved assets are not automatically regrouped or replaced.
+
 Show canonical worlds/locations and the scenes that use them:
 
 - Group scenes by shared location/world so a single approved location reference can support several scenes.
+- The story graph's canonical entity types are `character`, `location`, `organization`, `group`, `creature`, `object`, and `other`. Only `location` records can be linked to a world-master image; only `character` records can be linked to a character-master image.
+- Older graph snapshots may use free-text entity types and therefore have no selectable location target. In that case, show a clear no-target message and keep standalone world-image generation available. Never silently reinterpret an older entity type as a location.
 - Display scene slugline, time/weather, mood, lighting direction, relevant screenplay description, and continuity requirements.
 - Generate background/world image candidates for a location. Allow scene-specific variants where story time, weather, damage, or lighting materially changes the setting.
 - For every candidate, expose the exact editable prompt and reference assets used (thumbnail, asset name, and intended influence). Support selected-text annotation through a contextual chat box for precise changes. Proposed edits are reviewable; they do not overwrite the prompt until accepted.
@@ -93,6 +117,7 @@ For every active character, show:
 - The same voice file **may be selected for multiple characters**; do not enforce unique voice selection or auto-reserve a voice after it is assigned.
 - Search/filter the available voice assets by name and supported metadata. Keep the dropdown usable for large libraries.
 - A voice binding links `character_id` to `voice_asset_id`; it should not copy the audio file into each character record.
+- The first implementation lives in the existing **Characters, Worlds & Frames** workspace as an Images/Voices tab, not as another top-level route. The API only lists characters from the exact graph of the current accepted screenplay; only same-workspace audio assets marked `voice_master` can be assigned. Bindings are saved per screenplay revision, and a voice asset can be reused by multiple characters.
 - Support a clear/unassign action and indicate where the binding is used in dialogue/audio generation.
 - Show warnings for characters with dialogue and no voice assignment. Narrator and non-speaking characters should be labeled distinctly so lack of a voice assignment is not treated as an error.
 - Changing a binding affects future voice generation and previews. It must not rewrite existing approved audio outputs without an explicit regeneration action.
@@ -101,7 +126,7 @@ Voice identity is separate from visual identity. A character's voice can be reas
 
 ## 5. Shared interaction and state rules
 
-- Every generated asset is a candidate until the user accepts it; maintain candidate history and the accepted asset ID.
+- Every generated asset remains in candidate history. For unchecked Assisted manual and isolated stages, the user selects the accepted asset. For checked Assisted manual stages, the Director's saved policy selects at most one accepted asset per target; keep the recorded decision and selected asset ID. Do not call a Director selection a user acceptance.
 - Save each prompt revision, chosen references, generation settings, and output against project, screenplay revision, graph snapshot, source hash, and relevant character/world/scene IDs. The candidate detail view must make the actual prompt and actual reference set inspectable, not merely show a reconstructed approximation.
 - Annotation is a precise prompt-editing interaction: selection identifies the target span; the user's instruction is applied to that span while preserving unrelated prompt content. Show the before/after text and require acceptance before it becomes the next generation prompt.
 - Reference changes, prompt edits, and model/workflow changes create a new candidate/revision; never silently mutate the lineage of an existing generated image.
@@ -181,7 +206,11 @@ This plan describes a clean Story Builder workflow for visual preparation and vo
 
 For a character present in the current clip, show its bound voice asset and available character image at the top of compatible video reference pickers under **Recommended**, with the character name and reason. Recommend them together for appearance/voice consistency. Do not select or attach them merely because a binding exists. Assisted manual automated video may select them under its explicitly confirmed reference policy; manual pickers still leave them unselected. The same voice file may remain bound to multiple characters.
 
+For the checked Assisted manual voice stage, inspect the accepted screenplay's labeled dialogue and match only speaking canonical characters. Automatically bind a voice-master asset only when its filename, description or tags contain one exact character-name or explicit voice-guidance match and only one asset qualifies. Preserve existing bindings and allow one shared asset for several characters. Record the match and source asset. If more than one asset qualifies, none qualifies, or dialogue speaker labels cannot be mapped to canonical characters, pause that character and let the Director choose from the library or add voice metadata. Mark non-speaking characters as not needing a voice. This selection rule is implemented in the current voice page and its workspace API.
+
 The video adapter must reconcile shared voice bindings with the local compiler's duplicate-asset/single-speaker assumptions: attach a shared media file once and represent the intended character mappings explicitly, or expose a supported alternative. Do not promise distinct vocal identities when characters share the same voice source. Unsupported multi-character mapping must be visible rather than silently duplicating the reference slot.
+
+**Local implementation update (2026-10-12):** Assisted R2V now shows bound voice and character-image recommendations for characters listed on each shot, with explicit add controls; a binding does not auto-attach media. One voice asset is stored once with multiple stable character IDs. The R2V request contract and graph reference map preserve that mapping and associate each character with the same audio tag. See `plans/progress_review.md` for focused verification. Live workflow compatibility and owner-started generation remain open.
 
 Text-only and first/last workflows must not claim to use these references if they have no compatible input. Show recommendations as unavailable for that workflow with the reason, or let the user explicitly choose reference-to-video. Fully automated mode uses the story-only route described in `automation.md` and does not require character image/voice selection.
 
@@ -205,3 +234,13 @@ Use `integration.md` for extraction of working Story Builder services and any ve
 ## Style-reference imagery
 
 Recommend selected style images and explicitly exported style-video frames at the top of compatible image-reference selectors; never populate all decoded frames. Export count defaults to two and may be zero. Preserve parent video/timestamp provenance, leave manual recommendations unselected, and distinguish style frames from generated first/last scene endpoints. See `production_styles.md`.
+# Frame-image implementation note (2026-10-10; superseded skip-storage detail)
+
+The existing Assets generator supports the Assisted manual `frame_images` stage for a planned screenplay shot. First/last frame requests carry the exact accepted screenplay revision, scene/shot numbers, and the revision-scoped `story_clip_id`; the backend checks that the shot exists and the ID matches before preview, queue, or candidate acceptance. Each shot can be explicitly skipped without creating an asset. The original browser-draft storage note below is historical: skip state is now stored by the backend in `story_frame_preparation_skips`, scoped to workspace and accepted screenplay revision, validated against existing shots, and reversible. The UI reloads the saved state and blocks prompt preview/generation for a skipped clip until the skip is undone. Automated frame generation and wiring selected frames into video jobs remain separate workflow integration/acceptance work. The current screenplay schema has no stored `clip_id`; the established deterministic video identity is reused rather than adding a parallel identifier.
+
+The isolated/manual Qwen Image Edit workflow now has a workspace-image picker for one to three references. The backend validates each asset ID and content hash, stages it under a job-owned ComfyUI name, and patches the Qwen graph without exposing arbitrary filenames to the client. Pinned style images are marked recommended but remain unselected. This does not yet feed screenplay frame references into automated frame jobs; that integration needs explicit clip-level selections and lineage.
+
+**Superseding implementation update (2026-10-11):** Screenplay-linked automated frame jobs now receive hash-validated selected character/location master images only for entities cited by that shot; ending frames may also receive that clip's selected opening frame. References, labels and canonical entity IDs are recorded in prompt/job lineage, and Qwen Image Edit fails clearly if no required reference is selected. The earlier statement that automated frame jobs still lacked references is historical and closed. FFLF video jobs separately accept the explicitly mapped first/last frame assets through the role-validated video path. Runtime workflow/node compatibility and owner-clicked image/video acceptance remain pending.
+
+## Owner clarification — 2026-10-15 — Frame references and paired prompts
+First/last-frame Qwen Edit references show current selected character/world masters and explicitly saved side views, excluding unselected generated candidates. Last-frame preparation may attach the selected first frame of the same clip as a continuity anchor. Reference selection automatically prepares an editable prompt for the chosen role: one opening-state still for First frame, one ending-state still for Last frame of the same shot/clip. Director receives exact shot direction and selected reference identities. Frame role changes must preserve the selected clip. Generation remains owner-clicked in manual stages.

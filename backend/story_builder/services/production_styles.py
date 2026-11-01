@@ -25,6 +25,31 @@ class ProductionStyleError(ValueError):
     """Invalid style setup or selection."""
 
 
+# Keep creative treatment separate from deliverable type. These concise,
+# versioned direction seeds guide the model without adding story facts.
+_DIRECTING_STYLES = {
+    "cinematic": {"display_name": "Cinematic", "version": 1,
+        "guidance": "Use coherent, motivated visual storytelling. Match camera, light, mood, pacing and sound to the scene without changing its events."},
+    "horror": {"display_name": "Horror", "version": 1,
+        "guidance": "Build unease through controlled reveals, motivated darkness, negative space, restrained movement and precise sound. Do not add threats or events absent from the story."},
+    "romance": {"display_name": "Romance", "version": 1,
+        "guidance": "Emphasize character connection through attentive performance, readable eyelines, expressive light and measured pacing. Preserve the written relationship and events."},
+    "action": {"display_name": "Action", "version": 1,
+        "guidance": "Keep action geography and cause-and-effect readable with purposeful movement, clear impacts and controlled pacing. Do not invent stunts, weapons or events."},
+    "mixed": {"display_name": "Mixed", "version": 1,
+        "guidance": "Blend compatible treatments only where the scene supports them. Keep transitions coherent and avoid flattening distinct scene moods into one tone."},
+}
+
+
+def _directing_style(style_id: str | None) -> dict[str, Any]:
+    selected_id = "cinematic" if style_id is None else style_id
+    if type(selected_id) is not str or selected_id not in _DIRECTING_STYLES:
+        raise ProductionStyleError(f"Unknown directing style {selected_id!r}.")
+    item = _DIRECTING_STYLES[selected_id]
+    content = {"style_id": selected_id, **item}
+    return {**content, "style_hash": stable_hash(content)}
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -109,6 +134,19 @@ class ProductionStyleService:
                     CHECK ((workspace_id IS NOT NULL AND isolated_context_id IS NULL) OR
                            (workspace_id IS NULL AND isolated_context_id IS NOT NULL))
                 );
+                CREATE TABLE IF NOT EXISTS directing_style_versions (
+                    style_version_id TEXT PRIMARY KEY,
+                    style_id TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    display_name TEXT NOT NULL,
+                    guidance TEXT NOT NULL,
+                    evidence_json TEXT NOT NULL,
+                    style_hash TEXT NOT NULL,
+                    published_at TEXT NOT NULL,
+                    scope_type TEXT NOT NULL DEFAULT 'cross_type',
+                    production_type_scope TEXT,
+                    UNIQUE(style_id, version)
+                );
                 CREATE INDEX IF NOT EXISTS production_style_selection_context_idx
                     ON production_style_selections(workspace_id, isolated_context_id, created_at);
                 CREATE TRIGGER IF NOT EXISTS production_style_versions_no_update
@@ -119,7 +157,16 @@ class ProductionStyleService:
                     BEFORE UPDATE ON production_style_selections BEGIN SELECT RAISE(ABORT, 'style selections are immutable'); END;
                 CREATE TRIGGER IF NOT EXISTS production_style_selections_no_delete
                     BEFORE DELETE ON production_style_selections BEGIN SELECT RAISE(ABORT, 'style selections are immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS directing_style_versions_no_update
+                    BEFORE UPDATE ON directing_style_versions BEGIN SELECT RAISE(ABORT, 'published directing style versions are immutable'); END;
+                CREATE TRIGGER IF NOT EXISTS directing_style_versions_no_delete
+                    BEFORE DELETE ON directing_style_versions BEGIN SELECT RAISE(ABORT, 'published directing style versions are immutable'); END;
             """)
+            columns = {row[1] for row in db.execute("PRAGMA table_info(directing_style_versions)")}
+            if "scope_type" not in columns:
+                db.execute("ALTER TABLE directing_style_versions ADD COLUMN scope_type TEXT NOT NULL DEFAULT 'cross_type'")
+            if "production_type_scope" not in columns:
+                db.execute("ALTER TABLE directing_style_versions ADD COLUMN production_type_scope TEXT")
 
     def list_catalog(self) -> dict[str, Any]:
         """Return six validated bundled types plus latest published custom types."""
@@ -157,7 +204,123 @@ class ProductionStyleService:
                 "director_profile_version": f"custom_v{row['version']}",
                 "director_profile_hash": row["director_profile_hash"], "custom": True,
             })
-        return {"catalog_version": "production_style_setup_v1", "production_types": bases}
+        return {"catalog_version": "production_style_setup_v3", "production_types": bases,
+                "directing_styles": self.list_directing_styles()}
+
+    def list_directing_styles(self) -> list[dict[str, Any]]:
+        """Return built-ins and the latest immutable version of each user style."""
+        result = [_directing_style(style_id) for style_id in _DIRECTING_STYLES]
+        with _ledger_connection(self.ledger) as db:
+            rows = db.execute("""SELECT d.* FROM directing_style_versions d
+                JOIN (SELECT style_id, MAX(version) version FROM directing_style_versions GROUP BY style_id) latest
+                USING (style_id, version) ORDER BY style_id""").fetchall()
+        result.extend({"style_id": row["style_id"], "display_name": row["display_name"],
+            "version": row["version"], "style_version_id": row["style_version_id"],
+            "guidance": row["guidance"], "evidence": json.loads(row["evidence_json"]),
+            "style_hash": row["style_hash"], "scope_type": row["scope_type"],
+            "production_type_scope": row["production_type_scope"], "custom": True} for row in rows)
+        return result
+
+    def publish_custom_directing_style(self, style_id: str, display_name: str, guidance: str,
+                                       evidence: list[dict[str, Any]] | None = None,
+                                       scope_type: str = "cross_type",
+                                       production_type_scope: str | None = None) -> dict[str, Any]:
+        """Publish a new immutable directing-style version with linked evidence metadata."""
+        if type(style_id) is not str or not re.fullmatch(r"[a-z][a-z0-9_]{1,63}", style_id):
+            raise ProductionStyleError("style_id must be a lowercase identifier (2–64 characters).")
+        if style_id in _DIRECTING_STYLES:
+            raise ProductionStyleError("Built-in directing styles cannot be replaced; choose a new style ID.")
+        if type(display_name) is not str or not display_name.strip() or len(display_name.strip()) > 120:
+            raise ProductionStyleError("display_name must be 1–120 characters.")
+        if type(guidance) is not str or not guidance.strip() or len(guidance.strip()) > 12000:
+            raise ProductionStyleError("guidance must be 1–12,000 characters.")
+        if type(scope_type) is not str or scope_type not in {"cross_type", "production_type"}:
+            raise ProductionStyleError("scope_type must be cross_type or production_type.")
+        if scope_type == "production_type":
+            if type(production_type_scope) is not str or not production_type_scope:
+                raise ProductionStyleError("Choose a production type for this directing style.")
+            if not any(item["production_type"] == production_type_scope for item in self.list_catalog()["production_types"]):
+                raise ProductionStyleError("Directing style production type is not in the current catalog.")
+        elif production_type_scope is not None:
+            raise ProductionStyleError("Cross-type directing styles cannot be bound to one production type.")
+        sources = [] if evidence is None else evidence
+        if not isinstance(sources, list) or len(sources) > 100 or any(not isinstance(item, dict) for item in sources):
+            raise ProductionStyleError("evidence must be a list of at most 100 objects.")
+        allowed_evidence_keys = {"asset_id", "kind", "sha256", "intent", "locator", "quote", "analyzer_run_id",
+            "source_id", "source_sha256", "filename", "quote"}
+        for item in sources:
+            if set(item) - allowed_evidence_keys:
+                raise ProductionStyleError("Evidence contains unsupported fields.")
+            if item.get("kind") == "document":
+                required = {"kind", "source_id", "source_sha256", "filename", "locator", "quote", "intent"}
+                if set(item) != required:
+                    raise ProductionStyleError("Document evidence must include its source, hash, filename, locator, quote, and intent.")
+                if not re.fullmatch(r"style-source-[a-f0-9]{16}", str(item.get("source_id", ""))):
+                    raise ProductionStyleError("Document evidence needs a valid source ID.")
+                if not re.fullmatch(r"[a-f0-9]{64}", str(item.get("source_sha256", ""))):
+                    raise ProductionStyleError("Document evidence needs a valid SHA-256 hash.")
+                for field, maximum in (("filename", 240), ("locator", 1000), ("quote", 280)):
+                    if type(item[field]) is not str or not item[field].strip() or len(item[field]) > maximum:
+                        raise ProductionStyleError(f"Document evidence {field} must be 1–{maximum} characters.")
+                if type(item["intent"]) is not str or not item["intent"].strip() or len(item["intent"]) > 1000:
+                    raise ProductionStyleError("Document evidence intent must be 1–1,000 characters.")
+                continue
+            if not re.fullmatch(r"pa-[a-f0-9]{16}", str(item.get("asset_id", ""))):
+                raise ProductionStyleError("Each style evidence record needs a valid shared-library asset_id.")
+            if item.get("kind") not in {"image", "audio", "video"}:
+                raise ProductionStyleError("Each style evidence record needs a supported media kind.")
+            if type(item.get("intent")) is not str or not item["intent"].strip() or len(item["intent"]) > 1000:
+                raise ProductionStyleError("Each evidence record needs an intent of 1–1,000 characters.")
+            for field in ("sha256", "locator"):
+                if field in item and (type(item[field]) is not str or len(item[field]) > 1000):
+                    raise ProductionStyleError(f"Evidence {field} must be text no longer than 1,000 characters.")
+            if "quote" in item and (type(item["quote"]) is not str or not item["quote"].strip() or len(item["quote"]) > 280):
+                raise ProductionStyleError("Media evidence quote must be 1–280 characters.")
+            if "analyzer_run_id" in item and (type(item["analyzer_run_id"]) is not str or not item["analyzer_run_id"].strip() or len(item["analyzer_run_id"]) > 128):
+                raise ProductionStyleError("Media evidence analyzer_run_id is invalid.")
+        evidence_json = json.dumps(sources, ensure_ascii=False, sort_keys=True)
+        content = {"style_id": style_id, "display_name": display_name.strip(),
+            "guidance": guidance.strip(), "evidence": sources,
+            "scope_type": scope_type, "production_type_scope": production_type_scope}
+        style_hash = stable_hash(content)
+        now = _now()
+        with _ledger_connection(self.ledger) as db:
+            db.execute("BEGIN IMMEDIATE")
+            version = db.execute("SELECT COALESCE(MAX(version), 0) + 1 FROM directing_style_versions WHERE style_id=?", (style_id,)).fetchone()[0]
+            version_id = f"custom-direction:{style_id}:v{version}:{style_hash[:12]}"
+            db.execute("""INSERT INTO directing_style_versions
+                (style_version_id,style_id,version,display_name,guidance,evidence_json,style_hash,published_at,scope_type,production_type_scope)
+                VALUES (?,?,?,?,?,?,?,?,?,?)""", (version_id, style_id, version, display_name.strip(),
+                guidance.strip(), evidence_json, style_hash, now, scope_type, production_type_scope))
+            db.commit()
+        return {**content, "version": version, "style_version_id": version_id,
+                "style_hash": style_hash, "custom": True, "published_at": now}
+
+    def _resolve_directing_style(self, style_id: str | None, version_id: str | None = None) -> dict[str, Any]:
+        if version_id is not None:
+            with _ledger_connection(self.ledger) as db:
+                row = db.execute("SELECT * FROM directing_style_versions WHERE style_version_id=?", (version_id,)).fetchone()
+            if not row or row["style_id"] != style_id:
+                raise ProductionStyleError("Unknown or mismatched directing-style version.")
+            return {"style_id": row["style_id"], "display_name": row["display_name"],
+                "version": row["version"], "style_version_id": row["style_version_id"],
+                "guidance": row["guidance"], "evidence": json.loads(row["evidence_json"]),
+                "style_hash": row["style_hash"], "scope_type": row["scope_type"],
+                "production_type_scope": row["production_type_scope"], "custom": True}
+        selected_id = "cinematic" if style_id is None else style_id
+        builtin = _DIRECTING_STYLES.get(selected_id)
+        if builtin:
+            content = {"style_id": selected_id, **builtin}
+            return {**content, "style_hash": stable_hash(content)}
+        with _ledger_connection(self.ledger) as db:
+            row = db.execute("SELECT * FROM directing_style_versions WHERE style_id=? ORDER BY version DESC LIMIT 1", (selected_id,)).fetchone()
+        if not row:
+            raise ProductionStyleError(f"Unknown directing style {selected_id!r}.")
+        return {"style_id": row["style_id"], "display_name": row["display_name"],
+            "version": row["version"], "style_version_id": row["style_version_id"],
+            "guidance": row["guidance"], "evidence": json.loads(row["evidence_json"]),
+            "style_hash": row["style_hash"], "scope_type": row["scope_type"],
+            "production_type_scope": row["production_type_scope"], "custom": True}
 
     def publish_custom_type(self, production_type: str, narrative_guidance: dict[str, Any], director_profile: dict[str, Any]) -> dict[str, Any]:
         """Validate and publish a new immutable custom production type version."""
@@ -183,7 +346,9 @@ class ProductionStyleService:
                 "director_profile": profile, "director_profile_hash": profile_hash, "published_at": now}
 
     def select(self, *, workspace_id: str | None = None, isolated_context_id: str | None = None,
-               production_type: str, style_version_id: str | None = None) -> dict[str, Any]:
+               production_type: str, style_version_id: str | None = None,
+               directing_style_id: str | None = None,
+               directing_style_version_id: str | None = None) -> dict[str, Any]:
         """Append a frozen selection for exactly one workspace or isolated context."""
         if type(production_type) is not str or not production_type:
             raise ProductionStyleError("production_type must be a non-empty string.")
@@ -210,11 +375,15 @@ class ProductionStyleService:
             if item is None:
                 raise ProductionStyleError(f"Unknown production type {production_type!r}.")
             selected = item
+        directing_style = self._resolve_directing_style(directing_style_id, directing_style_version_id)
+        if directing_style.get("scope_type") == "production_type" and directing_style.get("production_type_scope") != production_type:
+            raise ProductionStyleError("This directing style is only available for its selected production type.")
         snapshot_id, now = uuid.uuid4().hex, _now()
         frozen = {"snapshot_id": snapshot_id, "workspace_id": workspace_id, "isolated_context_id": isolated_context_id,
                   "production_type": production_type, "style_version_id": selected["style_version_id"],
                   "style_version": selected["style_version"], "narrative_guidance": selected["narrative_guidance"],
                   "narrative_hash": selected["narrative_hash"], "director_profile": selected["director_profile"],
+                  "directing_style": directing_style,
                   "director_profile_hash": selected["director_profile_hash"], "created_at": now}
         with _ledger_connection(self.ledger) as db:
             db.execute("""INSERT INTO production_style_selections
@@ -236,5 +405,5 @@ class ProductionStyleService:
     def list_selections(self, *, workspace_id: str | None = None, isolated_context_id: str | None = None) -> list[dict[str, Any]]:
         column, value = _validate_context(workspace_id, isolated_context_id)
         with _ledger_connection(self.ledger) as db:
-            rows = db.execute(f"SELECT snapshot_json FROM production_style_selections WHERE {column}=? ORDER BY created_at,snapshot_id", (value,)).fetchall()
+            rows = db.execute(f"SELECT snapshot_json FROM production_style_selections WHERE {column}=? ORDER BY rowid", (value,)).fetchall()
         return [json.loads(row["snapshot_json"]) for row in rows]

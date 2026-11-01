@@ -42,6 +42,29 @@ class StoryAuthoringTests(unittest.TestCase):
         self.assertEqual(page["total"], 1)
         self.assertEqual(page["items"][0]["revision_id"], revision_id)
 
+    def test_story_draft_persists_without_revision_and_rejects_stale_base(self):
+        workspace = self.authoring.create_workspace(title="Draft recovery", source_text="Saved source")
+        workspace_id = workspace["workspace_id"]
+        base_id = workspace["current_revision"]["revision_id"]
+        saved = self.authoring.save_source_draft(workspace_id=workspace_id,
+            source_text="Saved source with unfinished edits", base_revision_id=base_id)
+        self.assertFalse(saved["stale"])
+        self.assertEqual(self.authoring.list_revisions(workspace_id)["total"], 1)
+
+        restarted = StoryAuthoring(ProductionLedger(self.ledger_path), data_root=self.data_root, chunk_chars=128)
+        restored = restarted.get_source_draft(workspace_id)
+        self.assertEqual(restored["source_text"], "Saved source with unfinished edits")
+        self.assertEqual(restored["base_revision_id"], base_id)
+        self.assertFalse(restored["stale"])
+
+        revised = restarted.write_revision(workspace_id=workspace_id,
+            source_text="Saved source with unfinished edits", expected_current_revision_id=base_id)
+        self.assertIsNone(restarted.get_source_draft(workspace_id))
+        with self.assertRaises(LedgerConflict):
+            restarted.save_source_draft(workspace_id=workspace_id, source_text="stale tab",
+                base_revision_id=base_id)
+        self.assertEqual(restarted.get_workspace(workspace_id)["current_revision_id"], revised["revision_id"])
+
     def test_selected_unicode_edit_preserves_outside_text_and_restore_is_new_child(self):
         source = "Before 😀. The old phrase stays. After Ω."
         workspace = self.authoring.create_workspace(title="Edit", source_text=source)
@@ -122,7 +145,7 @@ class StoryAuthoringTests(unittest.TestCase):
     def test_revision_id_collision_never_overwrites_existing_immutable_file(self):
         workspace = self.authoring.create_workspace(title="Collision", source_text="keep original")
         original = workspace["current_revision"]
-        original_path = self.data_root / workspace["workspace_id"] / "production_v2" / "runs" / workspace["authoring_uuid"] / "story" / "revisions" / f"{original['revision_id']}.json"
+        original_path = self.data_root / "projects" / workspace["workspace_id"] / "story" / "production_v2" / "runs" / workspace["authoring_uuid"] / "story" / "revisions" / f"{original['revision_id']}.json"
         original_bytes = original_path.read_bytes()
         colliding = uuid.UUID(hex=original["revision_id"].removeprefix("story-canon-") + "0" * 20)
         replacement_id = uuid.UUID("abcdef12-3456-7890-abcd-ef1234567890")

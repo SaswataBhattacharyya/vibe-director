@@ -42,7 +42,7 @@ class StoryImportApiTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name) / "data"
-        self.ledger = ProductionLedger(self.root / "storage/production/ledger.sqlite3")
+        self.ledger = ProductionLedger(self.root / "services/production/ledger.sqlite3")
         self.imports = StoryImports(self.ledger, self.root)
 
     def test_text_markdown_preserves_unicode_blank_lines_and_line_endings(self):
@@ -55,7 +55,7 @@ class StoryImportApiTests(unittest.TestCase):
         self.assertTrue(result["extraction"]["extractor_version"].startswith("story-import-adapter/1"))
         self.assertEqual("".join(result["text"][span["start_codepoint"]:span["end_codepoint"]]
             for span in result["lines"]), result["text"])
-        restarted = StoryImports(ProductionLedger(self.root / "storage/production/ledger.sqlite3"), self.root)
+        restarted = StoryImports(ProductionLedger(self.root / "services/production/ledger.sqlite3"), self.root)
         self.assertEqual(restarted.get(result["import_id"]), result)
         preview_path = self.root / "story_imports" / result["import_id"] / "preview.json"
         preview_path.write_text(preview_path.read_text(encoding="utf-8").replace("line_start", "tampered"), encoding="utf-8")
@@ -113,6 +113,20 @@ class StoryImportApiTests(unittest.TestCase):
         status, history = call("GET", f"/api/story/workspaces/{workspace['workspace_id']}/revisions?limit=10")
         self.assertEqual(status, "200 OK")
         self.assertEqual(history["total"], 1)
+        draft_path = f"/api/story/workspaces/{workspace['workspace_id']}/draft"
+        status, saved_draft = call("PUT", draft_path, json.dumps({
+            "base_revision_id": revision["revision_id"], "source_text": "Recovered working draft"
+        }).encode())
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(saved_draft["source_text"], "Recovered working draft")
+        status, recovered_draft = call("GET", draft_path)
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(recovered_draft["draft"]["source_text"], "Recovered working draft")
+        status, _ = call("DELETE", draft_path)
+        self.assertEqual(status, "200 OK")
+        status, cleared_draft = call("GET", draft_path)
+        self.assertEqual(status, "200 OK")
+        self.assertIsNone(cleared_draft["draft"])
         status, restored = call("POST", f"/api/story/workspaces/{workspace['workspace_id']}/restore",
             json.dumps({"revision_id": revision["revision_id"],
                         "expected_current_revision_id": revision["revision_id"]}).encode())

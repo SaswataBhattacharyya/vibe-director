@@ -20,7 +20,7 @@ class StorySelectedEditApiTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / "data"
-        self.ledger = ProductionLedger(self.root / "storage/production/ledger.sqlite3")
+        self.ledger = ProductionLedger(self.root / "services/production/ledger.sqlite3")
         self.story = StoryAuthoring(self.ledger, data_root=self.root)
         created = self.story.create_workspace(title="Unicode", source_text="Before 😀. The old phrase. After Ω.")
         self.workspace = created["workspace_id"]
@@ -51,6 +51,32 @@ class StorySelectedEditApiTests(unittest.TestCase):
             "start_codepoint": start, "end_codepoint": start + len(quote),
             "expected_text": quote, "instruction": "Make the wording more specific."}
 
+    def test_collaborator_context_and_revision_compare_are_read_only_until_apply(self):
+        payload = {**self.request(), "context_scope": "story"}
+        status, proposal = self.call("POST", f"/api/story/workspaces/{self.workspace}/edit-proposals", payload)
+        self.assertEqual(status, "201 Created")
+        prompt = self.calls[0][0]
+        self.assertIn("Before 😀", prompt)
+        self.assertIn("bounded context pass", prompt)
+        self.assertIn("SOURCE GRAPH", prompt)
+        self.assertEqual(self.story.get_workspace(self.workspace)["current_revision_id"], self.revision)
+        status, revision = self.call("GET", f"/api/story/workspaces/{self.workspace}/revisions/{self.revision}")
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(revision["source_text"], "Before 😀. The old phrase. After Ω.")
+        status, _ = self.call("POST", f"/api/story/workspaces/{self.workspace}/edit-proposals", {**payload, "context_scope": "selected"})
+        self.assertEqual(status, "409 Conflict")
+        self.assertEqual(len(self.calls), 1)
+
+    def test_collaborator_rejects_oversized_target_without_provider_or_truncation(self):
+        value = self.story.create_workspace(title="Long", source_text="x" * 12001)
+        revision = value["current_revision"]
+        payload = {"base_revision_id": revision["revision_id"], "start_codepoint": 0,
+            "end_codepoint": 12001, "expected_text": revision["source_text"], "instruction": "Clarify",
+            "idempotency_key": str(uuid.uuid4()), "context_scope": "story"}
+        status, _ = self.call("POST", f"/api/story/workspaces/{value['workspace_id']}/edit-proposals", payload)
+        self.assertEqual(status, "422 Unprocessable Entity")
+        self.assertEqual(self.calls, [])
+
     def test_unicode_selected_context_durable_key_accept_and_reload(self):
         payload = self.request()
         status, proposal = self.call("POST", f"/api/story/workspaces/{self.workspace}/edit-proposals", payload)
@@ -58,6 +84,7 @@ class StorySelectedEditApiTests(unittest.TestCase):
         self.assertEqual(proposal["status"], "pending")
         self.assertEqual(proposal["provider"], "codex")
         self.assertEqual(proposal["expected_text"], "old phrase")
+        self.assertEqual(proposal["explanation"], "Clarified.")
         prompt, provider, temperature = self.calls[0]
         self.assertIn("SELECTED PASSAGE:\nold phrase", prompt)
         self.assertNotIn("Before 😀", prompt)
@@ -75,7 +102,7 @@ class StorySelectedEditApiTests(unittest.TestCase):
             "proposal_id": proposal["proposal_id"], "expected_current_revision_id": self.revision})
         self.assertEqual(status, "201 Created")
         self.assertEqual(accepted["source_text"], "Before 😀. The the new phrase. After Ω.")
-        restarted = StoryAuthoring(ProductionLedger(self.root / "storage/production/ledger.sqlite3"), data_root=self.root)
+        restarted = StoryAuthoring(ProductionLedger(self.root / "services/production/ledger.sqlite3"), data_root=self.root)
         self.assertEqual(restarted.get_workspace(self.workspace)["current_revision"]["source_text"], accepted["source_text"])
 
     def test_ambiguous_provider_failure_never_repeats_paid_call(self):

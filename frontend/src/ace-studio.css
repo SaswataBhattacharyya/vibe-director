@@ -1,0 +1,11 @@
+.ace-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}.ace-tabs [aria-pressed=true]{background:var(--studio-selected);border-color:var(--studio-accent)}.ace-format{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:360px;overflow:auto}.ace-studio-page audio{width:100%}.ace-studio-page .editor-project-status{display:flex;gap:12px;flex-wrap:wrap}.ace-studio-page .editor-composer small{color:var(--studio-muted);align-self:center}.ace-studio-page .editor-preview label{display:grid;gap:6px}.ace-studio-page .editor-preview textarea{width:100%;box-sizing:border-box}.ace-studio-page .editor-messages p{white-space:pre-wrap}
+.ace-drop{border:1px dashed var(--studio-accent);border-radius:12px;padding:16px;display:grid;gap:12px;margin-block:16px}.ace-studio-page .editor-preview{display:flex;flex-direction:column;gap:12px}.ace-studio-page .editor-preview[hidden]{display:none}.ace-run{margin-top:12px;background:var(--studio-selected);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}.ace-studio-page button{transition:transform .12s ease,opacity .12s ease}.ace-studio-page button:active:not(:disabled){transform:scale(.97)}.ace-studio-page button:disabled{opacity:.5}.ace-spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:ace-spin .8s linear infinite}.ace-studio-page progress{width:100%;accent-color:var(--studio-accent)}@keyframes ace-spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.ace-spinner{animation:none}.ace-studio-page button{transition:none}.ace-studio-page button:active:not(:disabled){transform:none}}
+
+
+.ace-generated-audio .summariser-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:end; margin-block:16px; }
+.ace-generated-audio .summariser-toolbar > label { flex-basis:100%; }
+.ace-generated-audio figure.card { margin:12px 0; padding:16px; }
+.ace-generated-audio label.ace-audio-choice { display:flex; flex-direction:row; align-items:center; gap:10px; overflow-wrap:anywhere; }
+.ace-generated-audio .ace-audio-choice input { width:16px; flex:0 0 16px; margin:0; }
+.ace-generated-audio audio { display:block; width:100%; margin-block:12px; }
+.ace-generated-audio figure small { display:block; margin-top:8px; }

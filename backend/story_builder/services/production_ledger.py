@@ -24,7 +24,7 @@ DEFAULT_LEDGER_PATH = PROJECT_ROOT / "storage" / "production" / "v2_ledger.sqlit
 JOB_STATES = {
     "draft", "validated", "queued", "waiting_for_predecessor", "waiting_for_user",
     "submitting", "running", "collecting", "needs_review", "accepted", "failed",
-    "cancel_requested", "cancelled", "retrying", "stale", "recovery_required",
+    "cancel_requested", "cancelled", "retrying", "stale", "recovery_required", "refinement_pending",
 }
 ALLOWED_TRANSITIONS = {
     "draft": {"validated", "cancelled"},
@@ -34,7 +34,8 @@ ALLOWED_TRANSITIONS = {
     "waiting_for_user": {"validated", "queued", "cancelled", "stale"},
     "submitting": {"running", "collecting", "failed", "cancel_requested", "recovery_required"},
     "running": {"collecting", "failed", "cancel_requested", "recovery_required"},
-    "collecting": {"needs_review", "failed", "cancel_requested", "recovery_required"},
+    "refinement_pending": {"queued", "cancelled", "failed"},
+    "collecting": {"refinement_pending", "needs_review", "failed", "cancel_requested", "recovery_required"},
     "needs_review": {"accepted", "retrying", "stale"},
     "retrying": {"queued", "failed", "cancelled"},
     "cancel_requested": {"cancelled", "collecting", "failed"},
@@ -55,6 +56,16 @@ class LedgerNotFound(LedgerError):
     """A project-scoped run or take does not exist."""
 
 
+class ClosingSQLiteConnection(sqlite3.Connection):
+    """Commit/rollback like sqlite3's context manager, then release the handle."""
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -68,13 +79,16 @@ class ProductionLedger:
     """SQLite WAL ledger with atomic idempotent transitions."""
 
     def __init__(self, path: Path | str | None = None) -> None:
-        configured = os.environ.get("STORY_BUILDER_PRODUCTION_LEDGER_PATH")
+        configured = (os.environ.get("VIBE_DIRECTOR_LEDGER_PATH")
+                      or os.environ.get("STORY_BUILDER_PRODUCTION_LEDGER_PATH"))
         self.path = Path(path or configured or DEFAULT_LEDGER_PATH).expanduser().resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path, timeout=30, isolation_level=None)
+        connection = sqlite3.connect(
+            self.path, timeout=30, isolation_level=None, factory=ClosingSQLiteConnection
+        )
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA busy_timeout = 30000")
@@ -169,9 +183,13 @@ class ProductionLedger:
                 CREATE INDEX IF NOT EXISTS production_video_review_pending_idx
                     ON production_video_director_reviews(resolution_status, created_at);
             """)
+            # Serialize introspection + ALTER across API/worker startup.
+            db.execute("BEGIN IMMEDIATE")
             columns = {row["name"] for row in db.execute("PRAGMA table_info(production_takes)")}
             if "input_snapshot_json" not in columns:
                 db.execute("ALTER TABLE production_takes ADD COLUMN input_snapshot_json TEXT NOT NULL DEFAULT '{}' ")
+            if "pipeline_json" not in columns:
+                db.execute("ALTER TABLE production_takes ADD COLUMN pipeline_json TEXT NOT NULL DEFAULT '{}' ")
             review_columns = {row["name"] for row in db.execute("PRAGMA table_info(production_video_director_reviews)")}
             if "retake_take_id" not in review_columns:
                 db.execute("ALTER TABLE production_video_director_reviews ADD COLUMN retake_take_id TEXT")
@@ -259,6 +277,136 @@ class ProductionLedger:
             db.commit()
             return result
 
+    def save_turbo_original(self, take, output):
+        """Commit a collected original without publishing it as the final video."""
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM production_takes WHERE job_id=?", (take["job_id"],)).fetchone()
+            if row["status"] == "cancel_requested":
+                db.execute("UPDATE production_takes SET status='cancelled',lease_owner=NULL,lease_until=NULL,updated_at=? WHERE job_id=?", (_now(), row["job_id"]))
+            elif row["status"] == "collecting":
+                pipeline = {"stage": "original_ready", "original": output, "original_prompt_id": row["prompt_id"]}
+                db.execute("UPDATE production_takes SET status='refinement_pending',pipeline_json=?,lease_owner=NULL,lease_until=NULL,updated_at=? WHERE job_id=?",
+                    (json.dumps(pipeline), _now(), row["job_id"]))
+                self._event(db, project_id=row["project_id"], run_id=row["run_id"], job_id=row["job_id"],
+                    event_type="turbo_original_ready", payload={"sha256": output["sha256"]})
+            else:
+                raise LedgerConflict("Original completion no longer owns the collecting take.")
+            status = "cancelled" if row["status"] == "cancel_requested" else "refinement_pending"
+            db.commit()
+            return status
+
+    def save_ltx_chunk_plan(self, take, plan):
+        """Pin windows before the first submission; never change a submitted graph."""
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM production_takes WHERE job_id=?", (take["job_id"],)).fetchone()
+            if (not row or row["status"] != "submitting" or row["prompt_id"]
+                    or row["lease_owner"] != take["lease_owner"]):
+                raise LedgerConflict("Chunk planning no longer owns the unsubmitted take.")
+            pipeline = json.loads(row["pipeline_json"])
+            if pipeline.get("ltx_chunks") is not None and pipeline["ltx_chunks"] != plan:
+                raise LedgerConflict("Saved LTX windows cannot be replaced.")
+            pipeline.update(ltx_chunks=plan, ltx_chunk_outputs=[], ltx_chunk_index=0)
+            db.execute("UPDATE production_takes SET pipeline_json=?,updated_at=? WHERE job_id=?",
+                       (json.dumps(pipeline), _now(), row["job_id"]))
+            self._event(db, project_id=row["project_id"], run_id=row["run_id"], job_id=row["job_id"],
+                        event_type="ltx_chunk_plan_saved", payload={"chunk_count": len(plan)})
+            db.commit()
+
+    def save_ltx_chunk(self, take, output):
+        """Advance one collected window while keeping the take unpublished."""
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT * FROM production_takes WHERE job_id=?", (take["job_id"],)).fetchone()
+            if row["status"] == "cancel_requested":
+                db.execute("UPDATE production_takes SET status='cancelled',lease_owner=NULL,lease_until=NULL,updated_at=? WHERE job_id=?", (_now(), row["job_id"]))
+                db.commit()
+                return "cancelled"
+            if row["status"] != "collecting" or row["prompt_id"] != take.get("prompt_id"):
+                raise LedgerConflict("Chunk completion no longer owns the collecting take.")
+            pipeline = json.loads(row["pipeline_json"])
+            index = pipeline["ltx_chunk_index"]
+            completed = pipeline["ltx_chunk_outputs"]
+            if output["index"] != index or len(completed) != index or index + 1 >= len(pipeline["ltx_chunks"]):
+                raise LedgerConflict("LTX chunks must complete in saved order.")
+            completed.append(output)
+            pipeline["ltx_chunk_index"] = index + 1
+            db.execute("UPDATE production_takes SET status='refinement_pending',pipeline_json=?,lease_owner=NULL,lease_until=NULL,updated_at=? WHERE job_id=?",
+                       (json.dumps(pipeline), _now(), row["job_id"]))
+            self._event(db, project_id=row["project_id"], run_id=row["run_id"], job_id=row["job_id"],
+                        event_type="ltx_chunk_ready", payload={"index": index, "prompt_id": row["prompt_id"]})
+            db.commit()
+            return "refinement_pending"
+
+    @staticmethod
+    def _group_allows_refinement(db, take):
+        """Respect story/batch phase barriers; paused groups stay idle."""
+        tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        for runs, clips in (("fully_automated_runs", "fully_automated_run_clips"),
+                            ("assisted_video_runs", "assisted_video_run_clips")):
+            if runs not in tables or clips not in tables:
+                continue
+            group = db.execute(f"SELECT r.* FROM {runs} r JOIN {clips} c USING(workspace_id,screenplay_revision_id) WHERE c.job_id=?", (take["job_id"],)).fetchone()
+            if not group:
+                continue
+            if group["run_state"] not in {"running", "waiting_for_readiness"}:
+                return False
+            manifest = json.loads(group["manifest_json"])
+            plan = manifest.get("clip_plan", {}).get("clips", []) if runs.startswith("fully") else manifest.get("clips", [])
+            if not plan or any(c.get("workflow_id") != "minimax_h3_t2v_local_v1" for c in plan):
+                return True  # Mixed reference workflows require a final predecessor.
+            if manifest.get("manifest_version") == 3 and len(manifest.get("planned_scene_numbers", [])) < len(manifest.get("screenplay", {}).get("scenes", [])):
+                return False
+            rows = db.execute(f"SELECT t.status,t.pipeline_json FROM production_takes t JOIN {clips} c ON t.job_id=c.job_id WHERE c.workspace_id=? AND c.screenplay_revision_id=?", (group["workspace_id"], group["screenplay_revision_id"])).fetchall()
+            return len(rows) == len(plan) and all(r["status"] in {"refinement_pending", "needs_review", "accepted"} for r in rows)
+        if "t2v_batches" in tables:
+            for group in db.execute("SELECT state,entries_json FROM t2v_batches"):
+                entries = json.loads(group["entries_json"])
+                if not any(e.get("job_id") == take["job_id"] for e in entries):
+                    continue
+                if group["state"] not in {"running", "waiting_for_readiness"}:
+                    return False
+                # Every original must be durably validated before any LTX
+                # promotion. Then refine one entry at a time in file order.
+                rows = [db.execute("SELECT status FROM production_takes WHERE job_id=?",
+                                   (entry.get("job_id"),)).fetchone() for entry in entries]
+                if not all(row and row["status"] in {"refinement_pending", "needs_review", "accepted"}
+                           for row in rows):
+                    return False
+                first_pending = next((entry for entry, row in zip(entries, rows)
+                                      if row["status"] == "refinement_pending"), None)
+                return bool(first_pending and first_pending.get("job_id") == take["job_id"])
+
+        return True
+
+    def belongs_to_t2v_batch(self, job_id):
+        with self._connect() as db:
+            if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='t2v_batches'").fetchone():
+                return False
+            return any(entry.get("job_id") == job_id
+                       for group in db.execute("SELECT entries_json FROM t2v_batches")
+                       for entry in json.loads(group["entries_json"]))
+
+    def has_ready_refinement(self):
+        with self._connect() as db:
+            return any(self._group_allows_refinement(db, row) for row in db.execute("SELECT * FROM production_takes WHERE status='refinement_pending'").fetchall())
+
+    def promote_turbo_refinements(self):
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            rows = db.execute("SELECT * FROM production_takes WHERE status='refinement_pending' ORDER BY created_at").fetchall()
+            # Promote one stage at a time, so group readiness remains visible to the next tick.
+            for row in rows:
+                if not self._group_allows_refinement(db, row):
+                    continue
+                pipeline = json.loads(row["pipeline_json"])
+                pipeline["stage"] = "ltx_refinement"
+                db.execute("UPDATE production_takes SET status='queued',pipeline_json=?,prompt_id=NULL,updated_at=? WHERE job_id=? AND status='refinement_pending'", (json.dumps(pipeline), _now(), row["job_id"]))
+                self._event(db, project_id=row["project_id"], run_id=row["run_id"], job_id=row["job_id"], event_type="ltx_refinement_queued", payload={})
+                break
+            db.commit()
+
     def transition_take(self, *, project_id: str, take_id: str, status: str,
                         payload: dict[str, Any] | None = None) -> dict[str, Any]:
         if status not in JOB_STATES:
@@ -279,7 +427,7 @@ class ProductionLedger:
             retry_reset = current == "retrying" and status == "queued"
             clear_current_error = retry_reset or status == "needs_review"
             error_json = (json.dumps(payload, ensure_ascii=False)
-                          if status == "failed" and payload else
+                          if status in {"failed", "recovery_required"} and payload else
                           None if clear_current_error else row["error_json"])
             retry_attempt = row["attempt"] + 1 if retry_reset else row["attempt"]
             prompt_id = None if current == "retrying" and status == "queued" else row["prompt_id"]
@@ -503,7 +651,12 @@ class ProductionLedger:
             if row["prompt_id"]:
                 db.commit()
                 return self._row(row)
-            prompt_id = str(uuid.uuid5(uuid.UUID(row["job_id"]), f"comfy-submit-attempt-{row['attempt']}"))
+            pipeline = json.loads(row["pipeline_json"])
+            stage = pipeline.get("stage")
+            suffix = "-ltx" if stage == "ltx_refinement" else ""
+            if stage == "ltx_refinement" and "ltx_chunks" in pipeline:
+                suffix += f"-chunk-{pipeline['ltx_chunk_index']}"
+            prompt_id = str(uuid.uuid5(uuid.UUID(row["job_id"]), f"comfy-submit-attempt-{row['attempt']}{suffix}"))
             db.execute("UPDATE production_takes SET prompt_id=?, updated_at=?, started_at=COALESCE(started_at, ?) WHERE job_id=?",
                        (prompt_id, now, now, row["job_id"]))
             self._event(db, project_id=project_id, run_id=row["run_id"], job_id=row["job_id"],
@@ -554,6 +707,19 @@ class ProductionLedger:
             db.commit()
         return failed
 
+    @staticmethod
+    def _queued_group_active(db, take):
+        tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if "assisted_video_runs" in tables:
+            r = db.execute("SELECT r.run_state FROM assisted_video_runs r JOIN assisted_video_run_clips c USING(workspace_id,screenplay_revision_id) WHERE c.job_id=?", (take["job_id"],)).fetchone()
+            if r and r[0] not in {"running", "waiting_for_readiness"}:
+                return False
+        if "t2v_batches" in tables:
+            for r in db.execute("SELECT state,entries_json FROM t2v_batches WHERE state NOT IN ('running','waiting_for_readiness')"):
+                if any(e.get("job_id") == take["job_id"] for e in json.loads(r["entries_json"])):
+                    return False
+        return True
+
     def claim_next_queued_take(self, *, lease_owner: str, lease_seconds: int = 180) -> dict[str, Any] | None:
         """Atomically claim one queued take, while enforcing one active GPU job.
 
@@ -571,7 +737,11 @@ class ProductionLedger:
             if active:
                 db.commit()
                 return None
-            row = db.execute("SELECT * FROM production_takes WHERE status='queued' ORDER BY created_at, job_id LIMIT 1").fetchone()
+            blocked = ""
+            if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='fully_automated_runs'").fetchone():
+                blocked = " AND job_id NOT IN (SELECT c.job_id FROM fully_automated_run_clips c JOIN fully_automated_runs r USING(workspace_id,screenplay_revision_id) WHERE r.run_state NOT IN ('running','waiting_for_readiness'))"
+            candidates = db.execute("SELECT * FROM production_takes WHERE status='queued'" + blocked + " ORDER BY created_at, job_id").fetchall()
+            row = next((candidate for candidate in candidates if self._queued_group_active(db, candidate)), None)
             if not row:
                 db.commit()
                 return None
@@ -1242,7 +1412,7 @@ class ProductionLedger:
     @staticmethod
     def _row(row: sqlite3.Row) -> dict[str, Any]:
         value = dict(row)
-        for key in ("config_json", "input_snapshot_json", "output_hashes_json"):
+        for key in ("config_json", "input_snapshot_json", "output_hashes_json", "pipeline_json"):
             if key in value and value[key] is not None:
                 target = key.removesuffix("_json")
                 value[target] = json.loads(value[key])

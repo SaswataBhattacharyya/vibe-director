@@ -55,6 +55,9 @@ class PromptWatchdog:
             raise GPUAdmissionError(state.get("reason", "Independent GPU watchdog tripped."))
         if not state.get("remote_terminal") and state.get("sampled_at") and time.time() - state["sampled_at"] > 6:
             raise GPUAdmissionError("Independent GPU watchdog telemetry is stale; reconcile this prompt.")
+        # Terminal state can be old after recovery; never reuse an old sample.
+        if state.get("sampled_at") and time.time() - state["sampled_at"] <= 6:
+            return state.get("gpu")
 
 
 def finish_prompt_watchdog(*, comfy_url, prompt_id):

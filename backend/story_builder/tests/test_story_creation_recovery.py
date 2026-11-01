@@ -24,7 +24,7 @@ class StoryCreationRecoveryTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name) / "data"
-        self.db_path = self.root / "storage/production/ledger.sqlite3"
+        self.db_path = self.root / "services/production/ledger.sqlite3"
         self.data_root = self.root
         self.authoring = StoryAuthoring(ProductionLedger(self.db_path), data_root=self.data_root)
 

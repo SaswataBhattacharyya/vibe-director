@@ -9,28 +9,54 @@ import os
 import subprocess
 import threading
 import urllib.request
+import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 from urllib.parse import urlparse
 
 
-MIN_FREE_BYTES = 20 * 1024**3
-GPU_RENDER_TEMP_CUTOFF = 83.0
+# Unified-memory devices can under-report CUDA free memory. Memory is diagnostic;
+# the shared workload lease controls admission instead of a fixed VRAM floor.
+MIN_FREE_BYTES = 0
+GPU_RENDER_TEMP_CUTOFF = 90.0
 GPU_RENDER_CLOCK_CEILING_MHZ = 2100.0
-DEFAULT_TELEMETRY_PATH = Path(os.environ.get("STORY_BUILDER_GPU_TELEMETRY_PATH") or
-                              (Path(os.environ.get("TMPDIR", "/tmp")) / "story-builder-gpu-telemetry.jsonl"))
+def _telemetry_path(environ: Mapping[str, str] | None = None) -> Path:
+    values = os.environ if environ is None else environ
+    configured = values.get("VIBE_DIRECTOR_GPU_TELEMETRY_PATH") or values.get("STORY_BUILDER_GPU_TELEMETRY_PATH")
+    return Path(configured or (Path(values.get("TMPDIR", "/tmp")) / "vibe-director-gpu-telemetry.jsonl"))
+
+
+DEFAULT_TELEMETRY_PATH = _telemetry_path()
 _TELEMETRY_LOCK = threading.Lock()
+
+
+def comfy_container_name() -> str:
+    """Resolve Vibe's ComfyUI container, retaining the donor env as fallback."""
+    return (os.environ.get("VIBE_DIRECTOR_COMFYUI_CONTAINER")
+            or os.environ.get("STORY_BUILDER_COMFYUI_CONTAINER") or "comfy-stack")
 
 
 class GPUAdmissionError(RuntimeError):
     """Raised when the host cannot prove that one GPU workload is safe to run."""
 
 
+class ComfyRuntimeUnavailable(GPUAdmissionError):
+    """A transport failure, not a GPU fault or invalid runtime response."""
+
+
 def read_gpu_operating_point() -> dict[str, float]:
     """Read only the two live controls used to protect sustained render work."""
-    output = _run(["nvidia-smi", "--query-gpu=temperature.gpu,clocks.current.graphics",
-                   "--format=csv,noheader,nounits"], timeout=2)
+    command = ["nvidia-smi", "--query-gpu=temperature.gpu,clocks.current.graphics",
+               "--format=csv,noheader,nounits"]
+    try:
+        output = _run(command, timeout=2)
+    except GPUAdmissionError as exc:
+        # One bounded retry fits within the watchdog's six-second freshness
+        # window. Invalid readings, command failures and GPU faults never retry.
+        if not isinstance(exc.__cause__, subprocess.TimeoutExpired):
+            raise
+        output = _run(command, timeout=2)
     rows = list(csv.reader(output.splitlines(), skipinitialspace=True))
     if len(rows) != 1 or len(rows[0]) != 2:
         raise GPUAdmissionError("Could not read one GPU temperature and graphics clock.")
@@ -58,6 +84,10 @@ def _json_url(url: str) -> dict[str, Any]:
     try:
         with urllib.request.urlopen(url, timeout=8) as response:
             value = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise GPUAdmissionError(f"ComfyUI runtime HTTP error at {url}: {exc.code}") from exc
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+        raise ComfyRuntimeUnavailable(f"Cannot reach ComfyUI runtime at {url}: {type(exc).__name__}: {exc}") from exc
     except Exception as exc:
         raise GPUAdmissionError(f"Cannot verify ComfyUI runtime at {url}: {type(exc).__name__}: {exc}") from exc
     if not isinstance(value, dict):
@@ -65,8 +95,34 @@ def _json_url(url: str) -> dict[str, Any]:
     return value
 
 
+def read_host_memory_diagnostic(meminfo_path: str | Path = "/proc/meminfo") -> dict[str, float] | None:
+    """Return optional host memory context; this is diagnostic, never admission."""
+    try:
+        values: dict[str, int] = {}
+        for line in Path(meminfo_path).read_text(encoding="ascii").splitlines():
+            key, separator, remainder = line.partition(":")
+            if not separator:
+                continue
+            parts = remainder.split()
+            if len(parts) >= 2 and parts[1] == "kB":
+                try:
+                    values[key] = int(parts[0]) * 1024
+                except ValueError:
+                    continue
+        required = ("MemTotal", "MemAvailable", "SwapTotal", "SwapFree")
+        if any(key not in values for key in required):
+            return None
+        gib = 1024**3
+        return {"total_gib": round(values["MemTotal"] / gib, 1),
+                "available_gib": round(values["MemAvailable"] / gib, 1),
+                "swap_total_gib": round(values["SwapTotal"] / gib, 1),
+                "swap_free_gib": round(values["SwapFree"] / gib, 1)}
+    except (OSError, UnicodeError):
+        return None
+
+
 def _comfy_processes(comfy_url: str) -> dict[int, str]:
-    container = os.environ.get("STORY_BUILDER_COMFYUI_CONTAINER", "comfy-stack")
+    container = comfy_container_name()
     output = _run(["docker", "top", container, "-eo", "pid,args"])
     rows: dict[int, str] = {}
     for line in output.splitlines()[1:]:
@@ -159,7 +215,7 @@ def interrupt_if_owned_prompt(*, comfy_url: str, prompt_id: str,
 
 
 def inspect_gpu_runtime(*, comfy_url: str, expected_prompt_id: str | None = None,
-                        workload_started_at: str | None = None) -> dict[str, Any]:
+                        workload_started_at: str | None = None, check_queue: bool = True) -> dict[str, Any]:
     """Verify NVIDIA, Docker-owned ComfyUI compute, queue and memory in host context."""
     since = workload_started_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
     point = read_gpu_operating_point()
@@ -192,43 +248,66 @@ def inspect_gpu_runtime(*, comfy_url: str, expected_prompt_id: str | None = None
     device = devices[0]
     if "cuda" not in str(device.get("name", "")).lower() and str(device.get("type", "")).lower() != "cuda":
         raise GPUAdmissionError(f"ComfyUI is not using the expected CUDA GPU: {device.get('name')!r}.")
+    # Unified-memory drivers can omit or misreport ComfyUI's CUDA-only free
+    # memory figure. It is diagnostic context, not an admission requirement.
     try:
-        free_bytes = int(device.get("vram_free", 0))
-    except (ValueError, TypeError) as exc:
-        raise GPUAdmissionError("ComfyUI did not report numeric free GPU memory.") from exc
-    # The 20 GiB reserve is a pre-submit admission check. Once the exact
-    # owned prompt is running, its model allocations are expected to consume
-    # that reserve; rejecting the monitor sample here would abandon active
-    # supervision precisely when memory use is highest. Ownership, temperature,
-    # clock, queue, compute-process and driver checks still apply in-flight.
-    if expected_prompt_id is None and free_bytes < MIN_FREE_BYTES:
-        raise GPUAdmissionError(f"ComfyUI reports only {free_bytes / 1024**3:.1f} GiB free; 20 GiB is required.")
-
+        raw_free_bytes = device.get("vram_free")
+        free_bytes = int(raw_free_bytes) if raw_free_bytes is not None else None
+        if free_bytes is not None and free_bytes < 0:
+            free_bytes = None
+    except (ValueError, TypeError):
+        free_bytes = None
     queue = _json_url(f"{comfy_url.rstrip('/')}/queue")
     running = _queue_prompt_ids(queue, "queue_running")
     pending = _queue_prompt_ids(queue, "queue_pending")
-    if pending:
-        raise GPUAdmissionError(f"ComfyUI has {len(pending)} pending prompt(s); keep new work in Story Builder's backend queue.")
+    from story_builder.services.media_jobs import get_workload_policy
+    parallel = get_workload_policy()["allow_simultaneous_runs"]
+    foreign_pending = [prompt_id for prompt_id in pending if prompt_id != expected_prompt_id]
+    if check_queue and foreign_pending and not parallel:
+        raise GPUAdmissionError(f"ComfyUI has {len(foreign_pending)} pending prompt(s); keep new work in Vibe Director's backend queue.")
     foreign_running = [prompt_id for prompt_id in running if prompt_id != expected_prompt_id]
-    if foreign_running:
+    if check_queue and foreign_running and not parallel:
         raise GPUAdmissionError(f"ComfyUI is running an unowned prompt: {foreign_running[0]}.")
 
-    comfy_processes = _comfy_processes(comfy_url)
-    processes = _compute_processes()
-    unknown = [item for item in processes if item["pid"] not in comfy_processes]
-    if unknown:
-        summary = ", ".join(f"PID {item['pid']} ({item['process_name']})" for item in unknown)
-        raise GPUAdmissionError(f"GPU compute is owned by another or unidentifiable workload: {summary}.")
-    nvidia_errors = _kernel_errors(since)
-    if nvidia_errors:
-        raise GPUAdmissionError(f"NVIDIA driver errors occurred during this workload: {nvidia_errors[-1]}")
+    # Vibe's own analyzer runs outside the ComfyUI container. Process identity
+    # cannot establish ownership; cooperating workers hold the shared lease.
+    comfy_processes: dict[int, str] = {}
+    processes: list[dict[str, Any]] = []
+    kernel_events = _kernel_errors(since)
+        # GB10 can log these specific allocation failures and still finish the Comfy prompt.
+    # Keep it as telemetry; execution/history and output validation determine
+    # whether the render failed. Other kernel faults remain blocking.
+    allocation_warnings = [line for line in kernel_events
+                           if "NVRM:" in line and "[NV_ERR_NO_MEMORY]" in line
+                           and "xid" not in line.lower()
+                           and (("_memdescAllocInternal(pMemDesc)" in line and "mem_desc.c:1359" in line)
+                                or ("kgrctxAllocCtxBuffers(" in line and "kernel_graphics_object.c:215" in line))]
+    nvidia_errors = [line for line in kernel_events if line not in allocation_warnings]
+    if kernel_events:
+        try:
+            record_gpu_telemetry(DEFAULT_TELEMETRY_PATH,
+                {"recorded_at": datetime.now(timezone.utc).isoformat(), "gpu": gpu,
+                 "host_memory": read_host_memory_diagnostic(), "comfyui_device": device,
+                 "nvidia_kernel_errors": nvidia_errors,
+                 "nvidia_kernel_warnings": allocation_warnings},
+                workload_id=expected_prompt_id,
+                phase="runtime_fault" if nvidia_errors else "runtime_warning")
+        except OSError:
+            pass  # A full/unwritable journal must not hide the driver fault.
+        if nvidia_errors:
+            raise GPUAdmissionError(f"NVIDIA driver errors occurred during this workload: {nvidia_errors[-1]}")
 
     return {"recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "gpu": gpu, "comfyui": {"device": device.get("name"), "free_bytes": free_bytes,
-              "free_gib": round(free_bytes / 1024**3, 2), "running_prompt_ids": running,
+              "free_gib": round(free_bytes / 1024**3, 2) if free_bytes is not None else None,
+            "running_prompt_ids": running,
             "pending_prompt_ids": pending}, "compute_processes": processes,
             "comfyui_container_pids": sorted(comfy_processes), "nvidia_kernel_errors": [],
-            "thermal_slowdown_active": thermal_active}
+            "nvidia_kernel_warnings": allocation_warnings,
+            "thermal_slowdown_active": thermal_active,
+            "host_memory": read_host_memory_diagnostic(),
+            "comfyui_allocator": {key: device.get(key) for key in
+                ("torch_vram_total", "torch_vram_free")}}
 
 
 def record_gpu_telemetry(path: str | Path | None, sample: dict[str, Any], *,

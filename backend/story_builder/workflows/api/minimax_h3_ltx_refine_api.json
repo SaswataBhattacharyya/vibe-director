@@ -1,0 +1,349 @@
+{
+  "1241": {
+    "class_type": "LTXVConditioning",
+    "inputs": {
+      "frame_rate": [
+        "5002",
+        2
+      ],
+      "positive": [
+        "2483",
+        0
+      ],
+      "negative": [
+        "2612",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "LTXVConditioning"
+    }
+  },
+  "4976": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler_cfg_pp"
+    },
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "4971": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "4967",
+        0
+      ],
+      "guider": [
+        "4964",
+        0
+      ],
+      "sampler": [
+        "4976",
+        0
+      ],
+      "sigmas": [
+        "5055",
+        0
+      ],
+      "latent_image": [
+        "4969",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "4964": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "cfg": 1,
+      "model": [
+        "6000",
+        0
+      ],
+      "positive": [
+        "5056",
+        0
+      ],
+      "negative": [
+        "5056",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CFGGuider"
+    }
+  },
+  "2612": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "4982",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "4982": {
+    "class_type": "LTXAVTextEncoderLoader",
+    "inputs": {
+      "text_encoder": "gemma_3_12B_it.safetensors",
+      "ckpt_name": "ltx-2.3-22b-dev.safetensors",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "LTXAVTextEncoderLoader"
+    }
+  },
+  "4995": {
+    "class_type": "LTXVTiledVAEDecode",
+    "inputs": {
+      "horizontal_tiles": 2,
+      "vertical_tiles": 2,
+      "overlap": 6,
+      "last_frame_fix": false,
+      "working_device": "cpu",
+      "working_dtype": "float32",
+      "vae": [
+        "3940",
+        2
+      ],
+      "latents": [
+        "4973",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "LTXVTiledVAEDecode"
+    }
+  },
+  "4849": {
+    "class_type": "CreateVideo",
+    "inputs": {
+      "fps": [
+        "5002",
+        2
+      ],
+      "images": [
+        "4995",
+        0
+      ],
+      "audio": [
+        "5002",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CreateVideo"
+    }
+  },
+  "4973": {
+    "class_type": "LTXVSeparateAVLatent",
+    "inputs": {
+      "av_latent": [
+        "4971",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "LTXVSeparateAVLatent"
+    }
+  },
+  "4922": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "lora_name": "ltxv/ltx2/ltx-2.3-22b-distilled-lora-384-1.1.safetensors",
+      "strength_model": 0.5,
+      "model": [
+        "3940",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "LoraLoaderModelOnly"
+    }
+  },
+  "4010": {
+    "class_type": "LTXVAudioVAELoader",
+    "inputs": {
+      "ckpt_name": "ltx-2.3-22b-dev.safetensors"
+    },
+    "_meta": {
+      "title": "LTXVAudioVAELoader"
+    }
+  },
+  "3940": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "ltx-2.3-22b-dev.safetensors"
+    },
+    "_meta": {
+      "title": "CheckpointLoaderSimple"
+    }
+  },
+  "5002": {
+    "class_type": "GetVideoComponents",
+    "inputs": {
+      "video": [
+        "5022",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "GetVideoComponents"
+    }
+  },
+  "2483": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "[Replaced with the authored scene prompt at submission]",
+      "clip": [
+        "4982",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "5021": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "5007",
+        0
+      ],
+      "vae": [
+        "3940",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "VAEEncode"
+    }
+  },
+  "5022": {
+    "class_type": "LoadVideo",
+    "inputs": {
+      "file": "[Prepared source video]"
+    },
+    "_meta": {
+      "title": "LoadVideo"
+    }
+  },
+  "5055": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "0.421875, 0.28, 0.14, 0.0"
+    },
+    "_meta": {
+      "title": "ManualSigmas"
+    }
+  },
+  "5007": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "5002",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": 1344,
+      "height": 768,
+      "crop": "disabled"
+    }
+  },
+  "5050": {
+    "class_type": "VAEEncodeAudio",
+    "inputs": {
+      "audio": [
+        "5002",
+        1
+      ],
+      "vae": [
+        "4010",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAEEncodeAudio"
+    }
+  },
+  "4969": {
+    "class_type": "LTXVConcatAVLatent",
+    "inputs": {
+      "video_latent": [
+        "5021",
+        0
+      ],
+      "audio_latent": [
+        "5056",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "LTXVConcatAVLatent"
+    }
+  },
+  "5056": {
+    "class_type": "LTXVSetAudioRefTokens",
+    "inputs": {
+      "positive": [
+        "1241",
+        0
+      ],
+      "negative": [
+        "1241",
+        1
+      ],
+      "audio_latent": [
+        "5050",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "LTXVSetAudioRefTokens"
+    }
+  },
+  "5014": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "filename_prefix": "isolated/t2v_refinement",
+      "format": "auto",
+      "codec": "auto",
+      "video": [
+        "4849",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "SaveVideo"
+    }
+  },
+  "4967": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 43
+    },
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "6000": {
+    "class_type": "RickyLTXSolAttention",
+    "inputs": {
+      "model": [
+        "4922",
+        0
+      ],
+      "enabled": true,
+      "tau": 1.0
+    }
+  }
+}

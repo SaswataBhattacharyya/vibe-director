@@ -1,0 +1,11 @@
+{
+  "workflow_id": "qwen_image_multi_angle_2511",
+  "workflow_version": "3",
+  "workflow_sha256": "11f0bcbd705ce40b00e869254dddc5b1c9d21f6f13c5c58b9c1a8e9751e3a0f5",
+  "status": "passed",
+  "evidence": {
+    "source": "vibe_director_successful_image_job",
+    "job_id": "63e41202-b1ab-4c48-9625-2f92b8075219",
+    "output_sha256": "7d75c802cb5841e80dad11a3c040f66cb4d6fac686bef98522aba229c12fa6fd"
+  }
+}

@@ -1,0 +1,38 @@
+.studio-subtabs { display:flex; gap:8px; margin:-10px 0 20px; }
+.voice-library-tools { display:flex; align-items:end; justify-content:space-between; gap:18px; padding:16px; margin-bottom:16px; }
+.voice-library-tools label,.voice-character-control label { display:grid; gap:7px; color:var(--studio-muted); font-size:13px; }
+.voice-library-tools input,.voice-character-control select { min-height:40px; min-width:min(360px,70vw); border:1px solid var(--studio-line); border-radius:var(--studio-radius); padding:8px 10px; color:var(--studio-text); background:var(--studio-field); }
+.voice-library-tools span,.voice-character-copy small { color:var(--studio-muted); font-size:12px; }
+.voice-audition-tools { display:grid; grid-template-columns:minmax(220px,1fr) minmax(240px,1fr); align-items:end; gap:16px; padding:16px; margin-bottom:16px; }
+.voice-audition-tools label { display:grid; gap:7px; color:var(--studio-muted); font-size:13px; }
+.voice-audition-tools select { min-height:40px; border:1px solid var(--studio-line); border-radius:var(--studio-radius); padding:8px 10px; color:var(--studio-text); background:var(--studio-field); }
+.voice-audition-tools audio { width:100%; height:36px; }
+.voice-audition-tools small { color:var(--studio-muted); font-size:12px; }
+.voice-catalog-import { display:flex; align-items:end; gap:16px; padding:16px; margin-bottom:16px; }
+.voice-catalog-import>div { flex:1; }
+.voice-catalog-import p { margin:6px 0 0; color:var(--studio-muted); font-size:13px; }
+.voice-catalog-import label { display:grid; gap:7px; color:var(--studio-muted); font-size:13px; }
+.voice-catalog-import select { min-height:40px; min-width:min(260px,60vw); border:1px solid var(--studio-line); border-radius:var(--studio-radius); padding:8px 10px; color:var(--studio-text); background:var(--studio-field); }
+.voice-character-list { display:grid; gap:12px; }
+.voice-character-card { display:grid; grid-template-columns:92px minmax(180px,1fr) minmax(240px,.8fr); align-items:center; gap:18px; padding:16px; }
+.voice-character-card>img,.voice-character-placeholder { width:92px; height:92px; object-fit:cover; border-radius:var(--studio-radius); background:var(--studio-field); }
+.voice-character-placeholder { display:grid; place-items:center; color:var(--studio-muted); }
+.voice-character-copy h2 { margin:0 0 6px; font-size:17px; }
+.voice-character-copy p { margin:0 0 7px; color:var(--studio-muted); font-size:13px; line-height:1.5; }
+.voice-character-copy small { overflow-wrap:anywhere; }
+.voice-character-control { display:grid; gap:9px; }
+.voice-character-control audio { width:100%; height:36px; }
+.voice-character-control .text-button { justify-self:start; }
+@media(max-width:720px) { .voice-character-card { grid-template-columns:64px 1fr; gap:12px; } .voice-character-card>img,.voice-character-placeholder { width:64px; height:64px; } .voice-character-control { grid-column:1/-1; } .voice-library-tools,.voice-catalog-import { align-items:stretch; flex-direction:column; } .voice-library-tools input,.voice-catalog-import select { min-width:0; width:100%; } .voice-audition-tools { grid-template-columns:1fr; } }
+
+.voice-catalog-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:14px 0; }
+.voice-catalog-options { display:grid; gap:6px; max-height:280px; overflow:auto; }
+.voice-catalog-options label { display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--studio-line); border-radius:var(--studio-radius); overflow-wrap:anywhere; }
+.voice-catalog-options small { display:block; color:var(--studio-muted); }
+
+.voice-catalog-batch { padding:16px; margin-bottom:16px; }
+.voice-catalog-batch h2 { margin:0; font-size:17px; }
+.voice-catalog-batch p { color:var(--studio-muted); font-size:13px; }
+.voice-catalog-dropdown { max-width:560px; }
+.voice-catalog-dropdown summary { cursor:pointer; padding:12px; border:1px solid var(--studio-line); border-radius:var(--studio-radius); background:var(--studio-field); }
+.voice-catalog-menu { padding:0 12px 12px; border:1px solid var(--studio-line); border-radius:var(--studio-radius); background:var(--studio-field); }

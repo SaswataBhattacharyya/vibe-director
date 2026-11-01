@@ -1,0 +1,11 @@
+{
+  "workflow_id": "qwen_image_edit_2511",
+  "workflow_version": "1",
+  "workflow_sha256": "49ee45e866e88c8c7cbb922cc913b3f115a1f524aa661535f6830e489a17b3e1",
+  "status": "passed",
+  "evidence": {
+    "source": "vibe_director_successful_image_job",
+    "job_id": "e24c90bb-1877-45bf-b7e3-1d7933065430",
+    "output_sha256": "7e47d1045f7fc7590bc87b040381db19cdfed0cebfb452dbe0c8d88addbfd184"
+  }
+}

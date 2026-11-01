@@ -1,5 +1,12 @@
 # Screenplay-first story workspace for Story Builder
 
+## Notes-integrated correction — 2026-10-11
+
+Generate screenplay internally builds/updates the source-linked graph for the saved revision. Its collapsed graph panel is optional inspection, not a required manual generation/acceptance gate. Mode choice follows readable screenplay. Use one main Story editor and selection-anchored micro-editing with review/apply across Story, Screenplay and prompts. Retain saved progress and compact restoreable history.
+
+Read [remaining_app.md](remaining_app.md) for task order/reuse and [OWNER_DUMMY_RUNS.md](OWNER_DUMMY_RUNS.md) for owner-clicked acceptance. This correction overrides conflicting older sections below; historical implementation checkpoints are not completion evidence.
+
+
 **Status:** Current product plan; planned behavior, not a claim of implementation. The decisions in `README.md`, `GLOSSARY.md`, and `automation.md` govern this document.  
 **Decision:** Merge the current Story Builder and Story Canvas into one story workspace. Use Production V2's source tracking, revision, chunking, and validation principles. Make the human-readable screenplay the canonical authored plan. Only after screenplay approval should the system compile it into scene, cut/shot, dialogue, and generation JSON for production prompts.
 

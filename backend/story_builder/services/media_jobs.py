@@ -16,14 +16,18 @@ import threading
 from datetime import datetime, timezone
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from story_builder.services.gpu_runtime import (
-    DEFAULT_TELEMETRY_PATH, MIN_FREE_BYTES, GPUAdmissionError, inspect_gpu_runtime, record_gpu_telemetry,
+    DEFAULT_TELEMETRY_PATH, GPUAdmissionError, inspect_gpu_runtime, record_gpu_telemetry,
 )
 
 
 from story_builder.services.gpu_watchdog import ensure_prompt_watchdog, finish_prompt_watchdog
+
+
+class ComfyMemoryReleasePending(RuntimeError):
+    """No GPU submission occurred; keep the durable job queued for handoff."""
 
 
 class MediaJobError(RuntimeError):
@@ -36,33 +40,151 @@ class MediaJobError(RuntimeError):
         self.remote_state_unknown = remote_state_unknown
 
 
-_COMFY_SUBMISSION_THREAD_LOCK = threading.Lock()
+_GPU_WORKLOAD_LOCK_STATE = threading.local()
 LOGGER = logging.getLogger(__name__)
+
+
+def _workload_lock_path() -> Path:
+    return Path(os.environ.get("VIBE_DIRECTOR_GPU_WORKLOAD_LOCK") or
+                os.environ.get("STORY_BUILDER_COMFY_SUBMISSION_LOCK") or
+                (Path(tempfile.gettempdir()) / "story-builder-comfy-submission.lock"))
+
+
+def _workload_policy_path() -> Path:
+    return Path(os.environ.get("VIBE_DIRECTOR_WORKLOAD_POLICY_PATH") or
+                (Path(__file__).resolve().parents[3] / "local_data" / "storage" / "workload-policy.json"))
+
+
+def _gpu_safety_hold_path() -> Path:
+    return Path(os.environ.get("VIBE_DIRECTOR_GPU_SAFETY_HOLD_PATH") or
+                (Path(__file__).resolve().parents[3] / "local_data" / "storage" / "gpu-safety-hold.json"))
+
+
+def get_gpu_safety_hold() -> dict[str, Any]:
+    """Return the durable admission hold left by an unconfirmed safety stop."""
+    target = _gpu_safety_hold_path()
+    try:
+        value = json.loads(target.read_text(encoding="utf-8"))
+        if isinstance(value, dict) and value.get("termination_unknown") is True:
+            return value
+        return {"termination_unknown": True, "reason": "Safety hold record is malformed; admission is held."}
+    except FileNotFoundError:
+        return {"termination_unknown": False}
+    except (OSError, ValueError, AttributeError) as exc:
+        return {"termination_unknown": True,
+            "reason": f"Safety hold record cannot be read; admission is held ({type(exc).__name__})."}
+
+
+def _set_gpu_safety_hold(reason: str, workload_id: str) -> None:
+    target = _gpu_safety_hold_path()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(target.name + "." + uuid.uuid4().hex + ".tmp")
+    value = {"termination_unknown": True, "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "workload_id": workload_id, "reason": reason}
+    try:
+        with temporary.open("w", encoding="utf-8") as stream:
+            json.dump(value, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(target)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def clear_gpu_safety_hold(*, verified_idle: bool) -> dict[str, bool]:
+    """Clear an unknown-termination hold only after an explicit idle check."""
+    import fcntl
+    if verified_idle is not True:
+        raise ValueError("Confirm that the affected workload and shared model services are idle.")
+    lock_path = _workload_lock_path()
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+") as handle:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise MediaJobError("Wait for active Vibe Director workloads to finish before clearing the safety hold.") from exc
+        _gpu_safety_hold_path().unlink(missing_ok=True)
+    return {"cleared": True}
+
+
+def get_workload_policy() -> dict[str, bool]:
+    try:
+        value = json.loads(_workload_policy_path().read_text())
+        return {"allow_simultaneous_runs": value.get("allow_simultaneous_runs") is True}
+    except (OSError, ValueError, AttributeError):
+        return {"allow_simultaneous_runs": False}
+
+
+def set_workload_policy(allow_simultaneous_runs: bool) -> dict[str, bool]:
+    """Persist the policy only while all shared/exclusive workload leases are idle."""
+    import fcntl
+    if type(allow_simultaneous_runs) is not bool:
+        raise ValueError("allow_simultaneous_runs must be a boolean.")
+    lock_path = _workload_lock_path()
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+") as handle:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise MediaJobError("Wait for active workloads to finish before changing simultaneous runs.") from exc
+        policy = {"allow_simultaneous_runs": allow_simultaneous_runs}
+        target = _workload_policy_path()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_name(target.name + "." + uuid.uuid4().hex + ".tmp")
+        try:
+            with temporary.open("w") as stream:
+                json.dump(policy, stream)
+                stream.flush()
+                os.fsync(stream.fileno())
+            temporary.replace(target)
+        finally:
+            temporary.unlink(missing_ok=True)
+        return policy
+
+
+@contextmanager
+def gpu_workload_lock():
+    """One blocking lease for heavy CPU/GPU work; shared only after explicit opt-in."""
+    import fcntl
+    depth = getattr(_GPU_WORKLOAD_LOCK_STATE, "depth", 0)
+    if depth:
+        _GPU_WORKLOAD_LOCK_STATE.depth = depth + 1
+        try:
+            yield
+        finally:
+            _GPU_WORKLOAD_LOCK_STATE.depth -= 1
+        return
+    lock_path = _workload_lock_path()
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+") as handle:
+        while True:
+            hold = get_gpu_safety_hold()
+            if hold.get("termination_unknown"):
+                raise MediaJobError("GPU admission is held because a previous workload may still be running: " +
+                    str(hold.get("reason") or "termination is unknown"))
+            parallel = get_workload_policy()["allow_simultaneous_runs"]
+            fcntl.flock(handle.fileno(), fcntl.LOCK_SH if parallel else fcntl.LOCK_EX)
+            hold = get_gpu_safety_hold()
+            if hold.get("termination_unknown"):
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+                raise MediaJobError("GPU admission is held because a previous workload may still be running: " +
+                    str(hold.get("reason") or "termination is unknown"))
+            if parallel == get_workload_policy()["allow_simultaneous_runs"]:
+                break
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        _GPU_WORKLOAD_LOCK_STATE.depth = 1
+        try:
+            yield
+        finally:
+            _GPU_WORKLOAD_LOCK_STATE.depth = 0
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 @contextmanager
 def comfy_submission_guard():
-    """Serialize every Story Builder submitter across threads and backend processes.
-
-    The lock is only an admission guard, not a media/job store. Durable job
-    status remains in the owning feature's backend ledger. ``flock`` releases
-    automatically if a backend process exits unexpectedly.
-    """
-    lock_path = Path(os.environ.get("STORY_BUILDER_COMFY_SUBMISSION_LOCK") or
-                     (Path(tempfile.gettempdir()) / "story-builder-comfy-submission.lock"))
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with _COMFY_SUBMISSION_THREAD_LOCK:
-        with lock_path.open("a+") as lock_file:
-            try:
-                import fcntl
-            except ImportError:  # pragma: no cover - non-POSIX development fallback
-                yield
-                return
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-            try:
-                yield
-            finally:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+    """Backward-compatible alias for the application-wide GPU workload lease."""
+    with gpu_workload_lock():
+        yield
 
 
 def wait_for_comfyui_idle(*, comfy_url: str, timeout_seconds: int,
@@ -82,7 +204,7 @@ def wait_for_comfyui_idle(*, comfy_url: str, timeout_seconds: int,
         running, pending = queue.get("queue_running"), queue.get("queue_pending")
         if not isinstance(running, list) or not isinstance(pending, list):
             raise MediaJobError("ComfyUI returned an invalid /queue response; submission was withheld")
-        if not running and not pending:
+        if (not running and not pending) or get_workload_policy()["allow_simultaneous_runs"]:
             try:
                 sample = inspect_gpu_runtime(comfy_url=comfy_url, workload_started_at=workload_started_at)
             except GPUAdmissionError as exc:
@@ -96,13 +218,16 @@ def wait_for_comfyui_idle(*, comfy_url: str, timeout_seconds: int,
 
 
 @contextmanager
-def gpu_workload_guard(*, comfy_url: str, timeout_seconds: int = 24 * 3600):
-    """Admit one app-owned GPU workload after visible ComfyUI work is idle.
+def gpu_workload_guard(*, comfy_url: str, timeout_seconds: int = 24 * 3600,
+                       on_safety_trip: Callable[[str], None] | None = None,
+                       monitor_interval_seconds: float = 10):
+    """Admit one Vibe Director GPU workload after visible ComfyUI work is idle.
 
-    This coordinates Story Builder callers only. It is not a host-wide GPU
-    scheduler and cannot lock out unrelated applications or manual clients.
+    All Vibe Director generation and analysis workers must share the same
+    process-wide lease for their full GPU work duration. This cannot lock out
+    external applications or direct manual ComfyUI clients.
     """
-    with comfy_submission_guard():
+    with gpu_workload_lock():
         started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
         stopped = threading.Event()
         monitor_failure: list[str] = []
@@ -113,44 +238,71 @@ def gpu_workload_guard(*, comfy_url: str, timeout_seconds: int = 24 * 3600):
                               workload_started_at=started_at)
 
         def monitor() -> None:
-            while not stopped.wait(10):
+            while not stopped.wait(monitor_interval_seconds):
                 try:
-                    sample = inspect_gpu_runtime(comfy_url=comfy_url, workload_started_at=started_at)
+                    sample = inspect_gpu_runtime(comfy_url=comfy_url, workload_started_at=started_at, check_queue=False)
                     record_gpu_telemetry(telemetry_path, sample, workload_id=workload_id, phase="app_gpu_workload")
                 except Exception as exc:
                     message = f"{type(exc).__name__}: {exc}"
                     monitor_failure.append(message)
                     record_gpu_telemetry(telemetry_path, {"recorded_at": datetime.now(timezone.utc).isoformat(),
                         "monitor_error": message}, workload_id=workload_id, phase="monitor_error")
+                    if on_safety_trip is not None:
+                        try:
+                            # The adapter owns this callback and must synchronously
+                            # stop and verify only its own process/container before
+                            # the shared lease can be released.
+                            on_safety_trip(message)
+                        except Exception as cancel_error:
+                            unknown = (f"Owned-workload cancellation could not be confirmed: "
+                                f"{type(cancel_error).__name__}: {cancel_error}")
+                            monitor_failure.append(unknown)
+                            _set_gpu_safety_hold(unknown, workload_id)
+                    else:
+                        unknown = "No adapter cancellation handler was registered; workload termination is unknown."
+                        monitor_failure.append(unknown)
+                        _set_gpu_safety_hold(unknown, workload_id)
                     stopped.set()
 
         monitor_thread = threading.Thread(target=monitor, name="story-builder-gpu-monitor", daemon=True)
         monitor_thread.start()
         try:
             yield
-        except BaseException:
+        except BaseException as exc:
             stopped.set()
-            monitor_thread.join(timeout=15)
+            # Cancellation owns the lease until its termination verification
+            # returns (or records a durable unknown-termination hold). A timed
+            # join could release admission while that callback is still active.
+            monitor_thread.join()
+            if monitor_failure and isinstance(exc, Exception):
+                raise MediaJobError(f"GPU state changed during the workload: {monitor_failure[0]}") from exc
             raise
         stopped.set()
-        monitor_thread.join(timeout=15)
+        monitor_thread.join()
         if monitor_failure:
             raise MediaJobError(f"GPU state changed during the workload: {monitor_failure[0]}")
 
 
 def release_comfyui_models_if_idle(*, comfy_url: str, timeout_seconds: int = 10,
-                                   poll_interval_seconds: float = 0.5) -> dict[str, Any]:
+                                   poll_interval_seconds: float = 0.5,
+                                   wait_for_memory_release: bool = False,
+                                   keep_waiting: Callable[[], bool] | None = None) -> dict[str, Any]:
     """Ask ComfyUI to unload VRAM models only when its shared queue is idle.
 
     This is best-effort housekeeping: it must never turn a successful render
     into a failed job, and it must not disrupt a queued/running workflow owned
     by another Story Builder page or a direct ComfyUI user.
+    Pipeline handoffs may additionally require two idle, low-allocation samples.
+    This observes the Torch allocator, not proof that every dynamic/CPU allocation
+    was evicted. ComfyUI's /free response only acknowledges asynchronous flags.
     """
     try:
         with urllib.request.urlopen(f"{comfy_url.rstrip('/')}/queue", timeout=timeout_seconds) as response:
             queue = json.loads(response.read().decode("utf-8"))
-        running = queue.get("queue_running", [])
-        pending = queue.get("queue_pending", [])
+        if not all(isinstance(queue.get(key), list) for key in ("queue_running", "queue_pending")):
+            raise ValueError("Invalid ComfyUI queue observation")
+        running = queue["queue_running"]
+        pending = queue["queue_pending"]
         if running or pending:
             return {"status": "deferred", "reason": "comfyui_queue_not_empty",
                     "running": len(running), "pending": len(pending)}
@@ -160,32 +312,72 @@ def release_comfyui_models_if_idle(*, comfy_url: str, timeout_seconds: int = 10,
             headers={"Content-Type": "application/json"}, method="POST")
         with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
             response.read()
-        # /free acknowledges a request; it does not prove the model has been
-        # evicted or that another GPU job can safely be admitted. Observe the
-        # ComfyUI device telemetry and report success only after the configured
-        # pre-submit headroom is visible again.
-        deadline = time.monotonic() + max(0, timeout_seconds)
-        last_free_bytes: int | None = None
-        while True:
-            try:
-                with urllib.request.urlopen(f"{comfy_url.rstrip('/')}/system_stats", timeout=timeout_seconds) as response:
-                    stats = json.loads(response.read().decode("utf-8"))
-                devices = stats.get("devices") if isinstance(stats, dict) else None
-                if not isinstance(devices, list) or len(devices) != 1 or not isinstance(devices[0], dict):
-                    raise ValueError("ComfyUI did not report exactly one GPU device")
-                last_free_bytes = int(devices[0].get("vram_free", 0))
-                if last_free_bytes >= MIN_FREE_BYTES:
-                    return {"status": "headroom_verified", "unload_request_accepted": True,
-                            "vram_free_bytes": last_free_bytes,
-                            "required_free_bytes": MIN_FREE_BYTES}
-            except Exception as exc:
-                return {"status": "unverified", "unload_request_accepted": True,
-                        "reason": f"VRAM verification failed: {type(exc).__name__}: {exc}"}
-            if time.monotonic() >= deadline:
-                return {"status": "unverified", "unload_request_accepted": True,
-                        "reason": "ComfyUI acknowledged /free but did not restore required GPU headroom",
-                        "vram_free_bytes": last_free_bytes, "required_free_bytes": MIN_FREE_BYTES}
-            time.sleep(max(0.05, poll_interval_seconds))
+        if wait_for_memory_release:
+            started = time.monotonic()
+            deadline = started + 30
+            idle_samples = 0
+            observation = {}
+            # The initial observation window is 30s. A supervised handoff can
+            # keep polling every 10s thereafter; elapsed time never grants
+            # permission to load a model. The caller maintains its claim lease.
+            while True:
+                if keep_waiting is not None and not keep_waiting():
+                    return {"status": "cancelled", "unload_request_accepted": True,
+                            "memory_release_observed": False, "elapsed_seconds": time.monotonic() - started}
+                elapsed = time.monotonic() - started
+                if time.monotonic() >= deadline and keep_waiting is None:
+                    return {"status": "unverified", "unload_request_accepted": True,
+                            "reason": "Idle Torch allocator was not observed within 30 seconds",
+                            "elapsed_seconds": elapsed, **observation}
+                time.sleep(10.0 if elapsed >= 30 else max(0.1, poll_interval_seconds))
+                try:
+                    with urllib.request.urlopen(f"{comfy_url.rstrip('/')}/queue", timeout=timeout_seconds) as response:
+                        observed_queue = json.loads(response.read().decode("utf-8"))
+                    if not all(isinstance(observed_queue.get(key), list) for key in ("queue_running", "queue_pending")):
+                        raise ValueError("Invalid ComfyUI queue observation")
+                    if observed_queue["queue_running"] or observed_queue["queue_pending"]:
+                        return {"status": "deferred", "reason": "comfyui_queue_changed_during_release"}
+                    with urllib.request.urlopen(f"{comfy_url.rstrip('/')}/system_stats", timeout=timeout_seconds) as response:
+                        observed_stats = json.loads(response.read().decode("utf-8"))
+                    device = observed_stats["devices"][0]
+                    reserved = int(device["torch_vram_total"])
+                    unused = int(device["torch_vram_free"])
+                    if not 0 <= unused <= reserved:
+                        raise ValueError("Invalid ComfyUI allocator counters")
+                    active = reserved - unused
+                    observation = {"torch_reserved_bytes": reserved, "torch_active_bytes": active,
+                                   "vram_free_bytes": device.get("vram_free"),
+                                   "host_memory": observed_stats.get("system", {})}
+                    idle_samples = idle_samples + 1 if reserved <= 256 * 1024**2 and active <= 64 * 1024**2 else 0
+                except Exception as exc:
+                    idle_samples = 0
+                    observation = {"reason": f"Memory observation failed: {type(exc).__name__}: {exc}"}
+                if idle_samples >= 2:
+                    result = {"status": "memory_release_observed", "unload_request_accepted": True,
+                              "memory_release_observed": True, "elapsed_seconds": time.monotonic() - started,
+                              **observation}
+                    LOGGER.info("ComfyUI pipeline memory handoff: %s", result)
+                    try:
+                        record_gpu_telemetry(DEFAULT_TELEMETRY_PATH, result,
+                                             workload_id=None, phase="pipeline_memory_handoff")
+                    except OSError:
+                        LOGGER.warning("Could not record ComfyUI memory handoff", exc_info=True)
+                    return result
+                if elapsed >= 30:
+                    LOGGER.warning("Waiting for ComfyUI unload; checking again in 10s: elapsed=%.1fs %s",
+                                   time.monotonic() - started, observation)
+        # Acknowledgement does not prove eviction or model fit. Preserve only
+        # observed memory as diagnostic evidence; do not recreate a VRAM floor.
+        try:
+            with urllib.request.urlopen(f"{comfy_url.rstrip('/')}/system_stats", timeout=timeout_seconds) as response:
+                stats = json.loads(response.read().decode("utf-8"))
+            devices = stats.get("devices")
+            free_bytes = int(devices[0]["vram_free"])
+            return {"status": "unload_requested", "unload_request_accepted": True,
+                    "vram_free_bytes": free_bytes}
+        except Exception as exc:
+            return {"status": "unverified", "unload_request_accepted": True,
+                    "reason": f"Memory observation failed: {type(exc).__name__}: {exc}"}
     except Exception as exc:  # cleanup failure must not mask the workflow result
         return {"status": "unavailable", "reason": f"{type(exc).__name__}: {exc}"}
 

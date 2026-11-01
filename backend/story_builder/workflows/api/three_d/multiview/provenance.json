@@ -1,0 +1,52 @@
+[
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/pixal3d_multiview/Pixal3D_MV_front_back_bounded.api.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/pixal3d_multiview/Pixal3D_MV_front_back_bounded.api.json",
+    "sha256": "adcb5751e0f0bad9964daddd27fab82cdfa149bd783f7951b7f27a65755cf1a4"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/pixal3d_multiview/Pixal3D_MV_four_views_bounded.api.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/pixal3d_multiview/Pixal3D_MV_four_views_bounded.api.json",
+    "sha256": "031f12b10bdb18e429c6f01c30ec08326c7ea41250e130ccbc246c9ef866d530"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/pixal3d_multiview/README.md",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/pixal3d_multiview/README.md",
+    "sha256": "64385178ca0889200b17c9eded1064c1f636a98523725663885885540d2ddf51"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/pixal3d_multiview/installation-manifest.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/pixal3d_multiview/installation-manifest.json",
+    "sha256": "c4540d3201f19162d92f8e1289e95ea831f9e2bb3a08704cc2dbdcd431388c7b"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/trellis2_multiview/config/front_back_512.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/trellis2_multiview/config/front_back_512.json",
+    "sha256": "07c61c730844df1a7a4d34b2a87b06ec7e5022788cde2b55b8f7d6758920965a"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/trellis2_multiview/config/front_back_1024.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/trellis2_multiview/config/front_back_1024.json",
+    "sha256": "4e917994419e31819cf58610922fae617f0cb6f857e00bcab086f08ae63c2e16"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/trellis2_multiview/config/four_views_1024.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/trellis2_multiview/config/four_views_1024.json",
+    "sha256": "4e917994419e31819cf58610922fae617f0cb6f857e00bcab086f08ae63c2e16"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/trellis2_multiview/config/front_back_1024_direct.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/trellis2_multiview/config/front_back_1024_direct.json",
+    "sha256": "e33687840cd24184c6e89a6720dbca5496a1ab4746d037290cbb2262291f38b2"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/trellis2_multiview/config/four_views_1024_direct.json",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/trellis2_multiview/config/four_views_1024_direct.json",
+    "sha256": "e33687840cd24184c6e89a6720dbca5496a1ab4746d037290cbb2262291f38b2"
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/trellis2_multiview/README.md",
+    "copy": "backend/story_builder/workflows/api/three_d/multiview/trellis2_multiview/README.md",
+    "sha256": "a479a04347c9b10e8c57324636931df58e4ac747aefb6c78c8b6e08056e37063"
+  }
+]

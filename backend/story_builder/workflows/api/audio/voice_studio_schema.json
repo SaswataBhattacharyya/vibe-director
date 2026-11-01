@@ -1,0 +1,1154 @@
+{
+  "ChatterBoxEngineNode": {
+    "input": {
+      "required": {
+        "language": [
+          [
+            "local:Russian",
+            "local:Norwegian",
+            "local:Korean",
+            "local:Japanese",
+            "local:German (havok2)",
+            "local:German",
+            "local:Georgian",
+            "local:French",
+            "local:English",
+            "local:Armenian",
+            "English",
+            "German",
+            "German (SebastianBodza)",
+            "German (havok2)",
+            "Norwegian",
+            "French",
+            "Russian",
+            "Armenian",
+            "Georgian",
+            "Japanese",
+            "Korean",
+            "Italian"
+          ],
+          {
+            "default": "English",
+            "tooltip": "ChatterBox language model to use for text-to-speech generation. Local models are preferred over remote downloads."
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "xpu",
+            "cpu",
+            "mps"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run ChatterBox model on:\n\u2022 auto: Automatically select best available (MPS on Apple Silicon, CUDA on NVIDIA, XPU on Intel, CPU fallback)\n\u2022 cuda: NVIDIA GPU (requires CUDA-capable GPU)\n\u2022 xpu: Intel GPU (requires Intel PyTorch XPU)\n\u2022 cpu: CPU-only processing (slower)\n\u2022 mps: Apple Metal Performance Shaders (Apple Silicon Macs only)"
+          }
+        ],
+        "exaggeration": [
+          "FLOAT",
+          {
+            "default": 0.5,
+            "min": 0.25,
+            "max": 2.0,
+            "step": 0.05,
+            "tooltip": "Speech exaggeration level for ChatterBox. Higher values create more dramatic and expressive speech."
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 0.8,
+            "min": 0.05,
+            "max": 5.0,
+            "step": 0.05,
+            "tooltip": "Controls randomness in ChatterBox generation. Higher values = more creative/varied speech, lower values = more consistent speech."
+          }
+        ],
+        "cfg_weight": [
+          "FLOAT",
+          {
+            "default": 0.5,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Classifier-Free Guidance weight for ChatterBox. Controls how strongly the model follows the text prompt."
+          }
+        ]
+      }
+    },
+    "output": [
+      "TTS_ENGINE"
+    ]
+  },
+  "CharacterVoicesNode": {
+    "input": {
+      "required": {
+        "voice_name": [
+          [
+            "none",
+            "voices_examples/higgs_audio/belinda.wav",
+            "voices_examples/higgs_audio/broom_salesman.wav",
+            "voices_examples/higgs_audio/chadwick.wav",
+            "voices_examples/Clint_Eastwood CC3 (enhanced2).wav",
+            "voices_examples/David_Attenborough CC3.wav",
+            "voices_examples/higgs_audio/en_man.wav",
+            "voices_examples/higgs_audio/en_woman.wav",
+            "voices_examples/female/female_01.wav",
+            "voices_examples/female/female_02.wav",
+            "voices_examples/higgs_audio/mabel.wav",
+            "voices_examples/male/male_01.wav",
+            "voices_examples/male/male_02.wav",
+            "voices_examples/Morgan_Freeman CC3.wav",
+            "voices_examples/Sophie_Anderson CC3.wav",
+            "voices_examples/higgs_audio/vex.wav",
+            "voices_examples/higgs_audio/zh_man_sichuan.wav"
+          ],
+          {
+            "default": "none",
+            "tooltip": "Use 'none' to rely on direct audio input + input text.\n\nSelect character voice from models/voices/ or voices_examples/ folders.\n\nIMPORTANT: Character Voices node requires a .txt file with the same name as the audio file to recognize it as a character.\n\nFILE REQUIREMENTS:\n\u2022 filename.wav + filename.txt (basic setup)\n\u2022 filename.wav + filename.reference.txt\n\u2022 filename.wav + filename.txt + filename.reference.txt (both files)\n\nPRIORITY SYSTEM - When both .txt and .reference.txt exist:\n\u2022 .reference.txt = actual spoken text transcription (used for voice cloning)\n\u2022 .txt = audio information/metadata (license, etc.)"
+          }
+        ],
+        "reference_text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "",
+            "tooltip": "Create reference text on-the-fly for connected audio input.\n\nENGINE REQUIREMENTS:\n\u2022 F5-TTS: REQUIRES reference text (must match spoken audio exactly)\n\u2022 Higgs Audio 2: Optional but uses reference text if provided\n\u2022 ChatterBox/VibeVoice/IndexTTS: Don't use reference text\n\nSelecting a library voice loads its transcription here automatically. Edits are temporary workflow overrides and never modify the source .txt file."
+          }
+        ],
+        "trim_start": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100000.0,
+            "step": 0.01,
+            "tooltip": "Start of the derived reference clip in seconds. The custom timeline controls this value."
+          }
+        ],
+        "trim_end": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100000.0,
+            "step": 0.01,
+            "tooltip": "End of the derived reference clip in seconds. 0 means the end of the source audio."
+          }
+        ],
+        "customized": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Internal UI state: the selected library voice has a temporary text or trim override."
+          }
+        ]
+      },
+      "optional": {
+        "opt_audio_input": [
+          "AUDIO",
+          {
+            "tooltip": "Direct audio input for voice reference (used when voice_name is 'none' or to override selected voice)"
+          }
+        ]
+      }
+    },
+    "output": [
+      "NARRATOR_VOICE",
+      "STRING",
+      "AUDIO"
+    ]
+  },
+  "UnifiedTTSTextNode": {
+    "input": {
+      "required": {
+        "TTS_engine": [
+          "TTS_ENGINE",
+          {
+            "tooltip": "TTS engine configuration from ChatterBox Engine or F5 TTS Engine nodes"
+          }
+        ],
+        "text": [
+          "STRING",
+          {
+            "multiline": true,
+            "default": "Hello! This is unified TTS with character switching support.\n[Alice] Hi there! I'm Alice speaking with the selected TTS engine.\n[Bob] And I'm Bob! This works with any TTS engine.\nBack to the main narrator voice for the conclusion.",
+            "tooltip": "Text to convert to speech. Use [Character] tags for voice switching. Characters not found in voice folders will use the narrator voice."
+          }
+        ],
+        "narrator_voice": [
+          [
+            "none",
+            "voices_examples/higgs_audio/belinda.wav",
+            "voices_examples/higgs_audio/broom_salesman.wav",
+            "voices_examples/higgs_audio/chadwick.wav",
+            "voices_examples/Clint_Eastwood CC3 (enhanced2).wav",
+            "voices_examples/David_Attenborough CC3.wav",
+            "voices_examples/higgs_audio/en_man.wav",
+            "voices_examples/higgs_audio/en_woman.wav",
+            "voices_examples/female/female_01.wav",
+            "voices_examples/female/female_02.wav",
+            "voices_examples/higgs_audio/mabel.wav",
+            "voices_examples/male/male_01.wav",
+            "voices_examples/male/male_02.wav",
+            "voices_examples/Morgan_Freeman CC3.wav",
+            "voices_examples/Sophie_Anderson CC3.wav",
+            "voices_examples/higgs_audio/vex.wav",
+            "voices_examples/higgs_audio/zh_man_sichuan.wav"
+          ],
+          {
+            "default": "none",
+            "tooltip": "Fallback narrator voice from voice folders. Used when opt_narrator is not connected. Select 'none' for engines that support direct TTS without voice cloning, such as MOSS."
+          }
+        ],
+        "seed": [
+          "INT",
+          {
+            "default": 1,
+            "min": 0,
+            "max": 4294967295,
+            "tooltip": "Seed for reproducible TTS generation. Same seed with same inputs will produce identical results. Set to 0 for random generation."
+          }
+        ]
+      },
+      "optional": {
+        "opt_narrator": [
+          "*",
+          {
+            "tooltip": "Voice reference: Connect Character Voices node output OR direct audio input. Takes priority over narrator_voice dropdown when connected."
+          }
+        ],
+        "enable_chunking": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Enable text chunking for long texts. When enabled, long texts are split into smaller chunks for more stable generation."
+          }
+        ],
+        "max_chars_per_chunk": [
+          "INT",
+          {
+            "default": 400,
+            "min": 100,
+            "max": 1000,
+            "step": 50,
+            "tooltip": "Maximum characters per chunk when chunking is enabled. Smaller chunks = more stable but potentially less coherent speech."
+          }
+        ],
+        "chunk_combination_method": [
+          [
+            "auto",
+            "concatenate",
+            "silence_padding",
+            "crossfade"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Method to combine audio chunks: 'auto' chooses best method, 'concatenate' joins directly, 'silence_padding' adds silence between chunks, 'crossfade' smoothly blends chunks."
+          }
+        ],
+        "silence_between_chunks_ms": [
+          "INT",
+          {
+            "default": 100,
+            "min": 0,
+            "max": 500,
+            "step": 25,
+            "tooltip": "Silence duration between chunks in milliseconds when using 'silence_padding' combination method. Longer silences = more distinct separation between chunks."
+          }
+        ],
+        "enable_audio_cache": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "If enabled, generated audio segments will be cached in memory to speed up subsequent runs with identical parameters."
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 32,
+            "step": 1,
+            "tooltip": "Legacy parallel workers for ChatterBox Classic only. 0-1 = sequential (recommended). Values above 1 process separate text segments concurrently; this is not true model batching, usually provides little or no speed benefit, and may use more VRAM. Unsupported for other TTS engines."
+          }
+        ]
+      }
+    },
+    "output": [
+      "AUDIO",
+      "STRING"
+    ]
+  },
+  "UnifiedVoiceDesignerNode": {
+    "input": {
+      "required": {
+        "TTS_engine": [
+          "TTS_ENGINE",
+          {
+            "tooltip": "Configured Qwen3-TTS, MOSS-TTS, or OmniVoice engine. This node owns the voice-design instruction; the engine owns its model, language, and generation settings. Qwen and MOSS require their voice-design model, while OmniVoice requires Voice Design mode."
+          }
+        ],
+        "reference_text": [
+          "STRING",
+          {
+            "default": "Welcome to the TTS Audio Suite. This text-to-speech toolkit brings stories to life with natural, expressive voices for audiobooks, videos, and interactive experiences. What will you create today?",
+            "multiline": true,
+            "tooltip": "Plain text spoken to create the reusable voice reference. The exact transcript is stored inside opt_narrator for Character Voices and Save Character Voice. Use roughly 10 seconds or more with varied intonation, questions, and representative sounds to evaluate and clone the designed voice reliably."
+          }
+        ],
+        "seed": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 18446744073709551615,
+            "tooltip": "Generation seed. 0 keeps the provider's random behavior. A fixed nonzero seed also lets Save Character Voice recognize an identical generation safely."
+          }
+        ],
+        "voice_instruction": [
+          "STRING",
+          {
+            "default": "A warm, confident adult voice with natural pacing, clear articulation, and a subtle expressive smile.",
+            "multiline": true,
+            "tooltip": "Describe the voice identity and delivery to create: age, gender, pitch, texture, accent, pace, emotion, and speaking style. This overrides any stored engine instruction for this voice-design generation."
+          }
+        ]
+      }
+    },
+    "output": [
+      "NARRATOR_VOICE",
+      "AUDIO",
+      "STRING"
+    ]
+  },
+  "Qwen3TTSEngineNode": {
+    "input": {
+      "required": {
+        "model_variant": [
+          [
+            "TTS - Base 1.7B (Voice Clone)",
+            "TTS - CustomVoice 1.7B (Presets + Instruction)",
+            "TTS - Base 0.6B (Voice Clone)",
+            "TTS - CustomVoice 0.6B (Presets)",
+            "Voice Design - 1.7B VoiceDesign",
+            "local:Qwen3-TTS-12Hz-1.7B-Base",
+            "local:Qwen3-TTS-12Hz-1.7B-CustomVoice",
+            "local:Qwen3-TTS-12Hz-0.6B-Base",
+            "local:Qwen3-TTS-12Hz-0.6B-CustomVoice",
+            "local:Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+            "1.7B",
+            "0.6B"
+          ],
+          {
+            "default": "TTS - Base 1.7B (Voice Clone)",
+            "tooltip": "Explicit Qwen3-TTS checkpoint. Local installations use the local: prefix. Base models clone a reference voice, CustomVoice models use preset speakers, and VoiceDesign works only with Voice Designer."
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "cpu"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Device to run Qwen3-TTS model on:\n\u2022 auto: Automatically select best available\n\u2022 cuda: NVIDIA GPU (requires CUDA)\n\u2022 cpu: CPU-only processing (very slow)"
+          }
+        ],
+        "voice_preset": [
+          [
+            "None (Zero-shot / Custom)",
+            "Vivian",
+            "Serena",
+            "Uncle_Fu",
+            "Dylan",
+            "Eric",
+            "Ryan",
+            "Aiden",
+            "Ono_Anna",
+            "Sohee"
+          ],
+          {
+            "default": "None (Zero-shot / Custom)",
+            "tooltip": "Preset speaker for CustomVoice checkpoints. Ignored by Base and VoiceDesign models."
+          }
+        ],
+        "language": [
+          [
+            "Auto",
+            "Chinese",
+            "English",
+            "Japanese",
+            "Korean",
+            "German",
+            "French",
+            "Russian",
+            "Portuguese",
+            "Spanish",
+            "Italian"
+          ],
+          {
+            "default": "Auto",
+            "tooltip": "Target language for speech generation:\n\u2022 Auto: Automatically detect from text\n\u2022 Portuguese: European Portuguese only for Base model\n  - Brazilian Portuguese: Only available with CustomVoice presets + instruction\n  - Example instruction: 'Speak with Brazilian Portuguese accent'"
+          }
+        ],
+        "instruct": [
+          "STRING",
+          {
+            "default": "",
+            "multiline": true,
+            "tooltip": "Delivery instruction for the 1.7B CustomVoice checkpoint. Voice Designer owns the voice description when a VoiceDesign checkpoint is selected, so this field is disabled there. Base and 0.6B CustomVoice models ignore it."
+          }
+        ],
+        "top_k": [
+          "INT",
+          {
+            "default": 50,
+            "min": 1,
+            "max": 100,
+            "step": 1,
+            "tooltip": "Top-K sampling:\n\u2022 Lower (10-30): More focused, consistent\n\u2022 Default (50): Balanced\n\u2022 Higher (80-100): More varied output"
+          }
+        ],
+        "top_p": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.05,
+            "tooltip": "Top-P (nucleus) sampling:\n\u2022 Lower (0.7-0.9): More focused\n\u2022 Default (1.0): All tokens considered\n\u2022 Combine with top_k for fine control"
+          }
+        ],
+        "temperature": [
+          "FLOAT",
+          {
+            "default": 0.9,
+            "min": 0.1,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Sampling temperature:\n\u2022 Lower (0.5-0.7): More predictable\n\u2022 Default (0.9): Balanced\n\u2022 Higher (1.2+): More creative, potentially unstable"
+          }
+        ],
+        "repetition_penalty": [
+          "FLOAT",
+          {
+            "default": 1.05,
+            "min": 1.0,
+            "max": 2.0,
+            "step": 0.05,
+            "tooltip": "Repetition penalty:\n\u2022 1.0: No penalty\n\u2022 1.05: Slight penalty (default)\n\u2022 1.2+: Strong penalty (may affect quality)"
+          }
+        ],
+        "max_new_tokens": [
+          "INT",
+          {
+            "default": 2048,
+            "min": 64,
+            "max": 8192,
+            "step": 64,
+            "tooltip": "Maximum tokens to generate:\n\u2022 64-512: Very short\n\u2022 2048: Standard (default)\n\u2022 4096-8192: Long generation\nHigher = more VRAM + longer generation"
+          }
+        ]
+      },
+      "optional": {
+        "dtype": [
+          [
+            "auto",
+            "bfloat16",
+            "float16",
+            "float32"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Model precision:\n\u2022 auto: Selects bfloat16 if GPU supports it (SM 8.0+), else float16\n\u2022 bfloat16: Best quality, stable (RTX 30xx+, A100+)\n\u2022 float16: Good quality, wider compatibility\n\u2022 float32: Maximum precision, 2x VRAM"
+          }
+        ],
+        "attn_implementation": [
+          [
+            "auto",
+            "sage_attn",
+            "flash_attention_2",
+            "sdpa",
+            "eager"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Attention mechanism:\n\u2022 auto: Best available (priority: sage_attn > flash_attention_2 > sdpa > eager)\n\u2022 sage_attn: Fastest (requires sageattention package)\n\u2022 flash_attention_2: Very fast (requires flash-attn installed)\n\u2022 sdpa: Good balance (PyTorch native)\n\u2022 eager: Slowest, most compatible"
+          }
+        ],
+        "x_vector_only_mode": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "X-vector only mode (Base model only):\n\u2022 False: Full voice cloning (high quality, requires ref_text)\n\u2022 True: Fast speaker embedding only (lower quality, no ref_text needed)\nOnly applies when voice_preset = None"
+          }
+        ],
+        "use_torch_compile": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable torch.compile for decoder (~1.5-2x speedup):\n\u2022 False: Standard inference (RECOMMENDED - works with all PyTorch versions)\n\u2022 True: Compiled decoder (REQUIRES PyTorch 2.10+ and triton-windows 3.6+)\n\u26a0\ufe0f REQUIREMENTS: PyTorch 2.10.0+cu130, triton-windows 3.6.0+, and Visual Studio C++ Build Tools on Windows\n\u26a0\ufe0f Shared Runtime will try to detect the toolchain automatically, but it still must be installed\n\u26a0\ufe0f See docs/qwen3_tts_optimizations.md for installation\nFirst generation slower due to compilation, then ~1.5-2x faster"
+          }
+        ],
+        "use_cuda_graphs": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable manual CUDA graph capture:\n\u2022 False: RECOMMENDED (reduce-overhead mode already has auto CUDA graphs)\n\u2022 True: Manual capture - minimal gain (~0.1 it/s), only works with mode='default'\nNote: reduce-overhead/max-autotune include CUDA graphs automatically"
+          }
+        ],
+        "compile_mode": [
+          [
+            "default",
+            "reduce-overhead",
+            "max-autotune"
+          ],
+          {
+            "default": "default",
+            "tooltip": "torch.compile mode (if use_torch_compile enabled):\n\u2022 default: RECOMMENDED - Standard torch.compile, ~1.7x speedup, works on Windows\n\u2022 reduce-overhead: Auto CUDA graphs, ~2-3x speedup, LINUX ONLY (fails on Windows)\n\u2022 max-autotune: Best optimization, longest compile, LINUX ONLY\n\u26a0\ufe0f Windows: Only 'default' works - reduce-overhead/max-autotune fail with cudaMallocAsync error\n\u26a0\ufe0f Model must be reloaded to test different modes (cache reuse otherwise)"
+          }
+        ],
+        "asr_use_forced_aligner": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Enable Qwen3 forced aligner (required for word timestamps + accurate SRT).\nTurn OFF to save VRAM and skip downloading the extra aligner model if you only need text (no timestamps)."
+          }
+        ],
+        "asr_translate_target_language": [
+          [
+            "English",
+            "Chinese",
+            "Cantonese",
+            "Arabic",
+            "German",
+            "French",
+            "Spanish",
+            "Portuguese",
+            "Indonesian",
+            "Italian",
+            "Korean",
+            "Russian",
+            "Thai",
+            "Vietnamese",
+            "Japanese",
+            "Turkish",
+            "Hindi",
+            "Malay",
+            "Dutch",
+            "Swedish",
+            "Danish",
+            "Finnish",
+            "Polish",
+            "Czech",
+            "Filipino",
+            "Persian",
+            "Greek",
+            "Romanian",
+            "Hungarian",
+            "Macedonian"
+          ],
+          {
+            "default": "English",
+            "tooltip": "Experimental ASR translation target for \u270f\ufe0f ASR Transcribe when task=translate.\n\nThis is ASR-only and does NOT affect Qwen TTS generation language.\n\nImportant:\n\u2022 Qwen translation in this integration is prompt-driven through the ASR wrapper, not a dedicated native target-language API\n\u2022 Translation quality currently depends heavily on language pair and backend behavior\n\u2022 English is the safest default\n\u2022 Non-English targets should be treated as experimental until you validate them on real audio"
+          }
+        ],
+        "asr_translate_instruction_override": [
+          "STRING",
+          {
+            "default": "Translate the speech from {source_language} into {target_language} text. Return only the translated text.",
+            "multiline": true,
+            "tooltip": "Qwen ASR-only experimental translation instruction template for \u270f\ufe0f ASR Transcribe when task=translate.\n\nThis field shows the actual default instruction used by this integration. Edit it if you want to experiment.\n\nAvailable placeholders:\n\u2022 {source_language}: Replaced with the unified ASR source language, or 'the spoken source language' when ASR language is Auto\n\u2022 {target_language}: Replaced with this engine node's ASR translation target\n\nImportant:\n\u2022 This does NOT affect Qwen TTS generation or the TTS 'instruct' field\n\u2022 Qwen translation here is prompt-driven through the ASR wrapper context\n\u2022 Results can vary a lot by language pair, and some pairs may not behave reliably at all\n\u2022 Weak or malformed custom instructions can produce worse translations or unexpected output"
+          }
+        ],
+        "runtime_mode": [
+          [
+            "Main Environment",
+            "\u26a0\ufe0f Shared Runtime"
+          ],
+          {
+            "default": "\u26a0\ufe0f Shared Runtime",
+            "tooltip": "IMPORTANT: Qwen3-TTS is fragile on Transformers 5 in the main environment.\n\nRuntime Isolation:\n\u2022 Main Environment: Use the main ComfyUI Python environment\n\u2022 Shared Runtime: Use the shared secondary legacy runtime already used by compatible engines\n\nWhy this matters:\n\u2022 The main ComfyUI env is on Transformers 5\n\u2022 Qwen3-TTS is more stable on the legacy Transformers 4 stack\n\u2022 Runtime isolation keeps Qwen3-TTS working without downgrading the whole app\n\n\u26a0\ufe0f Shared Runtime reuses heavy base packages such as PyTorch and adds its pinned legacy dependencies during suite installation.\n\u26a0\ufe0f If it is missing, enable automatic shared runtime installation in Settings and repair/reinstall the suite through Manager."
+          }
+        ]
+      }
+    },
+    "output": [
+      "TTS_ENGINE"
+    ]
+  },
+  "RVCEngineNode": {
+    "input": {
+      "required": {
+        "pitch": [
+          "INT",
+          {
+            "default": 0,
+            "min": -14,
+            "max": 14,
+            "step": 1,
+            "display": "slider",
+            "tooltip": "Pitch shift in semitones. 0=no change, +12=octave up (male\u2192female), -12=octave down (female\u2192male)"
+          }
+        ],
+        "index_ratio": [
+          "FLOAT",
+          {
+            "default": 0.75,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+            "display": "slider",
+            "tooltip": "Index file influence (0.0-1.0). Higher=more like training voice, lower=more like input voice"
+          }
+        ],
+        "consonant_protection": [
+          "FLOAT",
+          {
+            "default": 0.25,
+            "min": 0.0,
+            "max": 0.5,
+            "step": 0.01,
+            "display": "slider",
+            "tooltip": "Consonant protection - Protects speech clarity. Low=voice changes more, High=keeps original pronunciation clearer"
+          }
+        ],
+        "volume_envelope": [
+          "FLOAT",
+          {
+            "default": 0.25,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.01,
+            "display": "slider",
+            "tooltip": "Volume envelope mixing - Controls volume patterns. Low=use target voice volume, High=keep original voice volume patterns"
+          }
+        ]
+      },
+      "optional": {
+        "hubert_model": [
+          [
+            "auto: Automatically select best available model",
+            "content-vec-best: Content Vec 768 (Recommended)",
+            "hubert-base-japanese: HuBERT Japanese",
+            "hubert-base-korean: HuBERT Korean",
+            "chinese-hubert-base: Chinese HuBERT Base",
+            "hubert-large: HuBERT Large 1024 (Experimental - Not Recommended)"
+          ],
+          {
+            "default": "auto: Automatically select best available model",
+            "tooltip": "HuBERT Model for feature extraction:\n\n\u2022 Auto: Automatically select the best available model based on your language\n\u2022 Content Vec 768: RECOMMENDED - Best for RVC voice conversion, fastest loading\n\u2022 HuBERT Japanese: Optimized for Japanese voices and phonetics  \n\u2022 HuBERT Korean: Specialized for Korean speech patterns\n\u2022 Chinese HuBERT: Fine-tuned for Mandarin Chinese tonal patterns\n\u2022 HuBERT Large 1024: EXPERIMENTAL - no compatible public pretrained RVC generator; may produce unintelligible audio\n\nModels will auto-download if not present. Use Content Vec 768 unless a checkpoint explicitly requires another encoder."
+          }
+        ],
+        "rvc_pitch_options": [
+          "RVC_PITCH_OPTIONS",
+          {
+            "tooltip": "Optional advanced pitch extraction settings from RVC Pitch Options node. Overrides basic parameters."
+          }
+        ],
+        "output_sample_rate": [
+          [
+            0,
+            16000,
+            32000,
+            40000,
+            44100,
+            48000
+          ],
+          {
+            "default": 0,
+            "tooltip": "Output sample rate (0=use input rate). 44100/48000 recommended for high quality"
+          }
+        ],
+        "enable_custom_chunking": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable the Voice Changer's outer chunking on top of native RVC segmentation. Leave off unless you specifically need shorter-than-native chunks for extra VRAM safety. Native RVC long-audio segmentation usually starts around 64s on the common half-precision path, and lower on some fp32/low-VRAM paths."
+          }
+        ],
+        "device": [
+          [
+            "auto",
+            "cuda",
+            "xpu",
+            "cpu",
+            "mps"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Processing device:\n\u2022 auto: Automatically select best available (MPS on Apple Silicon, CUDA on NVIDIA, XPU on Intel, CPU fallback)\n\u2022 cuda: NVIDIA GPU (requires CUDA-capable GPU)\n\u2022 xpu: Intel GPU (requires Intel PyTorch XPU)\n\u2022 cpu: CPU-only processing (slower)\n\u2022 mps: Apple Metal Performance Shaders (Apple Silicon Macs only)"
+          }
+        ]
+      }
+    },
+    "output": [
+      "TTS_ENGINE"
+    ]
+  },
+  "RVCDatasetPrepNode": {
+    "input": {
+      "required": {
+        "TTS_engine": [
+          "TTS_ENGINE",
+          {
+            "tooltip": "Connect the RVC engine here because dataset prep also needs HuBERT and pitch-extraction settings, not just the later training node."
+          }
+        ],
+        "model_name": [
+          "STRING",
+          {
+            "default": "MyVoice",
+            "tooltip": "Base name for the trained RVC voice. Changing only this should not force dataset re-prep when the actual data/settings stay the same."
+          }
+        ],
+        "dataset_source": [
+          "STRING",
+          {
+            "default": "",
+            "tooltip": "Optional folder, zip, or single audio file path. Relative paths resolve from ComfyUI input/ and input/datasets/. Clean single-speaker speech matters more than having one huge raw recording. Leave empty if you only use opt_audio inputs."
+          }
+        ],
+        "training_sample_rate": [
+          [
+            "32k",
+            "40k",
+            "48k"
+          ],
+          {
+            "default": "40k",
+            "tooltip": "Target training sample rate. 40k is the normal speech default and usually the right place to start."
+          }
+        ]
+      },
+      "optional": {
+        "cpu_workers": [
+          "INT",
+          {
+            "default": 1,
+            "min": 1,
+            "max": 32,
+            "step": 1,
+            "tooltip": "CPU workers for slicing and feature extraction. 1-4 is usually enough; more is not automatically better, especially on Windows."
+          }
+        ],
+        "chunk_seconds": [
+          "FLOAT",
+          {
+            "default": 3.0,
+            "min": 1.0,
+            "max": 15.0,
+            "step": 0.1,
+            "tooltip": "Target clip length after slicing. RVC usually likes short clips; 3.0s is a good default, and an effective range around 2-8s is normal."
+          }
+        ],
+        "overlap_seconds": [
+          "FLOAT",
+          {
+            "default": 0.3,
+            "min": 0.0,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Small overlap helps avoid harsh cuts between slices. Too much overlap just duplicates data and slows prep."
+          }
+        ],
+        "max_volume": [
+          "FLOAT",
+          {
+            "default": 0.95,
+            "min": 0.1,
+            "max": 1.0,
+            "step": 0.01,
+            "tooltip": "Peak normalization ceiling for extracted clips. 0.95 is a safe default; avoid pushing everything to 1.0 unless you like clipping risk."
+          }
+        ],
+        "mute_ratio": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": 0.0,
+            "max": 0.5,
+            "step": 0.01,
+            "tooltip": "Extra silence augmentation ratio. Leave this at 0 for normal training; raise it only if the model is over-voicing silence or breathing badly."
+          }
+        ],
+        "reuse_existing": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Reuse the prepared dataset cache when settings match. Usually keep this on; rebuilding features every run is just wasted time."
+          }
+        ],
+        "opt_audio1": [
+          "AUDIO",
+          {
+            "forceInput": true,
+            "tooltip": "Optional training audio clip. Connect one or more AUDIO sources here for quick in-graph tests, or combine them with a dataset path."
+          }
+        ]
+      }
+    },
+    "output": [
+      "TRAINING_DATASET",
+      "STRING"
+    ]
+  },
+  "RVCTrainingConfigNode": {
+    "input": {
+      "required": {
+        "epochs": [
+          "INT",
+          {
+            "default": 100,
+            "min": 1,
+            "max": 20000,
+            "step": 1,
+            "tooltip": "Actual RVC epoch count. Around 20 is a smoke test, 50-100 is a first real pass, and 100+ is where cleaner datasets usually become worth judging. Loss helps spot trends, but listening tests still decide quality."
+          }
+        ],
+        "batch_size": [
+          "INT",
+          {
+            "default": 4,
+            "min": 1,
+            "max": 64,
+            "step": 1,
+            "tooltip": "Use the largest stable batch that fits VRAM. Bigger is usually faster and a bit smoother; lower it first if you hit OOM or instability."
+          }
+        ],
+        "learning_rate": [
+          "FLOAT",
+          {
+            "default": 0.0001,
+            "min": 1e-08,
+            "max": 1.0,
+            "step": 1e-08,
+            "tooltip": "1e-4 is the normal safe default. Lower it if training gets spiky or noisy; raising it is one of the fastest ways to make adversarial training worse."
+          }
+        ],
+        "gpu_ids": [
+          "STRING",
+          {
+            "default": "",
+            "tooltip": "CUDA device ids in the odd RVC format, for example '0' or '0-1'. Leave blank unless you deliberately want multi-GPU behavior."
+          }
+        ],
+        "num_workers": [
+          "INT",
+          {
+            "default": 0,
+            "min": 0,
+            "max": 16,
+            "step": 1,
+            "tooltip": "PyTorch dataloader workers. Keep this at 0 on Windows; worker processes there can respawn ComfyUI internals and break training."
+          }
+        ]
+      },
+      "optional": {
+        "fp16_run": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Keep this on for normal CUDA training. Turn it off only if you see NaNs, weird instability, or hardware/driver-specific fp16 issues."
+          }
+        ],
+        "save_every_epoch": [
+          "INT",
+          {
+            "default": 5,
+            "min": 0,
+            "max": 1000,
+            "tooltip": "Checkpoint cadence. Save a resumable training checkpoint every N epochs. 5 is a good default, 1 is safest, and 0 disables periodic resume checkpoints entirely."
+          }
+        ],
+        "cache_data_in_gpu": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Cache batches in VRAM for speed. Usually worth it if you have room; turn it off if VRAM pressure becomes the real bottleneck."
+          }
+        ],
+        "max_checkpoints": [
+          "INT",
+          {
+            "default": 1,
+            "min": 1,
+            "max": 999,
+            "step": 1,
+            "tooltip": "Checkpoint retention policy. Keep the newest N checkpoint pairs and delete older ones. 1 means keep only the latest resumable checkpoint, 3 means keep the latest three, and so on."
+          }
+        ],
+        "save_every_weights": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Export extra standalone weight files at each save interval. Mostly useful for inspection or experiments; normal training does not need this."
+          }
+        ],
+        "train_index": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Build the matched FAISS index after training. Usually keep this on; normal RVC inference often sounds worse without the proper index."
+          }
+        ],
+        "save_best_model": [
+          "BOOLEAN",
+          {
+            "default": true,
+            "tooltip": "Track generator loss and save the lowest-loss model as an extra inference checkpoint candidate. Useful for listening tests, but lowest loss is not guaranteed to be the best sounding model."
+          }
+        ],
+        "best_model_threshold": [
+          "INT",
+          {
+            "default": 30,
+            "min": 1,
+            "max": 100,
+            "tooltip": "Initial gate for first 'best model' capture. Leave this alone unless you are debugging why low-loss checkpoint saving triggers too early or too often."
+          }
+        ],
+        "log_every_epoch": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.1,
+            "max": 2.0,
+            "step": 0.1,
+            "tooltip": "Logging cadence within an epoch. This affects dashboard/log granularity, not training quality. 1.0 is about once per epoch, 0.5 is about twice."
+          }
+        ],
+        "pretrained_generator": [
+          [
+            "auto",
+            "",
+            "pretrained_v2/G32k.pth",
+            "pretrained_v2/G40k.pth",
+            "pretrained_v2/G48k.pth",
+            "pretrained_v2/f0G32k.pth",
+            "pretrained_v2/f0G40k.pth",
+            "pretrained_v2/f0G48k.pth",
+            "pretrained_v2/f0Ov2Super32kG.pth",
+            "pretrained_v2/f0Ov2Super40kG.pth",
+            "pretrained_v2/f0_RIN_E3_40k_G.pth"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Generator initialization checkpoint. Keep this on auto unless you know exactly why you want a different base; training from scratch on a small dataset is usually a bad idea."
+          }
+        ],
+        "pretrained_discriminator": [
+          [
+            "auto",
+            "",
+            "pretrained_v2/D32k.pth",
+            "pretrained_v2/D40k.pth",
+            "pretrained_v2/D48k.pth",
+            "pretrained_v2/f0D32k.pth",
+            "pretrained_v2/f0D40k.pth",
+            "pretrained_v2/f0D48k.pth",
+            "pretrained_v2/f0Ov2Super32kD.pth",
+            "pretrained_v2/f0Ov2Super40kD.pth",
+            "pretrained_v2/f0_RIN_E3_40k_D.pth"
+          ],
+          {
+            "default": "auto",
+            "tooltip": "Discriminator initialization checkpoint. Auto is the sane default and should stay matched to the generator/sample-rate setup."
+          }
+        ],
+        "c_adv": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "Adversarial loss weight. Advanced knob. Do not touch this unless you are intentionally rebalancing training and understand the side effects."
+          }
+        ],
+        "c_mel": [
+          "FLOAT",
+          {
+            "default": 45.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "Mel reconstruction weight. One of the main terms keeping speech recognizable. Usually leave it at default unless you are doing real loss tuning."
+          }
+        ],
+        "c_kl": [
+          "FLOAT",
+          {
+            "default": 1.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "KL regularization weight. Changing this can absolutely destabilize training, so leave it alone unless you know the tradeoff you want."
+          }
+        ],
+        "c_fm": [
+          "FLOAT",
+          {
+            "default": 2.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "Feature-matching weight. Usually helps texture/stability. Leave it at default unless you are deliberately rebalancing losses."
+          }
+        ],
+        "c_tefs": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "Experimental TEFS auxiliary loss. Keep this at 0 unless you are explicitly experimenting with that feature."
+          }
+        ],
+        "c_hd": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "Experimental harmonic-detail auxiliary loss. Keep this at 0 for normal training."
+          }
+        ],
+        "c_tsi": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "Experimental TSI auxiliary loss. Keep this at 0 unless you are intentionally testing it."
+          }
+        ],
+        "c_gp": [
+          "FLOAT",
+          {
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100.0,
+            "step": 0.1,
+            "tooltip": "Gradient-penalty weight. This is mostly a stabilization/debug knob, not a normal training control. Leave it at 0 unless adversarial loss is misbehaving."
+          }
+        ],
+        "use_multiscale": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Use experimental multiscale mel loss. Heavier and not needed for a normal first pass."
+          }
+        ],
+        "use_balancer": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Enable dynamic loss balancing. Advanced only. If you do not already know why you want this, you do not want this."
+          }
+        ],
+        "use_pareto": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Pareto-style balancing on top of the dynamic balancer. Ignore this unless you are already deliberately using the balancer."
+          }
+        ],
+        "fast_mode": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Speed tweak for the advanced balancer path. It does nothing useful unless you already enabled those advanced balancing options."
+          }
+        ]
+      }
+    },
+    "output": [
+      "TRAINING_CONFIG",
+      "STRING"
+    ]
+  },
+  "UnifiedModelTrainingNode": {
+    "input": {
+      "required": {
+        "TTS_engine": [
+          "TTS_ENGINE",
+          {
+            "tooltip": "Engine configuration used to route to the correct training backend. For RVC, only the shared training-relevant settings matter here, not inference-only knobs."
+          }
+        ],
+        "training_dataset": [
+          "TRAINING_DATASET",
+          {
+            "tooltip": "Prepared dataset payload from an engine-specific dataset prep node. Bad data quality will hurt you more than fancy training settings."
+          }
+        ]
+      },
+      "optional": {
+        "training_config": [
+          "TRAINING_CONFIG",
+          {
+            "tooltip": "Engine-specific training config. If omitted, backend defaults are used, but explicit config is better if you care about checkpoint cadence, resume behavior, or reproducibility."
+          }
+        ],
+        "continue_from": [
+          "*",
+          {
+            "tooltip": "Warm-start a new run from an existing finished model or artifacts. For RVC this is not exact resume; generator weights continue, but optimizer/discriminator state starts fresh."
+          }
+        ],
+        "output_name": [
+          "STRING",
+          {
+            "default": "",
+            "tooltip": "Optional exported model name override. Blank uses the dataset model name."
+          }
+        ],
+        "resume": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Exact resume from saved RVC training checkpoints for the latest compatible RVC job with the same output name, dataset, and sample rate. This only works if real G_*.pth and D_*.pth checkpoints exist."
+          }
+        ],
+        "overwrite": [
+          "BOOLEAN",
+          {
+            "default": false,
+            "tooltip": "Reuse the resolved output name instead of making a unique suffix. Good for deliberate replacement, bad for archival. Do not use this with resume."
+          }
+        ]
+      },
+      "hidden": {
+        "node_id": [
+          "STRING",
+          {
+            "default": "0"
+          }
+        ],
+        "unique_id": "UNIQUE_ID"
+      }
+    },
+    "output": [
+      "TRAINING_ARTIFACTS",
+      "STRING"
+    ]
+  },
+  "SaveAudioAdvanced": {
+    "input": {
+      "required": {}
+    }
+  },
+  "PreviewAny": {
+    "input": {
+      "required": {}
+    }
+  }
+}

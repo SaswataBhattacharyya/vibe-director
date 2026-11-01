@@ -1,4 +1,35 @@
+## Mandatory T2V pipeline — owner correction 2026-10-24
+All new T2V generation uses H3 Turbo (four steps at a smaller source canvas), followed by the pinned lower-noise LTX 2.3 refinement (three steps with installed Sol attention). This applies to standalone, batch and story T2V; FFLF/R2V remain unchanged. User quality, aspect ratio and duration specify the final output. Final landscape choices: Low1216×672, Standard1344×768, High1664×928, Max1920×1088. Existing numeric batch presets keep their original sizes. Pure-T2V automated stories and batches make all originals first and then refine serially. Original H3 audio is remuxed into the final video; source/stage IDs and hashes are durable. Pause prevents subsequent stages; Stop cancels pending refinement. Screenplay, authored prompts and frozen older jobs are preserved. See `plans/T2V_TURBO_LTX_INTEGRATION.md` for recipe, provenance and verification limits. This supersedes older “upscaling deferred” instructions for T2V only.
+
+## Clip planning source contract — 2026-10-16
+Director planning receives numbered source words for each shot action/dialogue field and chooses inclusive word-ID ranges. Server computes exact Unicode offsets and retains full ordered coverage validation. Do not require a reasoning model to count character offsets. Manual-control state must update as soon as saved, even if later clip planning fails. Failed preparation keeps saved canonical assets, voices and prompts available for retry; it must not imply any video was generated.
+
 # Video generation planning for Story Builder
+
+## Assisted manual shot references — owner correction 2026-10-16
+
+Video Create uses the accepted screenplay's shot design and saved asset selections. Director attaches current character masters for visible cast, current world masters for cited locations, and assigned voices only for speakers in that shot, preserving stable character–voice IDs in the request. Show action, dialogue, camera, lighting, mood and duration beside the reference controls; prepare an editable workflow-specific shot prompt automatically. Ambiguous cast/location/speaker matches or missing selected assets are explained rather than guessed. Standalone creation remains available.
+
+User may remove, replace or add image/audio/video references with separate identity, location, style, motion or sound instructions. These are per-shot overrides; global masters and voice assignments remain unchanged. Persist prompt, references and review decisions by workspace/revision/setup/workflow/shot; restore on switching/reloading. Rebuild Director choices is explicit and warns before replacing edits.
+
+Automatic and extra references share workflow capacity (currently R2V: 9 images, 3 videos, 3 audio including paired soundtracks). Keep every proposal visible; when over capacity, ask which to retain and block submission until resolved. Never silently truncate. Show possible instruction conflicts near reference review, explain the affected identity/clothing/location scope and offer narrower instructions or a visible retained override. Do not claim visual/semantic inspection where only instruction scope was checked. Preparing a shot never queues generation; Assisted manual Generate remains owner-clicked.
+
+This applies when video automation is unchecked in Assisted manual. If it is checked, Video Create offers an explicit “Use shot-by-shot manual R2V” action that saves manual video control and prepares the existing duration-bounded clip plan; it never submits a video. Otherwise checked video automation continues through the saved automated clip plan. This supersedes earlier recommendation-only wording for story-linked Assisted manual R2V. Optional style-library recommendations and isolated creation still require user selection. Fully automated behavior is unchanged.
+
+
+### Sequential clip preparation — 2026-10-16
+
+Reuse the existing clip planner and source-span coverage rules. Show Scene / Shot / Clip / seconds in the dropdown, splitting long material into clips within the saved duration policy and workflow’s 5–15 second limits. Show the clip’s action/dialogue and shot direction. Attach saved selected masters and assigned speaker voices automatically; continue a split utterance with its speaker identity. Planned duration is fixed in Create so it stays consistent with coverage.
+
+Only clips whose predecessors have accepted videos are selectable. Retake revises the current clip. Accept & Next loads the following planned clip and prepares its prompt and references. Each subsequent clip in the same scene must include the preceding accepted video as a continuity reference (up to its final 15 seconds); new scenes do not inherit it. The backend checks plan freshness, clip identity/duration, preceding acceptance and continuity asset hash before admission. User edits and extra scoped references remain available. Do not overwrite edited prompts on reload; restoration is explicit.
+
+
+## Notes-integrated correction — 2026-10-11
+
+Retake preserves the exact current prompt/references/instructions/settings. Next clears the completed clip draft and loads the next planned clip prompt; standalone Next opens a clean draft. Use grouped typed carousels, Add selected and per-reference instructions, collate and persisted drafts. Derived character frames are optional verified continuity assets; scene-start clips needing those images require R2V.
+
+Read [remaining_app.md](remaining_app.md) for task order/reuse and [OWNER_DUMMY_RUNS.md](OWNER_DUMMY_RUNS.md) for owner-clicked acceptance. This correction overrides conflicting older sections below; historical implementation checkpoints are not completion evidence.
+
 
 **Status:** Current product and workflow plan. Use `README.md`, `GLOSSARY.md` and `automation.md` for authoritative decisions, terminology and wrapper behavior.  
 **Position in the journey:** Follows the usable screenplay/clip plan. Visual preparation in `char_world.md` is optional and skippable; Fully automated skips image generation. Selected clip frames, character/world references and assets from the shared library feed compatible workflows when chosen.
@@ -226,3 +257,8 @@ Follow `integration.md` for selected tool reuse. Final assembly/composition is a
 ## Production-style reference recommendations
 
 Use `production_styles.md` for selected style image/audio/video recommendations, controlled video-frame extraction (default two, zero allowed), and the automated style-video R2V exception. Manual pickers in Assisted manual rank compatible selected-style assets highest without auto-selecting them. R2V audio selectors include style audio. Compile actual reference labels and per-reference style intent into the submitted prompt and retain its manifest.
+
+
+### Create layout — owner update, 2026-10-26
+
+Use the Current Take shared workspace: middle Director chat, right existing Create controls. Each pane collapses independently and its layout persists. Keep all current workflow/reference/parameter/generation controls. Chat prepares an explicitly applied prompt suggestion through the existing field-edit provider, with the shared model selector and /model. It does not silently attach references or submit a render. Generation remains behind the existing Generate and readiness checks.

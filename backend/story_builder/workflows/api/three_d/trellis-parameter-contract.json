@@ -1,0 +1,3538 @@
+{
+  "1024_bounded": {
+    "3": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "108",
+          0
+        ],
+        "positive": [
+          "299",
+          0
+        ],
+        "negative": [
+          "299",
+          1
+        ],
+        "latent_image": [
+          "87",
+          0
+        ],
+        "seed": 56,
+        "steps": 12,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "12": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "40",
+          0
+        ],
+        "positive": [
+          "98",
+          0
+        ],
+        "negative": [
+          "98",
+          1
+        ],
+        "latent_image": [
+          "98",
+          2
+        ],
+        "seed": 43,
+        "steps": 12,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "18": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "126",
+          0
+        ],
+        "positive": [
+          "91",
+          0
+        ],
+        "negative": [
+          "91",
+          1
+        ],
+        "latent_image": [
+          "91",
+          2
+        ],
+        "seed": 42,
+        "steps": 20,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "23": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "126",
+          0
+        ],
+        "positive": [
+          "94",
+          0
+        ],
+        "negative": [
+          "94",
+          1
+        ],
+        "latent_image": [
+          "94",
+          2
+        ],
+        "seed": 42,
+        "steps": 12,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "94": {
+      "class_type": "Trellis2UpsampleStage",
+      "inputs": {
+        "positive": [
+          "91",
+          0
+        ],
+        "negative": [
+          "91",
+          1
+        ],
+        "shape_latent": [
+          "18",
+          0
+        ],
+        "vae": [
+          "117",
+          0
+        ],
+        "target_resolution": 1024
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "positive": [
+              "CONDITIONING",
+              {}
+            ],
+            "negative": [
+              "CONDITIONING",
+              {}
+            ],
+            "shape_latent": [
+              "LATENT",
+              {
+                "tooltip": "The 512-resolution shape latent output from the first shape-stage KSampler."
+              }
+            ],
+            "vae": [
+              "VAE",
+              {}
+            ],
+            "target_resolution": [
+              "INT",
+              {
+                "tooltip": "Voxel resolution of the upsampled shape. Higher = more detail, more VRAM.",
+                "default": 1024,
+                "min": 1024,
+                "max": 2048,
+                "step": 128
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "positive",
+            "negative",
+            "shape_latent",
+            "vae",
+            "target_resolution"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "CONDITIONING",
+          "CONDITIONING",
+          "LATENT"
+        ],
+        "output_is_list": [
+          false,
+          false,
+          false
+        ],
+        "output_name": [
+          "positive",
+          "negative",
+          "LATENT"
+        ],
+        "output_tooltips": [
+          null,
+          null,
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "Trellis2UpsampleStage",
+        "display_name": "Trellis2 Upsample Stage",
+        "description": "",
+        "python_module": "comfy_extras.nodes_trellis2",
+        "category": "model/conditioning/trellis",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "122": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "example.png"
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "image": [
+              [
+                "1fac05870e284af4beb0e460e240cdb1_text_00001_.png",
+                "212cdc0488d5.png",
+                "69b0ce0ded7d462b94756bf380fc5dac_text_00001_.png",
+                "6c6cc62207a5.png",
+                "72c9501241a14fb19751913a429e665d_text_00001_.png",
+                "7c408d7edd8d4f499eb604fc7dcb84a6_text_00001_.png",
+                "89bf690ae17b.png",
+                "90dda44449ec476199e165387a940a4e_text_00001_.png",
+                "Dragon_info.webp",
+                "Pasted image.png",
+                "a73a43af8209.png",
+                "ad0df929933b4888b958607ff9c4aff1_ComfyUI_temp_pszzc_00001_.png",
+                "ae7ac133d9e24657adb5c1446bafc1c7_text_00001_.png",
+                "clip_20260718_054115_2.png",
+                "d82b9aec699f46e7a0002d3226d9ba54_text_00001_.png",
+                "disposable-full-production-verification-ca2e40f2_production-3e6db70691_reference_1.png",
+                "disposable-full-production-verification-ca2e40f2_production-3e6db70691_reference_2.png",
+                "disposable-full-production-verification-ca2e40f2_production-3e6db70691_reference_3.png",
+                "disposable-two-scene-production-f6e5bca1_production-6121bc2ee2_reference_1.png",
+                "disposable-two-scene-production-f6e5bca1_production-6121bc2ee2_reference_2.png",
+                "disposable-two-scene-production-f6e5bca1_production-6121bc2ee2_reference_3.png",
+                "example.png",
+                "f27ec6e49cd8.png",
+                "img_1 (1).webp",
+                "img_1.webp",
+                "standalone-workbench.png"
+              ],
+              {
+                "image_upload": true
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "image"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "IMAGE",
+          "MASK"
+        ],
+        "output_is_list": [
+          false,
+          false
+        ],
+        "output_name": [
+          "IMAGE",
+          "MASK"
+        ],
+        "name": "LoadImage",
+        "display_name": "Load Image",
+        "description": "",
+        "python_module": "nodes",
+        "category": "image",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "search_aliases": [
+          "load image",
+          "open image",
+          "import image",
+          "image input",
+          "upload image",
+          "read image",
+          "image loader"
+        ],
+        "essentials_category": "Basics"
+      }
+    },
+    "186": {
+      "class_type": "DecimateMesh",
+      "inputs": {
+        "mesh": [
+          "241",
+          0
+        ],
+        "target_face_count": 100000,
+        "placement_mode": "midpoint"
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "mesh": [
+              "MESH",
+              {}
+            ],
+            "target_face_count": [
+              "INT",
+              {
+                "tooltip": "Target max faces. 0 disables.",
+                "default": 200000,
+                "min": 0,
+                "max": 50000000
+              }
+            ],
+            "placement_mode": [
+              "COMFY_DYNAMICCOMBO_V3",
+              {
+                "display_name": "placement_mode",
+                "tooltip": "midpoint: cumesh-faithful (recommended). qem: QEM-optimal placement.",
+                "options": [
+                  {
+                    "key": "midpoint",
+                    "inputs": {
+                      "required": {}
+                    }
+                  },
+                  {
+                    "key": "qem",
+                    "inputs": {
+                      "required": {
+                        "line_quadric_weight": [
+                          "FLOAT",
+                          {
+                            "tooltip": "Per-edge line-quadric weight; preserves sharp ridges/valleys. 0 = off.",
+                            "default": 0.0,
+                            "min": 0.0,
+                            "max": 100.0,
+                            "step": 0.1
+                          }
+                        ],
+                        "feature_edge_quadric_weight": [
+                          "FLOAT",
+                          {
+                            "tooltip": "Extra quadric weight on dihedral feature edges (creases). 0 = off.",
+                            "default": 0.0,
+                            "min": 0.0,
+                            "max": 1000.0,
+                            "step": 1.0
+                          }
+                        ],
+                        "feature_edge_min_dihedral_deg": [
+                          "FLOAT",
+                          {
+                            "tooltip": "Minimum dihedral angle (degree) to count an edge as a feature edge.",
+                            "default": 30.0,
+                            "min": 0.0,
+                            "max": 180.0,
+                            "step": 1.0
+                          }
+                        ],
+                        "clamp_v_to_edge": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Project the QEM-optimal position onto the collapsed edge segment.",
+                            "default": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "hidden": {
+            "unique_id": [
+              "UNIQUE_ID"
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "mesh",
+            "target_face_count",
+            "placement_mode"
+          ],
+          "hidden": [
+            "unique_id"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "MESH"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "mesh"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "DecimateMesh",
+        "display_name": "Decimate Mesh",
+        "description": "Simplifies a mesh to a target face count using QEM, on the active compute device. 'midpoint' is the cumesh-faithful preset (best quality, preserves thin features / hair); 'qem' places vertices at the QEM optimum with line/feature-edge controls. Output stays welded.",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/mesh",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "224": {
+      "class_type": "BakeNormalMapFromMesh",
+      "inputs": {
+        "low_poly": [
+          "196",
+          0
+        ],
+        "high_poly": [
+          "241",
+          0
+        ],
+        "resolution": 2048,
+        "cage_distance": 0.05,
+        "ignore_backfaces": true
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "low_poly": [
+              "MESH",
+              {}
+            ],
+            "high_poly": [
+              "MESH",
+              {}
+            ],
+            "resolution": [
+              "INT",
+              {
+                "display_name": "resolution",
+                "default": 1024,
+                "min": 64,
+                "max": 8192,
+                "step": 64
+              }
+            ],
+            "cage_distance": [
+              "FLOAT",
+              {
+                "tooltip": "Surface search band, as a fraction of the bounding box diagonal. Raise for wrong/missing patches under heavy decimation; lower if it grabs across gaps.",
+                "default": 0.05,
+                "min": 0.001,
+                "max": 0.5,
+                "step": 0.001
+              }
+            ],
+            "ignore_backfaces": [
+              "BOOLEAN",
+              {
+                "tooltip": "Skip high-poly surfaces facing away from the texel, so crevices/enclosed spaces don't grab the opposite wall. Disable only if the high-poly winding is inconsistent.",
+                "default": true
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "low_poly",
+            "high_poly",
+            "resolution",
+            "cage_distance",
+            "ignore_backfaces"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "IMAGE"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "normal_map"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "BakeNormalMapFromMesh",
+        "display_name": "Bake Normal Map from Mesh",
+        "description": "Bakes a tangent-space normal map (glTF/OpenGL +Y) from a high-poly mesh into a low-poly's UV layout, capturing detail lost during decimation. Feed the UV-unwrapped low_poly and the high_poly it was decimated from. Outputs an image for Apply Texture To Mesh's normal_map input.",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/texturing",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "233": {
+      "class_type": "BakeAmbientOcclusion",
+      "inputs": {
+        "low_poly": [
+          "196",
+          0
+        ],
+        "high_poly": [
+          "241",
+          0
+        ],
+        "resolution": 1024,
+        "samples": 64,
+        "max_distance": 0.71,
+        "strength": 1,
+        "bias": 0.01
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "low_poly": [
+              "MESH",
+              {}
+            ],
+            "high_poly": [
+              "MESH",
+              {}
+            ],
+            "resolution": [
+              "INT",
+              {
+                "default": 1024,
+                "min": 64,
+                "max": 8192,
+                "step": 64
+              }
+            ],
+            "samples": [
+              "INT",
+              {
+                "tooltip": "Rays per texel. More = smoother, slower. Raise if grainy.",
+                "default": 64,
+                "min": 4,
+                "max": 1024,
+                "step": 4
+              }
+            ],
+            "max_distance": [
+              "FLOAT",
+              {
+                "tooltip": "Ray length, as a fraction of the bounding box diagonal. Smaller = tighter, more local occlusion.",
+                "default": 0.5,
+                "min": 0.01,
+                "max": 2.0,
+                "step": 0.01
+              }
+            ],
+            "strength": [
+              "FLOAT",
+              {
+                "tooltip": "Scales the occlusion. >1 darkens, <1 lightens.",
+                "default": 1.0,
+                "min": 0.0,
+                "max": 2.0,
+                "step": 0.05
+              }
+            ],
+            "bias": [
+              "FLOAT",
+              {
+                "tooltip": "Ray origin lift off the surface, as a fraction of the bounding box diagonal. Raise if even surfaces show dark blotches/holes.",
+                "default": 0.01,
+                "min": 0.0001,
+                "max": 0.2,
+                "step": 0.0005
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "low_poly",
+            "high_poly",
+            "resolution",
+            "samples",
+            "max_distance",
+            "strength",
+            "bias"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "IMAGE"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "occlusion"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "BakeAmbientOcclusion",
+        "display_name": "Bake Ambient Occlusion",
+        "description": "Bakes an ambient-occlusion map from a high-poly mesh into a low-poly's UV layout (white = open, dark = crevices). Feed the UV-unwrapped low_poly and the high_poly it was decimated from. Outputs a grayscale image for Apply Texture To Mesh's occlusion input (packed into the ORM map / occlusionTexture).",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/texturing",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "241": {
+      "class_type": "RemeshMesh",
+      "inputs": {
+        "mesh": [
+          "202",
+          0
+        ],
+        "resolution": 256,
+        "sign_mode": "udf",
+        "sign_mode.qef": false,
+        "sign_mode.drop_inverted_components": false,
+        "sign_mode.drop_enclosed_components": false,
+        "band": 1.0,
+        "project_back": 0.0,
+        "fix_poles": false,
+        "smooth_iters": 2,
+        "drop_small_components": 0.01,
+        "precluster_max_verts": 2000000
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "mesh": [
+              "MESH",
+              {}
+            ],
+            "resolution": [
+              "INT",
+              {
+                "tooltip": "Voxel grid resolution (output density). 256 ~ 100k faces, 512 ~ 1M. For an exact face count, follow with Decimate Mesh.",
+                "default": 512,
+                "min": 32,
+                "max": 2048
+              }
+            ],
+            "sign_mode": [
+              "COMFY_DYNAMICCOMBO_V3",
+              {
+                "display_name": "sign_mode",
+                "tooltip": "udf: robust to messy/non-manifold input. sdf: clean single surface with QEF (Quadratic Error Function) sharp-feature recovery, but needs consistent winding.",
+                "options": [
+                  {
+                    "key": "udf",
+                    "inputs": {
+                      "required": {
+                        "qef": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "QEF (Quadratic Error Function) dual-vertex placement for sharper edges.",
+                            "advanced": true,
+                            "default": false
+                          }
+                        ],
+                        "drop_inverted_components": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Drop inward-normal (negative-volume) closed components \u2014 the UDF inner shell.",
+                            "advanced": true,
+                            "default": false
+                          }
+                        ],
+                        "drop_enclosed_components": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Drop components inside the largest's bbox that fail a point-in-mesh raycast. Disable for legitimate nested parts.",
+                            "advanced": true,
+                            "default": false
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "key": "sdf",
+                    "inputs": {
+                      "required": {
+                        "qef": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "QEF (Quadratic Error Function) dual-vertex placement (recovers sharp features) vs edge-crossing centroid.",
+                            "default": true
+                          }
+                        ],
+                        "manifold": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Manifold Dual Contouring: 1-4 dual verts/voxel for multi-sheet cases. Slower.",
+                            "default": false
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "band": [
+              "FLOAT",
+              {
+                "tooltip": "Narrow-band width in voxel units. In UDF mode also offsets the surface.",
+                "advanced": true,
+                "default": 1.0,
+                "min": 0.5,
+                "max": 4.0,
+                "step": 0.1
+              }
+            ],
+            "project_back": [
+              "FLOAT",
+              {
+                "tooltip": "Linearly interpolate vertices toward the original surface (0 = pure DC, 1 = snapped).",
+                "advanced": true,
+                "default": 0.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.05
+              }
+            ],
+            "fix_poles": [
+              "BOOLEAN",
+              {
+                "tooltip": "Collapse valence-3 vertex pairs (DC T-junction artifact).",
+                "advanced": true,
+                "default": false
+              }
+            ],
+            "smooth_iters": [
+              "INT",
+              {
+                "tooltip": "Taubin smoothing iterations (0 = off). 2-3 cleans DC staircase-like artifacts; higher over-smooth QEF edges.",
+                "default": 0,
+                "min": 0,
+                "max": 20
+              }
+            ],
+            "drop_small_components": [
+              "FLOAT",
+              {
+                "tooltip": "Drop components below this fraction of the largest's face count. 0 disables.",
+                "advanced": true,
+                "default": 0.01,
+                "min": 0.0,
+                "max": 0.5,
+                "step": 0.005
+              }
+            ],
+            "precluster_max_verts": [
+              "INT",
+              {
+                "tooltip": "Cap input vertex count before the field queries, inputs above this are cluster-decimated to it first. Prevents OOM on huge meshes.",
+                "advanced": true,
+                "default": 20000000,
+                "min": 0,
+                "max": 100000000
+              }
+            ]
+          },
+          "hidden": {
+            "unique_id": [
+              "UNIQUE_ID"
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "mesh",
+            "resolution",
+            "sign_mode",
+            "band",
+            "project_back",
+            "fix_poles",
+            "smooth_iters",
+            "drop_small_components",
+            "precluster_max_verts"
+          ],
+          "hidden": [
+            "unique_id"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "MESH"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "mesh"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "RemeshMesh",
+        "display_name": "Remesh Mesh (Narrow-Band DC)",
+        "description": "Re-extracts a uniformly tessellated mesh via a narrow-band distance field + Dual Contouring, on the active compute device. Normalizes messy / non-manifold / self-intersecting topology; run before Decimate Mesh to hit an exact face count. Output stays welded.",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/mesh",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "288": {
+      "class_type": "PrimitiveInt",
+      "inputs": {
+        "value": 1024
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "value": [
+              "INT",
+              {
+                "min": -9223372036854775807,
+                "max": 9223372036854775807,
+                "control_after_generate": "fixed"
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "value"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "INT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "INT"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "PrimitiveInt",
+        "display_name": "Int",
+        "description": "",
+        "python_module": "comfy_extras.nodes_primitive",
+        "category": "utilities/primitive",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "322": {
+      "class_type": "Save3DAdvanced",
+      "inputs": {
+        "model_3d": [
+          "285",
+          0
+        ],
+        "filename_prefix": "3d/ricky_trellis2/1024_bounded",
+        "viewport_state": "",
+        "width": 1024,
+        "height": 1024
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model_3d": [
+              "FILE_3D_GLB,FILE_3D_GLTF,FILE_3D_FBX,FILE_3D_OBJ,FILE_3D_STL,FILE_3D_USDZ,FILE_3D",
+              {
+                "tooltip": "3D model file from an upstream 3D node."
+              }
+            ],
+            "filename_prefix": [
+              "STRING",
+              {
+                "default": "3d/ComfyUI",
+                "multiline": false
+              }
+            ],
+            "viewport_state": [
+              "LOAD_3D",
+              {}
+            ],
+            "width": [
+              "INT",
+              {
+                "tooltip": "Render width of the viewport in pixels.",
+                "default": 1024,
+                "min": 1,
+                "max": 4096,
+                "step": 1
+              }
+            ],
+            "height": [
+              "INT",
+              {
+                "tooltip": "Render height of the viewport in pixels.",
+                "default": 1024,
+                "min": 1,
+                "max": 4096,
+                "step": 1
+              }
+            ]
+          },
+          "optional": {
+            "model_3d_info": [
+              "LOAD3D_MODEL_INFO",
+              {
+                "tooltip": "Placement of each model in the scene: position, rotation, and scale (Y-up world space).",
+                "advanced": true
+              }
+            ],
+            "camera_info": [
+              "LOAD3D_CAMERA",
+              {
+                "tooltip": "Viewport camera information: position, look-at target, zoom, and type.",
+                "advanced": true
+              }
+            ]
+          },
+          "hidden": {
+            "prompt": [
+              "PROMPT"
+            ],
+            "extra_pnginfo": [
+              "EXTRA_PNGINFO"
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model_3d",
+            "filename_prefix",
+            "viewport_state",
+            "width",
+            "height"
+          ],
+          "optional": [
+            "model_3d_info",
+            "camera_info"
+          ],
+          "hidden": [
+            "prompt",
+            "extra_pnginfo"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "FILE_3D",
+          "LOAD3D_MODEL_INFO",
+          "LOAD3D_CAMERA",
+          "INT",
+          "INT"
+        ],
+        "output_is_list": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "output_name": [
+          "model_3d",
+          "model_3d_info",
+          "camera_info",
+          "width",
+          "height"
+        ],
+        "output_tooltips": [
+          "3D model file (glb/obj/stl/etc.) from an upstream 3D node.",
+          "Placement of each model in the scene: position, rotation, and scale (Y-up world space).",
+          "Viewport camera information: position, look-at target, zoom, and type.",
+          "Render width of the viewport in pixels.",
+          "Render height of the viewport in pixels."
+        ],
+        "output_matchtypes": null,
+        "name": "Save3DAdvanced",
+        "display_name": "Save 3D (Advanced)",
+        "description": "",
+        "python_module": "comfy_extras.nodes_save_3d",
+        "category": "3d",
+        "output_node": true,
+        "deprecated": false,
+        "experimental": true,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": [
+          "save 3d",
+          "export 3d model",
+          "save mesh advanced"
+        ],
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    }
+  },
+  "1536_detail": {
+    "3": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "108",
+          0
+        ],
+        "positive": [
+          "299",
+          0
+        ],
+        "negative": [
+          "299",
+          1
+        ],
+        "latent_image": [
+          "87",
+          0
+        ],
+        "seed": 56,
+        "steps": 12,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "12": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "40",
+          0
+        ],
+        "positive": [
+          "98",
+          0
+        ],
+        "negative": [
+          "98",
+          1
+        ],
+        "latent_image": [
+          "98",
+          2
+        ],
+        "seed": 43,
+        "steps": 12,
+        "cfg": 1,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "18": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "126",
+          0
+        ],
+        "positive": [
+          "91",
+          0
+        ],
+        "negative": [
+          "91",
+          1
+        ],
+        "latent_image": [
+          "91",
+          2
+        ],
+        "seed": 42,
+        "steps": 20,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "23": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "126",
+          0
+        ],
+        "positive": [
+          "94",
+          0
+        ],
+        "negative": [
+          "94",
+          1
+        ],
+        "latent_image": [
+          "94",
+          2
+        ],
+        "seed": 42,
+        "steps": 12,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "denoise": 1
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model": [
+              "MODEL",
+              {
+                "tooltip": "The model used for denoising the input latent."
+              }
+            ],
+            "seed": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709551615,
+                "control_after_generate": true,
+                "tooltip": "The random seed used for creating the noise."
+              }
+            ],
+            "steps": [
+              "INT",
+              {
+                "default": 20,
+                "min": 1,
+                "max": 10000,
+                "tooltip": "The number of steps used in the denoising process."
+              }
+            ],
+            "cfg": [
+              "FLOAT",
+              {
+                "default": 8.0,
+                "min": 0.0,
+                "max": 100.0,
+                "step": 0.1,
+                "round": 0.01,
+                "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+              }
+            ],
+            "sampler_name": [
+              [
+                "euler",
+                "euler_cfg_pp",
+                "euler_ancestral",
+                "euler_ancestral_cfg_pp",
+                "heun",
+                "heunpp2",
+                "exp_heun_2_x0",
+                "exp_heun_2_x0_sde",
+                "dpm_2",
+                "dpm_2_ancestral",
+                "lms",
+                "dpm_fast",
+                "dpm_adaptive",
+                "dpmpp_2s_ancestral",
+                "dpmpp_2s_ancestral_cfg_pp",
+                "dpmpp_sde",
+                "dpmpp_sde_gpu",
+                "dpmpp_2m",
+                "dpmpp_2m_cfg_pp",
+                "dpmpp_2m_sde",
+                "dpmpp_2m_sde_gpu",
+                "dpmpp_2m_sde_heun",
+                "dpmpp_2m_sde_heun_gpu",
+                "dpmpp_3m_sde",
+                "dpmpp_3m_sde_gpu",
+                "ddpm",
+                "lcm",
+                "ipndm",
+                "ipndm_v",
+                "deis",
+                "cfgpp_ud10_ab",
+                "res_multistep",
+                "res_multistep_cfg_pp",
+                "res_multistep_ancestral",
+                "res_multistep_ancestral_cfg_pp",
+                "gradient_estimation",
+                "gradient_estimation_cfg_pp",
+                "er_sde",
+                "seeds_2",
+                "seeds_3",
+                "sa_solver",
+                "sa_solver_pece",
+                "ddim",
+                "uni_pc",
+                "uni_pc_bh2"
+              ],
+              {
+                "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+              }
+            ],
+            "scheduler": [
+              [
+                "simple",
+                "sgm_uniform",
+                "karras",
+                "exponential",
+                "ddim_uniform",
+                "beta",
+                "normal",
+                "linear_quadratic",
+                "kl_optimal"
+              ],
+              {
+                "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+              }
+            ],
+            "positive": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to include in the image."
+              }
+            ],
+            "negative": [
+              "CONDITIONING",
+              {
+                "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+              }
+            ],
+            "latent_image": [
+              "LATENT",
+              {
+                "tooltip": "The latent image to denoise."
+              }
+            ],
+            "denoise": [
+              "FLOAT",
+              {
+                "default": 1.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.01,
+                "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model",
+            "seed",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "positive",
+            "negative",
+            "latent_image",
+            "denoise"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "LATENT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "LATENT"
+        ],
+        "name": "KSampler",
+        "display_name": "KSampler",
+        "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+        "python_module": "nodes",
+        "category": "model/sampling",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "output_tooltips": [
+          "The denoised latent."
+        ],
+        "search_aliases": [
+          "sampler",
+          "sample",
+          "generate",
+          "denoise",
+          "diffuse",
+          "txt2img",
+          "img2img"
+        ]
+      }
+    },
+    "94": {
+      "class_type": "Trellis2UpsampleStage",
+      "inputs": {
+        "positive": [
+          "91",
+          0
+        ],
+        "negative": [
+          "91",
+          1
+        ],
+        "shape_latent": [
+          "18",
+          0
+        ],
+        "vae": [
+          "117",
+          0
+        ],
+        "target_resolution": 1536
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "positive": [
+              "CONDITIONING",
+              {}
+            ],
+            "negative": [
+              "CONDITIONING",
+              {}
+            ],
+            "shape_latent": [
+              "LATENT",
+              {
+                "tooltip": "The 512-resolution shape latent output from the first shape-stage KSampler."
+              }
+            ],
+            "vae": [
+              "VAE",
+              {}
+            ],
+            "target_resolution": [
+              "INT",
+              {
+                "tooltip": "Voxel resolution of the upsampled shape. Higher = more detail, more VRAM.",
+                "default": 1024,
+                "min": 1024,
+                "max": 2048,
+                "step": 128
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "positive",
+            "negative",
+            "shape_latent",
+            "vae",
+            "target_resolution"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "CONDITIONING",
+          "CONDITIONING",
+          "LATENT"
+        ],
+        "output_is_list": [
+          false,
+          false,
+          false
+        ],
+        "output_name": [
+          "positive",
+          "negative",
+          "LATENT"
+        ],
+        "output_tooltips": [
+          null,
+          null,
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "Trellis2UpsampleStage",
+        "display_name": "Trellis2 Upsample Stage",
+        "description": "",
+        "python_module": "comfy_extras.nodes_trellis2",
+        "category": "model/conditioning/trellis",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "122": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "example.png"
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "image": [
+              [
+                "1fac05870e284af4beb0e460e240cdb1_text_00001_.png",
+                "212cdc0488d5.png",
+                "69b0ce0ded7d462b94756bf380fc5dac_text_00001_.png",
+                "6c6cc62207a5.png",
+                "72c9501241a14fb19751913a429e665d_text_00001_.png",
+                "7c408d7edd8d4f499eb604fc7dcb84a6_text_00001_.png",
+                "89bf690ae17b.png",
+                "90dda44449ec476199e165387a940a4e_text_00001_.png",
+                "Dragon_info.webp",
+                "Pasted image.png",
+                "a73a43af8209.png",
+                "ad0df929933b4888b958607ff9c4aff1_ComfyUI_temp_pszzc_00001_.png",
+                "ae7ac133d9e24657adb5c1446bafc1c7_text_00001_.png",
+                "clip_20260718_054115_2.png",
+                "d82b9aec699f46e7a0002d3226d9ba54_text_00001_.png",
+                "disposable-full-production-verification-ca2e40f2_production-3e6db70691_reference_1.png",
+                "disposable-full-production-verification-ca2e40f2_production-3e6db70691_reference_2.png",
+                "disposable-full-production-verification-ca2e40f2_production-3e6db70691_reference_3.png",
+                "disposable-two-scene-production-f6e5bca1_production-6121bc2ee2_reference_1.png",
+                "disposable-two-scene-production-f6e5bca1_production-6121bc2ee2_reference_2.png",
+                "disposable-two-scene-production-f6e5bca1_production-6121bc2ee2_reference_3.png",
+                "example.png",
+                "f27ec6e49cd8.png",
+                "img_1 (1).webp",
+                "img_1.webp",
+                "standalone-workbench.png"
+              ],
+              {
+                "image_upload": true
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "image"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "IMAGE",
+          "MASK"
+        ],
+        "output_is_list": [
+          false,
+          false
+        ],
+        "output_name": [
+          "IMAGE",
+          "MASK"
+        ],
+        "name": "LoadImage",
+        "display_name": "Load Image",
+        "description": "",
+        "python_module": "nodes",
+        "category": "image",
+        "output_node": false,
+        "has_intermediate_output": false,
+        "search_aliases": [
+          "load image",
+          "open image",
+          "import image",
+          "image input",
+          "upload image",
+          "read image",
+          "image loader"
+        ],
+        "essentials_category": "Basics"
+      }
+    },
+    "186": {
+      "class_type": "DecimateMesh",
+      "inputs": {
+        "mesh": [
+          "241",
+          0
+        ],
+        "target_face_count": 700000,
+        "placement_mode": "midpoint"
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "mesh": [
+              "MESH",
+              {}
+            ],
+            "target_face_count": [
+              "INT",
+              {
+                "tooltip": "Target max faces. 0 disables.",
+                "default": 200000,
+                "min": 0,
+                "max": 50000000
+              }
+            ],
+            "placement_mode": [
+              "COMFY_DYNAMICCOMBO_V3",
+              {
+                "display_name": "placement_mode",
+                "tooltip": "midpoint: cumesh-faithful (recommended). qem: QEM-optimal placement.",
+                "options": [
+                  {
+                    "key": "midpoint",
+                    "inputs": {
+                      "required": {}
+                    }
+                  },
+                  {
+                    "key": "qem",
+                    "inputs": {
+                      "required": {
+                        "line_quadric_weight": [
+                          "FLOAT",
+                          {
+                            "tooltip": "Per-edge line-quadric weight; preserves sharp ridges/valleys. 0 = off.",
+                            "default": 0.0,
+                            "min": 0.0,
+                            "max": 100.0,
+                            "step": 0.1
+                          }
+                        ],
+                        "feature_edge_quadric_weight": [
+                          "FLOAT",
+                          {
+                            "tooltip": "Extra quadric weight on dihedral feature edges (creases). 0 = off.",
+                            "default": 0.0,
+                            "min": 0.0,
+                            "max": 1000.0,
+                            "step": 1.0
+                          }
+                        ],
+                        "feature_edge_min_dihedral_deg": [
+                          "FLOAT",
+                          {
+                            "tooltip": "Minimum dihedral angle (degree) to count an edge as a feature edge.",
+                            "default": 30.0,
+                            "min": 0.0,
+                            "max": 180.0,
+                            "step": 1.0
+                          }
+                        ],
+                        "clamp_v_to_edge": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Project the QEM-optimal position onto the collapsed edge segment.",
+                            "default": true
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "hidden": {
+            "unique_id": [
+              "UNIQUE_ID"
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "mesh",
+            "target_face_count",
+            "placement_mode"
+          ],
+          "hidden": [
+            "unique_id"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "MESH"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "mesh"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "DecimateMesh",
+        "display_name": "Decimate Mesh",
+        "description": "Simplifies a mesh to a target face count using QEM, on the active compute device. 'midpoint' is the cumesh-faithful preset (best quality, preserves thin features / hair); 'qem' places vertices at the QEM optimum with line/feature-edge controls. Output stays welded.",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/mesh",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "224": {
+      "class_type": "BakeNormalMapFromMesh",
+      "inputs": {
+        "low_poly": [
+          "196",
+          0
+        ],
+        "high_poly": [
+          "241",
+          0
+        ],
+        "resolution": 2048,
+        "cage_distance": 0.05,
+        "ignore_backfaces": true
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "low_poly": [
+              "MESH",
+              {}
+            ],
+            "high_poly": [
+              "MESH",
+              {}
+            ],
+            "resolution": [
+              "INT",
+              {
+                "display_name": "resolution",
+                "default": 1024,
+                "min": 64,
+                "max": 8192,
+                "step": 64
+              }
+            ],
+            "cage_distance": [
+              "FLOAT",
+              {
+                "tooltip": "Surface search band, as a fraction of the bounding box diagonal. Raise for wrong/missing patches under heavy decimation; lower if it grabs across gaps.",
+                "default": 0.05,
+                "min": 0.001,
+                "max": 0.5,
+                "step": 0.001
+              }
+            ],
+            "ignore_backfaces": [
+              "BOOLEAN",
+              {
+                "tooltip": "Skip high-poly surfaces facing away from the texel, so crevices/enclosed spaces don't grab the opposite wall. Disable only if the high-poly winding is inconsistent.",
+                "default": true
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "low_poly",
+            "high_poly",
+            "resolution",
+            "cage_distance",
+            "ignore_backfaces"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "IMAGE"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "normal_map"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "BakeNormalMapFromMesh",
+        "display_name": "Bake Normal Map from Mesh",
+        "description": "Bakes a tangent-space normal map (glTF/OpenGL +Y) from a high-poly mesh into a low-poly's UV layout, capturing detail lost during decimation. Feed the UV-unwrapped low_poly and the high_poly it was decimated from. Outputs an image for Apply Texture To Mesh's normal_map input.",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/texturing",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "233": {
+      "class_type": "BakeAmbientOcclusion",
+      "inputs": {
+        "low_poly": [
+          "196",
+          0
+        ],
+        "high_poly": [
+          "241",
+          0
+        ],
+        "resolution": 1024,
+        "samples": 64,
+        "max_distance": 0.71,
+        "strength": 1,
+        "bias": 0.01
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "low_poly": [
+              "MESH",
+              {}
+            ],
+            "high_poly": [
+              "MESH",
+              {}
+            ],
+            "resolution": [
+              "INT",
+              {
+                "default": 1024,
+                "min": 64,
+                "max": 8192,
+                "step": 64
+              }
+            ],
+            "samples": [
+              "INT",
+              {
+                "tooltip": "Rays per texel. More = smoother, slower. Raise if grainy.",
+                "default": 64,
+                "min": 4,
+                "max": 1024,
+                "step": 4
+              }
+            ],
+            "max_distance": [
+              "FLOAT",
+              {
+                "tooltip": "Ray length, as a fraction of the bounding box diagonal. Smaller = tighter, more local occlusion.",
+                "default": 0.5,
+                "min": 0.01,
+                "max": 2.0,
+                "step": 0.01
+              }
+            ],
+            "strength": [
+              "FLOAT",
+              {
+                "tooltip": "Scales the occlusion. >1 darkens, <1 lightens.",
+                "default": 1.0,
+                "min": 0.0,
+                "max": 2.0,
+                "step": 0.05
+              }
+            ],
+            "bias": [
+              "FLOAT",
+              {
+                "tooltip": "Ray origin lift off the surface, as a fraction of the bounding box diagonal. Raise if even surfaces show dark blotches/holes.",
+                "default": 0.01,
+                "min": 0.0001,
+                "max": 0.2,
+                "step": 0.0005
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "low_poly",
+            "high_poly",
+            "resolution",
+            "samples",
+            "max_distance",
+            "strength",
+            "bias"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "IMAGE"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "occlusion"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "BakeAmbientOcclusion",
+        "display_name": "Bake Ambient Occlusion",
+        "description": "Bakes an ambient-occlusion map from a high-poly mesh into a low-poly's UV layout (white = open, dark = crevices). Feed the UV-unwrapped low_poly and the high_poly it was decimated from. Outputs a grayscale image for Apply Texture To Mesh's occlusion input (packed into the ORM map / occlusionTexture).",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/texturing",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "241": {
+      "class_type": "RemeshMesh",
+      "inputs": {
+        "mesh": [
+          "202",
+          0
+        ],
+        "resolution": 768,
+        "sign_mode": "udf",
+        "sign_mode.qef": false,
+        "sign_mode.drop_inverted_components": false,
+        "sign_mode.drop_enclosed_components": false,
+        "band": 1.0,
+        "project_back": 0.0,
+        "fix_poles": false,
+        "smooth_iters": 2,
+        "drop_small_components": 0.01,
+        "precluster_max_verts": 20000000
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "mesh": [
+              "MESH",
+              {}
+            ],
+            "resolution": [
+              "INT",
+              {
+                "tooltip": "Voxel grid resolution (output density). 256 ~ 100k faces, 512 ~ 1M. For an exact face count, follow with Decimate Mesh.",
+                "default": 512,
+                "min": 32,
+                "max": 2048
+              }
+            ],
+            "sign_mode": [
+              "COMFY_DYNAMICCOMBO_V3",
+              {
+                "display_name": "sign_mode",
+                "tooltip": "udf: robust to messy/non-manifold input. sdf: clean single surface with QEF (Quadratic Error Function) sharp-feature recovery, but needs consistent winding.",
+                "options": [
+                  {
+                    "key": "udf",
+                    "inputs": {
+                      "required": {
+                        "qef": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "QEF (Quadratic Error Function) dual-vertex placement for sharper edges.",
+                            "advanced": true,
+                            "default": false
+                          }
+                        ],
+                        "drop_inverted_components": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Drop inward-normal (negative-volume) closed components \u2014 the UDF inner shell.",
+                            "advanced": true,
+                            "default": false
+                          }
+                        ],
+                        "drop_enclosed_components": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Drop components inside the largest's bbox that fail a point-in-mesh raycast. Disable for legitimate nested parts.",
+                            "advanced": true,
+                            "default": false
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "key": "sdf",
+                    "inputs": {
+                      "required": {
+                        "qef": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "QEF (Quadratic Error Function) dual-vertex placement (recovers sharp features) vs edge-crossing centroid.",
+                            "default": true
+                          }
+                        ],
+                        "manifold": [
+                          "BOOLEAN",
+                          {
+                            "tooltip": "Manifold Dual Contouring: 1-4 dual verts/voxel for multi-sheet cases. Slower.",
+                            "default": false
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "band": [
+              "FLOAT",
+              {
+                "tooltip": "Narrow-band width in voxel units. In UDF mode also offsets the surface.",
+                "advanced": true,
+                "default": 1.0,
+                "min": 0.5,
+                "max": 4.0,
+                "step": 0.1
+              }
+            ],
+            "project_back": [
+              "FLOAT",
+              {
+                "tooltip": "Linearly interpolate vertices toward the original surface (0 = pure DC, 1 = snapped).",
+                "advanced": true,
+                "default": 0.0,
+                "min": 0.0,
+                "max": 1.0,
+                "step": 0.05
+              }
+            ],
+            "fix_poles": [
+              "BOOLEAN",
+              {
+                "tooltip": "Collapse valence-3 vertex pairs (DC T-junction artifact).",
+                "advanced": true,
+                "default": false
+              }
+            ],
+            "smooth_iters": [
+              "INT",
+              {
+                "tooltip": "Taubin smoothing iterations (0 = off). 2-3 cleans DC staircase-like artifacts; higher over-smooth QEF edges.",
+                "default": 0,
+                "min": 0,
+                "max": 20
+              }
+            ],
+            "drop_small_components": [
+              "FLOAT",
+              {
+                "tooltip": "Drop components below this fraction of the largest's face count. 0 disables.",
+                "advanced": true,
+                "default": 0.01,
+                "min": 0.0,
+                "max": 0.5,
+                "step": 0.005
+              }
+            ],
+            "precluster_max_verts": [
+              "INT",
+              {
+                "tooltip": "Cap input vertex count before the field queries, inputs above this are cluster-decimated to it first. Prevents OOM on huge meshes.",
+                "advanced": true,
+                "default": 20000000,
+                "min": 0,
+                "max": 100000000
+              }
+            ]
+          },
+          "hidden": {
+            "unique_id": [
+              "UNIQUE_ID"
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "mesh",
+            "resolution",
+            "sign_mode",
+            "band",
+            "project_back",
+            "fix_poles",
+            "smooth_iters",
+            "drop_small_components",
+            "precluster_max_verts"
+          ],
+          "hidden": [
+            "unique_id"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "MESH"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "mesh"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "RemeshMesh",
+        "display_name": "Remesh Mesh (Narrow-Band DC)",
+        "description": "Re-extracts a uniformly tessellated mesh via a narrow-band distance field + Dual Contouring, on the active compute device. Normalizes messy / non-manifold / self-intersecting topology; run before Decimate Mesh to hit an exact face count. Output stays welded.",
+        "python_module": "comfy_extras.nodes_mesh_postprocess",
+        "category": "3d/mesh",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "288": {
+      "class_type": "PrimitiveInt",
+      "inputs": {
+        "value": 4096
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "value": [
+              "INT",
+              {
+                "min": -9223372036854775807,
+                "max": 9223372036854775807,
+                "control_after_generate": "fixed"
+              }
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "value"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "INT"
+        ],
+        "output_is_list": [
+          false
+        ],
+        "output_name": [
+          "INT"
+        ],
+        "output_tooltips": [
+          null
+        ],
+        "output_matchtypes": null,
+        "name": "PrimitiveInt",
+        "display_name": "Int",
+        "description": "",
+        "python_module": "comfy_extras.nodes_primitive",
+        "category": "utilities/primitive",
+        "output_node": false,
+        "deprecated": false,
+        "experimental": false,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": null,
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    },
+    "322": {
+      "class_type": "Save3DAdvanced",
+      "inputs": {
+        "model_3d": [
+          "285",
+          0
+        ],
+        "filename_prefix": "3d/ricky_trellis2/1536_detail",
+        "viewport_state": "",
+        "width": 1024,
+        "height": 1024
+      },
+      "schema": {
+        "input": {
+          "required": {
+            "model_3d": [
+              "FILE_3D_GLB,FILE_3D_GLTF,FILE_3D_FBX,FILE_3D_OBJ,FILE_3D_STL,FILE_3D_USDZ,FILE_3D",
+              {
+                "tooltip": "3D model file from an upstream 3D node."
+              }
+            ],
+            "filename_prefix": [
+              "STRING",
+              {
+                "default": "3d/ComfyUI",
+                "multiline": false
+              }
+            ],
+            "viewport_state": [
+              "LOAD_3D",
+              {}
+            ],
+            "width": [
+              "INT",
+              {
+                "tooltip": "Render width of the viewport in pixels.",
+                "default": 1024,
+                "min": 1,
+                "max": 4096,
+                "step": 1
+              }
+            ],
+            "height": [
+              "INT",
+              {
+                "tooltip": "Render height of the viewport in pixels.",
+                "default": 1024,
+                "min": 1,
+                "max": 4096,
+                "step": 1
+              }
+            ]
+          },
+          "optional": {
+            "model_3d_info": [
+              "LOAD3D_MODEL_INFO",
+              {
+                "tooltip": "Placement of each model in the scene: position, rotation, and scale (Y-up world space).",
+                "advanced": true
+              }
+            ],
+            "camera_info": [
+              "LOAD3D_CAMERA",
+              {
+                "tooltip": "Viewport camera information: position, look-at target, zoom, and type.",
+                "advanced": true
+              }
+            ]
+          },
+          "hidden": {
+            "prompt": [
+              "PROMPT"
+            ],
+            "extra_pnginfo": [
+              "EXTRA_PNGINFO"
+            ]
+          }
+        },
+        "input_order": {
+          "required": [
+            "model_3d",
+            "filename_prefix",
+            "viewport_state",
+            "width",
+            "height"
+          ],
+          "optional": [
+            "model_3d_info",
+            "camera_info"
+          ],
+          "hidden": [
+            "prompt",
+            "extra_pnginfo"
+          ]
+        },
+        "is_input_list": false,
+        "output": [
+          "FILE_3D",
+          "LOAD3D_MODEL_INFO",
+          "LOAD3D_CAMERA",
+          "INT",
+          "INT"
+        ],
+        "output_is_list": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "output_name": [
+          "model_3d",
+          "model_3d_info",
+          "camera_info",
+          "width",
+          "height"
+        ],
+        "output_tooltips": [
+          "3D model file (glb/obj/stl/etc.) from an upstream 3D node.",
+          "Placement of each model in the scene: position, rotation, and scale (Y-up world space).",
+          "Viewport camera information: position, look-at target, zoom, and type.",
+          "Render width of the viewport in pixels.",
+          "Render height of the viewport in pixels."
+        ],
+        "output_matchtypes": null,
+        "name": "Save3DAdvanced",
+        "display_name": "Save 3D (Advanced)",
+        "description": "",
+        "python_module": "comfy_extras.nodes_save_3d",
+        "category": "3d",
+        "output_node": true,
+        "deprecated": false,
+        "experimental": true,
+        "dev_only": false,
+        "api_node": false,
+        "price_badge": null,
+        "search_aliases": [
+          "save 3d",
+          "export 3d model",
+          "save mesh advanced"
+        ],
+        "essentials_category": null,
+        "has_intermediate_output": false
+      }
+    }
+  }
+}

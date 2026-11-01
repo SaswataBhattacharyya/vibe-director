@@ -6,6 +6,10 @@ ComfyUI input directory, and pass the staged basenames as ``ResolvedAsset``
 records. The compiler only adds allowlisted loader nodes to a copied API graph.
 """
 
+# Reused from Story Builder (mooV_E_maker), services/minimax_h3_graph_compiler.py.
+# Keep typed validation and deterministic tag/loader ordering aligned with that
+# source; Vibe Director wraps it with workspace asset ID/hash contracts.
+
 from __future__ import annotations
 
 import copy
@@ -29,7 +33,30 @@ H3_FPS = 24
 RESOLUTION_PRESETS: dict[float, tuple[int, int]] = {
     0.98: (1344, 768),
     0.4: (864, 480),
+    0.6: (1056, 608),
+    0.8: (1216, 672),
+    1.5: (1664, 928),
+    2.0: (1920, 1088),
 }
+ASPECT_RATIOS = ("16:9", "9:16", "4:3", "3:4", "1:1")
+
+
+def resolution_dimensions(preset: float, aspect_ratio: str = "16:9") -> tuple[int, int]:
+    """Preserve legacy canvases; fit other ratios to the same pixel budget on a 32px grid."""
+    if aspect_ratio not in ASPECT_RATIOS:
+        raise GraphPlanError("unsupported_aspect_ratio", "Choose a supported video aspect ratio.")
+    width, height = RESOLUTION_PRESETS[preset]
+    if aspect_ratio == "16:9":
+        return width, height
+    if aspect_ratio == "9:16":
+        return height, width
+    numerator, denominator = map(int, aspect_ratio.split(":"))
+    ratio = numerator / denominator
+    area = width * height
+    align = lambda value: max(32, math.floor(value / 32 + 0.5) * 32)
+    return align(math.sqrt(area * ratio)), align(math.sqrt(area / ratio))
+
+
 ALLOWED_LOADERS = {"LoadImage", "LoadAudio", "VHS_LoadVideo"}
 TAG_PATTERN = re.compile(r"<(Picture|Video|Audio)\s+(\d+)>", re.IGNORECASE)
 SAFE_FILENAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_. -]{0,254}$")
@@ -71,6 +98,10 @@ class AudioReference:
     role: str
     intent: str
     speaker_id: str | None = None
+    speaker_ids: tuple[str, ...] = field(default_factory=tuple)
+
+    def all_speaker_ids(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(([self.speaker_id] if self.speaker_id else []) + list(self.speaker_ids)))
 
 
 @dataclass(frozen=True)
@@ -163,12 +194,12 @@ def validate_reference_plan(plan: ReferencePlan) -> None:
         raise GraphPlanError("missing_prompt", "A non-empty H3 prompt is required.", context={"shot_id": plan.shot_id})
     if not math.isfinite(plan.duration_seconds) or not 5.0 <= plan.duration_seconds <= 15.0:
         raise GraphPlanError("invalid_duration", "Local H3 R2V duration must be between 5 and 15 seconds.", context={"requested_seconds": plan.duration_seconds})
-    if plan.aspect_ratio != "16:9":
-        raise GraphPlanError("unsupported_aspect_ratio", "The first dynamic R2V release supports the tested 16:9 canvas only.", context={"aspect_ratio": plan.aspect_ratio})
+    if plan.aspect_ratio not in ASPECT_RATIOS:
+        raise GraphPlanError("unsupported_aspect_ratio", "Choose a supported video aspect ratio.", context={"aspect_ratio": plan.aspect_ratio})
     if plan.resolution_preset not in RESOLUTION_PRESETS:
-        raise GraphPlanError("unsupported_resolution_preset", "Choose the tested 0.98 final or 0.4 preview preset.", context={"preset": plan.resolution_preset})
-    if not isinstance(plan.steps, int) or not 8 <= plan.steps <= 40:
-        raise GraphPlanError("invalid_steps", "H3 steps must be an integer between 8 and 40.", context={"steps": plan.steps})
+        raise GraphPlanError("unsupported_resolution_preset", "Choose Low (0.4), Standard (0.6), Medium (0.8) or High (0.98).", context={"preset": plan.resolution_preset})
+    if not isinstance(plan.steps, int) or not (plan.steps == 4 or 8 <= plan.steps <= 40):
+        raise GraphPlanError("invalid_steps", "H3 steps must be four for Turbo, or between 8 and 40 for legacy workflows.", context={"steps": plan.steps})
     if not isinstance(plan.seed, int) or not 0 <= plan.seed <= 0xFFFFFFFF:
         raise GraphPlanError("invalid_seed", "Seed must be an unsigned 32-bit integer.")
     if plan.ref_image_size not in {"match", "max"}:
@@ -193,7 +224,9 @@ def validate_reference_plan(plan: ReferencePlan) -> None:
                 raise GraphPlanError("video_interval_too_long", "A local H3 reference-video excerpt cannot exceed 15 seconds.", context={"asset_id": item.asset_id})
         if item.include_paired_soundtrack and not item.audio_intent.strip():
             raise GraphPlanError("missing_paired_audio_intent", "A paired soundtrack needs an explicit audio intent.", context={"asset_id": item.asset_id})
-    speakers = [row.speaker_id for row in plan.standalone_audios if row.speaker_id]
+    speakers = [speaker_id for row in plan.standalone_audios for speaker_id in row.all_speaker_ids()]
+    for speaker_id in speakers:
+        _require_identifier(speaker_id, "speaker_id")
     if len(set(speakers)) != len(speakers):
         raise GraphPlanError("duplicate_speaker_voice", "A speaker may have only one standalone voice reference in a shot.", context={"speaker_ids": speakers})
 
@@ -263,9 +296,10 @@ def _build_reference_map(plan: ReferencePlan, resolved: Mapping[str, ResolvedAss
     speakers: dict[str, str] = {}
     for ref in plan.standalone_audios:
         tag = f"<Audio {audio_index}>"
-        audios.append({"tag": tag, "asset_id": ref.asset_id, "source": "standalone_audio", "role": ref.role, "intent": ref.intent, "speaker_id": ref.speaker_id})
-        if ref.speaker_id:
-            speakers[ref.speaker_id] = tag
+        speaker_ids = ref.all_speaker_ids()
+        audios.append({"tag": tag, "asset_id": ref.asset_id, "source": "standalone_audio", "role": ref.role, "intent": ref.intent, "speaker_id": ref.speaker_id, "speaker_ids": list(speaker_ids)})
+        for speaker_id in speaker_ids:
+            speakers[speaker_id] = tag
         audio_index += 1
     return ResolvedReferenceMap(tuple(pictures), tuple(videos), tuple(audios), speakers)
 
@@ -337,10 +371,11 @@ def compile_r2v_graph(
         statements = []
         for row in rows:
             tag = row["tag"]
-            speaker_id = row.get("speaker_id")
+            speaker_ids = row.get("speaker_ids", [])
             source = row.get("source")
-            if speaker_id:
-                statements.append(f"{tag} is the voice reference for Subject ({speaker_id}).")
+            if speaker_ids:
+                statements.extend(f"{tag} is the voice reference for Subject ({speaker_id})."
+                    for speaker_id in speaker_ids)
             elif source == "paired_video_soundtrack":
                 statements.append(f"{tag} is the paired soundtrack for {row['paired_video_tag']}.")
             else:
@@ -388,7 +423,14 @@ def compile_r2v_graph(
         graph[node_id] = {"class_type": "LoadAudio", "inputs": {"audio": asset.comfy_filename}}
         _connect(h3_node, f"ref_audios.ref_audio_{index}", node_id)
     frame_count = _aligned_frame_count(plan.duration_seconds)
-    width, height = RESOLUTION_PRESETS[plan.resolution_preset]
+    width, height = resolution_dimensions(plan.resolution_preset, plan.aspect_ratio)
+    turbo = any(node.get("class_type") == "LoraLoaderModelOnly" and "turbo" in str(node.get("inputs", {}).get("lora_name", "")) for node in graph.values())
+    if turbo:
+        if plan.steps != 4:
+            raise GraphPlanError("invalid_steps", "Pinned Turbo R2V requires four steps.")
+        width, height = (max(32, math.floor(v * 2 / 3 / 32 + .5) * 32) for v in (width, height))
+    elif plan.steps == 4:
+        raise GraphPlanError("invalid_steps", "Four steps require the Turbo R2V graph.")
     inputs.update({"prompt": compiled_prompt, "width": width, "height": height, "length": frame_count, "ref_image_size": plan.ref_image_size})
     schedulers = [node.get("inputs", {}) for node in graph.values() if node.get("class_type") == "BasicScheduler"]
     if len(schedulers) != 1:

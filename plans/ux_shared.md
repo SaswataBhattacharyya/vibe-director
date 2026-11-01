@@ -1,5 +1,12 @@
 # Shared UI and recovery rules
 
+## Notes-integrated correction — 2026-10-11
+
+Preserve PR22 StudioShell and all three themes. One primary task surface; avoid repeated explanation cards. Truthful server-backed Saving/Saved/Failed, compact history, retained drafts on failure, selection-anchored micro-edit popovers with accessible equivalents. Hover videos enlarge/play muted; images enlarge; audio enlarges with explicit Play. Keyboard and reduced-motion support are required.
+
+Read [remaining_app.md](remaining_app.md) for task order/reuse and [OWNER_DUMMY_RUNS.md](OWNER_DUMMY_RUNS.md) for owner-clicked acceptance. This correction overrides conflicting older sections below; historical implementation checkpoints are not completion evidence.
+
+
 Applies to screenplay, image/world/frame/voice/video stages and Media Prep. These rules integrate Ashu's StudioDirector UI guidance with the current product plans. `automation.md` remains authoritative for advancement and approval behavior; `integration.md` defines code reuse boundaries.
 
 ## 1. Entry, context and navigation

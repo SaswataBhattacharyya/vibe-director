@@ -1,0 +1,33 @@
+{
+  "hyperframes": {
+    "url": "https://github.com/heygen-com/hyperframes",
+    "commit": "c163330a16b90108190549a61bcebba39deae6c6",
+    "reference_path": "/home/riki/web_dev/vibe_editor_sources/hyperframes",
+    "license": "Apache-2.0",
+    "package": "hyperframes",
+    "version": "0.8.199",
+    "integrity": "sha512-mnaS5EJi4YtUUGcbFudGw0ZCkkMMmohUfd1CffBekKofNA/zpX5sfES/57XMoZ81n5PLrd/Gpj/fL/sgOINZEA=="
+  },
+  "reuse": [
+    "shared Media Prep queue and media library",
+    "grill-with-docs",
+    "Blender",
+    "FreeCAD",
+    "GSAP",
+    "GNU/Linux"
+  ],
+  "not_acquired": [
+    "CLI-Anything (conditional)",
+    "motion-prompt (optional)",
+    "huashu-art-motion (optional)",
+    "Remotion (duplicate engine)"
+  ],
+  "shader_transitions": {
+    "package": "@hyperframes/shader-transitions",
+    "version": "0.8.199",
+    "url": "https://github.com/heygen-com/hyperframes/tree/main/packages/shader-transitions",
+    "license": "Apache-2.0",
+    "integrity": "sha512-DxyEHe+YjGU/IB0hE0N+rb5MTg1lr/4lqU76Tg6U0inniXk6V15a7dNaHeaXdbruf5Pdl1vwyMS0+iPH1sUzLQ==",
+    "install": "npm install --save-exact --ignore-scripts @hyperframes/shader-transitions@0.8.199"
+  }
+}

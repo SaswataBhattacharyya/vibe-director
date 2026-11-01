@@ -13,10 +13,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable
 
-from story_builder.services.media_jobs import comfy_submission_guard, release_comfyui_models_if_idle
+from story_builder.services.media_jobs import (ComfyMemoryReleasePending, comfy_submission_guard, release_comfyui_models_if_idle,
+    get_workload_policy, gpu_workload_lock)
 from story_builder.services.gpu_runtime import (
     DEFAULT_TELEMETRY_PATH, GPU_RENDER_CLOCK_CEILING_MHZ, GPU_RENDER_TEMP_CUTOFF,
-    GPUAdmissionError, inspect_gpu_runtime, interrupt_if_owned_prompt,
+    GPUAdmissionError, ComfyRuntimeUnavailable, inspect_gpu_runtime, interrupt_if_owned_prompt,
     read_gpu_operating_point, record_gpu_telemetry,
 )
 from story_builder.services.production_ledger import LedgerConflict, ProductionLedger
@@ -70,11 +71,23 @@ class ProductionJobWorker:
                  sleep: Callable[[float], None] = time.sleep,
                  worker_id: str = "production-v2-worker", poll_interval: float = 2.0,
                  render_timeout_seconds: int = 8 * 60 * 60,
-                 lease_seconds: int = 300, heartbeat_interval_seconds: float = 20.0):
+                 lease_seconds: int = 300, heartbeat_interval_seconds: float = 20.0, performance_journal=None):
+        self.performance_journal = performance_journal
         self.ledger = ledger
         self.comfy_url = comfy_url.rstrip("/")
-        self.prepare = prepare
-        self.collect = collect
+        def timed_prepare(take):
+            if self.performance_journal is None:
+                return prepare(take)
+            with self.performance_journal.phase(take, "prepare_and_stage"):
+                return prepare(take)
+        def timed_collect(take, history):
+            if self.performance_journal is None:
+                return collect(take, history)
+            self.performance_journal.execution_history(take, history)
+            with self.performance_journal.phase(take, "collect_and_validate"):
+                return collect(take, history)
+        self.prepare = timed_prepare
+        self.collect = timed_collect
         self.cleanup = cleanup
         self.director_provider_preflight = director_provider_preflight
         self.director_video_review = director_video_review
@@ -91,7 +104,19 @@ class ProductionJobWorker:
         self.lease_seconds = max(1, min(3600, lease_seconds))
         self.heartbeat_interval_seconds = max(0.05, heartbeat_interval_seconds)
 
+    def _commit_collected_stage(self, take, outputs):
+        if outputs and outputs[0].get("pipeline_original"):
+            return self.ledger.save_turbo_original(take, outputs[0])
+        if outputs and outputs[0].get("pipeline_chunk"):
+            return self.ledger.save_ltx_chunk(take, outputs[0])
+        self.ledger.set_take_outputs(project_id=take["project_id"], take_id=take["take_id"], outputs=outputs)
+        self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
+            status="needs_review", payload={"output_count": len(outputs)})
+        return "needs_review"
+
+    @gpu_workload_lock()
     def process_one(self) -> dict[str, Any]:
+        self.ledger.promote_turbo_refinements()
         take = self.ledger.claim_next_queued_take(lease_owner=self.worker_id, lease_seconds=self.lease_seconds)
         if take is None:
             return {"status": "idle"}
@@ -142,6 +167,8 @@ class ProductionJobWorker:
             finally:
                 heartbeat_stop.set()
                 heartbeat_thread.join(timeout=max(0.1, self.heartbeat_interval_seconds * 2))
+            if self._finish_owner_cancellation(take, prepared, submitted=False):
+                return {"status": "cancelled", "take_id": take["take_id"]}
             # Preparation/staging can take time; recheck immediately before
             # reserving an ID or POSTing so a newly-busy ComfyUI never receives
             # a second queued render from this worker.
@@ -176,6 +203,9 @@ class ProductionJobWorker:
                 except GPUAdmissionError:
                     finish_prompt_watchdog(comfy_url=self.comfy_url, prompt_id=prompt_id)
                     raise
+                if self._finish_owner_cancellation(take, prepared, submitted=False):
+                    finish_prompt_watchdog(comfy_url=self.comfy_url, prompt_id=prompt_id)
+                    return {"status": "cancelled", "take_id": take["take_id"]}
                 try:
                     response = self.request_json(f"{self.comfy_url}/prompt", method="POST",
                         payload={"prompt": prepared.graph, "prompt_id": prompt_id}, timeout_seconds=60)
@@ -201,9 +231,23 @@ class ProductionJobWorker:
                         observed="absent", details={"code": "comfy_prompt_id_mismatch", "reserved_prompt_id": prompt_id,
                                                      "returned_prompt_id": returned_id})
                     return {"status": "recovery_required", "take_id": take["take_id"], "prompt_id": prompt_id}
-                self.ledger.bind_prompt_id(project_id=take["project_id"], take_id=take["take_id"], prompt_id=prompt_id)
+                try:
+                    self.ledger.bind_prompt_id(project_id=take["project_id"], take_id=take["take_id"], prompt_id=prompt_id)
+                except LedgerConflict:
+                    # Stop may have landed while POST /prompt was in flight.
+                    with self.ledger._connect() as db:
+                        current = db.execute("SELECT status FROM production_takes WHERE job_id=?", (take["job_id"],)).fetchone()
+                    if not current or current["status"] != "cancel_requested":
+                        raise
+                take["prompt_id"] = prompt_id
                 return self._wait_collect(take, prompt_id, prepared,
                                           workload_started_at=workload_started_at)
+        except ComfyMemoryReleasePending as exc:
+            if self._finish_owner_cancellation(take, prepared, submitted=False):
+                return {"status": "cancelled", "take_id": take["take_id"]}
+            self.ledger.requeue_unsubmitted_take(project_id=take["project_id"], take_id=take["take_id"],
+                lease_owner=self.worker_id, reason=str(exc))
+            return {"status": "waiting_for_memory_release", "take_id": take["take_id"], "reason": str(exc)}
         except Exception as exc:
             LOGGER.exception("Production H3 worker failed project=%s run=%s shot=%s take=%s",
                 take.get("project_id"), take.get("run_id"), take.get("shot_id"), take.get("take_id"))
@@ -227,6 +271,28 @@ class ProductionJobWorker:
             return {"status": "recovery_required" if reserved_prompt else "failed",
                     "take_id": take["take_id"], "reason": str(exc)[:500]}
 
+    def _finish_owner_cancellation(self, take, prepared, *, submitted, prompt_id=None):
+        with self.ledger._connect() as db:
+            row = db.execute("SELECT status FROM production_takes WHERE job_id=?", (take["job_id"],)).fetchone()
+        if not row or row["status"] not in {"cancel_requested", "cancelled"}:
+            return False
+        if submitted:
+            # An interrupt acknowledgement is not proof that execution stopped.
+            interrupt_if_owned_prompt(comfy_url=self.comfy_url, prompt_id=prompt_id,
+                request_json=self.request_json)
+            queue = self.request_json(f"{self.comfy_url}/queue", timeout_seconds=10)
+            if not all(isinstance(queue.get(key), list) for key in ("queue_running", "queue_pending")):
+                return False
+            if any(len(item) > 1 and item[1] == prompt_id
+                   for key in ("queue_running", "queue_pending") for item in queue[key]):
+                return False
+        if row["status"] != "cancelled":
+            self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
+                status="cancelled", payload={"reason": "owner_stopped_run"})
+        if prepared:
+            self._cleanup_owned(take, prepared)
+        return True
+
     def _comfy_queue_busy_reason(self) -> str | None:
         """Return a reason to defer submission unless ComfyUI explicitly reports idle."""
         try:
@@ -235,7 +301,7 @@ class ProductionJobWorker:
             pending = queue.get("queue_pending")
             if not isinstance(running, list) or not isinstance(pending, list):
                 return "comfy_queue_status_invalid"
-            if running or pending:
+            if (running or pending) and not get_workload_policy()["allow_simultaneous_runs"]:
                 return f"comfy_queue_busy:running={len(running)}:pending={len(pending)}"
             return None
         except Exception as exc:
@@ -336,15 +402,16 @@ class ProductionJobWorker:
                     observed="success", details={"prompt_id": prompt_id, "recovered_after_restart": True})
                 outputs = self.collect(take, state)
                 if outputs:
-                    self.ledger.set_take_outputs(project_id=take["project_id"], take_id=take["take_id"], outputs=outputs)
-                    self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
-                        status="needs_review", payload={"output_count": len(outputs), "recovered_after_restart": True})
+                    stage_status = self._commit_collected_stage(take, outputs)
                     self.cleanup(take)
                 else:
                     self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
                         status="failed", payload={"code": "output_missing", "recovered_after_restart": True})
                     self.cleanup(take)
-                self.release_idle(comfy_url=self.comfy_url)
+                if outputs:
+                    self._release_after_stage(take, stage_status)
+                else:
+                    self.release_idle(comfy_url=self.comfy_url)
                 observed_count += 1
                 continue
             is_running = status.get("status_str") == "running"
@@ -487,7 +554,22 @@ class ProductionJobWorker:
             error={"code": "director_video_review_blocked", "message": str(decision.get("reason") or "Review inconclusive.")[:1200]})
         return {"status": "blocked", "take_id": take["take_id"]}
 
-    def _wait_collect(self, take: dict[str, Any], prompt_id: str,
+    def _wait_collect(self, take, prompt_id, prepared, *, workload_started_at=None):
+        if self.performance_journal is None:
+            return self._wait_collect_impl(take, prompt_id, prepared,
+                workload_started_at=workload_started_at)
+        started = time.monotonic()
+        outcome = "error"
+        try:
+            result = self._wait_collect_impl(take, prompt_id, prepared,
+                workload_started_at=workload_started_at)
+            outcome = result.get("status", "unknown")
+            return result
+        finally:
+            self.performance_journal.measure(take, "post_submit_to_worker_result",
+                time.monotonic() - started, outcome)
+
+    def _wait_collect_impl(self, take: dict[str, Any], prompt_id: str,
                       prepared: PreparedTake | None, *,
                       workload_started_at: str | None = None) -> dict[str, Any]:
         watchdog = ensure_prompt_watchdog(comfy_url=self.comfy_url, prompt_id=prompt_id)
@@ -495,11 +577,17 @@ class ProductionJobWorker:
         last_heartbeat = 0.0
         next_telemetry = 0.0
         next_limit_check = 0.0
+        transport_failures = 0
         while time.monotonic() < deadline:
+            if self._finish_owner_cancellation(take, prepared, submitted=True, prompt_id=prompt_id):
+                finish_prompt_watchdog(comfy_url=self.comfy_url, prompt_id=prompt_id)
+                return {"status": "cancelled", "take_id": take["take_id"], "prompt_id": prompt_id}
             if time.monotonic() >= next_limit_check:
                 try:
-                    watchdog.check()
-                    point = self.operating_point_reader()
+                    watched_point = watchdog.check()
+                    # Reuse the independent monitor's fresh sample instead of
+                    # launching a competing nvidia-smi query every poll.
+                    point = watched_point if isinstance(watched_point, dict) and watched_point else self.operating_point_reader()
                 except GPUAdmissionError as exc:
                     self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
                         status="recovery_required", payload={"code": "gpu_limit_monitor_failed",
@@ -530,12 +618,27 @@ class ProductionJobWorker:
                 try:
                     sample = self.gpu_inspector(comfy_url=self.comfy_url, expected_prompt_id=prompt_id,
                                                 workload_started_at=workload_started_at)
+                except ComfyRuntimeUnavailable as exc:
+                    transport_failures += 1
+                    if transport_failures < 3:
+                        # Keep the independent watchdog and one-second operating
+                        # point checks active. Never POST this prompt again.
+                        LOGGER.warning("Comfy runtime poll transient failure take=%s attempt=%s error=%s",
+                                       take["take_id"], transport_failures, exc)
+                        next_telemetry = time.monotonic() + 10
+                        self.sleep(self.poll_interval)
+                        continue
+                    self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
+                        status="recovery_required", payload={"code": "comfy_status_unavailable",
+                            "message": str(exc), "prompt_id": prompt_id})
+                    return {"status": "recovery_required", "take_id": take["take_id"], "prompt_id": prompt_id}
                 except GPUAdmissionError as exc:
                     self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
                         status="recovery_required", payload={"code": "gpu_monitor_failed",
                                                               "message": str(exc), "prompt_id": prompt_id})
                     return {"status": "recovery_required", "take_id": take["take_id"],
                             "prompt_id": prompt_id, "reason": str(exc)}
+                transport_failures = 0
                 record_gpu_telemetry(DEFAULT_TELEMETRY_PATH, sample, workload_id=take["take_id"], phase="render")
                 next_telemetry = time.monotonic() + 10
             try:
@@ -575,13 +678,11 @@ class ProductionJobWorker:
                         self._cleanup_owned(take, prepared)
                     self.release_idle(comfy_url=self.comfy_url)
                     return {"status": "failed", "take_id": take["take_id"], "reason": "output_missing"}
-                self.ledger.set_take_outputs(project_id=take["project_id"], take_id=take["take_id"], outputs=outputs)
-                self.ledger.transition_take(project_id=take["project_id"], take_id=take["take_id"],
-                    status="needs_review", payload={"output_count": len(outputs)})
+                stage_status = self._commit_collected_stage(take, outputs)
                 if prepared:
                     self._cleanup_owned(take, prepared)
-                unload = self.release_idle(comfy_url=self.comfy_url)
-                return {"status": "needs_review", "take_id": take["take_id"], "outputs": outputs,
+                unload = self._release_after_stage(take, stage_status)
+                return {"status": stage_status, "take_id": take["take_id"], "outputs": outputs,
                         "comfy_cleanup": unload}
             self.sleep(self.poll_interval)
             if time.monotonic() - last_heartbeat > 20:
@@ -592,6 +693,23 @@ class ProductionJobWorker:
             take_id=take["take_id"], observed="absent", details={"code": "render_poll_timeout",
             "message": "Render exceeded worker timeout; do not resubmit until ComfyUI state is reconciled."})
         return {"status": current["status"], "take_id": take["take_id"], "prompt_id": prompt_id}
+
+    def _release_after_stage(self, take, stage_status):
+        keep_models = stage_status == "refinement_pending" or (
+            take.get("pipeline", {}).get("stage") == "ltx_refinement"
+            and self.ledger.has_ready_refinement())
+        if keep_models:
+            return {}
+        if self.ledger.belongs_to_t2v_batch(take["job_id"]):
+            # Final batch release also waits for observation. A new queue owner
+            # makes release defer safely rather than disrupting their work.
+            released = self.release_idle(comfy_url=self.comfy_url,
+                wait_for_memory_release=True, keep_waiting=lambda: True)
+            if self.performance_journal is not None and "elapsed_seconds" in released:
+                self.performance_journal.measure(take, "model_unload_observation",
+                                                released["elapsed_seconds"], released["status"])
+            return released
+        return self.release_idle(comfy_url=self.comfy_url)
 
     def _cleanup_owned(self, take: dict[str, Any], prepared: PreparedTake) -> None:
         try:

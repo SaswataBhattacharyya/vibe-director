@@ -1,0 +1,15 @@
+{
+  "seed": 42,
+  "pipeline_type": "512",
+  "ss_guidance_strength": 7.5,
+  "ss_sampling_steps": 30,
+  "slat_guidance_strength": 3.0,
+  "slat_sampling_steps": 12,
+  "front_axis": "z",
+  "blend_temperature": 2.0,
+  "sampler": "euler",
+  "texture_size": 1024,
+  "decimation_target": 100000,
+  "remesh": true,
+  "quad": false
+}

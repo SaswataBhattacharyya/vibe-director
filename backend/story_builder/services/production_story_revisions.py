@@ -7,6 +7,7 @@ import os
 import re
 import tempfile
 import uuid
+from story_builder.services.storage_paths import project_root
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,7 @@ def revision_root(output_root: Path, project_id: str, run_id: str) -> Path:
     if canonical_run_id != run_id.lower():
         raise ValueError("Run identifier must use canonical UUID form.")
     root = output_root.resolve()
-    target = (root / project_id / "production_v2" / "runs" / canonical_run_id / "story" / "revisions").resolve()
+    target = (project_root(root, project_id) / "story" / "production_v2" / "runs" / canonical_run_id / "story" / "revisions").resolve()
     if not target.is_relative_to(root):
         raise ValueError("Story revision path escapes the project output root.")
     return target

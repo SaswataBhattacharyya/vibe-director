@@ -1,0 +1,11 @@
+.run-clip-live { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border, #50425e); border-radius: 12px; min-width: 0; }
+.run-clip-live .run-clip-phase { display: flex; align-items: center; gap: .6rem; font-weight: 600; }
+.run-clip-spinner { flex-shrink: 0; animation: run-clip-spin 1.2s linear infinite; }
+.run-clip-references { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 320px)); gap: 1rem; }
+.run-clip-live figure { margin: .5rem 0; min-width: 0; }
+.run-clip-live img, .run-clip-live video { width: 100%; max-width: 480px; max-height: 280px; object-fit: contain; border-radius: 8px; background: #110d1c; }
+.run-clip-live figcaption, .run-clip-live small { overflow-wrap: anywhere; }
+.run-clip-live pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.6; max-height: 32rem; overflow-y: auto; padding: 1rem; background: #110d1c; border-radius: 8px; }
+.run-clip-live summary { cursor: pointer; padding: .5rem 0; }
+@keyframes run-clip-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .run-clip-spinner { animation: none; } }

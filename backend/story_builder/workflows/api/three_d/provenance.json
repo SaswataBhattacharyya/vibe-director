@@ -1,0 +1,27 @@
+[
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/TRELLIS2_local_1024_bounded.api.json",
+    "sha256": "85a0d73b561fe6b108d65c73d73ad97a040a2a3bad72b27be0791544af074f7c",
+    "adaptations": "None; runtime mutates documented inputs only."
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/TRELLIS2_local_1536_detail.api.json",
+    "sha256": "1be833d794efce05bc08c161abfe468d1f0513846707c3e0205a7c804f027e37",
+    "adaptations": "None; runtime mutates documented inputs only."
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/TRELLIS2_local_1024_bounded.ui.json",
+    "sha256": "aa5e0fb7f130262eaa8cbe2130425b061899cc81e70331f7e865d4b65b6978e4",
+    "adaptations": "None; reference only."
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/workflows/ricky/3d_stuff/TRELLIS2_local_1536_detail.ui.json",
+    "sha256": "0260a3881d080ccee16808ae8cba742665567b1a627ed84b30a614a6994bf887",
+    "adaptations": "None; reference only."
+  },
+  {
+    "source": "/home/riki/web_dev/setup_comfy_and-stuff/docs/vibe_director_comfy_handoff_2026-10-29/trellis-parameter-contract.json",
+    "sha256": "fc5288e9986e72e99afdda3424f7ba0f8b4c85f60ec63b7068d934a598d0b164",
+    "adaptations": "None; reference only."
+  }
+]

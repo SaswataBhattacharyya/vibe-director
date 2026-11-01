@@ -1,4 +1,29 @@
+## Owner correction — 2026-10-22 — one YouTube source store
+
+YouTube originals live only in `local_data/donor_migration/video_repertoire/downloads`. Workspace libraries and analyzer source manifests link to that file, retaining their asset IDs; analysis outputs remain separate. Downloads do not trigger analysis. Selecting a completed analyzed source offers Yes/No to open its saved Results job; No stays on the current page. Delete analysis removes its derived outputs/result and analyzed relationship while retaining the original so it can be selected again. Workspace selection still determines library membership and analysis scope.
+
 # Media Prep — video, audio and image workspaces
+
+## Owner correction — 2026-10-14 — image assets and reference sources
+
+Video Summariser now has Image Assets beside Video Assets and Audio Assets. All three extracted tabs provide item selection, Select all shown/Clear selection, Delete selected and Delete all. Delete all includes search-hidden assets of that tab in the current workspace; confirmation shows scope/count. Deletion uses the existing guarded asset API sequentially, reports failures, and removes successful items from catalog-backed Results. Per-extracted-image trash controls are also in Results and Search library. Deletion removes that published frame and its verified concrete run-local frame; original downloads, siblings and analysis metadata remain. Complete Delete analysis remains available for all run outputs.
+
+Video Create keeps three reference sections (Images, Audio, Videos), each with one source dropdown and one visible carousel. Images: characters, worlds, first/last frames, extracted Image Assets, downloaded/imported images. Audio: voices, Audio Assets, downloaded/imported audio. Video: Video Assets, downloaded/imported videos. Existing generated audio/video references and pinned production-style recommendations remain usable; derived metadata distinguishes extracted assets, public origin distinguishes imported originals. Selected references/role instructions/paired soundtrack numbering remain intact while changing sources. Category uploads use the matching role. New originals use inputs/media/images, inputs/media/audio, inputs/media/videos within the existing workspace; prior files are not moved.
+
+SAM Audio is separate from SAM/SAM2/SAM3 image-mask nodes. Actual ComfyUI node catalog has the latter, no SAM Audio nodes. Vibe reports checkpoint_present=false, worker_configured=false. UI explains this and the temporary preview/listen/save workflow. No install, model download or inference was performed.
+
+## Owner correction — 2026-10-14 — extracted assets and search
+
+Video Summariser includes **Video Assets** beside **Audio Assets**. Source downloads/uploads stay in Library; derived clips never enter the source analysis picker. Completed sources are marked analyzed and excluded from new analysis; deleting that analysis permits reanalysis. Results and both extracted tabs expose permanent per-video/audio deletion with confirmation, retaining original sources and sibling clips. Extracted frames are saved; no per-frame deletion requested here.
+
+A source video's full summary describes its complete extracted video group; a semantic summary hit returns every surviving, nonarchived clip in that run, including through shared pickers. Rank/paginate semantic records before expanding groups, so a page limit does not silently cut a group in half. Audio uses its own event/clip/transcript semantics; only clips without meaningful local text inherit the video summary. Downloads retain title/metadata search and receive no automatic analyzer semantics. Explicit existing user indexing remains available.
+
+## Notes-integrated correction — 2026-10-11
+
+Media Prep & Library contains full Video Summariser nested views, four Audio tools, separate Image Detailer and separate Search. Search offers Videos, Images and Audio; Audio has Voice Files above Audio Clips, with independent name/semantic search, date sort and card/list/carousel views. Newest by default, explicit semantic fallback. Shared repertoire stores all annotated outputs. Reuse typed preview/search primitives in generation pickers; voice enrollment is explicit.
+
+Read [remaining_app.md](remaining_app.md) for task order/reuse and [OWNER_DUMMY_RUNS.md](OWNER_DUMMY_RUNS.md) for owner-clicked acceptance. This correction overrides conflicting older sections below; historical implementation checkpoints are not completion evidence.
+
 
 **Status:** Current product plan based on the user's request and source inspection on 2026-10-08. This is planning only; it does not claim the reorganized UI is implemented.  
 **Name:** Use **Media Prep** for the top-level area. It includes preparation, analysis, generation/repair tools and repositories. Keep the existing tool names inside it so familiar capabilities remain easy to find.
@@ -71,6 +96,8 @@ Reuse its existing sections, retaining available controls and results:
 
 Arrange these as focused subsections within Audio Studio, preserving the existing generation pipelines. Character mapping must share the same canonical bindings used by `char_world.md`; a second tool view must not create a separately editable conflicting map. Shared voice files remain assignable to multiple characters.
 
+Voice Files combines workspace-enrolled voice assets with the configured ComfyUI voice catalog without relocating catalogue originals. Catalogue entries are read-only previews streamed by validated voice ID; never accept a filesystem path from the browser. They support name/metadata search, date order and Template/List/Carousel views. A Director can explicitly copy a selected catalogue voice into the current workspace; it then becomes a normal `voice_master` asset for character assignment, annotations and optional semantic indexing. Browsing alone never copies files or changes bindings. Unimported ComfyUI catalogue entries remain keyword-searchable only.
+
 ### Audio Reconstruct
 
 Reuse the existing character calibration, dialogue-part preparation and raw-take upload/history UI. Preserve project/character/part identities and immutable take behavior.
@@ -129,7 +156,7 @@ Present readable findings with an optional structured JSON/evidence view. Keep t
 
 ## 6. Shared media storage, JSON and readable descriptions
 
-“One place” means one coherent media catalogue/storage interface with typed Video/Audio/Image collections. Existing physical files can stay in their working locations initially and be registered through adapters. Use links and hashes to avoid gratuitous duplication, and choose final on-disk organization during implementation.
+"One place" means one coherent media catalogue/storage interface with typed Video/Audio/Image collections. Existing physical files can stay in their working locations during migration and be registered through adapters, but Vibe Director must not depend on files inside the Story Builder or OpenMontage checkouts at completion. Copy only the runtime assets Vibe actually needs—such as required model weights, TTS voice/skill assets, workflows, and selected downloaded reference videos—into Vibe Director's managed asset area or the retained `setup_comfy_and-stuff` installation. Keep that ComfyUI/model installation; do not copy its whole environment into Vibe Director. Use hashes and an inventory to avoid duplicate transfers, preserve provenance, and exclude accumulated project databases/cache/output unrelated to runtime. Donor checkouts may be removed only after a path/import/script audit and a successful verification with both donor directories unavailable; this is a later owner-authorized cleanup step, not part of ordinary migration.
 
 Every reusable asset exposes:
 

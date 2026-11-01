@@ -25,6 +25,7 @@ test('import preview is editable, explicitly applied, saved as a revision, and r
   await page.goto('/#/story');
   await page.locator('input[type="file"]').setInputFiles({ name: 'draft.txt', mimeType: 'text/plain', buffer: Buffer.from('fixture') });
   await expect(page.getByLabel('Editable extracted text')).toHaveValue('Extracted original\ntext');
+  await page.getByText('File details', { exact: true }).click();
   await expect(page.getByText('abc123')).toBeVisible();
   await expect(page.getByText('def456')).toBeVisible();
   await expect(page.getByText(/Browser text editing normalizes line endings to LF/)).toBeVisible();
@@ -35,10 +36,10 @@ test('import preview is editable, explicitly applied, saved as a revision, and r
   await page.reload();
   await expect(page.getByLabel('Editable extracted text')).toHaveValue('Edited extracted text');
   expect(calls.some(call => call.includes('/apply'))).toBe(false);
-  await page.getByRole('button', { name: 'Apply import as new workspace' }).click();
+  await page.getByRole('button', { name: 'Apply import', exact: true }).click();
   await expect(page.getByLabel('Story source text')).toHaveValue('Edited extracted text');
   await page.getByLabel('Story source text').fill('Saved revision text');
-  await page.getByRole('button', { name: 'Save revision' }).click();
+  await page.getByRole('button', { name: 'Save progress' }).click();
   await expect(page.getByText('New story revision saved.')).toBeVisible();
   const postsBeforeReload = calls.filter(call => call.startsWith('POST ')).length;
   await page.reload();
@@ -63,7 +64,7 @@ test('stale revision conflict keeps the local draft and does not overwrite serve
   });
   await page.goto('/#/story');
   await expect(page.getByLabel('Story source text')).toHaveValue('My preserved local draft');
-  await page.getByRole('button', { name: 'Save revision' }).click();
+  await page.getByRole('button', { name: 'Save progress' }).click();
   await expect(page.getByRole('alert')).toContainText('Your draft is preserved and was not overwritten');
   await expect(page.getByLabel('Story source text')).toHaveValue('My preserved local draft');
   expect(posts).toEqual([{ source_text: 'My preserved local draft', expected_current_revision_id: 'rev-old' }]);
@@ -84,7 +85,7 @@ test('initializing workspace is unavailable and can be checked again', async ({ 
   });
   await page.addInitScript(() => { localStorage.setItem('vibe-story-selected-v1', 'story-pending'); });
   await page.goto('/#/story');
-  await expect(page.getByText('This workspace is still initializing.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Story is loading.', { exact: false })).toBeVisible();
   await expect(page.getByLabel('Story source text')).toHaveCount(0);
   allowReady = true;
   await page.getByRole('button', { name: 'Refresh workspace' }).click();
@@ -137,15 +138,17 @@ test('lost import-apply response recovers by key after reload without a second P
   });
   await page.goto('/#/story');
   await page.locator('input[type="file"]').setInputFiles({ name: 'lost.md', mimeType: 'text/markdown', buffer: Buffer.from('source') });
-  await page.getByRole('button', { name: 'Apply import as new workspace' }).click();
+  await page.getByRole('button', { name: 'Apply import' }).click();
   await expect(page.getByText(/Creation response was not confirmed/)).toBeVisible();
   const frozen = await page.evaluate(() => JSON.parse(localStorage.getItem('vibe-story-ui-draft-v1')).pendingCreate);
   expect(frozen.key).toBeTruthy();
   expect(frozen.sourceText).toBe('Frozen import text');
   await page.getByLabel('Editable extracted text').fill('Edited after response loss');
   await page.reload();
+  await expect(page.getByLabel('Editable extracted text')).toHaveValue('Edited after response loss');
+  await page.getByRole('button',{name:'Close preview'}).click();
   await expect(page.getByLabel('Story source text')).toHaveValue('Frozen import text');
-  await expect(page.getByText('Story workspace creation is confirmed.')).toBeVisible();
+  await expect(page.getByText('Story creation is confirmed.')).toBeVisible();
   expect(applyPosts).toBe(1);
   expect(calls.filter(call => call.includes('/creations/by-idempotency/')).every(call => call.startsWith('GET '))).toBeTruthy();
 });
@@ -193,20 +196,63 @@ test('story creation freezes an explicit style snapshot across lost-response rec
 
   await page.goto('/#/story');
   await page.getByLabel('Title').fill('Pinned story');
-  await page.getByLabel('Source text', {exact:true}).fill('Story source');
-  await page.getByLabel('Production type & style').selectOption(original.snapshot_id);
-  await page.getByRole('button', { name: 'Create workspace' }).click();
+  await page.getByLabel('Story source text').fill('Story source');
+  await expect(page.locator('.story-style-pin')).toContainText('Short Film · v1');
+  await page.getByRole('button', { name: 'Save progress' }).click();
   await expect(page.getByText('Creation outcome needs recovery')).toBeVisible();
   expect(frozenCreation.workspace.style_selection_snapshot_id).toBe(original.snapshot_id);
   await page.reload();
   await expect(page.getByLabel('Story source text')).toHaveValue('Story source');
-  await expect(page.locator('.story-style-pin')).toContainText('Style pinned at original creation');
   await expect(page.locator('.story-style-pin')).toContainText('Short Film · v1');
   expect(createPosts).toBe(1);
 
   currentSelections = [latest];
-  await page.getByRole('button', { name: 'Refresh saved styles' }).first().click();
-  await page.getByLabel('Production type & style').selectOption(latest.snapshot_id);
+  await page.reload();
   await expect(page.locator('.story-style-pin')).toContainText('Short Film · v1');
   expect(createPosts).toBe(1);
+});
+
+test('story autosaves separately from revisions and recovers after local draft storage is cleared', async ({ page }) => {
+  let revision = { revision_id: 'rev-draft-1', source_text: 'Original story' };
+  let draft = null;
+  let revisionCount = 1;
+  const workspace = () => ({ workspace_id: 'story-autosave', title: 'Autosave story', current_revision_id: revision.revision_id, initialized: true, status: 'ready', current_revision: revision });
+  await page.addInitScript(() => localStorage.setItem('vibe-story-selected-v1', 'story-autosave'));
+  await page.route('**/api/story/**', async route => {
+    const req = route.request(), url = new URL(req.url()), path = url.pathname;
+    if (path === '/api/story/workspaces' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ workspace_id: 'story-autosave', title: 'Autosave story', current_revision_id: revision.revision_id, initialized: true, status: 'ready' }]) });
+    if (path === '/api/story/workspaces/story-autosave' && req.method() === 'GET') return route.fulfill({ json: workspace() });
+    if (path === '/api/story/workspaces/story-autosave/draft' && req.method() === 'GET') return route.fulfill({ json: { draft } });
+    if (path === '/api/story/workspaces/story-autosave/draft' && req.method() === 'PUT') {
+      const body = req.postDataJSON();
+      if (body.base_revision_id !== revision.revision_id) return route.fulfill({ status: 409, json: { error: { code: 'stale_revision', message: 'revision conflict' } } });
+      draft = { workspace_id: 'story-autosave', base_revision_id: body.base_revision_id, source_text: body.source_text, stale: false };
+      return route.fulfill({ json: draft });
+    }
+    if (path === '/api/story/workspaces/story-autosave/draft' && req.method() === 'DELETE') { draft = null; return route.fulfill({ json: { discarded: true } }); }
+    if (path === '/api/story/workspaces/story-autosave/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf([{ revision_id: revision.revision_id, source_sha256: 'sha', revision_number: revisionCount }]) });
+    if (path === '/api/story/workspaces/story-autosave/revisions' && req.method() === 'POST') {
+      const body = req.postDataJSON();
+      revision = { revision_id: `rev-draft-${revisionCount + 1}`, source_text: body.source_text };
+      revisionCount++;
+      if (draft?.source_text === body.source_text && draft.base_revision_id === body.expected_current_revision_id) draft = null;
+      return route.fulfill({ json: revision });
+    }
+    return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: `Unexpected ${req.method()} ${path}` } } });
+  });
+
+  await page.goto('/#/story');
+  const source = page.getByLabel('Story source text');
+  await expect(source).toHaveValue('Original story');
+  await expect(page.getByText('Save progress creates a revision.')).toBeVisible();
+  await source.fill('Edited story survives a browser-local draft loss');
+  await expect(page.getByText('Draft saved · Save progress to create a revision')).toBeVisible({ timeout: 5000 });
+  expect(revisionCount).toBe(1);
+  await page.evaluate(() => localStorage.removeItem('vibe-story-draft-v1'));
+  await page.reload();
+  await expect(page.getByLabel('Story source text')).toHaveValue('Edited story survives a browser-local draft loss');
+  await page.getByRole('button', { name: 'Save progress' }).click();
+  await expect(page.getByText('New story revision saved.')).toBeVisible();
+  expect(revisionCount).toBe(2);
+  expect(draft).toBeNull();
 });

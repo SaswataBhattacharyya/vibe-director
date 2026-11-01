@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import io
 import json
+import sqlite3
 import tempfile
 import unittest
 import warnings
 from pathlib import Path
 
 from story_builder.isolated_server import create_app
-from story_builder.services.production_ledger import ProductionLedger
+from story_builder.services.production_ledger import LedgerConflict, ProductionLedger
+from story_builder.services.production_setup import ProductionSetup
 from story_builder.services.production_styles import ProductionStyleService
+from story_builder.services.story_authoring import StoryAuthoring
 
 
 class StoryStyleLinkTests(unittest.TestCase):
@@ -18,7 +21,7 @@ class StoryStyleLinkTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
-        self.ledger_path = self.root / "storage/production/ledger.sqlite3"
+        self.ledger_path = self.root / "services/production/ledger.sqlite3"
         self.ledger = ProductionLedger(self.ledger_path)
         self.styles = ProductionStyleService(self.ledger)
         self.app = create_app(data_root=self.root,
@@ -111,6 +114,88 @@ class StoryStyleLinkTests(unittest.TestCase):
         status, replayed = self.call("POST", path, request)
         self.assertEqual(status, "200 OK")
         self.assertEqual(replayed["workspace"]["created_revision"]["metadata"], metadata)
+
+    def test_workspace_selection_updates_current_pin_without_rewriting_creation_snapshot(self):
+        v1 = self.custom("Keep the original direction frozen in the first screenplay.")
+        initial = self.styles.select(isolated_context_id="setup-context-update",
+            production_type="journal_style", style_version_id=v1["style_version_id"])
+        status, created = self.call("POST", "/api/story/workspaces", {
+            "idempotency_key": "3f76a483-01c9-4c12-9a9a-4fc08d539d54",
+            "title": "Style update", "source_text": "A story.",
+            "style_selection_snapshot_id": initial["snapshot_id"]})
+        self.assertEqual(status, "201 Created")
+        workspace_id = created["workspace"]["workspace_id"]
+        v2 = self.custom("Use the revised direction for future screenplay drafts.")
+        status, updated = self.call("POST", "/api/styles/selections", {
+            "workspace_id": workspace_id, "production_type": "journal_style",
+            "style_version_id": v2["style_version_id"], "directing_style_id": "cinematic"})
+        self.assertEqual(status, "201 Created")
+        self.assertEqual(updated["workspace_id"], workspace_id)
+        status, selected = self.call("GET", f"/api/styles/selections?workspace_id={workspace_id}")
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(selected["selections"][-1]["snapshot_id"], updated["snapshot_id"])
+        status, loaded = self.call("GET", f"/api/story/workspaces/{workspace_id}")
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(loaded["style_selection_snapshot_id"], updated["snapshot_id"])
+        self.assertEqual(loaded["style_selection"], updated)
+        self.assertEqual(loaded["current_revision"]["metadata"]["style_selection"], initial)
+
+    def test_style_change_marks_old_screenplay_stale_and_removes_acceptance(self):
+        v1 = self.custom("Original direction.")
+        initial = self.styles.select(isolated_context_id="setup-context-stale",
+            production_type="journal_style", style_version_id=v1["style_version_id"])
+        status, created = self.call("POST", "/api/story/workspaces", {
+            "idempotency_key": "fd590a99-2a21-44d6-8ddb-34624eb313a4",
+            "title": "Stale style", "source_text": "A story.",
+            "style_selection_snapshot_id": initial["snapshot_id"]})
+        self.assertEqual(status, "201 Created")
+        workspace_id = created["workspace"]["workspace_id"]
+        source = created["workspace"]["created_revision"]
+        graph_id = "graph-style-change"
+        screenplay_id = "screenplay-style-change"
+        with sqlite3.connect(self.ledger_path) as db:
+            db.execute("PRAGMA foreign_keys=ON")
+            db.execute("""INSERT INTO story_graph_snapshots
+                (snapshot_id,workspace_id,source_revision_id,source_sha256,idempotency_key,request_hash,status,chunk_total,coverage_state,provider)
+                VALUES(?,?,?,?,?,?,?,?,?,?)""",
+                (graph_id,workspace_id,source["revision_id"],source["source_sha256"],
+                 "graph-style-change-key","request-hash","complete",1,"complete","test"))
+            db.execute("""INSERT INTO story_screenplay_revisions
+                (screenplay_revision_id,workspace_id,source_revision_id,graph_snapshot_id,screenplay_json,idempotency_key,style_selection_snapshot_id,accepted_at)
+                VALUES(?,?,?,?,?,?,?,CURRENT_TIMESTAMP)""",
+                (screenplay_id,workspace_id,source["revision_id"],graph_id,"{}",
+                 "screenplay-style-change-key",initial["snapshot_id"]))
+        story = StoryAuthoring(self.ledger,data_root=self.root)
+        self.assertTrue(story.list_screenplay_revisions(workspace_id=workspace_id)["items"][0]["accepted"])
+        revised = self.custom("Revised direction.")
+        updated = self.styles.select(workspace_id=workspace_id, production_type="journal_style",
+            style_version_id=revised["style_version_id"], directing_style_id="cinematic")
+        item = story.list_screenplay_revisions(workspace_id=workspace_id)["items"][0]
+        self.assertTrue(item["stale"])
+        self.assertFalse(item["accepted"])
+        status, rejection = self.call("POST",
+            f"/api/story/workspaces/{workspace_id}/screenplay/revisions/{screenplay_id}/accept", {})
+        self.assertEqual(status, "409 Conflict")
+        self.assertIn("older production style", rejection["error"]["message"])
+        self.assertFalse(story.get_screenplay_revision(workspace_id, screenplay_id)["accepted"])
+        setup = ProductionSetup(self.ledger, story)
+        with self.assertRaisesRegex(LedgerConflict, "current accepted screenplay"):
+            setup.save(workspace_id, screenplay_id, {"mode": "assisted_manual", "automate_steps": {
+                "character_images": False, "character_voice": False, "world_images": False,
+                "frame_images": False, "video": False}, "video_quality": "high",
+                "duration_policy": {"kind": "fixed", "seconds": 6}})
+        new_screenplay_id = "screenplay-style-change-new"
+        with sqlite3.connect(self.ledger_path) as db:
+            db.execute("""INSERT INTO story_screenplay_revisions
+                (screenplay_revision_id,workspace_id,source_revision_id,graph_snapshot_id,screenplay_json,idempotency_key,style_selection_snapshot_id)
+                VALUES(?,?,?,?,?,?,?)""",
+                (new_screenplay_id, workspace_id, source["revision_id"], graph_id,
+                 json.dumps({"scenes": [{"scene_number": 1, "shots": [{"shot_number": 1}]}]}),
+                 "screenplay-style-change-new-key", updated["snapshot_id"]))
+        status, accepted = self.call("POST",
+            f"/api/story/workspaces/{workspace_id}/screenplay/revisions/{new_screenplay_id}/accept", {})
+        self.assertEqual(status, "200 OK")
+        self.assertTrue(accepted["accepted"])
 
     def test_unknown_snapshot_fails_before_reserving_workspace(self):
         request = {"idempotency_key": "1f8d8525-12b5-4c5b-b975-718d70789a8a",

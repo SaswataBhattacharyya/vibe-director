@@ -1,0 +1,11 @@
+{
+  "workflow_id": "z_image_turbo",
+  "workflow_version": "1",
+  "workflow_sha256": "d9ccfbdff52fca07264767da2b91e246c5c85a6310213f270cce2b0085485b6e",
+  "status": "passed",
+  "evidence": {
+    "source": "vibe_director_successful_image_job",
+    "job_id": "a3a7ec26-5932-4aa5-a2b0-54fa838b88d6",
+    "output_sha256": "095141049f326701079ae21399f29df8ab85fd73b41e530ad228a8adee7ee881"
+  }
+}

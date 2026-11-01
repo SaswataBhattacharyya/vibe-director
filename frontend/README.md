@@ -1,4 +1,6 @@
-# Initial isolated T2V UI
+# Frontend notes
+
+> Historical implementation details below describe the first isolated text-to-video slice. They are not a current feature inventory or navigation specification. Use the [top-level README](../README.md), [current plans](../plans/README.md), and [implementation handoff](../plans/HANDOFF.md) for the current product and status. Do not restore routes or limitations described here without checking those sources.
 
 A small React/Vite application for the isolated text-to-video workflow. Start with `npm run dev` (Vite binds to `127.0.0.1:8082` and proxies `/api` to the isolated backend at `127.0.0.1:3020`). The API is same-origin `/api/video/*`; configure the hosting proxy in the eventual integration environment. No external font or image service is needed.
 

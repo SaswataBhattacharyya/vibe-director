@@ -12,6 +12,26 @@ try {
     await page.getByRole('button', { name, exact: true }).click();
     assert.equal(await page.locator('html').getAttribute('data-palette'), id);
     assert.equal(await page.getByRole('button', { name, exact: true }).getAttribute('aria-pressed'), 'true');
+    const themedSurfaces = await page.evaluate(() => {
+      const expectedProbe = document.createElement('div');
+      expectedProbe.style.backgroundColor = 'var(--studio-surface)';
+      document.body.append(expectedProbe);
+      const expected = getComputedStyle(expectedProbe).backgroundColor;
+      expectedProbe.remove();
+      const selectors = ['.take-job-status', '.r2v-asset-card'];
+      return selectors.map((selector) => {
+        const probe = document.createElement('div');
+        probe.className = selector.slice(1);
+        document.body.append(probe);
+        const actual = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return { selector, actual, expected };
+      });
+    });
+    for (const { selector, actual, expected } of themedSurfaces) {
+      assert.equal(actual, expected, `${selector} should use the active theme surface`);
+      assert.ok(!actual.includes('var('), `${selector} should not expose an unresolved theme token`);
+    }
   }
   await page.getByRole('button', { name: 'Midnight mixtape', exact: true }).click();
   await page.reload();

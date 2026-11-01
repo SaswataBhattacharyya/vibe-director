@@ -1,0 +1,18 @@
+.image-detailer-choice{width:100%;text-align:left;color:var(--studio-text);cursor:pointer;transition:transform .14s ease,border-color .14s ease}.image-detailer-choice:hover{transform:scale(1.015)}.image-detailer-choice.selected{border-color:var(--studio-accent);background:var(--studio-selected)}.image-detailer-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px}.image-detailer-facts div{min-width:0;padding:9px 0;border-top:1px solid var(--studio-line)}.image-detailer-facts dt{font-size:.78rem;color:var(--studio-muted)}.image-detailer-facts dd{margin:4px 0 0;line-height:1.45;overflow-wrap:anywhere;white-space:pre-wrap}@media(max-width:700px){.image-detailer-facts{grid-template-columns:1fr}}
+
+.image-detailer-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr); gap: 24px; align-items: start; }
+.image-detailer-gallery.summariser-assets { max-height: 620px; overflow: auto; align-content: start; grid-auto-rows: max-content; padding: 8px; margin: 0; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+.image-detailer-item { min-width: 0; padding: 10px; display: flex; flex-direction: column; gap: 10px; height: auto; }
+.image-detailer-item > label { display: flex; align-items: center; gap: 8px; }
+.image-detailer-choice { width: 100%; min-width: 0; margin: 0; height: auto; padding: 8px; }
+.image-detailer-choice strong, .image-detailer-choice small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.image-detailer-gallery.image-repository-list { grid-template-columns: minmax(0, 1fr); }
+.image-detailer-gallery.image-repository-carousel { display: flex; overflow: auto; }
+.image-detailer-gallery.image-repository-carousel > article { min-width: 190px; max-width: 240px; }
+.image-detailer-report { min-width: 0; overflow-wrap: anywhere; }
+.image-detailer-selected { display: block; width: 100%; max-height: 300px; object-fit: contain; border-radius: 14px; margin-bottom: 16px; background: #120d20; }
+@media (max-width: 900px) { .image-detailer-layout { grid-template-columns: minmax(0, 1fr); } .image-detailer-gallery.summariser-assets { max-height: 420px; } }
+
+.image-detailer-search { flex-wrap: wrap; }
+.image-detailer-search .summariser-search { flex: 1 1 280px; min-width: min(280px, 100%); }
+.image-detailer-search .summariser-search input { min-width: 0; width: 100%; }

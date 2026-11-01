@@ -1,0 +1,265 @@
+{
+  "8": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "65",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    }
+  },
+  "10": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    }
+  },
+  "41": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "Zit_Upscale-2026-01-06 04-41-00-0001.png"
+    }
+  },
+  "61": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "64": {
+    "class_type": "CFGNorm",
+    "inputs": {
+      "model": [
+        "67",
+        0
+      ],
+      "strength": 1.0000000000000002
+    }
+  },
+  "65": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "64",
+        0
+      ],
+      "positive": [
+        "70",
+        0
+      ],
+      "negative": [
+        "71",
+        0
+      ],
+      "latent_image": [
+        "66",
+        0
+      ],
+      "seed": 42,
+      "steps": 20,
+      "cfg": 4.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+    }
+  },
+  "66": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "67": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "106",
+        0
+      ],
+      "shift": 3.1
+    }
+  },
+  "68": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "61",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ],
+      "image1": [
+        "41",
+        0
+      ],
+      "prompt": [
+        "112",
+        0
+      ]
+    }
+  },
+  "69": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "61",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ],
+      "image1": [
+        "41",
+        0
+      ],
+      "prompt": "\u6cdb\u9ec4\uff0cAI\u611f\uff0c\u4e0d\u771f\u5b9e\uff0c\u4e11\u964b\uff0c\u6cb9\u817b\u7684\u76ae\u80a4\uff0c\u5f02\u5e38\u7684\u80a2\u4f53\uff0c\u4e0d\u534f\u8c03\u7684\u80a2\u4f53"
+    }
+  },
+  "70": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "68",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "71": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "69",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    }
+  },
+  "90": {
+    "class_type": "easy promptList",
+    "inputs": {
+      "prompt_1": [
+        "108",
+        0
+      ],
+      "prompt_2": [
+        "109",
+        0
+      ],
+      "prompt_3": [
+        "110",
+        0
+      ],
+      "prompt_4": [
+        "111",
+        0
+      ],
+      "prompt_5": ""
+    }
+  },
+  "106": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "117",
+        0
+      ],
+      "lora_name": "qwen-image-edit-2511-multiple-angles-lora.safetensors",
+      "strength_model": 1
+    }
+  },
+  "108": {
+    "class_type": "QwenMultiangleCameraNode",
+    "inputs": {
+      "image": [
+        "41",
+        0
+      ],
+      "horizontal_angle": 0,
+      "vertical_angle": 0,
+      "zoom": 1,
+      "default_prompts": true,
+      "camera_view": false
+    }
+  },
+  "109": {
+    "class_type": "QwenMultiangleCameraNode",
+    "inputs": {
+      "image": [
+        "41",
+        0
+      ],
+      "horizontal_angle": 90,
+      "vertical_angle": 0,
+      "zoom": 1,
+      "default_prompts": true,
+      "camera_view": false
+    }
+  },
+  "110": {
+    "class_type": "QwenMultiangleCameraNode",
+    "inputs": {
+      "image": [
+        "41",
+        0
+      ],
+      "horizontal_angle": 180,
+      "vertical_angle": 0,
+      "zoom": 1,
+      "default_prompts": true,
+      "camera_view": false
+    }
+  },
+  "111": {
+    "class_type": "QwenMultiangleCameraNode",
+    "inputs": {
+      "image": [
+        "41",
+        0
+      ],
+      "horizontal_angle": 270,
+      "vertical_angle": 0,
+      "zoom": 1,
+      "default_prompts": true,
+      "camera_view": false
+    }
+  },
+  "116": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "8",
+        0
+      ]
+    }
+  },
+  "117": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "qwen_image_edit_2511_bf16.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "112": {
+    "class_type": "easy promptConcat",
+    "inputs": {
+      "prompt1": [
+        "90",
+        1
+      ],
+      "prompt2": "",
+      "separator": ". "
+    }
+  }
+}

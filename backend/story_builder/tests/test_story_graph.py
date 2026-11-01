@@ -21,7 +21,7 @@ class StoryGraphTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / "data"
-        self.ledger = ProductionLedger(self.root / "storage/production/ledger.sqlite3")
+        self.ledger = ProductionLedger(self.root / "services/production/ledger.sqlite3")
         self.story = StoryAuthoring(self.ledger, data_root=self.root)
         source = "Mira keeps the key. " * 400
         created = self.story.create_workspace(title="Graph source", source_text=source)
@@ -35,7 +35,8 @@ class StoryGraphTests(unittest.TestCase):
             if "GRAPH RECORDS (JSON):\n" in prompt:
                 records = json.loads(prompt.split("GRAPH RECORDS (JSON):\n", 1)[1])
                 cited = [r["record_id"] for r in records if r["kind"] in {"event", "fact"}]
-                return {"model": "fake-model", "scenes": ([{"slugline": "INT. ROOM - DAY", "summary": "Mira keeps the key.", "shots": [{"action": "Mira keeps the key.", "dialogue": "", "camera": "", "lighting": "", "mood": "", "sfx": "", "music": "", "evidence_record_ids": cited}]}] if cited else [])}
+                characters = json.loads(prompt.split("CANONICAL CHARACTER IDs (JSON):\n", 1)[1].split("\nCHUNK ID:", 1)[0])
+                return {"model": "fake-model", "scenes": ([{"slugline": "INT. ROOM - DAY", "summary": "Mira keeps the key.", "shots": [{"action": "Mira keeps the key.", "dialogue": "", "camera": "", "lighting": "", "mood": "", "sfx": "", "music": "", "evidence_record_ids": cited, "character_record_ids": [row["record_id"] for row in characters if row["name"] == "Mira"]}]}] if cited else [])}
             chunk = json.loads(prompt.split("CHUNK TEXT (JSON):\n", 1)[1])
             quote = "Mira keeps the key."
             start = chunk.index(quote)
@@ -60,6 +61,250 @@ class StoryGraphTests(unittest.TestCase):
             "CONTENT_LENGTH": str(len(raw)), "wsgi.input": io.BytesIO(raw)}
         result = b"".join(self.app(environ, lambda status, headers: result_status.append(status)))
         return result_status[0], json.loads(result)
+
+    def graph_with_alias_pair(self):
+        graph = self.story.build_story_graph(workspace_id=self.workspace, source_revision_id=self.revision,
+            idempotency_key=str(uuid.uuid4()), provider_call=lambda **kwargs: self.app_provider(**kwargs))
+        rows = sorted(graph["chunks"], key=lambda row: row["chunk_index"])
+        quote = "Mira keeps the key."
+        db = self.ledger._connect()
+        try:
+            ids = ("entity-alias-long", "entity-alias-short", "entity-alias-full")
+            names = ("Mira Sen", "Mira", "Mira Sen Kapoor")
+            for record_id, name, chunk in zip(ids, names, rows[:3]):
+                start = self.source.find(quote, chunk["start_codepoint"], chunk["end_codepoint"])
+                db.execute("INSERT INTO story_graph_records(record_id,snapshot_id,kind,type,name,detail,status,properties_json) VALUES(?,?,?,?,?,?,?,?)",
+                    (record_id,graph["snapshot_id"],"entity","character",name,"", "source_supported", "{}"))
+                db.execute("INSERT INTO story_graph_evidence(record_id,source_revision_id,source_sha256,chunk_id,start_codepoint,end_codepoint,quote) VALUES(?,?,?,?,?,?,?)",
+                    (record_id,self.revision,graph["source_sha256"],chunk["chunk_id"],start,start+len(quote),quote))
+            original = next(row["record_id"] for row in graph["records"] if row["kind"] == "entity" and row["type"] == "object")
+            db.execute("INSERT INTO story_graph_records(record_id,snapshot_id,kind,type,name,detail,subject_id,object_id,predicate,status,properties_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                ("relation-alias-test",graph["snapshot_id"],"relation","story_relation","Mira Sen holds key","",ids[0],original,"holds","source_supported","{}"))
+            db.execute("INSERT INTO story_graph_records(record_id,snapshot_id,kind,type,name,detail,subject_id,object_id,predicate,status,properties_json) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                ("relation-alias-side",graph["snapshot_id"],"relation","story_relation","Mira returns key","",ids[1],original,"returns","source_supported","{}"))
+            db.commit()
+        finally: db.close()
+        return self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+
+    def app_provider(self, **kwargs):
+        # Use the fixture's deterministic provider without invoking a live model.
+        prompt = kwargs["prompt"]
+        if "GRAPH RECORDS (JSON):\n" in prompt:
+            records = json.loads(prompt.split("GRAPH RECORDS (JSON):\n",1)[1])
+            cited=[r["record_id"] for r in records if r["kind"] in {"event","fact"}]
+            return {"model":"fake-model","scenes":[]}
+        chunk=json.loads(prompt.split("CHUNK TEXT (JSON):\n",1)[1]); quote="Mira keeps the key."; start=chunk.index(quote); end=start+len(quote)
+        return {"model":"fake-model","records":[
+            {"kind":"entity","type":"character","name":"Mira","detail":"","start":start,"end":end,"quote":quote,"status":"source_supported"},
+            {"kind":"entity","type":"object","name":"key","detail":"","start":start,"end":end,"quote":quote,"status":"source_supported"},
+            {"kind":"fact","type":"possession","name":"Mira keeps the key","detail":"Mira possesses the key.","start":start,"end":end,"quote":quote,"status":"source_supported"},
+            {"kind":"event","type":"action","name":"Mira keeps the key","detail":"","start":start,"end":end,"quote":quote,"status":"source_supported"}]}
+
+    def test_graph_is_revision_scoped_and_rebuilt_for_new_story_revision(self):
+        old_graph = self.story.build_story_graph(workspace_id=self.workspace,
+            source_revision_id=self.revision, idempotency_key=str(uuid.uuid4()),
+            provider_call=self.app_provider)
+        revised_source = self.source + "\nA new event changes the ending."
+        revised = self.story.write_revision(workspace_id=self.workspace,
+            source_text=revised_source, expected_current_revision_id=self.revision)
+        revised_id = revised["revision_id"]
+        graph_path = f"/api/story/workspaces/{self.workspace}/graph"
+
+        old_status, loaded_old = self.call("GET", f"{graph_path}?revision_id={self.revision}")
+        missing_status, _ = self.call("GET", f"{graph_path}?revision_id={revised_id}")
+        self.assertEqual(old_status, "200 OK")
+        self.assertEqual(loaded_old["snapshot_id"], old_graph["snapshot_id"])
+        self.assertEqual(missing_status, "404 Not Found")
+
+        new_graph = self.story.build_story_graph(workspace_id=self.workspace,
+            source_revision_id=revised_id, idempotency_key=str(uuid.uuid4()),
+            provider_call=self.app_provider)
+        self.assertEqual(new_graph["source_revision_id"], revised_id)
+        self.assertEqual(new_graph["source_sha256"], revised["source_sha256"])
+        self.assertTrue(all(evidence["source_revision_id"] == revised_id
+            for record in new_graph["records"] for evidence in record["evidence"]))
+        reloaded_status, loaded_new = self.call("GET", f"{graph_path}?revision_id={revised_id}")
+        self.assertEqual(reloaded_status, "200 OK")
+        self.assertEqual(loaded_new["snapshot_id"], new_graph["snapshot_id"])
+
+    def test_identity_alias_persists_expands_search_and_undo_keeps_graph_rows(self):
+        graph = self.graph_with_alias_pair()
+        pair = next(item for item in graph["identity_candidates"] if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-long","entity-alias-short"})
+        before = {r["record_id"]:(r["evidence"],r["subject_id"],r["object_id"]) for r in graph["records"]}
+        body = {"snapshot_id":graph["snapshot_id"],"left_record_id":pair["left_record_id"],"right_record_id":pair["right_record_id"],"action":"alias","idempotency_key":str(uuid.uuid4()),"expected_head":0,"left_fingerprint":pair["left_fingerprint"],"right_fingerprint":pair["right_fingerprint"]}
+        distinct = dict(body,action="distinct",idempotency_key=str(uuid.uuid4()))
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",distinct)
+        self.assertEqual(status,"201 Created")
+        body["expected_head"] = 1
+        status, accepted = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",body)
+        self.assertEqual(status,"201 Created")
+        status, replay = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",body)
+        self.assertEqual(status,"201 Created"); self.assertTrue(replay["replayed"])
+        reloaded = self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+        self.assertEqual(reloaded["decision_head"],2)
+        search = self.story.search_story_graph(workspace_id=self.workspace,query="Mira Sen")
+        neighborhood = next(item for item in search["neighborhoods"] if item["match_record_id"]=="entity-alias-long")
+        self.assertIn("entity-alias-short",neighborhood["alias_member_ids"])
+        self.assertIn(accepted["decision_id"],[item["decision_id"] for item in neighborhood["alias_provenance"]])
+        self.assertIn("relation-alias-test",[item["record_id"] for item in neighborhood["records"]])
+        after = {r["record_id"]:(r["evidence"],r["subject_id"],r["object_id"]) for r in reloaded["records"]}
+        self.assertEqual(before,after)
+        undo = dict(body,action="undo",idempotency_key=str(uuid.uuid4()),expected_head=2,target_decision_id=accepted["decision_id"])
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",undo)
+        self.assertEqual(status,"201 Created")
+        after_undo = self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+        self.assertFalse(any("entity-alias-long" in group for group in after_undo["alias_groups"]))
+        self.assertEqual(before,{r["record_id"]:(r["evidence"],r["subject_id"],r["object_id"]) for r in after_undo["records"]})
+        stale_head = dict(body,idempotency_key=str(uuid.uuid4()),expected_head=0)
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",stale_head)
+        self.assertEqual(status,"409 Conflict")
+        self.story.update_story_graph_record(workspace_id=self.workspace,record_id="entity-alias-long",name="Mira Sen Renamed",detail="")
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",dict(body,idempotency_key=str(uuid.uuid4()),expected_head=3))
+        self.assertEqual(status,"409 Conflict")
+        status, _ = self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",dict(body,left_record_id="entity-alias-long",right_record_id="entity-alias-long",idempotency_key=str(uuid.uuid4()),expected_head=3))
+        self.assertEqual(status,"422 Unprocessable Entity")
+
+    def test_transitive_alias_group_rejects_conflicting_distinct_and_foreign_snapshot(self):
+        graph = self.graph_with_alias_pair()
+        candidates = graph["identity_candidates"]
+        ab = next(item for item in candidates if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-long","entity-alias-short"})
+        ac = next(item for item in candidates if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-long","entity-alias-full"})
+        bc = next(item for item in candidates if {item["left_record_id"],item["right_record_id"]} == {"entity-alias-short","entity-alias-full"})
+        def payload(pair, action, head):
+            return {"snapshot_id":graph["snapshot_id"],"left_record_id":pair["left_record_id"],"right_record_id":pair["right_record_id"],"action":action,"idempotency_key":str(uuid.uuid4()),"expected_head":head,"left_fingerprint":pair["left_fingerprint"],"right_fingerprint":pair["right_fingerprint"]}
+        status,_=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",payload(ab,"alias",0)); self.assertEqual(status,"201 Created")
+        status,_=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",payload(ac,"alias",1)); self.assertEqual(status,"201 Created")
+        status,_=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",payload(bc,"distinct",2)); self.assertEqual(status,"409 Conflict")
+        foreign=payload(ab,"alias",2)
+        other=self.story.create_workspace(title="Other story",source_text="Different source.")["workspace_id"]
+        status,_=self.call("POST",f"/api/story/workspaces/{other}/graph/identity-decisions",foreign); self.assertEqual(status,"404 Not Found")
+
+    def test_undo_cannot_reactivate_distinct_pair_inside_transitive_alias_group(self):
+        graph = self.graph_with_alias_pair()
+        candidates = graph["identity_candidates"]
+        pairs = {frozenset((item["left_record_id"], item["right_record_id"])): item for item in candidates}
+        ab_ids = frozenset(("entity-alias-long", "entity-alias-short"))
+        ac_ids = frozenset(("entity-alias-long", "entity-alias-full"))
+        bc_ids = frozenset(("entity-alias-short", "entity-alias-full"))
+        def payload(pair, action, head, target=None):
+            return {"snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+                "right_record_id": pair["right_record_id"], "action": action,
+                "idempotency_key": str(uuid.uuid4()), "expected_head": head,
+                "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"],
+                **({"target_decision_id": target} if target else {})}
+        def send(body):
+            return self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", body)
+        status, distinct = send(payload(pairs[ab_ids], "distinct", 0)); self.assertEqual(status, "201 Created")
+        status, alias_ab = send(payload(pairs[ab_ids], "alias", 1)); self.assertEqual(status, "201 Created")
+        status, _ = send(payload(pairs[ac_ids], "alias", 2)); self.assertEqual(status, "201 Created")
+        status, _ = send(payload(pairs[bc_ids], "alias", 3)); self.assertEqual(status, "201 Created")
+        status, response = send(payload(pairs[ab_ids], "undo", 4, alias_ab["decision_id"]))
+        self.assertEqual(status, "409 Conflict")
+        self.assertIn("distinct decision", response["error"]["message"])
+        refreshed = self.story.get_story_graph(workspace_id=self.workspace, snapshot_id=graph["snapshot_id"])
+        self.assertEqual(refreshed["decision_head"], 4)
+        self.assertNotIn(distinct["decision_id"], [item["decision_id"] for item in refreshed["identity_decisions"] if item["active"]])
+
+    def test_search_provenance_keeps_active_alias_beyond_history_limit(self):
+        graph = self.graph_with_alias_pair()
+        pair = next(item for item in graph["identity_candidates"]
+            if {item["left_record_id"], item["right_record_id"]} == {"entity-alias-long", "entity-alias-short"})
+        status, accepted = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", {
+            "snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+            "right_record_id": pair["right_record_id"], "action": "alias", "idempotency_key": str(uuid.uuid4()),
+            "expected_head": 0, "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"]})
+        self.assertEqual(status, "201 Created")
+        db = self.ledger._connect()
+        try:
+            left_id, right_id = sorted((pair["left_record_id"], pair["right_record_id"]))
+            for index in range(100):
+                db.execute("INSERT INTO story_graph_identity_decisions(decision_id,workspace_id,snapshot_id,left_record_id,right_record_id,action,left_fingerprint,right_fingerprint,idempotency_key,request_hash,expected_head) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                    (f"irrelevant-{index}", self.workspace, graph["snapshot_id"], left_id, right_id,
+                     "distinct", "stale", "stale", f"unused-key-{index}", "stale", index + 1))
+            db.commit()
+        finally:
+            db.close()
+        search = self.story.search_story_graph(workspace_id=self.workspace, query="Mira Sen")
+        neighborhood = next(item for item in search["neighborhoods"] if item["match_record_id"] == "entity-alias-long")
+        self.assertIn("entity-alias-short", neighborhood["alias_member_ids"])
+        self.assertIn(accepted["decision_id"], [item["decision_id"] for item in neighborhood["alias_provenance"]])
+
+    def test_entity_edit_makes_prior_alias_stale_for_search(self):
+        graph=self.graph_with_alias_pair()
+        pair=next(item for item in graph["identity_candidates"] if {item["left_record_id"],item["right_record_id"]}=={"entity-alias-long","entity-alias-short"})
+        status,accepted=self.call("POST",f"/api/story/workspaces/{self.workspace}/graph/identity-decisions",{
+            "snapshot_id":graph["snapshot_id"],"left_record_id":pair["left_record_id"],"right_record_id":pair["right_record_id"],
+            "action":"alias","idempotency_key":str(uuid.uuid4()),"expected_head":0,
+            "left_fingerprint":pair["left_fingerprint"],"right_fingerprint":pair["right_fingerprint"]})
+        self.assertEqual(status,"201 Created")
+        self.story.update_story_graph_record(workspace_id=self.workspace,record_id="entity-alias-long",name="Renamed entity",detail="")
+        refreshed=self.story.get_story_graph(workspace_id=self.workspace,snapshot_id=graph["snapshot_id"])
+        self.assertFalse(any("entity-alias-long" in group for group in refreshed["alias_groups"]))
+        stale=next(item for item in refreshed["identity_decisions"] if item["decision_id"]==accepted["decision_id"])
+        self.assertTrue(stale["stale"]); self.assertFalse(stale["active"])
+
+    def test_relation_search_expands_alias_endpoints_and_their_incident_relations(self):
+        graph = self.graph_with_alias_pair()
+        unreviewed = self.story.search_story_graph(workspace_id=self.workspace, query="holds")
+        ordinary = next(item for item in unreviewed["neighborhoods"] if item["match_record_id"] == "relation-alias-test")
+        self.assertEqual(ordinary["alias_member_ids"], [])
+        pair = next(item for item in graph["identity_candidates"]
+            if {item["left_record_id"], item["right_record_id"]} == {"entity-alias-long", "entity-alias-short"})
+        status, _ = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", {
+            "snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+            "right_record_id": pair["right_record_id"], "action": "alias",
+            "idempotency_key": str(uuid.uuid4()), "expected_head": 0,
+            "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"]})
+        self.assertEqual(status, "201 Created")
+        result = self.story.search_story_graph(workspace_id=self.workspace, query="holds")
+        neighborhood = next(item for item in result["neighborhoods"] if item["match_record_id"] == "relation-alias-test")
+        related = {item["record_id"] for item in neighborhood["records"]}
+        self.assertIn("entity-alias-short", related)
+        self.assertIn("relation-alias-side", related)
+
+    def test_identity_decision_rejects_partial_snapshot_and_malformed_ids(self):
+        graph = self.graph_with_alias_pair()
+        pair = next(item for item in graph["identity_candidates"]
+            if {item["left_record_id"], item["right_record_id"]} == {"entity-alias-long", "entity-alias-short"})
+        body = {"snapshot_id": graph["snapshot_id"], "left_record_id": pair["left_record_id"],
+            "right_record_id": pair["right_record_id"], "action": "alias", "idempotency_key": str(uuid.uuid4()),
+            "expected_head": 0, "left_fingerprint": pair["left_fingerprint"], "right_fingerprint": pair["right_fingerprint"]}
+        db = self.ledger._connect()
+        try:
+            db.execute("UPDATE story_graph_snapshots SET status='partial', chunk_complete=0 WHERE snapshot_id=?", (graph["snapshot_id"],))
+            db.execute("UPDATE story_graph_chunks SET state='pending' WHERE snapshot_id=? AND chunk_index=1", (graph["snapshot_id"],))
+            db.commit()
+        finally:
+            db.close()
+        status, response = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", body)
+        self.assertEqual(status, "409 Conflict")
+        self.assertIn("complete graph snapshot", response["error"]["message"])
+        malformed = dict(body, left_record_id=[])
+        status, _ = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph/identity-decisions", malformed)
+        self.assertEqual(status, "422 Unprocessable Entity")
+
+    def test_cross_chunk_name_variant_is_suggested_without_merging_records(self):
+        def entity(record_id, name, chunk_id, quote):
+            return {"record_id": record_id, "kind": "entity", "type": "character", "name": name,
+                "evidence": [{"chunk_id": chunk_id, "quote": quote, "start_codepoint": 0, "end_codepoint": len(quote)}]}
+        records = [entity("e1", "Mira Sen", "chunk-1", "Mira Sen entered the room."),
+                   entity("e2", "Mira", "chunk-2", "Mira returned at dawn.")]
+        candidates = StoryAuthoring._graph_identity_candidates(records)
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual((candidates[0]["left_record_id"], candidates[0]["right_record_id"]), ("e1", "e2"))
+        self.assertNotIn("decision", candidates[0])
+        self.assertEqual([record["record_id"] for record in records], ["e1", "e2"])
+
+    def test_name_variant_candidates_require_disjoint_chunks_and_matching_type(self):
+        def entity(record_id, name, entity_type, chunk_id):
+            return {"record_id": record_id, "kind": "entity", "type": entity_type, "name": name,
+                "evidence": [{"chunk_id": chunk_id, "quote": name}]}
+        records = [entity("e1", "Mira Sen", "character", "chunk-1"),
+                   entity("e2", "Mira", "character", "chunk-1"),
+                   entity("e3", "Mira", "location", "chunk-2"),
+                   entity("e4", "Mira", "character", "chunk-3")]
+        candidates = StoryAuthoring._graph_identity_candidates(records)
+        self.assertEqual([(item["left_record_id"], item["right_record_id"]) for item in candidates], [("e1", "e4")])
 
     def test_all_chunks_have_exact_durable_evidence_and_review_survives_reload(self):
         key = str(uuid.uuid4())
@@ -104,7 +349,7 @@ class StoryGraphTests(unittest.TestCase):
             "name": "Mira holds the key", "detail": "Writer reviewed this claim.", "status": "user_authored"})
         self.assertEqual(update_status, "200 OK")
         self.assertEqual(saved["status"], "user_authored")
-        restarted = StoryAuthoring(ProductionLedger(self.root / "storage/production/ledger.sqlite3"), data_root=self.root)
+        restarted = StoryAuthoring(ProductionLedger(self.root / "services/production/ledger.sqlite3"), data_root=self.root)
         loaded = restarted.get_story_graph(workspace_id=self.workspace, snapshot_id=graph["snapshot_id"])
         reviewed = next(record for record in loaded["records"] if record["record_id"] == fact["record_id"])
         self.assertEqual(reviewed["name"], "Mira holds the key")
@@ -140,7 +385,9 @@ class StoryGraphTests(unittest.TestCase):
         workspace_id = created["workspace"]["workspace_id"]
         revision_id = created["workspace"]["created_revision"]["revision_id"]
 
+        graph_prompts = []
         def graph_provider(*, prompt):
+            graph_prompts.append(prompt)
             chunk = json.loads(prompt.split("CHUNK TEXT (JSON):\n", 1)[1])
             quote = "Mira keeps the key."
             start = chunk.index(quote)
@@ -150,6 +397,7 @@ class StoryGraphTests(unittest.TestCase):
 
         graph = self.story.build_story_graph(workspace_id=workspace_id, source_revision_id=revision_id,
             idempotency_key=str(uuid.uuid4()), provider_call=graph_provider)
+        self.assertIn("character, location, organization, group, creature, object, or other", graph_prompts[0])
         prompts = []
 
         def screenplay_provider(*, prompt):
@@ -173,6 +421,133 @@ class StoryGraphTests(unittest.TestCase):
             screenplay_revision_id=draft["screenplay_revision_id"], idempotency_key=str(uuid.uuid4()),
             screenplay=edited)
         self.assertEqual(child["style_selection_snapshot_id"], selection["snapshot_id"])
+
+    def test_changed_workspace_style_requires_a_fresh_screenplay_draft_identity(self):
+        styles = ProductionStyleService(self.ledger)
+        original_style = styles.select(isolated_context_id="workspace-style-recovery",
+            production_type="informative")
+        first_pin = styles.select(workspace_id=self.workspace, production_type="informative",
+            style_version_id=original_style["style_version_id"])
+        graph = self.story.build_story_graph(workspace_id=self.workspace,
+            source_revision_id=self.revision, idempotency_key=str(uuid.uuid4()),
+            provider_call=self.app_provider)
+        first_key = str(uuid.uuid4())
+        first = self.story.draft_screenplay(workspace_id=self.workspace,
+            source_revision_id=self.revision, graph_snapshot_id=graph["snapshot_id"],
+            idempotency_key=first_key, provider_call=self.app_provider)
+        self.assertEqual(first["style_selection_snapshot_id"], first_pin["snapshot_id"])
+        self.assertTrue(self.story.accept_screenplay(workspace_id=self.workspace,
+            screenplay_revision_id=first["screenplay_revision_id"])["accepted"])
+
+        updated_pin = styles.select(workspace_id=self.workspace, production_type="informative",
+            style_version_id=original_style["style_version_id"], directing_style_id="cinematic")
+        self.assertNotEqual(first_pin["snapshot_id"], updated_pin["snapshot_id"])
+        with self.assertRaisesRegex(LedgerConflict, "older production style"):
+            self.story.accept_screenplay(workspace_id=self.workspace,
+                screenplay_revision_id=first["screenplay_revision_id"])
+        with self.assertRaisesRegex(LedgerConflict, "different source, graph, or production style lineage"):
+            self.story.draft_screenplay(workspace_id=self.workspace,
+                source_revision_id=self.revision, graph_snapshot_id=graph["snapshot_id"],
+                idempotency_key=first_key, provider_call=self.app_provider)
+
+        second = self.story.draft_screenplay(workspace_id=self.workspace,
+            source_revision_id=self.revision, graph_snapshot_id=graph["snapshot_id"],
+            idempotency_key=str(uuid.uuid4()), provider_call=self.app_provider)
+        self.assertEqual(second["style_selection_snapshot_id"], updated_pin["snapshot_id"])
+        self.assertNotEqual(first["screenplay_revision_id"], second["screenplay_revision_id"])
+        self.assertTrue(self.story.accept_screenplay(workspace_id=self.workspace,
+            screenplay_revision_id=second["screenplay_revision_id"])["accepted"])
+
+    def test_screenplay_merges_explicit_scene_continuations_across_source_chunks(self):
+        graph = self.story.build_story_graph(workspace_id=self.workspace, source_revision_id=self.revision,
+            idempotency_key=str(uuid.uuid4()), provider_call=self.app_provider)
+        prompts = []
+
+        def screenplay_provider(*, prompt):
+            prompts.append(prompt)
+            records = json.loads(prompt.split("GRAPH RECORDS (JSON):\n", 1)[1])
+            chunk_id = prompt.split("CHUNK ID: ", 1)[1].split(" ", 1)[0]
+            chunk_index = int(chunk_id.rsplit("_", 1)[1])
+            return {"scenes": [{"slugline": "INT. ROOM - DAY", "summary": f"Beat from {chunk_id}.",
+                "continues_previous_scene": chunk_index > 1,
+                "shots": [{"action": f"Beat from {chunk_id}.", "dialogue": "", "camera": "", "lighting": "",
+                    "mood": "", "sfx": "", "music": "", "evidence_record_ids": [records[0]["record_id"]]}]}]}
+
+        draft = self.story.draft_screenplay(workspace_id=self.workspace, source_revision_id=self.revision,
+            graph_snapshot_id=graph["snapshot_id"], idempotency_key=str(uuid.uuid4()),
+            provider_call=screenplay_provider)
+        scenes = draft["screenplay"]["scenes"]
+        self.assertGreater(draft["chunk_total"], 1)
+        self.assertEqual(len(scenes), 1)
+        self.assertEqual(len(scenes[0]["shots"]), draft["chunk_total"])
+        self.assertEqual([shot["shot_number"] for shot in scenes[0]["shots"]],
+            list(range(1, draft["chunk_total"] + 1)))
+        self.assertEqual(len({e["chunk_id"] for shot in scenes[0]["shots"] for e in shot["evidence"]}),
+            draft["chunk_total"])
+        self.assertTrue(all("PREVIOUS CHUNK CONTINUITY (JSON)" in prompt for prompt in prompts[1:]))
+        self.assertFalse(any("continues_previous_scene" in scene for scene in scenes))
+
+    def test_supplied_passage_ids_resolve_exact_unicode_evidence_and_feed_screenplay(self):
+        created = self.story.create_workspace(title='Harbor Light', source_text=(
+            'At dusk, Mara says, “Hold the lamp.” 🛟 Ivo connects the dynamo. ' * 50))
+        workspace, revision = created['workspace_id'], created['current_revision']['revision_id']
+        source = created['current_revision']['source_text']
+        def provider(*, prompt):
+            if 'GRAPH RECORDS (JSON):\n' in prompt:
+                records = json.loads(prompt.split('GRAPH RECORDS (JSON):\n', 1)[1])
+                return {'scenes': [{'slugline': 'INT. LIGHTHOUSE - DUSK', 'summary': 'Repair',
+                    'shots': [{'action': 'Ivo connects the dynamo.', 'dialogue': '',
+                        'camera': 'Close up', 'lighting': 'Dusk', 'mood': 'Urgent', 'sfx': 'Rain', 'music': '',
+                        'evidence_record_ids': [row['record_id'] for row in records]}]}]}
+            passages = json.loads(prompt.split('SOURCE PASSAGES (JSON):\n', 1)[1].split('\nCHUNK TEXT', 1)[0])
+            return {'records': [{'kind': 'event', 'type': 'action', 'name': 'Repair',
+                'evidence_span_id': passages[-1]['evidence_span_id'],
+                'start': -999, 'end': 999999, 'quote': 'AI quotation is deliberately wrong'}]}
+        graph = self.story.build_story_graph(workspace_id=workspace, source_revision_id=revision,
+            idempotency_key=str(uuid.uuid4()), provider_call=provider)
+        self.assertEqual(graph['status'], 'complete')
+        for record in graph['records']:
+            for evidence in record['evidence']:
+                self.assertEqual(source[evidence['start_codepoint']:evidence['end_codepoint']], evidence['quote'])
+        screenplay = self.story.draft_screenplay(workspace_id=workspace, source_revision_id=revision,
+            graph_snapshot_id=graph['snapshot_id'], idempotency_key=str(uuid.uuid4()), provider_call=provider)
+        self.assertEqual(screenplay['screenplay']['scenes'][0]['shots'][0]['direction']['camera'], 'Close up')
+
+    def test_foreign_passage_id_is_rejected_even_with_valid_legacy_offsets(self):
+        def provider(*, prompt):
+            return {'records': [{'kind': 'event', 'type': 'action', 'name': 'Repair',
+                'evidence_span_id': 'other_chunk:passage-1',
+                'start': 0, 'end': 18, 'quote': 'Mira keeps the key.'}]}
+        graph = self.story.build_story_graph(workspace_id=self.workspace, source_revision_id=self.revision,
+            idempotency_key=str(uuid.uuid4()), provider_call=provider)
+        self.assertEqual(graph['status'], 'partial')
+        self.assertEqual(graph['records'], [])
+        self.assertTrue(all('supplied passage ID' in chunk['error_message'] for chunk in graph['chunks']))
+
+    def test_unique_exact_quote_repairs_miscounted_offsets(self):
+        source = 'Mara says, “Hold the lamp.” Ivo connects the dynamo.'
+        created = self.story.create_workspace(title='Harbor Light', source_text=source)
+        quote = 'Ivo connects the dynamo.'
+        def provider(*, prompt):
+            return {"records": [{"kind": "event", "type": "action", "name": "Repair",
+                "detail": "", "start": 0, "end": len(quote), "quote": quote}]}
+        graph = self.story.build_story_graph(workspace_id=created['workspace_id'],
+            source_revision_id=created['current_revision']['revision_id'],
+            idempotency_key=str(uuid.uuid4()), provider_call=provider)
+        self.assertEqual(graph['status'], 'complete')
+        evidence = graph['records'][0]['evidence'][0]
+        self.assertEqual(evidence['start_codepoint'], source.index(quote))
+        self.assertEqual(source[evidence['start_codepoint']:evidence['end_codepoint']], quote)
+
+    def test_ambiguous_quote_does_not_repair_miscounted_offsets(self):
+        def provider(*, prompt):
+            return {"records": [{"kind": "event", "type": "action", "name": "Keep key",
+                "detail": "", "start": 1, "end": 19, "quote": 'Mira keeps the key.'}]}
+        graph = self.story.build_story_graph(workspace_id=self.workspace,
+            source_revision_id=self.revision, idempotency_key=str(uuid.uuid4()), provider_call=provider)
+        self.assertEqual(graph['status'], 'partial')
+        self.assertEqual(graph['records'], [])
+        self.assertTrue(all('cannot be uniquely located' in chunk['error_message'] for chunk in graph['chunks']))
 
     def test_explicit_retry_retries_only_failed_chunks(self):
         calls = []
@@ -273,12 +648,20 @@ class StoryGraphTests(unittest.TestCase):
             self.story._save_screenplay(workspace_id=self.workspace, source_revision_id=self.revision,
                 graph_snapshot_id=graph["snapshot_id"], screenplay=altered, idempotency_key=draft_key)
         first_shot = draft["screenplay"]["scenes"][0]["shots"][0]
+        self.assertEqual(len(first_shot["character_record_ids"]), 1)
+        self.assertEqual(first_shot["character_record_ids"][0], next(row["record_id"] for row in graph["records"]
+            if row["kind"] == "entity" and row["type"] == "character" and row["name"] == "Mira"))
         self.assertEqual(first_shot["action"], "Mira keeps the key.")
         self.assertEqual(first_shot["evidence"][0]["source_revision_id"], self.revision)
         self.assertEqual(draft["task_status"], "complete")
         self.assertEqual(draft["chunk_complete"], draft["chunk_total"])
         self.assertEqual(draft["coverage_state"], "all_source_chunks_planned_semantic_coverage_unverified")
         edited = json.loads(json.dumps(draft["screenplay"]))
+        for invalid in (0, -1, True, "5", float("inf"), float("nan")):
+            with self.assertRaises(ValueError):
+                self.story._planned_duration(invalid)
+        self.assertIsNone(self.story._planned_duration(None))
+        edited["scenes"][0]["shots"][0]["planned_duration_seconds"] = 8.5
         edited["scenes"][0]["shots"][0]["action"] = ""
         edited["scenes"][0]["shots"][0]["dialogue"] = "Mira: I have it."
         edit_key = str(uuid.uuid4())
@@ -294,6 +677,7 @@ class StoryGraphTests(unittest.TestCase):
         self.assertEqual(replayed_edit["screenplay_revision_id"], saved["screenplay_revision_id"])
         _, loaded = self.call("GET", f"{screenplay_path}?revision_id={self.revision}")
         self.assertEqual(loaded["screenplay_revision_id"], saved["screenplay_revision_id"])
+        self.assertEqual(loaded["screenplay"]["scenes"][0]["shots"][0]["planned_duration_seconds"], 8.5)
         self.assertEqual(loaded["screenplay"]["scenes"][0]["shots"][0]["evidence"], first_shot["evidence"])
         accept_path = f"{screenplay_path}/revisions/{saved['screenplay_revision_id']}/accept"
         accept_status, accepted = self.call("POST", accept_path, {})
@@ -360,6 +744,10 @@ class StoryGraphTests(unittest.TestCase):
         status, final = self.call_with_app(restarted_app, "POST", path, payload)
         self.assertEqual(status, "201 Created")
         self.assertEqual(final["task_status"], "complete")
+        coverage = final["screenplay"]["graph_record_coverage"]
+        self.assertEqual(coverage["scope"], "extracted_events_and_facts")
+        self.assertGreaterEqual(coverage["record_count"], coverage["linked_count"])
+        self.assertEqual(coverage["linked_count"] + len(coverage["unlinked_records"]), coverage["record_count"])
         self.assertEqual(len(calls), before + partial["chunk_total"] - 1)
         replay_app = create_app(data_root=self.root, reasoning_json_provider=provider,
             capability_provider=lambda: {}, gpu_reader=lambda: {})

@@ -1,11 +1,30 @@
 from __future__ import annotations
 
 import tempfile
+import subprocess
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-from story_builder.services.reasoning_provider import ReasoningProviderError, _codex_json
+from story_builder.services.reasoning_provider import ReasoningProviderError, _codex_json, _run_json_command
+
+
+class ReasoningTimeoutTests(unittest.TestCase):
+    def test_provider_call_allows_thirty_minutes(self):
+        process = MagicMock(returncode=0)
+        process.communicate.return_value = ('{"ok":true}', '')
+        with patch('story_builder.services.reasoning_provider.subprocess.Popen', return_value=process):
+            self.assertEqual(_run_json_command(['codex', 'exec'], 'test'), '{"ok":true}')
+        process.communicate.assert_called_once_with(input='test', timeout=1800)
+
+    def test_expired_call_still_terminates_process_group(self):
+        process = MagicMock(pid=12345)
+        process.communicate.side_effect = [subprocess.TimeoutExpired('codex', 1800), ('', '')]
+        with patch('story_builder.services.reasoning_provider.subprocess.Popen', return_value=process), \
+             patch('story_builder.services.reasoning_provider.os.killpg') as terminate:
+            with self.assertRaisesRegex(ReasoningProviderError, '1800 seconds'):
+                _run_json_command(['codex', 'exec'], 'test')
+        terminate.assert_called_once()
 
 
 class CodexImageInputTests(unittest.TestCase):

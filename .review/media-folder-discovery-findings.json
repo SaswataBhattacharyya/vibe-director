@@ -1,0 +1,495 @@
+{
+  "comparison": "Task-scoped working changes; unrelated existing working-tree changes excluded",
+  "mode": "Manual source tracing plus refreshed Graphify depth-2 candidate discovery",
+  "limitations": [
+    "Graphify module import candidates are broader than semantic impact; retained only source-confirmed affected seams.",
+    "Two levels traced: UI \u2192 API catalogue/list \u2192 discovery; reuse \u2192 asset_path/shared_file \u2192 tool inputs and checkpoint saving. Dynamic tool flows were not exhaustively traversed.",
+    "No measured coverage, no generated-media acceptance. Graph has unsupported/zero-node files.",
+    "Risk is a prioritization heuristic; unknown caller count gives an upper bound."
+  ],
+  "findings": [
+    {
+      "node": "backend/story_builder/services/media_discovery.py::project_locations",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 10
+      },
+      "anchor": "def project_locations(root, workspace):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project registry \u2192 canonical and saved folder scopes.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_discovery.py::discover",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 26
+      },
+      "anchor": "def discover(root, workspace, *, shared=False, kinds=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "list_assets/browse_catalogue \u2192 serialized discovery.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_discovery.py::_discover_locked",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 35
+      },
+      "anchor": "def _discover_locked(root, workspace, *, shared=False, kinds=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Recursive discovery \u2192 manifest identities, probe and content hashes; catalogue tests exercise new branches.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_discovery.py::available",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 93
+      },
+      "anchor": "def available(root, record):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "list_assets/browse_catalogue \u2192 missing source filtering.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/storage_paths.py::shared_file",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 77
+      },
+      "anchor": "def shared_file(root: Path, location: dict) -> Path:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "asset_path \u2192 authorized source resolution \u2192 previews, reference reuse and tool input validation.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::list_assets",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 385
+      },
+      "anchor": "def list_assets(root: Path, workspace_id: str, *, kind: str | None = None, limit: int = 50,",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "API list \u2192 generic asset pools \u2192 Image Assets, FFLF, Editor, ACE, storyboard.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::browse_catalogue",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1302
+      },
+      "anchor": "def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = \"image,video,audio\",",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "API catalogue \u2192 shared picker and R2V dropdown; current/project/global scopes tested.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::catalogue_source",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1232
+      },
+      "anchor": "def catalogue_source(record: dict[str, Any]) -> str:",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "browse_catalogue \u2192 physical repertoire classification without requiring analysis metadata.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::asset_path",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 821
+      },
+      "anchor": "def asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Unchanged resolver delegates new storage locations to shared_file; frozen identities remain intact.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::reuse_catalogue_asset",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1397
+      },
+      "anchor": "def reuse_catalogue_asset(root: Path, workspace_id: str, *, source_workspace_id: str, asset_id: str, role: str | None = None, mode: str = \"reference\") -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Explicit Add \u2192 hash verification \u2192 shared link/copy; tamper and identity tests.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::_link_shared_asset",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1464
+      },
+      "anchor": "def _link_shared_asset(root, workspace_id, source_workspace_id, source, location, role):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Reference-mode reuse retains location and provenance in target manifest.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::deletion_preview",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1526
+      },
+      "anchor": "def deletion_preview(root: Path, workspace_id: str, asset_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Resolves discovered source path and checks other saved memberships before deleting.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::delete_media_file",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1577
+      },
+      "anchor": "def delete_media_file(root: Path, workspace_id: str, asset_id: str, sha256: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Unchanged explicit deletion resolves same source; discovery does not delete originals.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::owned_files",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 178
+      },
+      "anchor": "def owned_files(root, workspace, memory=None):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project save copies source files into checkpoint; excludes nested project-data.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::save",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 338
+      },
+      "anchor": "def save(root, workspace, folder, memory):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project checkpoint copies registered source bytes and verifies original hash.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "frontend/src/MediaSourcePicker.tsx::MediaSourcePicker",
+      "location": {
+        "file": "frontend/src/MediaSourcePicker.tsx",
+        "line": 9
+      },
+      "anchor": "export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false}: {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared picker used by Editor, Media Prep, Image Assets, ACE, Jukebox and Styles. Three browser tests cover source/Add interactions.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "frontend/src/App.tsx::VideoWorkspace",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 129
+      },
+      "anchor": "function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: 'create'|'take'; visible?: boolean; workspaceId: string }) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "R2V current project dropdown \u2192 browseMediaCatalogue \u2192 explicit Add; FFLF retains role slots.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "frontend/src/lib/media-api.ts::browseMediaCatalogue",
+      "location": {
+        "file": "frontend/src/lib/media-api.ts",
+        "line": 381
+      },
+      "anchor": "export function browseMediaCatalogue(workspaceId:string, options:{kinds:string;source:string;owner:string;query:string;offset:number;order:string;folder?:string}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared HTTP client feeds both picker UIs; pagination/filter contracts unchanged.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "frontend/src/lib/media-api.ts::listMediaAssets",
+      "location": {
+        "file": "frontend/src/lib/media-api.ts",
+        "line": 97
+      },
+      "anchor": "export function listMediaAssets(workspaceId: string, kind: string, includeArchived = false, styleContextId = '') {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Generic tool pools read newly discovered project assets; role categories remain separate.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::validate_selection",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 169
+      },
+      "anchor": "def validate_selection(root, workspace, values):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Editor asset_path consumer validates selected files before rendering.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/ace_studio.py::reference",
+      "location": {
+        "file": "backend/story_builder/services/ace_studio.py",
+        "line": 196
+      },
+      "anchor": "def reference(root, p):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "ACE asset_path consumer probes reference audio; generation was not run.",
+        "Static references and focused tests establish test evidence, not measured coverage. Caller-count factor not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED"
+    }
+  ]
+}

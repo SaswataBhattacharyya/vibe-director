@@ -78,6 +78,19 @@ class PromptDraftTests(unittest.TestCase):
         self.assertNotIn('"video_quality": "standard"', prompt)
         self.assertNotIn('"seconds": 10', prompt)
 
+    def test_preparation_uses_only_applicable_approved_project_rules(self):
+        from story_builder.services.prompt_director import PromptDirector
+        PromptDirector(self.ledger, self.story)
+        with sqlite3.connect(self.path) as db:
+            db.execute("INSERT INTO story_prompt_guidance(workspace_id,revision,body_json) VALUES(?,?,?)", (
+                "ws-a", 1, json.dumps({"lessons": [
+                    {"scope":"video", "rule":"Use one concrete camera move."},
+                    {"scope":"character", "rule":"Specify visible clothing."}], "assets":{}})))
+        with patch("story_builder.services.reasoning_provider.generate_json", return_value={"prompt":"A door opens."}) as model:
+            self.drafts.prepare("ws-a", "sp-a", "1.1", T2V_WORKFLOW_ID)
+        self.assertIn("Use one concrete camera move.", model.call_args.kwargs["prompt"])
+        self.assertNotIn("Specify visible clothing.", model.call_args.kwargs["prompt"])
+
     def test_prompt_drafts_persist_with_setup_and_screenplay_identity(self):
         value = {"1.1": {"workflow_id": T2V_WORKFLOW_ID, "prompt": "Scene action and holistic direction."}}
         saved = self.drafts.save("ws-a", "sp-a", self.setup_value, value)

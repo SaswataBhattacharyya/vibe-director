@@ -1198,6 +1198,139 @@ class IsolatedVideoJobTests(unittest.TestCase):
         with jobs.ledger._connect() as db:
             self.assertEqual(db.execute("SELECT COUNT(*) FROM production_takes WHERE project_id='workspace-a'").fetchone()[0], 0)
 
+    def test_release_unsubmitted_attempt_fences_late_submission_and_keeps_new_draft_usable(self):
+        from story_builder.services.minimax_h3_t2v import T2V_GRAPH_PATH
+        self.jobs.graph_path = T2V_GRAPH_PATH
+        self.assertEqual(self.jobs.release_attempt(workspace_id="workspace-a", idempotency_key="old"), {"released":True})
+        self.assertEqual(self.jobs.release_attempt(workspace_id="workspace-a", idempotency_key="old"), {"released":True})
+        with self.assertRaises(StoryHandoffRejected):
+            self.create(key="old", payload=request(workflow_version=2, steps=4), _manual_submission=True)
+        self.assertEqual(self.jobs.list_jobs(workspace_id="workspace-a"), [])
+        created = self.create(key="new", payload=request(workflow_version=2, steps=4), _manual_submission=True)
+        restored = self.jobs.release_attempt(workspace_id="workspace-a", idempotency_key="new")
+        self.assertFalse(restored["released"])
+        self.assertEqual(restored["job"]["job_id"], created["job_id"])
+        self.assertEqual(len(self.jobs.list_jobs(workspace_id="workspace-a")), 1)
+
+    def test_release_attempt_racing_admission_never_loses_or_duplicates_job(self):
+        from story_builder.services.minimax_h3_t2v import T2V_GRAPH_PATH
+        self.jobs.graph_path = T2V_GRAPH_PATH
+        gate = Barrier(2)
+        def submit():
+            gate.wait()
+            try: return self.create(key="race-release", payload=request(workflow_version=2, steps=4), _manual_submission=True)
+            except StoryHandoffRejected: return None
+        def release():
+            gate.wait()
+            return self.jobs.release_attempt(workspace_id="workspace-a", idempotency_key="race-release")
+        with ThreadPoolExecutor(2) as pool:
+            a, b = pool.submit(submit), pool.submit(release)
+            job, result = a.result(), b.result()
+        saved = self.jobs.list_jobs(workspace_id="workspace-a")
+        if result["released"]:
+            self.assertIsNone(job)
+            self.assertEqual(saved, [])
+        else:
+            self.assertEqual(result["job"]["job_id"], job["job_id"])
+            self.assertEqual(len(saved), 1)
+
+    def test_manual_submission_treats_screenplay_metadata_as_advisory(self):
+        jobs, lineage = self.story_jobs()
+        from story_builder.services.minimax_h3_t2v import T2V_GRAPH_PATH
+        jobs.graph_path = T2V_GRAPH_PATH
+        clip = story_clip_id("workspace-a", "screenplay-a", 1, 1)
+        payload = request(workflow_version=2, steps=4, prompt="My own final prompt.", duration_seconds=9)
+        for number, metadata in enumerate((lineage, {**lineage, "setup_hash": "0" * 64},
+                {**lineage, "workflow_id": "stale-extra-field"}, {"scene_number": 1})):
+            with self.subTest(metadata=metadata):
+                job = jobs.create_job(workspace_id="workspace-a", clip_id=clip,
+                    idempotency_key=f"manual-{number}", request=payload,
+                    source_lineage=metadata, _manual_submission=True)
+                self.assertEqual(job["request"]["prompt"], payload["prompt"])
+                self.assertEqual(job["request"]["duration_seconds"], 9)
+                replay = jobs.create_job(workspace_id="workspace-a", clip_id=clip,
+                    idempotency_key=f"manual-{number}", request=payload,
+                    source_lineage={"outdated": True}, _manual_submission=True)
+                self.assertEqual(replay["job_id"], job["job_id"])
+                self.assertEqual(replay["source_lineage"], job["source_lineage"])
+        with self.assertRaises(StoryHandoffRejected):
+            jobs.create_job(workspace_id="workspace-a", clip_id=clip, idempotency_key="strict-stale",
+                request=payload, source_lineage={**lineage, "setup_hash": "0" * 64})
+        with self.assertRaisesRegex(IsolatedJobConflict, "[Ii]dempotency"):
+            jobs.create_job(workspace_id="workspace-a", clip_id=clip, idempotency_key="manual-0",
+                request={**payload, "prompt": "A different render."}, _manual_submission=True)
+        with self.assertRaisesRegex(ValueError, "frozen automated run"):
+            jobs.create_job(workspace_id="workspace-a", clip_id=clip, idempotency_key="bad-mode",
+                request=payload, _manual_submission=True, _full_run_continuation=True)
+
+    def test_manual_retake_inherits_original_provenance_without_browser_lineage(self):
+        jobs, lineage = self.story_jobs()
+        from story_builder.services.minimax_h3_t2v import T2V_GRAPH_PATH
+        jobs.graph_path = T2V_GRAPH_PATH
+        clip = story_clip_id("workspace-a", "screenplay-a", 1, 1)
+        payload = request(workflow_version=2, steps=4)
+        original = jobs.create_job(workspace_id="workspace-a", clip_id=clip,
+            idempotency_key="original-linked", request=payload, source_lineage=lineage)
+        self.assertEqual(original["source_lineage"]["shot_number"], 1)
+        take = jobs._take_and_meta(original["job_id"])[0]
+        for status in ("submitting", "collecting", "needs_review"):
+            self.ledger.transition_take(project_id="workspace-a", take_id=take["take_id"], status=status)
+        for number, metadata in enumerate((None, {"broken": "browser metadata"})):
+            retake = jobs.create_job(workspace_id="workspace-a", clip_id=clip,
+                idempotency_key=f"manual-retake-{number}", request={**payload, "prompt": "My retake."},
+                retake_of_job_id=original["job_id"], keep_original=True,
+                source_lineage=metadata, _manual_submission=True)
+            self.assertEqual(retake["source_lineage"], original["source_lineage"])
+            self.assertEqual(retake["request"]["prompt"], "My retake.")
+        self.assertEqual(jobs.get_job(original["job_id"])["status"], "needs_review")
+
+    def test_manual_r2v_admits_custom_image_audio_prompt_without_saved_shot(self):
+        from story_builder.tests.test_isolated_r2v_contract import request as r2v_request
+        jobs = IsolatedVideoJobs(self.ledger, r2v_capability_provider=lambda: {"available": True})
+        payload = r2v_request(workflow_version=2, steps=4,
+            prompt="Animate <Picture 1> with sound from <Audio 1>.",
+            audios=[{"asset_id": "pa-1111111111111111", "sha256": "b" * 64,
+                     "role": "sound", "intent": "Use the soundtrack.", "speaker_ids": []}])
+        job = jobs.create_job(workspace_id="workspace-a", clip_id="manual-r2v", idempotency_key="manual-r2v",
+            request=payload, source_lineage={"workflow_id": "stale", "scene_number": 1}, _manual_submission=True)
+        self.assertEqual(job["request"]["prompt"], payload["prompt"])
+        self.assertEqual(len(job["request"]["images"]), 1)
+        self.assertEqual(len(job["request"]["audios"]), 1)
+        self.assertIsNone(job["source_lineage"])
+
+    def test_manual_http_submission_accepts_unprepared_shot_and_reports_definitive_rejection(self):
+        from story_builder.services.minimax_h3_t2v import T2V_GRAPH_PATH
+        app = create_app(data_root=Path(self.temporary.name) / "manual-http", graph_path=T2V_GRAPH_PATH,
+            capability_provider=lambda: {"available": True},
+            worker_status_provider=lambda: {"enabled": True, "running": True, "available": True},
+            gpu_reader=lambda: {"temperature_c": 40., "graphics_clock_mhz": 1200.})
+        def call(payload, path="/api/video/jobs"):
+            body = json.dumps(payload).encode()
+            environ = {"REQUEST_METHOD": "POST", "PATH_INFO": path, "QUERY_STRING": "",
+                "CONTENT_TYPE": "application/json", "CONTENT_LENGTH": str(len(body)), "wsgi.input": io.BytesIO(body)}
+            statuses = []
+            result = json.loads(b"".join(app(environ, lambda status, headers: statuses.append(status))))
+            return statuses[0], result
+        payload = {"workspace_id": "ws", "clip_id": "clip", "idempotency_key": "manual-http",
+            "request": request(workflow_version=2, steps=4), "source_lineage": {"broken": True}}
+        status, job = call(payload)
+        self.assertEqual(status, "202 Accepted", job)
+        self.assertIsNone(job["source_lineage"])
+        status, rejected = call({**payload, "idempotency_key": "invalid", "request": {**payload["request"], "prompt": ""}})
+        self.assertEqual(status, "422 Unprocessable Entity", rejected)
+        self.assertEqual(rejected["admission_state"], "not_created")
+        status, conflict = call({**payload, "request": {**payload["request"], "prompt": "Changed request."}})
+        self.assertEqual(status, "409 Conflict", conflict)
+        self.assertNotIn("admission_state", conflict)
+
+        status, recovered = call({"workspace_id":"ws", "idempotency_key":"manual-http"}, "/api/video/attempts/release")
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(recovered["job"]["job_id"], job["job_id"])
+        self.assertFalse(recovered["released"])
+        status, released = call({"workspace_id":"ws", "idempotency_key":"not-admitted"}, "/api/video/attempts/release")
+        self.assertEqual(status, "200 OK")
+        self.assertTrue(released["released"])
+
     def test_story_lineage_persists_replays_and_retakes_without_changing_request(self):
         jobs, lineage = self.story_jobs()
         clip = story_clip_id("workspace-a", "screenplay-a", 1, 1)

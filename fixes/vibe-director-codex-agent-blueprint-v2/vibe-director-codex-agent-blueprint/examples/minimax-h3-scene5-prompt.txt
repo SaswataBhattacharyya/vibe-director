@@ -1,0 +1,19 @@
+subject_definitions:
+<Picture 1> Tiny mouse reference. Preserve exact character identity, proportions and tail.
+<Picture 2> Lion reference. Preserve mane, face and relative size.
+<Picture 3> EXACT FIRST FRAME: last frame of previous clip. Mouse beside intact rope knot; lion still trapped. Preserve positions, net and lighting.
+<audio1> Lion VOICE IDENTITY SAMPLE, not prerecorded dialogue. Generate only the lion's new speech from the dialogue text below.
+
+detailed_description:
+15-second cinematic forest animation, ONE CONTINUOUS SHOT. Continue from <Picture 3>.
+[00:00–00:02] Mouse inspects rope knot beside lion paw. Camera gently pushes in; lion watches hopefully.
+[00:02–00:06] Mouse grips rope with tiny paws and gnaws rapidly; show fibers fraying before breaking. Low close framing, lion paw visible. Quiet tooth-on-rope sounds.
+[00:06–00:09] Rope finally snaps; ends separate, the connected net visibly loses tension. Mouse hops back; camera pulls back and rises.
+[00:09–00:12] Lion pulls his front paw free and carefully rises. Loosened net slides down and remains on the forest floor; camera widens to include mouse.
+[00:12–00:15] Lion lowers his head toward mouse and says using <audio1>, warmly, "You saved me, little friend!" Synchronize his mouth to generated speech. Mouse nods; camera settles on both faces.
+
+camera_direction: One physically smooth camera with no cuts; low inspection view to close chewing action, then controlled wide reveal and final two-character composition.
+overall_soundscape: Quiet birds, forest air, rope fibers, a sharp rope snap, lion breathing and footfalls. Clear generated lion dialogue. No narration or other voices.
+non_diegetic_music: N/A.
+visual_continuity: Match <Picture 3> exactly at start, preserve <Picture 1> and <Picture 2> identities, keep mouse much smaller, show net physically loosening and staying on ground. No text or overlays.
+END FRAME: Free lion smiling down at happy mouse, broken net behind; suitable as next clip's first frame.

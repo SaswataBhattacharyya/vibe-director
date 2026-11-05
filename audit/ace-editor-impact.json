@@ -1,0 +1,688 @@
+{
+  "comparison": "Application patch against HEAD; pre-existing Markdown cleanup excluded. Untracked new components/styles/tests included.",
+  "mode": "manual source traversal with Graphify discovery; full local AST graph rebuilt after edits",
+  "limitations": [
+    "Initial incremental graph was sparse. A full local code-only rebuild completed: 4,364 nodes and 13,432 edges. A BFS depth-2 query from the four main components found 164 candidates; 28 boundary nodes below were confirmed in source. Type/import neighbors are not all behavioral impact.",
+    "Two or more source-consumer levels traced for media, sessions and output contracts. Shared caller inventory below is bounded; this is not a whole-repository review.",
+    "No measured coverage. Test-gap=1 means no direct backend test references found in backend/story_builder/tests, not proof of uncovered lines.",
+    "All backend nodes are indirectly affected contracts and remain unchanged. No real rendering, training, native folder dialog or provider/GPU acceptance performed."
+  ],
+  "overall_risk": {
+    "level": "high",
+    "score": 0.9
+  },
+  "findings": [
+    {
+      "node": "Editor UI",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 15
+      },
+      "anchor": "export default function VibeEditorPage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "ACE UI",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 25
+      },
+      "anchor": "export default function AceStudioPage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Editor browser",
+      "location": {
+        "file": "frontend/src/EditorAssetBrowser.tsx",
+        "line": 5
+      },
+      "anchor": "export default function EditorAssetBrowser({assets,kind,disabled,onImport,onAttach,onDelete,onPreview}:{assets:MediaAsset[];kind:string;disabled:boolean;onImport:(files:File[])=>void;onAttach:(assets:MediaAsset[])=>void;onDelete:(ids:string[])=>void;onPreview:(asset:MediaAsset)=>void}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Compact popover",
+      "location": {
+        "file": "frontend/src/CompactPopover.tsx",
+        "line": 6
+      },
+      "anchor": "export default function CompactPopover({label,children,onOpenChange,disabled=false}:{label:string;children:ReactNode;onOpenChange?:(open:boolean)=>void;disabled?:boolean}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Attachment and browser styles",
+      "location": {
+        "file": "frontend/src/editor-assets.css",
+        "line": 1
+      },
+      "anchor": ".editor-asset-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:end}.editor-asset-controls label{display:grid;gap:4px}.editor-asset-results{gap:12px;margin:12px 0}.editor-asset-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.editor-asset-list{display:grid}.editor-asset-carousel{display:flex;overflow-x:auto}.editor-asset-results .editor-asset-card{min-width:150px;max-width:100%;padding:8px;border:1px solid var(--studio-line,#555);border-radius:8px}.editor-asset-card label{display:flex;gap:6px;overflow-wrap:anywhere}.editor-asset-card button{width:100%;display:grid;gap:6px}.editor-asset-card img,.editor-asset-card video{width:100%;height:110px;object-fit:contain}.editor-asset-list .editor-asset-card{display:flex;align-items:center;gap:12px}.editor-asset-list .editor-asset-card button{width:150px}.editor-attachment-chip{max-width:100%;min-width:0;box-sizing:border-box;display:inline-flex;align-items:center;position:relative;padding-right:24px}.editor-composer .editor-attachment-chip .editor-attachment-remove{position:absolute;right:0;margin:0;padding:2px 5px;opacity:0;pointer-events:none}.editor-attachment-chip:hover .editor-attachment-remove,.editor-attachment-chip:focus-within .editor-attachment-remove{opacity:1;pointer-events:auto}@media(hover:none){.editor-composer .editor-attachment-chip .editor-attachment-remove{opacity:1;pointer-events:auto}}",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Popover styles",
+      "location": {
+        "file": "frontend/src/compact-popover.css",
+        "line": 1
+      },
+      "anchor": ".compact-popover{position:fixed;z-index:1000;width:min(640px,calc(100vw - 16px));max-height:min(70vh,480px);overflow:auto;box-sizing:border-box;padding:16px;background:var(--studio-surface,#211831);color:var(--studio-text,#f8f1ff);border:1px solid var(--studio-line,#655c70);border-radius:12px;box-shadow:0 12px 38px #0008}",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Shared catalogue picker",
+      "location": {
+        "file": "frontend/src/MediaSourcePicker.tsx",
+        "line": 9
+      },
+      "anchor": "export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false}: {",
+      "revision": "working-tree",
+      "risk": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Shared output UI",
+      "location": {
+        "file": "frontend/src/OutputDestination.tsx",
+        "line": 6
+      },
+      "anchor": "export default function OutputDestination({tool,workspaceId,disabled=false,onReady}:{tool:string;workspaceId:string;disabled?:boolean;onReady?:(ready:boolean)=>void}) {",
+      "revision": "working-tree",
+      "risk": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "changed": true,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Selection toggle",
+      "location": {
+        "file": "frontend/src/SelectionToggle.tsx",
+        "line": 2
+      },
+      "anchor": "export default function SelectionToggle({selected, shown, onChange, disabled=false,capacity,occupied=0}: {",
+      "revision": "working-tree",
+      "risk": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Media deletion preflight",
+      "location": {
+        "file": "frontend/src/lib/media-deletion.ts",
+        "line": 2
+      },
+      "anchor": "export async function deleteSelectedMedia(workspaceId:string, ids:string[]) {",
+      "revision": "working-tree",
+      "risk": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references; at least five direct source callers",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references; at least five direct source callers",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Shared upload client",
+      "location": {
+        "file": "frontend/src/lib/media-api.ts",
+        "line": 212
+      },
+      "anchor": "export function uploadMediaAsset(workspaceId: string, file: File, role: string, storage: 'workspace' | 'recording' = 'workspace') {",
+      "revision": "working-tree",
+      "risk": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Shared reuse client",
+      "location": {
+        "file": "frontend/src/lib/media-api.ts",
+        "line": 385
+      },
+      "anchor": "export function reuseCatalogueAsset(workspaceId:string, asset:MediaAsset, role?:string, mode:'reference'|'copy' = 'reference') {",
+      "revision": "working-tree",
+      "risk": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references; at least five direct source callers",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Output HTTP routes",
+      "location": {
+        "file": "backend/story_builder/services/studio_tools_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root,environ,start_response,read_json,respond):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Editor HTTP routes",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root, environ, start_response, read_json, respond):",
+      "revision": "working-tree",
+      "risk": 0.7,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; no direct backend test references found",
+      "evidence": [
+        "Execution flow; cross-module consumer; no direct backend test references found",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Editor selection validator",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 169
+      },
+      "anchor": "def validate_selection(root, workspace, values):",
+      "revision": "working-tree",
+      "risk": 0.7,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; no direct backend test references found",
+      "evidence": [
+        "Execution flow; cross-module consumer; no direct backend test references found",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Editor project persistence",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 191
+      },
+      "anchor": "def update_project(root, project_id, body):",
+      "revision": "working-tree",
+      "risk": 0.7,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; no direct backend test references found",
+      "evidence": [
+        "Execution flow; cross-module consumer; no direct backend test references found",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Editor export",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 441
+      },
+      "anchor": "def export_video(root, project_id, body):",
+      "revision": "working-tree",
+      "risk": 0.9,
+      "factors": {
+        "test_gap": 1,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; no direct backend test references found",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; no direct backend test references found",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Editor renderer",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor_render.py",
+        "line": 54
+      },
+      "anchor": "def render(root, job_id, request, progress):",
+      "revision": "working-tree",
+      "risk": 0.9,
+      "factors": {
+        "test_gap": 1,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; no direct backend test references found",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; no direct backend test references found",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "ACE settings and confirmation",
+      "location": {
+        "file": "backend/story_builder/services/ace_studio.py",
+        "line": 259
+      },
+      "anchor": "def command(root, project_id, body):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Upload validation and registration",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 243
+      },
+      "anchor": "def register_upload(root: Path, workspace_id: str, *, filename: str, content: bytes,",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Media reuse and ownership",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1349
+      },
+      "anchor": "def reuse_catalogue_asset(root: Path, workspace_id: str, *, source_workspace_id: str, asset_id: str, role: str | None = None, mode: str = \"reference\") -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Deletion reference inspection",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1478
+      },
+      "anchor": "def deletion_preview(root: Path, workspace_id: str, asset_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Hash-checked file deletion",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1529
+      },
+      "anchor": "def delete_media_file(root: Path, workspace_id: str, asset_id: str, sha256: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Output grants",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 35
+      },
+      "anchor": "def grant(root, value=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Output preferences",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 72
+      },
+      "anchor": "def preference(root, tool, workspace, choice=None, *, allow_unavailable=False):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Frozen output choice",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 90
+      },
+      "anchor": "def freeze(root, tool, request):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Output publication",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 147
+      },
+      "anchor": "def finalize(root, job, result):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "Missing-folder recovery",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 235
+      },
+      "anchor": "def locate_saved_folder(root, tool, workspace, selected_grant):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "changed": false,
+      "reason": "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+      "evidence": [
+        "Execution flow; cross-module consumer; filesystem/process boundary; relevant mocked/CPU test references",
+        "Editor input \u2192 upload/reuse \u2192 library identity \u2192 persisted ranges \u2192 approved plan \u2192 renderer/export; ACE intent/settings \u2192 explicit confirmation \u2192 existing jobs; output choice \u2192 saved preference/grant \u2192 frozen request \u2192 publication/relink."
+      ],
+      "verification": "PENDING"
+    }
+  ]
+}

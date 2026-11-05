@@ -339,8 +339,11 @@ def validate_comfy_capabilities(object_info: Mapping[str, Any]) -> dict[str, Any
         raise GraphPlanError("comfy_nodes_missing", "Installed ComfyUI lacks nodes needed by the dynamic H3 route.", context={"missing_nodes": missing})
     r2v = object_info["MiniMaxH3ReferenceToVideo"].get("input", {}).get("required", {})
     r2v_optional = object_info["MiniMaxH3ReferenceToVideo"].get("input", {}).get("optional", {})
-    if not {"clip", "vae", "audio_vae", "prompt", "width", "height", "length", "ref_image_size"}.issubset(r2v):
-        raise GraphPlanError("comfy_r2v_schema_mismatch", "Installed H3 R2V node lacks required base inputs.")
+    # ComfyUI exposes the VAE sockets as optional; the compiled graph connects both.
+    base_inputs = {"clip", "vae", "audio_vae", "prompt", "width", "height", "length", "ref_image_size"}
+    missing_inputs = sorted(base_inputs - (set(r2v) | set(r2v_optional)))
+    if missing_inputs:
+        raise GraphPlanError("comfy_r2v_schema_mismatch", "Installed H3 R2V node lacks workflow inputs: " + ", ".join(missing_inputs) + ".", context={"missing_inputs": missing_inputs})
     for group in ("ref_images", "ref_videos", "ref_video_audios", "ref_audios"):
         if group not in r2v_optional and group not in r2v:
             raise GraphPlanError("comfy_r2v_schema_mismatch", "Installed H3 R2V node lacks an expected autogrow reference input.", context={"input_group": group})

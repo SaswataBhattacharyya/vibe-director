@@ -85,7 +85,7 @@ def preference(root, tool, workspace, choice=None, *, allow_unavailable=False):
         if not isinstance(token, str) or not re.fullmatch(r'[a-f0-9]{32}', token): raise
         record = checked(root, 'library', 'output_destinations', 'grants') / f'{token}.json'
         if record.is_symlink(): raise ValueError('Invalid saved folder.')
-        return {**choice, 'path': json.loads(record.read_text())['path'], 'available': False}
+        return {**choice, 'path': (json.loads(record.read_text())['path'] if record.exists() else ''), 'available': False}
 
 def freeze(root, tool, request):
     if tool not in TOOLS: return request

@@ -1,0 +1,199 @@
+{
+  "comparison": "Task-specific replacement/reselection patch in an already dirty checkout; unrelated existing changes excluded",
+  "mode": "manual plus Graphify depth-2 discovery",
+  "limitations": [
+    "Graphify is a discovery aid; source verified for paths listed. No claim of exhaustive dynamic callers or coverage. Refreshed graph is incremental (145 nodes,634 edges), not complete repo coverage. No new GPU render.",
+    "Overall heuristic risk high (maximum 0.60); scores prioritize shared admission boundaries, not defect probabilities."
+  ],
+  "findings": [
+    {
+      "node": "create_app",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 273
+      },
+      "anchor": "def create_app(*, data_root: Path, ledger_path: Path | None = None,",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "stage_r2v_references",
+      "location": {
+        "file": "backend/story_builder/services/isolated_r2v_assets.py",
+        "line": 46
+      },
+      "anchor": "def stage_r2v_references(*, media_root: Path, workspace_id: str, job_id: str,",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "discover",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 39
+      },
+      "anchor": "def discover(root, workspace, *, shared=False, kinds=None):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "_discover_locked",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 48
+      },
+      "anchor": "def _discover_locked(root, workspace, *, shared=False, kinds=None):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "available",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 113
+      },
+      "anchor": "def available(root, record):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "list_assets",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 385
+      },
+      "anchor": "def list_assets(root: Path, workspace_id: str, *, kind: str | None = None, limit: int = 50,",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "browse_catalogue",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1302
+      },
+      "anchor": "def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = \"image,video,audio\",",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "_file_digest",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 12
+      },
+      "anchor": "def _file_digest(path, signature):",
+      "revision": "working-tree",
+      "risk": 0.25,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 0,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "_signature",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 18
+      },
+      "anchor": "def _signature(path):",
+      "revision": "working-tree",
+      "risk": 0.25,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 0,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual trace: catalogue/list -> discovery/availability -> current picker -> reference admission -> R2V staging. Static test references and 47 focused passing tests; no measured coverage. Caller-count threshold not claimed. create_app and staging enforce owner/content integrity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ]
+}

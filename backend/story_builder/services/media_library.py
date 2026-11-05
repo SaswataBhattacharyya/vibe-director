@@ -388,6 +388,8 @@ def list_assets(root: Path, workspace_id: str, *, kind: str | None = None, limit
     project = media_root(root, workspace_id)
     if kind not in {None, "image", "video", "audio"} or not 1 <= limit <= 100 or offset < 0:
         raise ProductionAssetError("Invalid media filter or pagination.")
+    from .media_discovery import discover, available
+    discover(root, workspace_id, kinds={kind} if kind else None)
     _, index = _manifest(project)
     # Shared stores own migrated occurrences; workspace manifests only hold
     # memberships. Include both, with local archive/annotation overrides winning.
@@ -397,7 +399,7 @@ def list_assets(root: Path, workspace_id: str, *, kind: str | None = None, limit
     all_local_rows = list(owned.values())
     local_rows = [row for row in all_local_rows
                   if (kind is None or row["kind"] == kind)
-                  and (include_archived or not row.get("archived_at"))]
+                  and (include_archived or (not row.get("archived_at") and available(root, row)))]
     local_by_id = {row["asset_id"]: row for row in all_local_rows}
     recommendations = []
     for record in _pinned_style_reference_records(root, style_selection):
@@ -817,6 +819,32 @@ def extract_style_reference_frames(root: Path, workspace_id: str, video_asset_id
 
 
 def asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:
+    try:
+        return _original_asset_path(root, workspace_id, asset_id)
+    except (FileNotFoundError, ValueError):
+        base = media_root(root, workspace_id)
+        index = base / 'checkpoint-assets.json'
+        if not index.is_file() or index.is_symlink():
+            raise
+        entry = json.loads(index.read_text()).get(asset_id)
+        if not entry:
+            raise
+        relative = Path(entry.get('path', ''))
+        if relative.is_absolute() or '..' in relative.parts or relative.parts[:1] != ('checkpoint-media',):
+            raise ValueError('Invalid checkpoint media location.')
+        path = base / relative
+        if any(p.is_symlink() for p in (path, *path.parents)) or not path.is_file():
+            raise FileNotFoundError('Checkpoint media is unavailable.')
+        if hashlib.sha256(path.read_bytes()).hexdigest() != entry['sha256']:
+            raise ValueError('Checkpoint media has changed.')
+        _, manifest = _manifest(base)
+        record = next((r for r in manifest['assets'] if r['asset_id'] == asset_id), None)
+        if not record or record['sha256'] != entry['sha256']:
+            raise ValueError('Checkpoint media identity mismatch.')
+        return path, record['media_type'], record['filename']
+
+
+def _original_asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:
     project = media_root(root, workspace_id)
     if not _ID.fullmatch(asset_id):
         raise FileNotFoundError(asset_id)
@@ -1205,6 +1233,8 @@ def catalogue_source(record: dict[str, Any]) -> str:
     metadata = record.get("metadata") or {}
     if record.get("source") == "youtube_download" or (record.get("storage_location") or {}).get("store") == "youtube":
         return "downloaded"
+    if (record.get("storage_location") or {}).get("store") == "repertoire":
+        return "extracted" if metadata.get("analyzer_run_id") or metadata.get("style_frame_sources") else "repertoire"
     if metadata.get("analyzer_run_id") or metadata.get("style_frame_sources"):
         return "extracted"
     if metadata.get("story_builder_donor_sources"):
@@ -1272,20 +1302,36 @@ def reconcile_download_catalogue(root: Path) -> dict[str, Any]:
 def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = "image,video,audio",
                      source: str = "all", owner: str = "", query: str = "",
                      offset: int = 0, limit: int = 24, order: str = "newest", folder: str = "") -> dict[str, Any]:
-    """Read registered media across local workspaces; never discovers arbitrary disk paths."""
+    """Discover supported files in source folders, retaining registered identities and roles."""
     if workspace_id:
         media_root(root, workspace_id)
     allowed = set(kinds.split(","))
     if not allowed or allowed - {"image", "video", "audio"}:
         raise ProductionAssetError("Choose supported media kinds.")
-    if source not in {"all", "current", "downloaded", "extracted", "repertoire", "imported", "generated", "style", "ace_generated"}:
+    if source not in {"all", "projects", "current", "downloaded", "extracted", "repertoire", "imported", "generated", "style", "ace_generated"}:
         raise ProductionAssetError("Unknown media source.")
     if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100 or order not in {"newest", "oldest"} or len(query) > 500:
         raise ProductionAssetError("Invalid catalogue paging, ordering or search.")
     if folder and (folder.startswith("/") or ".." in folder.split("/") or len(folder) > 1000):
         raise ProductionAssetError("Invalid source folder.")
-    if owner and source in {"all", "current"}:
+    if owner and source in {"all", "projects", "current"}:
         media_root(root, owner)
+    from .media_discovery import discover, available
+    # Category filters retain metadata semantics; broad folder scopes discover files.
+    if source in {"all", "projects", "current", "downloaded", "repertoire"}:
+        if source in {"all", "downloaded", "repertoire"} and not owner:
+            discover(root, "tool-library", shared=True, kinds=allowed)
+        if source in {"all", "projects", "current"}:
+            selected = owner or (workspace_id if source == "current" else "")
+            if selected:
+                discover(root, selected, kinds=allowed)
+            else:
+                for directory in sorted((root / "projects").iterdir()) if (root / "projects").exists() else []:
+                    if directory.is_dir() and not directory.is_symlink():
+                        try:
+                            discover(root, project_identity(root, directory.name), kinds=allowed)
+                        except ProductionAssetError:
+                            continue
     rows, owners, folders = [], [], set()
     base = root / "projects"
     records_by_owner = {}
@@ -1310,19 +1356,21 @@ def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = "image,video
         except ProductionAssetError:
             continue
         owners.append(project.name)
-        if (source == "current" and project.name != workspace_id) or (owner and source in {"all", "current"} and project.name != owner):
+        if (source == "current" and project.name != workspace_id) or (owner and source in {"all", "projects", "current"} and project.name != owner):
+            continue
+        if source == "projects" and project.name == "tool-library":
             continue
         for record in index["assets"]:
             if source != "current" and not owner and record.get("storage_location") and (record.get("metadata") or {}).get("library_sources"):
                 continue
-            if record.get("archived_at") or record.get("kind") not in allowed:
+            if record.get("archived_at") or record.get("kind") not in allowed or not available(root, record):
                 continue
             category = catalogue_source(record)
             if source == "style" and "style_reference" not in record.get("roles", []):
                 continue
             if source == "ace_generated" and (record.get("kind") != "audio" or (record.get("metadata") or {}).get("source") != "ace_step_standalone"):
                 continue
-            if source not in {"all", "current", "style", "ace_generated", category} and not (source == "repertoire" and category == "extracted"):
+            if source not in {"all", "projects", "current", "style", "ace_generated", category} and not (source == "repertoire" and category == "extracted"):
                 continue
             text = " ".join([str(record.get("filename", "")), str(record.get("description", "")), *map(str, record.get("tags") or [])]).casefold()
             if query.strip().casefold() not in text:

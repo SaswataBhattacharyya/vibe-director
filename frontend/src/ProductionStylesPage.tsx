@@ -1,3 +1,4 @@
+import {managedProjectId} from './lib/media-workspace';
 import MediaSourcePicker from './MediaSourcePicker';
 import SelectionToggle from './SelectionToggle';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
@@ -46,7 +47,7 @@ function readDirectionForm(): DirectionForm { try { const value=JSON.parse(local
 
 export default function ProductionStylesPage() {
   const [contextId, setContextId] = useState(initialContext);
-  const [selectionWorkspaceId] = useState(() => new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || '');
+  const [selectionWorkspaceId] = useState(() => managedProjectId()==='tool-library'?'':managedProjectId()||new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || '');
   const [storageWarning, setStorageWarning] = useState('');
   const [catalog, setCatalog] = useState<ProductionStyle[]>([]);
   const [directingStyles, setDirectingStyles] = useState<DirectingStyle[]>([]);

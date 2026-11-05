@@ -1,0 +1,724 @@
+{
+  "comparison": "Task-only edits against pre-task copies in /tmp/project-restore-baseline; unrelated working tree changes excluded. Most project service/controller files were already untracked before this task.",
+  "mode": "Graphify discovery + manual source/API/persistence traversal",
+  "graph": {
+    "nodes": 4461,
+    "edges": 13876,
+    "refresh": "code-only --no-cluster --force; incremental extraction emitted only 80 nodes so full refresh was necessary",
+    "backend_reverse_depth": 2,
+    "backend_changed_symbols": 6,
+    "backend_reverse_nodes": 8
+  },
+  "limitations": [
+    "Graph dynamic API imports, React callbacks, browser keys and persistence edges require manual confirmation. Report enumerates the traced boundaries, not every transitive application function.",
+    "67 JSON/data/fixture sources have zero AST nodes; documents intentionally excluded. No measured coverage.",
+    "Existing local checkpoint reopening preserves newer working data; same-installation reopen is not a substitute for independent portable-restore validation.",
+    "Native folder chooser and new provider/GPU generation not run. Shared repertoire is not wholly bundled; only owned/referenced saved media is included."
+  ],
+  "overall_risk": "high",
+  "maximum_risk": 0.6,
+  "maximum_upper_bound": 0.7,
+  "findings": [
+    {
+      "node": "existing_project",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 155
+      },
+      "anchor": "def existing_project(root, folder):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "open_project and validate_folder resolve exact local folder ownership against ledger and project_root; marker alone cannot authorize a folder.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "validate_folder",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 312
+      },
+      "anchor": "def validate_folder(root, value, workspace=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "save/open/new consumers; only exact live legacy folder gains compatibility exception; New remains external.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "owned_files",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 178
+      },
+      "anchor": "def owned_files(root, workspace, memory=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "save enumerates before/after copy; checkpoint pruning prevents nested saves while preserving registered-media materialization.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "save",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 338
+      },
+      "anchor": "def save(root, workspace, folder, memory):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "handle Save/New writes scoped ledgers/files, verifies hashes and publishes main manifest; new relative checkpoint pointers.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "open_project",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 424
+      },
+      "anchor": "def open_project(root, folder):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "handle Open validates folder identity; legacy activates existing ID, portable restore retains integrity/schema checks.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "handle",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 647
+      },
+      "anchor": "def handle(root, story, environ, start_response, read_json, respond):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "isolated_server dynamic dispatcher registers /api/projects; save/open/select/new and idle guards share identity.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "sql_snapshot",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 102
+      },
+      "anchor": "def sql_snapshot(path, workspace):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "save/assert_idle/owned_files follow project owner, declared child relationships and explicit globals; fresh restore tested.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "assert_idle",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 135
+      },
+      "anchor": "def assert_idle(root, workspace):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "handle/save and legacy Open prevent snapshot/switch with unsettled jobs.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "output_defaults",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 323
+      },
+      "anchor": "def output_defaults(root, workspace, folder):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "save and handle set only absent preferences; frozen job destinations are not rewritten.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "project_root",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 39
+      },
+      "anchor": "def project_root(root: Path, workspace_id: str) -> Path:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Stable named-folder registry and deleted-project tombstones remain shared engine location authority.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "load_project_documents",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 157
+      },
+      "anchor": "def load_project_documents(root: Path, data: dict) -> dict:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Editor/ACE service indexes resolve project-owned session documents after restoration.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "save_project_documents",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 176
+      },
+      "anchor": "def save_project_documents(root: Path, data: dict, tool: str, write) -> dict:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Existing session persistence remains unchanged; project checkpoint includes session documents.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "asset_path",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 819
+      },
+      "anchor": "def asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Save materializes registered media; restored checkpoint assets resolve when original location is missing.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "current",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 66
+      },
+      "anchor": "def current(root):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "activate and GET handle feed ProjectController; adds existing folder fallback.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "activate",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 418
+      },
+      "anchor": "def activate(root, workspace, title, memory):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "open_project and handle Select write active identity; current supplies page memory and folder.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "capture",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 14
+      },
+      "anchor": "function capture(workspace:string){",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "action and periodic memory sync archive project browser settings; existing scoping retained.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "install",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 25
+      },
+      "anchor": "function install(project:Project,restore:boolean){",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "startup/action install server state, setActiveProjectId, legacy selected keys and strip foreign URL ownership.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "ProjectController",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 39
+      },
+      "anchor": "export default function ProjectController({children}:{children:ReactNode}){",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "App provider remounts children on switch; full existing-project pagination; scoped browser tests.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "ProjectController.action",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 80
+      },
+      "anchor": " const action=async(operation:string,target?:string)=>{if(!project||actionBusy.current)return;actionBusy.current=true;setBusy(true);setError('');try{",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "sync old memory, checkpoint old project, open target, install returned memory; cached archive retained for recovery.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "VibeEditorPage",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 17
+      },
+      "anchor": "export default function VibeEditorPage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "App editor route; project-owned server sessions; standalone and explicit New unchanged.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "VibeEditorPage.load",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 49
+      },
+      "anchor": "  const load=async(id=selectedId.current)=>{",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "state API filters workspace before selecting session; missing selection restores first owned session once.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "AceStudioPage",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 26
+      },
+      "anchor": "export default function AceStudioPage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "Media Prep music route uses same managed identity; existing standalone Create test preserved.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "AceStudioPage.refresh",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 48
+      },
+      "anchor": "  const refresh=async()=>{const next=await api<State>('state');next.projects=next.projects.filter(p=>p.workspace_id===workspace);setState(next);const restore=restoreSession.current;restoreSession.current=false;setProjectId(id=>{if(restore&&!id&&next.projects.length)return next.projects[0].id;if(id&&!next.projects.some(p=>p.id===id)){try{const recovered=localStorage.getItem(`vibe-ace-draft-${id}`);if(recovered){const value=JSON.parse(recovered);localStorage.setItem('vibe-ace-draft-',JSON.stringify({...value,revision:0}));}}catch{/* Keep original recovery draft. */}return '';}return id;});return next;};",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": true,
+      "evidence": [
+        "state API filters project sessions, restores first owned entry only when no saved choice; New remains explicit.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "setActiveProjectId",
+      "location": {
+        "file": "frontend/src/lib/media-workspace.ts",
+        "line": 4
+      },
+      "anchor": "export function setActiveProjectId(value:string){activeProjectId=value;}",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "install sets shared page ownership.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "managedProjectId",
+      "location": {
+        "file": "frontend/src/lib/media-workspace.ts",
+        "line": 5
+      },
+      "anchor": "export function managedProjectId(){return activeProjectId;}",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Story/Screenplay/Setup/Prompts and video read managed ownership before URL.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "defaultMediaWorkspaceId",
+      "location": {
+        "file": "frontend/src/lib/media-workspace.ts",
+        "line": 25
+      },
+      "anchor": "export function defaultMediaWorkspaceId(): string {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Editor/ACE/image/audio/3D use shared owner before legacy browser keys.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "StoryPage",
+      "location": {
+        "file": "frontend/src/StoryPage.tsx",
+        "line": 25
+      },
+      "anchor": "export default function StoryPage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "ProjectController remount + selected key loads saved story source.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "ScreenplayPage.refresh",
+      "location": {
+        "file": "frontend/src/ScreenplayPage.tsx",
+        "line": 48
+      },
+      "anchor": "  const refresh = async () => {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Managed project selects saved source and screenplay, falls back to revision history; actual owner data rendered.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "VideoWorkspace",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 128
+      },
+      "anchor": "function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: 'create'|'take'; visible?: boolean; workspaceId: string }) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "changed": false,
+      "evidence": [
+        "Project-owned draft and history; listAllJobs fallback loads saved takes independent of browser choice. No generation code changed.",
+        "Focused test evidence is static/reference and executed-case evidence; no measured coverage or TESTED_BY claim."
+      ],
+      "verification": "VERIFIED"
+    }
+  ],
+  "citation_verifier_result": {
+    "checked": 29,
+    "rejected": [],
+    "exit_code": 0
+  }
+}

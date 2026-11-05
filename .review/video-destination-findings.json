@@ -1,0 +1,324 @@
+{
+  "comparison": "task-scoped working tree vs HEAD; unrelated existing Editor/project/docs changes excluded",
+  "mode": "manual source trace with refreshed Graphify discovery aid",
+  "overall_risk": "high (.60 known / .70 possible)",
+  "limitations": [
+    "Bounded two-hop trace from worker and retake paths; publication consumer inspected additionally. Not exhaustive repository analysis.",
+    "Graph rebuilt: 4450 nodes/13827 edges across 455 files; graph lacks measured test coverage and is not runtime readiness proof.",
+    "CPU compilation and mocked staging, not real generated-media acceptance."
+  ],
+  "findings": [
+    {
+      "node": "isolated_video_jobs.py::_workflow_request",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2817
+      },
+      "anchor": "def _workflow_request(snapshot: Mapping[str, Any]) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Three internal consumers: prepare, editable retake draft, direct retake. Only output_destination is excluded; unknown workflow fields still fail.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::prepare_isolated_take",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2859
+      },
+      "anchor": "def prepare_isolated_take(take: dict[str, Any], *, graph_path: Path | None = None,",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "build_worker.prepare -> prepare_isolated_take -> preview dispatch; entire saved snapshot hash verified before projection. All three graph compilers exercised by new tests.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::retake_draft",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2632
+      },
+      "anchor": "    def retake_draft(self, job_id: str, *, keep_original: bool) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "isolated_server retake-draft route returns editable workflow fields; publication choice remains saved in source take.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::create_retake",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2716
+      },
+      "anchor": "    def create_retake(self, job_id: str, *, idempotency_key: str,",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Direct retake -> strict normalization -> create_job; regression covers server metadata in existing saved request_json.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::build_worker",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2938
+      },
+      "anchor": "def build_worker(ledger: ProductionLedger, *, comfy_url: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "ProductionJobWorker.process_one -> nested prepare -> prepare_isolated_take; no scheduling, guards or engine POST changed.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "production_job_worker.py::process_one",
+      "location": {
+        "file": "backend/story_builder/services/production_job_worker.py",
+        "line": 118
+      },
+      "anchor": "    def process_one(self) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Worker executes prepare before engine submission; failed live job has no engine prompt ID.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::_compile_workflow_preview",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2837
+      },
+      "anchor": "def _compile_workflow_preview(request: Mapping[str, Any], t2v_graph: Path,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Dispatch still calls original strict T2V/FL2VA/R2V compilers; all three tested with/without frozen destination.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_contract.py::compile_preview",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_contract.py",
+        "line": 157
+      },
+      "anchor": "def compile_preview(payload: Mapping[str, Any], *, graph_path: Path = T2V_GRAPH_PATH) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "T2V dispatched compile consumer; public schema remains strict.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_fl2va_contract.py::compile_preview",
+      "location": {
+        "file": "backend/story_builder/services/isolated_fl2va_contract.py",
+        "line": 139
+      },
+      "anchor": "def compile_preview(payload: Mapping[str, Any], *, graph_path: Path = FL2VA_GRAPH_PATH) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "First/last-frame dispatched compile consumer; staged loader path rewrite retained.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_r2v_contract.py::compile_preview",
+      "location": {
+        "file": "backend/story_builder/services/isolated_r2v_contract.py",
+        "line": 180
+      },
+      "anchor": "def compile_preview(payload: Mapping[str, Any], *, graph_path: Path = GRAPH_PATH) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "R2V dispatched compile consumer; two-image/one-video fixture and exact failed snapshot compile with mocked staging.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::create_job",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2145
+      },
+      "anchor": "    def create_job(self, *, workspace_id: str, clip_id: str, idempotency_key: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Retake -> create_job -> queue_take; frozen output destination and idempotency retained; new lifecycle regression passes.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "production_ledger.py::queue_take",
+      "location": {
+        "file": "backend/story_builder/services/production_ledger.py",
+        "line": 232
+      },
+      "anchor": "    def queue_take(self, *, project_id: str, run_id: str, shot_id: str, take_id: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "create_job persists full snapshot/hash including output destination; no migration or rewrite.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::make_output_collector",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 3013
+      },
+      "anchor": "def make_output_collector(*, data_root: Path, ledger: ProductionLedger, comfy_url: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Nested collect reads take.input_snapshot.output_destination for verified output relocation; preparation never mutates take.",
+        "Static test references and focused CPU regressions exist; no measured coverage claimed. Caller-count threshold not fully enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ]
+}

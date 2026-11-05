@@ -48,9 +48,10 @@ def handle(root,environ,start_response,read_json,respond):
         from . import multiview_3d
         backend=parse_qs(environ.get('QUERY_STRING','')).get('backend',['trellis'])[0]
         if backend not in {'trellis','pixal'}:raise ValueError('Invalid backend.')
+        workspace=parse_qs(environ.get('QUERY_STRING','')).get('workspace_id',[None])[0]
         result={'input':str(trellis.home(root)/'input'),'output':str(trellis.output_folder(root,None,backend)),
                 'service':multiview_3d.health(),
-                'jobs':[j for j in jobs.list_jobs('trellis') if j.get('request',{}).get('backend','trellis')==backend][:30]}
+                'jobs':[j for j in jobs.list_jobs('trellis') if j.get('request',{}).get('backend','trellis')==backend and (not workspace or j.get('request',{}).get('workspace_id','tool-library')==workspace)][:30]}
 
     elif path=='/api/trellis/output-folder' and method=='POST':
         result=trellis.grant_folder(root,body['path']) if body.get('path') else trellis.choose_folder(root)

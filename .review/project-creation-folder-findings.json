@@ -1,0 +1,245 @@
+{
+  "comparison": "Task-specific New-project child-folder change in dirty working tree; unrelated earlier edits excluded.",
+  "mode": "manual source tracing; refreshed Graphify is a discovery aid",
+  "depth": "Controller action -> project handle -> save/activate -> validation, registry and output defaults; reopen and install consumers included. This is a scoped map, not a whole-repository audit.",
+  "overall_risk": "high (maximum 0.60, upper bound 0.70), prioritization score not defect probability",
+  "limitations": [
+    "No measured coverage; test_gap=0 means direct test evidence, not every branch covered.",
+    "Caller count not exhaustively enumerated; unknown adds 0.10 to upper bounds.",
+    "Graphify full refresh: 4576 nodes / 14300 edges; 71 zero-node and 39 unsupported files omitted.",
+    "22 backend project tests and 7 browser project tests pass; production build passes. New-project browser case additionally checks 390px layout.",
+    "Real user projects were not created or switched as a test. Runtime GET confirms projects_folder and original active project. No provider/GPU generation initiated."
+  ],
+  "findings": [
+    {
+      "node": "backend/story_builder/services/projects.py::def handle(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 647
+      },
+      "anchor": "def handle(root, story, environ, start_response, read_json, respond):",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Creates a fresh child directory, inserts identity, registers internal folder, calls save then activate. ProjectTests new-child tests exercise these branches."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def validate_folder(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 312
+      },
+      "anchor": "def validate_folder(root, value, workspace=None):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Called by New for external parent and by save/open for final child. Canonical registered projects retain existing ownership exception."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def existing_project(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 155
+      },
+      "anchor": "def existing_project(root, folder):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Recognizes newly registered canonical folder only through live ledger identity; reused by validate_folder and open_project."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def save(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 338
+      },
+      "anchor": "def save(root, workspace, folder, memory):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "New checkpoints and output defaults use the child folder, not its parent. Legacy exact-folder API callers remain supported."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def open_project(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 424
+      },
+      "anchor": "def open_project(root, folder):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Reopens the named child without creating another identity; new backend test saves source and verifies restoration."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def current(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 66
+      },
+      "anchor": "def current(root):",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Returns projects_folder to ProjectController and the registered child folder after activate."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "frontend/src/ProjectController.tsx::const action=async",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 81
+      },
+      "anchor": " const action=async(operation:string,target?:string)=>{if(!project||actionBusy.current)return;actionBusy.current=true;setBusy(true);setError('');try{",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Sends parent_folder only for New; saves outgoing memory/checkpoint, installs returned child path. Browser creation and project-switch tests pass."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/storage_paths.py::def project_root(",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 39
+      },
+      "anchor": "def project_root(root: Path, workspace_id: str) -> Path:",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Reads project-folders registry; save, output/media ownership and current/open consume the same stable identity. Existing round-trip and named-child tests pass."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def output_defaults(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 323
+      },
+      "anchor": "def output_defaults(root, workspace, folder):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Called by save and successful project operations; derives outputs beneath the returned child. Child outputs directory checked by backend test; per-tool provider execution not run."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "frontend/src/ProjectController.tsx::function install(",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 25
+      },
+      "anchor": "function install(project:Project,restore:boolean){",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Applies returned identity/browser memory; existing A-B-A and Editor/ACE restoration browser tests pass."
+      ],
+      "verification": "PENDING"
+    }
+  ]
+}

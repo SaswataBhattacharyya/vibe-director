@@ -1,3 +1,4 @@
+import {mockProject} from './fixtures/project.mjs';
 import {test,expect} from '@playwright/test';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jwZkAAAAASUVORK5CYII=','base64');
 test('3D batch has explicit start, recovery and collapsible panels',async({page})=>{
@@ -13,7 +14,7 @@ test('3D batch has explicit start, recovery and collapsible panels',async({page}
   return route.fulfill({status:404,json:{error:{message:'Unused mock'}}});
  });
  await page.route('**/mock/image.png',r=>r.fulfill({contentType:'image/png',body:png}));
- await page.goto('/#/image-to-3d');
+ await mockProject(page); await page.goto('/#/image-to-3d');
  await expect(page.getByRole('heading',{name:'Image to 3D · TRELLIS.2'})).toBeVisible();
  await page.getByRole('button',{name:'Hide conversation',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Director',exact:true})).toBeHidden();

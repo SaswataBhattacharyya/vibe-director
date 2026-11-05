@@ -1,0 +1,80 @@
+{
+  "comparison": "working tree vs HEAD scoped to R2V schema check and regression tests; prior project/Editor changes excluded",
+  "mode": "Source-confirmed two-level trace: validator \u2192 r2v_capability \u2192 server capability/worker readiness \u2192 Video UI getCapability",
+  "overall_risk": "medium",
+  "maximum_lower_bound": 0.4,
+  "maximum_upper_bound": 0.5,
+  "limitations": [
+    "No measured coverage or direct caller-count total. Test references and four executed tests supply bounded evidence.",
+    "Full legacy R2V module has the same six failures/four errors at HEAD and working tree; no new failing case names.",
+    "No generation or real media acceptance run."
+  ],
+  "findings": [
+    {
+      "node": "def validate_comfy_capabilities(",
+      "location": {
+        "file": "backend/story_builder/services/minimax_h3_graph_compiler.py",
+        "line": 334
+      },
+      "anchor": "def validate_comfy_capabilities(object_info: Mapping[str, Any]) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Direct change: accepts base sockets from required or optional; still rejects genuinely absent base/reference/video-loader inputs. Four regression tests pass, including subtests for every base socket."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "def r2v_capability(",
+      "location": {
+        "file": "backend/story_builder/services/production_r2v_capability.py",
+        "line": 88
+      },
+      "anchor": "def r2v_capability(*, comfy_url: str | None = None, root: Path | None = None,",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Direct caller: R2V preflight consumes schema check before reporting manual/automation readiness; model, feature flag, graph and verified-output gates unchanged."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "def dispatch_status(",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 357
+      },
+      "anchor": "    def dispatch_status(workflow_id: str | None = None):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Downstream readiness combines workflow preflight with live worker support. Existing running process requires reload; no frozen jobs, media or graph payloads modified."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ]
+}

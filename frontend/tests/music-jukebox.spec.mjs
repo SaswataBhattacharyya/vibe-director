@@ -1,6 +1,7 @@
+import {mockProject} from './fixtures/project.mjs';
 import {test,expect} from '@playwright/test';
 test('offline music graph renders instruments, preserves split ranges and roundtrips MIDI',async({page})=>{
- await page.goto('/');
+ await mockProject(page); await page.goto('/');
  const result=await page.evaluate(async()=>{
   const e=await import('/src/lib/jukebox-engine.ts');
   const p=e.fresh();p.bars=1;p.master=-6;p.tracks=e.houseBeat(p);
@@ -17,8 +18,9 @@ test('offline music graph renders instruments, preserves split ranges and roundt
 test('music project UI composes, saves, recovers and previews without generation',async({page})=>{
  let saved;let saves=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/**',async r=>{const path=new URL(r.request().url()).pathname;
+  if(path==='/api/studio-tools/output-destination')return r.fulfill({json:{mode:'default',path:'/tmp/music',available:true}});
   if(path==='/api/jukebox/state')return r.fulfill({json:{projects:saved?[saved]:[],output:'/tmp/music'}});
-  if(path==='/api/jukebox/projects'){saved={...r.request().postDataJSON().project,id:'jukebox-123456789abc',workspace_id:'jukebox-123456789abc',revision:1};return r.fulfill({json:saved});}
+  if(path==='/api/jukebox/projects'){saved={...r.request().postDataJSON().project,id:'jukebox-123456789abc',revision:1};return r.fulfill({json:saved});}
   if(path.endsWith('/save')&&path.includes('/jukebox/')){saved={...r.request().postDataJSON().project,revision:++saves+1};return r.fulfill({json:saved});}
   if(path.endsWith('/jobs')&&path.includes('/jukebox/'))return r.fulfill({json:{jobs:[]}});
   if(path==='/api/jukebox/projects/jukebox-123456789abc')return r.fulfill({json:saved});
@@ -27,10 +29,10 @@ test('music project UI composes, saves, recovers and previews without generation
   if(path.includes('/workspace'))return r.fulfill({json:{}});
   return r.fulfill({status:404,json:{error:'Not mocked'}});
  });
- await page.goto('/#/media-prep?tool=music');await page.getByRole('button',{name:'Music Jukebox',exact:true}).click();
- await page.getByLabel('Project name',{exact:true}).fill('First beat');await page.getByRole('button',{name:'New named project',exact:true}).click();
+ await mockProject(page); await page.goto('/#/media-prep?tool=music');await page.getByRole('button',{name:'Music Jukebox',exact:true}).click();
+ await page.getByLabel('Session name',{exact:true}).fill('First beat');await page.getByRole('button',{name:'New music session',exact:true}).click();
  await page.getByRole('button',{name:'Compose & Beats',exact:true}).click();await page.getByRole('button',{name:'Add house drum pattern',exact:true}).click();
- await page.getByRole('button',{name:'Save project',exact:true}).click();await expect.poll(()=>saved?.tracks.length).toBe(3);
+ await page.getByRole('button',{name:'Save music session',exact:true}).click();await expect.poll(()=>saved?.tracks.length).toBe(3);
  await page.getByRole('button',{name:'Prepare rendered preview',exact:true}).click();await expect(page.locator('audio[src^="blob:"]')).toBeVisible();await expect(page.getByRole('alert')).toHaveCount(0);
  await page.getByRole('button',{name:'DJ Mix',exact:true}).click();await expect(page.getByRole('combobox',{name:'Track A',exact:true})).toBeVisible();
  await page.screenshot({path:'/tmp/music-jukebox-desktop.png',fullPage:true});
@@ -38,11 +40,11 @@ test('music project UI composes, saves, recovers and previews without generation
  await expect(page.getByRole('group',{name:'Piano roll grid'})).toBeVisible();
  await page.getByRole('button',{name:'Note 60 step 1',exact:true}).click();
  await page.reload();await page.getByRole('button',{name:'Music Jukebox',exact:true}).click();await expect(page.getByText('Recovered an unsaved browser draft. Save to keep it.',{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Save project',exact:true}).click();await expect.poll(()=>saved?.tracks.length).toBe(4);expect(saved.tracks[3].notes).toHaveLength(1);
+ await page.getByRole('button',{name:'Save music session',exact:true}).click();await expect.poll(()=>saved?.tracks.length).toBe(4);expect(saved.tracks[3].notes).toHaveLength(1);
  await page.setViewportSize({width:760,height:1000});await page.screenshot({path:'/tmp/music-jukebox-narrow.png',fullPage:true});expect(errors).toEqual([]);
 });
 test('audio edits, stretch and captured DJ loops render with bounded timing',async({page})=>{
- await page.goto('/');
+ await mockProject(page); await page.goto('/');
  const result=await page.evaluate(async()=>{
   const e=await import('/src/lib/jukebox-engine.ts');
   const ctx=new AudioContext({sampleRate:44100}),src=ctx.createBuffer(2,44100*3,44100);

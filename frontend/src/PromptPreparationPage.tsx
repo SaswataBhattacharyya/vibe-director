@@ -1,6 +1,9 @@
+import {managedProjectId} from './lib/media-workspace';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, RefreshCw } from 'lucide-react';
 import SelectionMicroEdit from './SelectionMicroEdit';
+import PromptDirector from './PromptDirector';
+import type {PromptChange} from './lib/prompt-director-api';
 import { FL2VA_WORKFLOW_ID, R2V_WORKFLOW_ID, WORKFLOW_ID } from './lib/video-api';
 import { getProductionSetup, getStoryPromptDrafts, getStoryScreenplay, getStoryWorkspace, prepareStoryPrompt, ProductionSetupState, saveStoryPromptDrafts, ScreenplayRevision, StoryPromptDraft, StoryPromptKnowledgeRef, StoryPromptStyleRef } from './lib/story-api';
 import { listMediaAssets, MediaAsset } from './lib/media-api';
@@ -50,7 +53,9 @@ export default function PromptPreparationPage() {
   const [drafts, setDrafts] = useState<Record<string, PromptDraft>>({});
   const [savedDrafts, setSavedDrafts] = useState<Record<string, PromptDraft>>({});
   const [savedSetupHash, setSavedSetupHash] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [savingNow, setSaving] = useState(false);
+  const [directorBusy, setDirectorBusy] = useState(false);
+  const saving = savingNow || directorBusy;
   const [preparingShot, setPreparingShot] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -74,7 +79,7 @@ export default function PromptPreparationPage() {
     refreshInFlight.current = true;
     setLoading(true); setError(''); setNotice('');
     try {
-      const id = new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || localStorage.getItem('vibe-story-selected-v1') || '';
+      const id = managedProjectId() || new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || localStorage.getItem('vibe-story-selected-v1') || '';
       if (!id) throw new Error('Open a saved story and accept its current screenplay first.');
       setWorkspaceId(id);
       const workspace = await getStoryWorkspace(id);
@@ -247,7 +252,18 @@ export default function PromptPreparationPage() {
   const summary = useMemo(() => revision?.screenplay.scenes.reduce((total, scene) => total + scene.shots.length, 0) || 0, [revision]);
 
   const unsavedClips = assistedPlan?.clips.some(clip => clipEdits[clip.clip_id] !== undefined && clipEdits[clip.clip_id] !== clip.prompt);
-  const canContinue = !loading && !saving && !planningClips && !savingClip && !hasUnsavedDrafts && !unsavedClips && !!assistedPlan?.clips.length && assistedPlan.setup_matches_current && JSON.stringify(referenceMaps) === JSON.stringify(savedReferenceMaps);
+  const unsavedReferences = JSON.stringify(referenceMaps) !== JSON.stringify(savedReferenceMaps);
+  // Asset preparation precedes the final clip plan in assisted mode. Only the
+  // route into Current Take requires a current production clip plan here.
+  const requiresClipPlan = setup?.setup?.mode === 'fully_automated';
+  const continueBlockedReason = loading || saving || preparingShot || planningClips || savingClip || savingReferenceMaps
+    ? 'Wait for the current operation to finish.'
+    : hasUnsavedDrafts || unsavedClips || unsavedReferences
+      ? 'Save your prompt and reference edits before continuing.'
+      : requiresClipPlan && (!assistedPlan?.clips.length || !assistedPlan.setup_matches_current)
+        ? 'Prepare and review the per-clip prompts before continuing to Current Take.'
+        : '';
+  const canContinue = !continueBlockedReason;
 
   return <main className="content-wrap prompt-preparation-page">
     <div className="page-heading"><div><div className="eyebrow">STORY WORKFLOW · PROMPTS</div><h1>Prompt Preparation</h1><p>{revision ? `${revision.screenplay.title} · accepted screenplay ${revision.screenplay_revision_id}` : 'Prompts derived from the accepted screenplay.'}</p></div><button className="quiet-button" type="button" onClick={reload} disabled={loading || saving || Boolean(preparingShot)} title={hasUnsavedDrafts ? 'Reloading will ask before discarding unsaved prompt edits.' : ''}><RefreshCw size={15}/> Reload</button></div>
@@ -255,6 +271,17 @@ export default function PromptPreparationPage() {
     {notice && <p role="status" className="prompt-notice">{notice}</p>}
     {loading && <section className="card">Loading the current screenplay and saved setup…</section>}
     {revision && setup && <>
+      <PromptDirector key={`${workspaceId}:${revision.screenplay_revision_id}`} workspace={workspaceId} revision={revision.screenplay_revision_id}
+        shotPrompts={Object.fromEntries(Object.entries(drafts).map(([key,value])=>[key,value.prompt]))}
+        shotWorkflows={Object.fromEntries(Object.entries(drafts).map(([key,value])=>[key,value.workflowId]))}
+        disabled={savingNow||loading||!!preparingShot||planningClips||!!savingClip}
+        onBusy={setDirectorBusy} onApplyShots={(changes:PromptChange[])=>{
+          setDrafts(current=>{
+            const next={...current};
+            for(const change of changes){const key=change.key.slice(5);if(next[key]?.prompt===change.before)next[key]={...next[key],prompt:change.value};}
+            return next;
+          });
+        }}/>
       <section className="card prompt-stage-summary"><div><b>{summary} shot prompts</b><span>Derived from scene action, dialogue, camera, lighting, mood, sound effects and music.</span></div><span className="prompt-revision-badge">{setup.setup?.mode === 'fully_automated' ? 'Fully automated route' : 'Assisted manual'}</span></section>
       <p className="prompt-boundary-note">Save the shot briefs, then prepare and review each production clip below. Start run uses the saved clip prompts. Changed screenplay or settings require preparing the clips again.</p>
       {revision.screenplay.scenes.map((scene, sceneIndex) => <section className="card prompt-scene" key={`${scene.scene_number}-${sceneIndex}`}>
@@ -316,8 +343,8 @@ export default function PromptPreparationPage() {
       <div className="prompt-stage-actions"><button type="button" className="generate-button" onClick={() => void save()} disabled={saving || loading || Boolean(preparingShot) || Object.keys(drafts).length === 0 || !hasUnsavedDrafts}>{saving ? 'Saving prompts…' : !hasUnsavedDrafts ? 'Prompt drafts saved' : 'Save prompt drafts'}</button>
         {setup.setup?.mode === 'assisted_manual' && setup.setup.automate_steps.video && <button type="button" className="quiet-button" onClick={() => void saveReferences()} disabled={loading || savingReferenceMaps || !assistedPlan?.clips.length || JSON.stringify(referenceMaps) === JSON.stringify(savedReferenceMaps)}>{savingReferenceMaps ? 'Saving references…' : 'Save per-clip references'}</button>}
         <a className="quiet-button" href={`#/setup?workspace_id=${encodeURIComponent(workspaceId)}`}>Previous · Automation &amp; Parameters</a>
-        <a className="generate-button" href={setup.setup?.mode === 'fully_automated' ? `#/take?workspace_id=${encodeURIComponent(workspaceId)}` : `#/assets?step=character_images&workspace_id=${encodeURIComponent(workspaceId)}`} aria-disabled={!canContinue} onClick={event => { if (!canContinue) event.preventDefault(); }}>{setup.setup?.mode === 'fully_automated' ? 'Continue to Current Take' : 'Continue to Characters & Voices'}</a>
-        {!canContinue && <span role="status">Save shot briefs, prepare clips and save all edits before continuing.</span>}
+        <a className="generate-button" href={setup.setup?.mode === 'fully_automated' ? `#/take?workspace_id=${encodeURIComponent(workspaceId)}` : `#/characters?step=character_images&workspace_id=${encodeURIComponent(workspaceId)}`} aria-disabled={!canContinue} aria-describedby={!canContinue ? 'prompt-continue-status' : undefined} onClick={event => { if (!canContinue) event.preventDefault(); }}>{setup.setup?.mode === 'fully_automated' ? 'Continue to Current Take' : 'Continue to Characters & Voices'}</a>
+        {!canContinue && <span id="prompt-continue-status" role="status">{continueBlockedReason}</span>}
       </div>
     </>}
   </main>;

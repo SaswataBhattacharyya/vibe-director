@@ -1,3 +1,4 @@
+import {mockProject} from './fixtures/project.mjs';
 import { test, expect } from '@playwright/test';
 
 test('Current Take shows generated clips in a selectable preview carousel', async ({ page }) => {
@@ -12,14 +13,15 @@ test('Current Take shows generated clips in a selectable preview carousel', asyn
     takes: [makeTake('take-1', 1, 6, 'First clip prompt.', 'clip-1'), makeTake('take-2', 2, 8, 'Second clip prompt.', 'clip-2')],
   });
   await page.route('**/api/**', route => route.fulfill({ status: 404, json: { detail: 'Not used in this history-only test' } }));
-  await page.goto('/#/take');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/take');
 
   const carousel = page.getByRole('list', { name: 'Generated video clips carousel' });
   await expect(carousel.getByRole('button', { name: /Take 1 · 6s · First clip prompt\./ })).toBeVisible();
   await expect(carousel.getByRole('button', { name: /Take 2 · 8s · Second clip prompt\./ })).toBeVisible();
   await carousel.getByRole('button', { name: /Take 2 · 8s · Second clip prompt\./ }).click();
   await expect(page.locator('.take-selected-preview video')).toHaveAttribute('src', /\/media\/clip-2\.mp4$/);
-  await expect(page.locator('.take-selected-preview')).toContainText('Second clip prompt.');
+  await page.getByText('Selected take prompt · Take 2',{exact:true}).click();
+  await expect(page.locator('details').filter({hasText:'Selected take prompt · Take 2'})).toContainText('Second clip prompt.');
 });
 
 test('Current Take restores accepted clips and keeps discarded candidates out of history', async ({ page }) => {
@@ -39,7 +41,7 @@ test('Current Take restores accepted clips and keeps discarded candidates out of
     if (url.pathname === '/api/video/jobs/ledger-take-1') return route.fulfill({ json:job });
     return route.fulfill({ status:404, json:{ detail:'Unexpected request in ledger history test' } });
   });
-  await page.goto('/#/take');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/take');
   await expect(page.getByRole('button', { name:/Take 1 · 6s · Ledger clip prompt\./ })).toBeVisible();
   await expect(page.getByRole('list', { name:'Generated video clips carousel' }).getByRole('button', { name:/Discarded take prompt/ })).toHaveCount(0);
   await expect(page.locator('.take-selected-preview video')).toHaveAttribute('src', /asset-1\/playback$/);
@@ -105,9 +107,10 @@ test('Current Take orders assembly choices by screenplay and requires one accept
       exportJobs.unshift(job);
       return route.fulfill({status:202,json:job});
     }
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Not used in assembly selection test' } });
   });
-  await page.goto('/#/take');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/take');
   const panel = page.getByRole('region', { name: 'Assemble story clips' });
   await expect(panel.getByText('Scene 1 · Shot 1 · Clip 1')).toBeVisible();
   await expect(panel.getByText('Scene 1 · Shot 2 · Clip 1')).toBeVisible();
@@ -165,7 +168,7 @@ test('Video prompt supports selected-text edits and applies only the accepted su
     }
     return route.fulfill({ status:404, json:{detail:'Not used in selected-edit test'} });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   const prompt = page.getByLabel('Shot prompt');
   await prompt.fill('A room with soft light.');
   await prompt.evaluate(element => {
@@ -211,7 +214,7 @@ test('story-linked Video Create prepares and saves only its current shot prompt'
     }
     return route.fulfill({status:404,json:{detail:'Not used in stage-local prompt preparation test'}});
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await expect(page.getByRole('heading',{name:'Create video'})).toBeVisible();
   await expect(page.getByRole('button',{name:'Prepare from screenplay'})).toBeVisible();
   await page.getByRole('button',{name:'Prepare from screenplay'}).click();
@@ -246,10 +249,11 @@ test('mocked T2V flow gates readiness, reviews output, accepts, and prepares a n
     if (url.pathname === '/api/video/jobs/job-1/accept') { job = { ...job, status: 'accepted' }; return route.fulfill({ json: job }); }
     if (url.pathname === '/api/video/retakes/job-1') { const keepOriginal = request.postDataJSON().keep_original; return route.fulfill({ json: { source_job_id: 'job-1', request: job.request, keep_original: keepOriginal, candidate_disposition: keepOriginal ? 'keep' : 'discard_requested', asset_cleanup: keepOriginal ? 'kept' : 'archived_recoverable', submission_created: false } }); }
     if (url.pathname === '/api/video/assets/asset-1/playback') return route.fulfill({ status: 200, contentType: 'video/mp4', body: '' });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
 
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await expect(page.getByRole('button', { name: /Generate video/ })).toBeDisabled();
@@ -298,16 +302,16 @@ for (const final of [false, true]) test(`Next accepts the ${final ? 'final' : 'c
     const req=route.request(), url=new URL(req.url()); calls.push(`${req.method()} ${url.pathname}`);
     if(url.pathname==='/api/video/jobs/job-current') return route.fulfill({json:job});
     if(url.pathname==='/api/video/jobs/job-current/accept') return route.fulfill({json:{...job,status:'accepted'}});
-    if(url.pathname==='/api/story/workspaces/workspace-a/screenplay') return route.fulfill({json:{accepted:true,screenplay_revision_id:'screenplay-1',workspace_id:'workspace-a',screenplay:{scenes:[{scene_number:1,slugline:'INT. ROOM',summary:'',shots:final ? [{shot_number:1}] : [{shot_number:1},{shot_number:2},{shot_number:3}]}]}}});
+    if(url.pathname==='/api/story/workspaces/workspace-a/screenplay/revisions/screenplay-1') return route.fulfill({json:{accepted:true,screenplay_revision_id:'screenplay-1',workspace_id:'workspace-a',screenplay:{scenes:[{scene_number:1,slugline:'INT. ROOM',summary:'',shots:final ? [{shot_number:1}] : [{shot_number:1},{shot_number:2},{shot_number:3}]}]}}});
     if(url.pathname==='/api/story/workspaces/workspace-a/prompt-drafts') return route.fulfill({json:{setup_hash:'setup-1',setup_matches_current:true,drafts:{'1.1':{workflow_id:request.workflow_id,prompt:'Scene one prompt'},'1.2':{workflow_id:request.workflow_id,prompt:'Scene two prompt'}}}});
     if(url.pathname==='/api/story/workspaces/workspace-a/production-setup') return route.fulfill({json:{workspace_id:'workspace-a',screenplay_revision_id:'screenplay-1',setup:{mode:'assisted_manual',automate_steps:{character_images:false,character_voice:false,world_images:false,frame_images:false,video:false},video_quality:'high',duration_policy:{kind:'fixed',seconds:6}},updated_at:'now'}});
     if(url.pathname==='/api/video/assets/output-1/playback') return route.fulfill({status:200,contentType:'video/mp4',body:''});
     return route.fulfill({status:404,json:{detail:'Unexpected API request'}});
   });
-  await page.goto('/#/take');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/take');
   await expect(page.getByRole('heading',{name:'Current take', exact:true}).first()).toBeVisible();
-  await expect(page.getByRole('button',{name:'Next clip'})).toBeVisible();
-  await page.getByRole('button',{name:'Next clip'}).click();
+  await expect(page.getByRole('button',{name:'Next clip',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Next clip',exact:true}).click();
   if (final) {
     await expect(page.getByText('Final take accepted. All screenplay shots have been reached.')).toBeVisible();
     expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('vibe-video-active-job-v1')).jobId)).toBe('job-current');
@@ -349,8 +353,8 @@ test('Next prepares and saves only the next screenplay prompt when it has not be
     if(url.pathname==='/api/video/assets/output-1/playback') return route.fulfill({status:200,contentType:'video/mp4',body:''});
     return route.fulfill({status:404,json:{detail:'Unexpected API request'}});
   });
-  await page.goto('/#/take');
-  await page.getByRole('button',{name:'Next clip'}).click();
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/take');
+  await page.getByRole('button',{name:'Next clip',exact:true}).click();
   await expect(page.getByLabel('Shot prompt')).toHaveValue('Prepared second shot prompt.');
   expect(calls).toContain('POST /api/story/workspaces/workspace-a/prompt-drafts/prepare');
   expect(calls).toContain('PUT /api/story/workspaces/workspace-a/prompt-drafts/shot');
@@ -374,12 +378,12 @@ test('Next refuses to accept a story take missing from the current accepted scre
     if(url.pathname==='/api/video/assets/output-1/playback') return route.fulfill({status:200,contentType:'video/mp4',body:''});
     return route.fulfill({status:404,json:{detail:'Unexpected API request'}});
   });
-  await page.goto('/#/take');
-  await page.getByRole('button',{name:'Next clip'}).click();
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/take');
+  await page.getByRole('button',{name:'Next clip',exact:true}).click();
   await expect(page.getByText(/Review the current accepted screenplay and choose a valid shot before advancing; your current take is unchanged\./)).toBeVisible();
   await expect(page.getByText(/reopen the saved shot from Prompt Preparation/i)).toHaveCount(0);
   expect(calls.some(call => call.endsWith('/accept'))).toBeFalsy();
-  await expect(page.getByRole('button',{name:'Next clip'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Next clip',exact:true})).toBeVisible();
 });
 
 test('lost create response preserves the frozen request and only reconciles on reload', async ({ page }) => {
@@ -396,9 +400,10 @@ test('lost create response preserves the frozen request and only reconciles on r
     }
     if (url.pathname === '/api/video/jobs/by-idempotency/' + encodeURIComponent(request.url().split('/by-idempotency/')[1]?.split('?')[0] || '')) return route.fulfill({ json: savedJob });
     if (url.pathname === '/api/video/jobs/job-recovered') return route.fulfill({ json: savedJob });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video'); await page.evaluate(() => localStorage.clear()); await page.reload();
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video'); await page.evaluate(() => localStorage.clear()); await page.reload();
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await page.getByLabel('Shot prompt').fill('Frozen original prompt.');
   await page.getByRole('button', { name: /Generate video/ }).click();
@@ -407,6 +412,7 @@ test('lost create response preserves the frozen request and only reconciles on r
   expect(keyBeforeReload).toBeTruthy();
   await page.reload();
   await expect(page.getByText('Recovered the saved job by its idempotency key. No new job was submitted.', { exact: true })).toBeVisible();
+  await page.getByRole('link',{name:'Current Take',exact:true}).first().click();
   await expect(page.getByText('Rendering your shot')).toBeVisible();
   expect(jobPosts).toBe(1);
   expect(calls.filter(call => call.startsWith('GET /api/video/jobs/by-idempotency/')).length).toBeGreaterThanOrEqual(1);
@@ -427,9 +433,10 @@ test('definitive stale story handoff rejection clears pending attempt but keeps 
       posts++;
       return route.fulfill({ status: 409, json: { error: { code: 'story_handoff_rejected', message: 'Saved shot prompt changed after opening it in Video.' }, admission_state: 'not_created' } });
     }
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: `Unexpected ${request.method()} ${url.pathname}` } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await expect(page.getByText('Screenplay · Scene 1, Shot 1')).toBeVisible();
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await page.getByRole('button', { name: /Generate video/ }).click();
@@ -460,18 +467,19 @@ test('an active Video job stays mounted while visiting Status and returning to C
     }
     if (url.pathname === '/api/video/jobs/job-stays-mounted') return route.fulfill({ json: job });
     if (url.pathname.startsWith('/api/status')) return route.fulfill({ status: 503, json: { error: { message: 'Status fixture offline' } } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await page.getByLabel('Shot prompt').fill('Keep this rendering job while I inspect status.');
   await page.getByRole('button', { name: /Generate video/ }).click();
   await expect(page.getByText('Rendering your shot')).toBeVisible();
-  await page.goto('/#/status');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/status');
   await expect(page.getByRole('heading', { name: 'Connections & workflows' })).toBeVisible();
-  await page.goto('/#/take');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/take');
   await expect(page.getByText('Rendering your shot')).toBeVisible();
   await expect(page.getByText('job-stays-mounted')).toBeVisible();
   expect(jobPosts).toBe(1);
@@ -493,6 +501,7 @@ test('FFL2VA uses ordered workspace images, validated preview and durable job re
       const isFl2va = url.searchParams.get('workflow_id') === 'minimax_h3_fl2va_first_last_v1';
       return route.fulfill({ json: { ...capability(true), workflow_id: isFl2va ? 'minimax_h3_fl2va_first_last_v1' : 'minimax_h3_t2v_local_v1' } });
     }
+    if (url.pathname === '/api/images/selections') return route.fulfill({json:{selection:null}});
     if (url.pathname === '/api/media/video-workspace/assets') return route.fulfill({ json: { total: 2, assets: [
       { asset_id: 'frame-first', workspace_id: 'video-workspace', kind: 'image', roles: ['first_frame'], filename: 'opening.png', media_type: 'image/png', sha256: 'a'.repeat(64), size_bytes: 10, content_url: '/media/opening.png' },
       { asset_id: 'frame-last', workspace_id: 'video-workspace', kind: 'image', roles: ['last_frame'], filename: 'closing.png', media_type: 'image/png', sha256: 'b'.repeat(64), size_bytes: 10, content_url: '/media/closing.png' },
@@ -510,13 +519,14 @@ test('FFL2VA uses ordered workspace images, validated preview and durable job re
         clip_id: body.clip_id, status: 'queued', request: body.request, outputs: [] } });
     }
     if (url.pathname === '/api/video/jobs/fl2va-job') return route.fulfill({ json: { job_id: 'fl2va-job', status: 'queued', request: submissions.at(-1), outputs: [] } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.getByRole('button', { name: /First \+ last frame/ }).click();
-  await expect(page.getByLabel('First frame')).toContainText('opening.png');
-  await page.getByLabel('First frame').selectOption('frame-first');
-  await page.getByLabel('Last frame').selectOption('frame-last');
+  await expect(page.getByLabel('First frame', {exact:true})).toContainText('opening.png');
+  await page.getByLabel('First frame', {exact:true}).selectOption('frame-first');
+  await page.getByLabel('Last frame', {exact:true}).selectOption('frame-last');
   await page.getByLabel('Shot prompt').fill('Move from the first image to the final image.');
   await page.getByLabel('Duration').selectOption('6');
   await page.getByRole('button', { name: 'Preview settings' }).click();
@@ -555,19 +565,21 @@ test('story-linked FFL2VA lists frame-role assets with the matching shot recomme
   });
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());
-    if (url.pathname === '/api/media/video-workspace/assets') return route.fulfill({ json: { total: 3, assets: [
+    if (url.pathname === '/api/images/selections') return route.fulfill({json:{selection:null}});
+    if (url.pathname === '/api/media/video-workspace/assets') return route.fulfill({ json: { total: 3, assets: url.searchParams.get('kind') === 'image' ? [
       image('other-first', 'first_frame', 1, 'clip-other', 'a'),
       image('current-first', 'first_frame', 2, 'clip-current', 'b'),
       image('current-last', 'last_frame', 2, 'clip-current', 'd'),
-    ] } });
+    ] : [] } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
-  await expect(page.getByLabel('First frame').locator('option')).toHaveText([
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
+  await expect(page.getByLabel('First frame', {exact:true}).locator('option')).toHaveText([
     'Choose first frame…', 'Recommended · Scene 2 · Shot 3 · current-first.png',
     'Scene 1 · Shot 1 · other-first.png',
   ]);
-  await expect(page.getByLabel('Last frame').locator('option')).toHaveText([
+  await expect(page.getByLabel('Last frame', {exact:true}).locator('option')).toHaveText([
     'Choose last frame…', 'Recommended · Scene 2 · Shot 3 · current-last.png',
   ]);
 });
@@ -590,9 +602,10 @@ test('FFLF accepts slot-specific frame uploads by picker, drop, and image paste'
       return route.fulfill({ json: { ...asset, deduplicated: false } });
     }
     if (url.pathname === '/api/video/capabilities') return route.fulfill({ json: { ...capability(false), workflow_id: 'minimax_h3_fl2va_first_last_v1' } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected request in local frame upload test' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.getByLabel('Choose first frame image').setInputFiles({ name: 'opening.png', mimeType: 'image/png', buffer: Buffer.from('first') });
   await expect(page.getByLabel('First frame', { exact: true })).toHaveValue('asset-1');
   await expect(page.getByAltText('First frame: opening.png')).toBeVisible();
@@ -638,15 +651,16 @@ test('frame assets refresh after an upload in Media Prep', async ({ page }) => {
       const added = { asset_id: 'new-frame', workspace_id: 'video-workspace', kind: 'image', roles: ['first_frame'], filename: 'new-frame.png', media_type: 'image/png', sha256: 'c'.repeat(64), size_bytes: 10, content_url: '/media/new-frame.png' };
       assets = [...assets, added]; return route.fulfill({ json: { ...added, deduplicated: false } });
     }
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.getByRole('link', { name: 'Open Media Prep' }).click();
   await page.getByLabel('Choose media file').setInputFiles({ name: 'new-frame.png', mimeType: 'image/png', buffer: Buffer.from('test-image') });
   await page.getByRole('button', { name: 'Add asset' }).click();
   await expect(page.getByText('Added to the workspace library.')).toBeVisible();
-  await page.goto('/#/video');
-  await expect(page.getByLabel('First frame')).toContainText('new-frame.png');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
+  await expect(page.getByLabel('First frame', {exact:true})).toContainText('new-frame.png');
 });
 
 test('saved frame IDs cannot enable FL2VA while the library is unresolved or failed', async ({ page }) => {
@@ -662,7 +676,7 @@ test('saved frame IDs cannot enable FL2VA while the library is unresolved or fai
   });
   await page.route('**/api/video/capabilities**', route => route.fulfill({ json: {
     ...capability(true), workflow_id: 'minimax_h3_fl2va_first_last_v1' } }));
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await expect(page.getByText('Loading workspace images…')).toBeVisible();
   await expect(page.getByRole('button', { name: /Generate video/ })).toBeDisabled();
   releaseAssets();
@@ -698,11 +712,11 @@ test('preview locks its inputs until the captured request finishes', async ({ pa
     return route.fulfill({ json: { job_id: 'locked-job', workspace_id: body.workspace_id,
       clip_id: body.clip_id, status: 'queued', request: body.request, outputs: [] } });
   });
-  await page.goto('/#/video');
-  await expect(page.getByLabel('First frame')).toContainText('opening.png');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
+  await expect(page.getByLabel('First frame', {exact:true})).toContainText('opening.png');
   await page.getByRole('button', { name: 'Preview settings' }).click();
   await expect(page.getByLabel('Shot prompt')).toBeDisabled();
-  await expect(page.getByLabel('First frame')).toBeDisabled();
+  await expect(page.getByLabel('First frame', {exact:true})).toBeDisabled();
   await expect(page.getByRole('button', { name: /Text to video/ })).toBeDisabled();
   releaseValidation();
   await expect(page.getByText('PREVIEW ONLY')).toBeVisible();
@@ -710,7 +724,7 @@ test('preview locks its inputs until the captured request finishes', async ({ pa
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await page.getByRole('button', { name: /Generate video/ }).click();
   await expect(page.getByLabel('Shot prompt')).toBeDisabled();
-  await expect(page.getByLabel('Last frame')).toBeDisabled();
+  await expect(page.getByLabel('Last frame', {exact:true})).toBeDisabled();
   await expect(page.getByRole('button', { name: /Text to video/ })).toBeDisabled();
   releaseJob();
   await expect(page.getByText('Queued for generation')).toBeVisible();
@@ -726,13 +740,15 @@ test('FL2VA readiness reason is shown and generation stays disabled', async ({ p
     if (url.pathname === '/api/video/capabilities') return route.fulfill({ json: {
       ...capability(false), workflow_id: 'minimax_h3_fl2va_first_last_v1',
       disabled_reason: 'FL2VA smoke manifest is missing.' } });
+    if (url.pathname === '/api/images/selections') return route.fulfill({json:{selection:null}});
     if (url.pathname === '/api/media/video-workspace/assets') return route.fulfill({ json: { total: 2, assets: [
       { asset_id: 'frame-first', kind: 'image', roles: [], filename: 'opening.png', sha256: 'a'.repeat(64) },
       { asset_id: 'frame-last', kind: 'image', roles: [], filename: 'closing.png', sha256: 'b'.repeat(64) },
     ] } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.getByRole('button', { name: 'Check readiness' }).click();
   await expect(page.locator('.video-readiness')).toContainText('The selected video workflow is not ready. Check Status for setup details.');
   await expect(page.locator('.video-readiness details small')).toBeHidden();
@@ -768,6 +784,7 @@ test('R2V gates on its own readiness, collates numbered refs, previews, and subm
     }
     if (url.pathname.startsWith(`/api/media/${workspaceId}/assets`)) {
       if (url.pathname.endsWith('/seo-styles')) return route.fulfill({ json: { styles: [{ style_id: 'seo-rain', name: 'Rain noir', weighted_terms: [{term:'rain',weight:3}], avoid_terms: [], created_at: '2026-10-10T00:00:00Z' }] } });
+      if (url.pathname.endsWith('/catalogue')) return route.fulfill({json:{assets:[],total:0,workspaces:[],workspace_names:{}}});
       const kind = url.searchParams.get('kind');
       return route.fulfill({ json: { total: assets[kind].length, assets: assets[kind] } });
     }
@@ -784,10 +801,11 @@ test('R2V gates on its own readiness, collates numbered refs, previews, and subm
         clip_id: body.clip_id, status: 'queued', request: body.request, outputs: [] } });
     }
     if (url.pathname === '/api/video/jobs/r2v-job') return route.fulfill({ json: { job_id: 'r2v-job', status: 'queued', request: submissions.at(-1)?.request, outputs: [] } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: `Unexpected mocked API request: ${request.method()} ${url.pathname}` } });
   });
 
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.getByRole('button', { name: /Reference to video/ }).click();
   await expect(page.locator('.r2v-asset-carousel[aria-label="Characters reference carousel"]')).toBeVisible();
   await page.getByLabel('Rank characters by SEO style').selectOption('seo-rain');
@@ -856,10 +874,11 @@ test('R2V remains usable when the optional SEO-style response has no styles arra
     if (url.pathname === '/api/video/capabilities') return route.fulfill({ json: { ...capability(false), workflow_id: 'minimax_h3_r2v_dynamic_v1' } });
     if (url.pathname === `/api/media/${workspaceId}/assets/seo-styles`) return route.fulfill({ json: {} });
     if (url.pathname === `/api/media/${workspaceId}/assets`) return route.fulfill({ json: { assets: [], total: 0 } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: `Unexpected request ${url.pathname}` } });
   });
 
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await expect(page.getByRole('heading', { name: 'Create video' })).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Rank characters by SEO style' })).toHaveValue('');
 });
@@ -892,9 +911,10 @@ test('R2V requests pinned production-style media and keeps it first in each comp
       const matching = [...pinned, ...ordinary].filter(row => row.kind === kind);
       return route.fulfill({ json: { assets: matching, total: matching.length } });
     }
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: `Unexpected request ${url.pathname}` } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await expect(page.locator('.r2v-asset-card').filter({ hasText: 'Pinned style image.png' })).toHaveCount(1);
   await expect(page.locator('.r2v-asset-card').filter({ hasText: 'Pinned style video.mp4' })).toHaveCount(1);
   await page.getByLabel('Audio reference source', {exact:true}).selectOption('audio-clips');
@@ -932,12 +952,14 @@ test('R2V file picker and drop upload references into the same workspace library
     }
     if (url.pathname.startsWith(`/api/media/${workspaceId}/assets`)) {
       if (url.pathname.endsWith('/seo-styles')) return route.fulfill({ json: { styles: [] } });
+      if (url.pathname.endsWith('/catalogue')) return route.fulfill({json:{assets:[],total:0,workspaces:[],workspace_names:{}}});
       const kind = url.searchParams.get('kind');
       return route.fulfill({ json: { assets: assets[kind], total: assets[kind].length } });
     }
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: `Unexpected request ${request.method()} ${url.pathname}` } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.getByRole('button', { name: /Reference to video/ }).click();
   await page.locator('.r2v-upload-button input').first().setInputFiles({ name: 'look.png', mimeType: 'image/png', buffer: Buffer.from('image') });
   await expect(page.getByLabel('image reference 1 role')).toHaveValue('visual identity or style');
@@ -970,19 +992,20 @@ test('R2V asset pickers load items beyond the default first 50', async ({ page }
         assets: imageAssets.slice(offset, offset + (offset ? 100 : 50)) } });
       return route.fulfill({ json: { total: 0, assets: [] } });
     }
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await expect(page.locator('.r2v-asset-card').filter({ hasText: 'late-image.png' })).toHaveCount(1);
   await page.locator('.r2v-asset-card').filter({ hasText: 'late-image.png' }).getByRole('button').click();
   await page.getByRole('button', { name: 'Add selected character image' }).click();
-  await expect(page.getByText('late-image.png')).toBeVisible();
+  await expect(page.getByText('late-image.png',{exact:true}).last()).toBeVisible();
 });
 
 test('R2V semantic picker uses indexed saved-text search for the selected media type', async ({ page }) => {
   const workspaceId = 'r2v-semantic-workspace';
   let searchRequest;
-  const resultAsset = { asset_id: 'semantic-image', workspace_id: workspaceId, kind: 'image', roles: ['style_reference'],
+  const resultAsset = { asset_id: 'semantic-image', workspace_id: workspaceId, kind: 'image', roles: ['character_master'],
     filename: 'rainy-courtroom.png', description: 'Rainy courtroom with warm practical lights', media_type: 'image/png',
     sha256: '6'.repeat(64), size_bytes: 10, content_url: '/media/semantic-image.png' };
   await page.addInitScript(({ workspaceId }) => localStorage.setItem('vibe-video-draft-v1', JSON.stringify({
@@ -996,9 +1019,10 @@ test('R2V semantic picker uses indexed saved-text search for the selected media 
     }
     if (url.pathname === `/api/media/${workspaceId}/assets`) return route.fulfill({ json: { total: 0, assets: [] } });
     if (url.pathname.endsWith('/seo-styles')) return route.fulfill({ json: { styles: [] } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.getByRole('button', { name: /Reference to video/ }).click();
   await page.getByLabel('Search characters by').selectOption('semantic');
   await page.getByRole('textbox', { name: 'Search characters' }).fill('rainy courtroom');
@@ -1031,9 +1055,11 @@ test('Create Video Retake restores the original main prompt and re-collates edit
       kind: 'image', roles: [], filename: 'retake-look.png', media_type: 'image/png', sha256: '4'.repeat(64), size_bytes: 10, content_url: '/media/retake-look.png' }] } });
     if (url.pathname === '/api/video/retakes/r2v-source') return route.fulfill({ json: { source_job_id: 'r2v-source', request,
       keep_original: false, candidate_disposition: 'discard_requested', asset_cleanup: 'archived_recoverable', submission_created: false } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
+  await page.getByRole('link',{name:'Current Take',exact:true}).first().click();
   await page.getByRole('button', { name: 'Retake' }).click();
   await page.getByLabel('Discard from take history').check();
   await page.getByRole('button', { name: /Return to editor/ }).click();
@@ -1060,13 +1086,153 @@ test('an explicitly blank R2V main prompt is not replaced by the prior prompt', 
     if (url.pathname === `/api/media/${workspaceId}/assets`) return route.fulfill({ json: { total: url.searchParams.get('kind') === 'image' ? 1 : 0, assets: url.searchParams.get('kind') === 'image' ? [{
       asset_id: 'empty-ref', workspace_id: workspaceId, kind: 'image', roles: [], recommendation_source: 'production_style', filename: 'style.png',
       media_type: 'image/png', sha256: '5'.repeat(64), size_bytes: 10, content_url: '/media/style.png' }] : [] } });
+    if (url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
     return route.fulfill({ status: 404, json: { detail: 'Unexpected mocked API request' } });
   });
-  await page.goto('/#/video');
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page); await page.goto('/#/video');
   await page.locator('.r2v-asset-card').filter({ hasText: 'style.png' }).first().getByRole('button').click();
   await page.getByRole('button', { name: 'Add selected character image' }).click();
   await expect(page.getByLabel('Main shot prompt')).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Collate prompt' })).toBeDisabled();
   await expect(page.getByRole('button', { name: /Generate video/ })).toBeDisabled();
   await expect(page.getByText('Old T2V prompt must not leak.')).toHaveCount(0);
+});
+
+test('a failed audio library preserves available R2V images and FFLF choices',async({page})=>{
+  const workspace='partial-library';
+  const frame={asset_id:'frame-one',workspace_id:workspace,kind:'image',roles:['first_frame','last_frame','character_master'],filename:'available.png',content_url:'/frame.png',sha256:'a'.repeat(64),media:{},created_at:'2026-11-03'};
+  await page.route('**/api/**',route=>{
+    const url=new URL(route.request().url());
+    if(url.pathname.endsWith('/assets'))return url.searchParams.get('kind')==='audio'?route.fulfill({status:503,json:{error:{message:'Audio temporarily unavailable'}}}):route.fulfill({json:{assets:url.searchParams.get('kind')==='image'?[frame]:[],total:url.searchParams.get('kind')==='image'?1:0}});
+    if(url.pathname.endsWith('/seo-styles'))return route.fulfill({json:{styles:[]}});
+    if(url.pathname==='/api/video/capabilities')return route.fulfill({json:capability(true)});
+    if(url.pathname==='/api/studio-tools/output-destination')return route.fulfill({json:{mode:'default',path:'/fixture',available:true}});
+    return route.fulfill({status:404,json:{error:{message:'Unused fixture endpoint'}}});
+  });
+  await mockProject(page,workspace);await page.goto('/#/video');
+  await page.getByRole('button',{name:/Reference to video/}).click();
+  await expect(page.locator('.r2v-asset-card').filter({hasText:'available.png'})).toHaveCount(1);
+  await expect(page.getByText(/Some project references could not load/)).toBeVisible();
+  await page.getByRole('button',{name:/First \+ last frame/}).click();
+  await page.getByLabel('First frame',{exact:true}).selectOption('frame-one');
+  await page.getByLabel('Last frame',{exact:true}).selectOption('frame-one');
+  await page.getByLabel('Shot prompt',{exact:true}).fill('A continuous shot');
+  await expect(page.getByRole('button',{name:/Generate video/})).toBeEnabled();
+});
+
+for (const invalidReference of [false, true]) test(`R2V pasted tag spellings ${invalidReference ? 'preserve invalid indices and expose rejection beside Generate' : 'compile and submit canonical audio tags'}`, async ({page}) => {
+  const workspaceId = 'r2v-workspace';
+  const assets = ['image', 'audio'].map((kind, index) => ({asset_id:`ref-${kind}`,workspace_id:workspaceId,
+    kind,roles:[`project_${kind}`],filename:`ref.${kind==='image'?'png':'wav'}`,media_type:`${kind}/${kind==='image'?'png':'wav'}`,
+    sha256:String(index+1).repeat(64),size_bytes:12,content_url:`/media/ref-${kind}`}));
+  const submitted=[];
+  await page.addInitScript(({workspaceId,invalidReference})=>localStorage.setItem('vibe-video-draft-v1',JSON.stringify({
+    workspaceId,clipId:'clip-tags',workflowId:'minimax_h3_r2v_dynamic_v1',duration:15,resolution:0.98,
+    prompt:'',r2vMainPrompt:'',
+    r2vCollatedPrompt:`Use <picture1> as identity. Use <audio${invalidReference?2:1}> for the lion's voice.`,
+    r2vImages:[{assetId:'ref-image',role:'lion',intent:'Preserve identity'}],
+    r2vAudios:[{assetId:'ref-audio',role:'lion voice',intent:'Preserve voice'}],
+  })),{workspaceId,invalidReference});
+  await page.route('**/api/**',async route=>{
+    const req=route.request(),url=new URL(req.url());
+    if(url.pathname==='/api/video/capabilities')return route.fulfill({json:{available:true,workflow_id:url.searchParams.get('workflow_id'),runtime_guard:{safe_to_submit:true},dispatch:{available:true}}});
+    if(url.pathname===`/api/media/${workspaceId}/assets`)return route.fulfill({json:{assets,total:assets.length}});
+    if(url.pathname==='/api/video/jobs'&&req.method()==='GET')return route.fulfill({json:{jobs:[]}});
+    if(url.pathname==='/api/video/validations'){
+      const prompt=req.postDataJSON().request.prompt;
+      expect(prompt).toContain('<Picture 1>');expect(prompt).toContain(`<Audio ${invalidReference?2:1}>`);
+      expect(prompt).not.toContain('<audio');
+      if(invalidReference)return route.fulfill({status:422,json:{error:{code:'prompt_reference_tags_mismatch',message:'Prompt reference tags must match every connected reference exactly.'}}});
+      return route.fulfill({json:{valid:true,compiled_preview:{}}});
+    }
+    if(url.pathname==='/api/video/jobs'&&req.method()==='POST'){
+      submitted.push(req.postDataJSON());return route.fulfill({json:{job_id:'canonical-job',workspace_id:workspaceId,status:'queued',request:req.postDataJSON().request,outputs:[]}});
+    }
+    return route.fulfill({status:404,json:{detail:'Unused in reference tag regression'}});
+  });
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));
+  await mockProject(page);await page.goto('/#/video');
+  const generate=page.getByRole('button',{name:'Generate video',exact:true});
+  await expect(generate).toBeEnabled();await generate.click();
+  if(invalidReference){
+    const feedback=page.getByRole('status',{name:'Generation feedback'});
+    await expect(feedback).toContainText('Prompt reference tags must match');
+    await expect(generate).toBeEnabled();
+    await expect(feedback).toBeInViewport();
+    const feedbackBox=await feedback.boundingBox(),buttonBox=await generate.boundingBox();
+    expect(Math.abs(feedbackBox.y-buttonBox.y)).toBeLessThan(180);
+    expect(submitted).toHaveLength(0);
+  }else{
+    await expect.poll(()=>submitted.length).toBe(1);
+    expect(submitted[0].request.prompt).toContain('<Audio 1>');
+    expect(submitted[0].request.audios[0].asset_id).toBe('ref-audio');
+  }
+});
+
+for (const rejection of [false, true]) test(`planned screenplay clip remains editable with a manual final prompt${rejection ? ' after definite rejection' : ''}`, async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('vibe-video-draft-v1', JSON.stringify({
+    prompt:'Screenplay suggestion.', duration:6, resolution:0.98, workspaceId:'workspace-story',
+    clipId:'planned-clip', workflowId:'minimax_h3_t2v_local_v1',
+    sourceLineage:{screenplay_revision_id:'screenplay-old',setup_hash:'a'.repeat(64),scene_number:1,shot_number:1,
+      source_prompt_sha256:'b'.repeat(64),planned_clip_id:'planned-clip'},
+  })));
+  let submitted;
+  await page.route('**/api/**', async route => {
+    const request=route.request(), url=new URL(request.url());
+    if(url.pathname==='/api/video/capabilities') return route.fulfill({json:capability(true)});
+    if(url.pathname==='/api/video/validations') return route.fulfill({json:{valid:true,normalized_request:request.postDataJSON().request,compiled_preview:{}}});
+    if(url.pathname==='/api/video/jobs' && request.method()==='POST') {
+      submitted=request.postDataJSON();
+      if(rejection) return route.fulfill({status:422,json:{error:{message:'Reference bytes changed.'},admission_state:'not_created'}});
+      return route.fulfill({status:202,json:{job_id:'manual-planned',workspace_id:'workspace-story',clip_id:'planned-clip',status:'queued',request:submitted.request}});
+    }
+    if(url.pathname==='/api/video/jobs/manual-planned') return route.fulfill({json:{job_id:'manual-planned',status:'queued'}});
+    if(url.pathname.endsWith('/assets')) return route.fulfill({json:{assets:[]}});
+    return route.fulfill({status:404,json:{detail:'Not used'}});
+  });
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));
+  await mockProject(page); await page.goto('/#/video');
+  await page.getByRole('button',{name:'Check readiness'}).click();
+  await expect(page.getByLabel('Duration',{exact:true})).toBeEnabled();
+  await page.getByLabel('Duration',{exact:true}).selectOption('9');
+  await page.getByLabel('Shot prompt',{exact:true}).fill('Use exactly my own prompt.');
+  await page.getByRole('button',{name:/Generate video/}).click();
+  await expect.poll(()=>submitted?.request.prompt).toBe('Use exactly my own prompt.');
+  expect(submitted.request.duration_seconds).toBe(9);
+  if(rejection) {
+    await expect(page.getByText(/backend confirmed no job was created/)).toBeVisible();
+    await expect(page.getByLabel('Shot prompt',{exact:true})).toBeEnabled();
+    await expect(page.getByLabel('Duration',{exact:true})).toBeEnabled();
+    const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem('vibe-video-draft-v1')));
+    expect(draft.pendingKey).toBeFalsy();
+    expect(draft.prompt).toBe('Use exactly my own prompt.');
+  } else await expect(page).toHaveURL(/#\/take/);
+});
+
+for(const existing of [false,true]) test(`pending attempt returns to editing without rendering: ${existing?'recover existing job':'release unsubmitted draft'}`,async({page})=>{
+  const request={workflow_id:'minimax_h3_t2v_local_v1',workflow_version:2,prompt:'Keep my prompt.',duration_seconds:6};
+  await page.addInitScript(request=>localStorage.setItem('vibe-video-draft-v1',JSON.stringify({workspaceId:'workspace-a',clipId:'clip-a',prompt:'Keep my prompt.',duration:6,resolution:0.98,workflowId:request.workflow_id,pendingKey:'old-attempt',pendingRequest:request})),request);
+  let renders=0,releases=0;
+  const job={job_id:'existing-render',workspace_id:'workspace-a',clip_id:'clip-a',status:'running',request};
+  await page.route('**/api/**',async route=>{
+    const req=route.request(), url=new URL(req.url());
+    if(url.pathname==='/api/video/capabilities')return route.fulfill({json:capability(true)});
+    if(url.pathname.includes('/by-idempotency/'))return route.fulfill({status:existing?503:404,json:{error:{message:'Lookup unavailable'}}});
+    if(url.pathname==='/api/video/attempts/release'){
+      releases++;return route.fulfill({json:existing?{released:false,job}:{released:true}});
+    }
+    if(url.pathname==='/api/video/jobs' && req.method()==='POST'){renders++;return route.abort();}
+    if(url.pathname==='/api/video/jobs/existing-render')return route.fulfill({json:job});
+    if(url.pathname.endsWith('/assets'))return route.fulfill({json:{assets:[]}});
+    return route.fulfill({status:404,json:{detail:'Not used'}});
+  });
+  await page.route('**/api/studio-tools/output-destination',r=>r.fulfill({json:{mode:'default',path:'/fixture/output',available:true}}));await mockProject(page);await page.goto('/#/video');
+  if(existing)await page.getByRole('button',{name:'Return to editing',exact:true}).click();
+  await expect(page.getByLabel('Shot prompt',{exact:true})).toBeEnabled();
+  await expect(page.getByLabel('Shot prompt',{exact:true})).toHaveValue('Keep my prompt.');
+  await expect(page.getByRole('button',{name:'Text to video',exact:false})).toBeEnabled();
+  await expect(page.getByRole('button',{name:'Reference to video',exact:false})).toBeEnabled();
+  expect(releases).toBe(1);expect(renders).toBe(0);
+  const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem('vibe-video-draft-v1')));
+  expect(draft.pendingKey).toBeFalsy();
 });

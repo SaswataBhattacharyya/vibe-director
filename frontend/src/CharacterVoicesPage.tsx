@@ -1,3 +1,4 @@
+import {managedProjectId} from './lib/media-workspace';
 import SelectionToggle from './SelectionToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Mic2, RefreshCw, X } from 'lucide-react';
@@ -47,7 +48,7 @@ export default function CharacterVoicesPage({ onAssets, embedded = false, contex
     try {
       const query = new URLSearchParams(window.location.hash.split('?')[1] || '');
       const routeWorkspace = query.get('workspace_id');
-      const id = contextWorkspaceId || routeWorkspace || localStorage.getItem('vibe-story-selected-v1') || '';
+      const id = managedProjectId() || contextWorkspaceId || routeWorkspace || localStorage.getItem('vibe-story-selected-v1') || '';
       if (!id.startsWith('story-')) throw new Error('Open a story and accept its screenplay to assign character voices. Use Audio Studio for standalone voices.');
       const revisions = await listStoryScreenplays(id, 0, 100);
       const accepted = revisions.items.find(item => item.accepted && !item.stale);

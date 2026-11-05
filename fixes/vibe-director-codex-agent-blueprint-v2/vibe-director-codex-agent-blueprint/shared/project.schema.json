@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/vibe-director/project.schema.json",
+  "title": "Vibe Director project context (starter contract)",
+  "description": "Portable reference model only. Adapt to app DB after code audit.",
+  "type": "object",
+  "required": ["project_id", "title"],
+  "properties": {
+    "project_id": {"type": "string"},
+    "title": {"type": "string"},
+    "style_bible": {"type": "object", "additionalProperties": true},
+    "model_profile": {
+      "type": "object",
+      "properties": {
+        "model_id": {"type": "string"},
+        "max_duration_s": {"type": "number", "exclusiveMinimum": 0},
+        "max_prompt_chars": {"type": "integer", "minimum": 1},
+        "supported_modes": {"type": "array", "items": {"type": "string"}},
+        "supports": {"type": "object", "additionalProperties": {"type": "boolean"}},
+        "reference_limits": {"type": "object", "additionalProperties": true}
+      },
+      "additionalProperties": true
+    },
+    "settings": {
+      "type": "object",
+      "properties": {"ltx_upscaling_enabled": {"type": "boolean"}},
+      "additionalProperties": true
+    },
+    "assets": {"type": "array", "items": {"$ref": "#/$defs/asset"}},
+    "characters": {"type": "array", "items": {"$ref": "#/$defs/character"}},
+    "locations": {"type": "array", "items": {"$ref": "#/$defs/location"}},
+    "scenes": {"type": "array", "items": {"$ref": "#/$defs/scene"}},
+    "clips": {"type": "array", "items": {"$ref": "#/$defs/clip"}},
+    "storyboard_panels": {"type": "array", "items": {"$ref": "#/$defs/panel"}},
+    "generation_jobs": {"type": "array", "items": {"type": "object", "additionalProperties": true}},
+    "updated_at": {"type": ["string", "null"]}
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "asset": {
+      "type": "object", "required": ["asset_id", "media_type"],
+      "properties": {
+        "asset_id": {"type": "string"}, "media_type": {"enum": ["image", "video", "audio", "text", "other"]},
+        "uri": {"type": ["string", "null"]},
+        "role": {"type": "string"}, "approved": {"type": "boolean"},
+        "version": {"type": "integer", "minimum": 1},
+        "source_asset_id": {"type": ["string", "null"]},
+        "source_time_s": {"type": ["number", "null"]},
+        "metadata": {"type": "object", "additionalProperties": true}
+      }, "additionalProperties": true
+    },
+    "character": {
+      "type": "object", "required": ["character_id", "name"],
+      "properties": {
+        "character_id": {"type": "string"}, "name": {"type": "string"},
+        "visual_bible": {"type": "string"}, "relative_scale": {"type": "string"},
+        "reference_asset_ids": {"type": "array", "items": {"type": "string"}},
+        "voice_sample_asset_ids": {"type": "array", "items": {"type": "string"}}
+      }, "additionalProperties": true
+    },
+    "location": {
+      "type": "object", "required": ["location_id", "name"],
+      "properties": {
+        "location_id": {"type": "string"}, "name": {"type": "string"},
+        "spatial_bible": {"type": "string"},
+        "style": {"type": "string"},
+        "reference_asset_ids": {"type": "array", "items": {"type": "string"}}
+      }, "additionalProperties": true
+    },
+    "scene": {
+      "type": "object", "required": ["scene_id", "slugline"],
+      "properties": {
+        "scene_id": {"type": "string"}, "slugline": {"type": "string"},
+        "location_id": {"type": ["string", "null"]},
+        "duration_estimate_s": {"type": "number", "minimum": 0},
+        "action": {"type": "string"},
+        "dialogue": {"type": "array", "items": {"$ref": "#/$defs/dialogue"}}
+      }, "additionalProperties": true
+    },
+    "dialogue": {
+      "type": "object", "required": ["speaker_character_id", "text"],
+      "properties": {
+        "speaker_character_id": {"type": "string"}, "text": {"type": "string"},
+        "delivery": {"type": "string"},
+        "voice_sample_asset_id": {"type": ["string", "null"]},
+        "start_s": {"type": ["number", "null"]}, "end_s": {"type": ["number", "null"]}
+      }, "additionalProperties": true
+    },
+    "clip": {
+      "type": "object", "required": ["clip_id", "scene_id", "target_duration_s"],
+      "properties": {
+        "clip_id": {"type": "string"}, "scene_id": {"type": "string"},
+        "target_duration_s": {"type": "number", "exclusiveMinimum": 0},
+        "model_id": {"type": ["string", "null"]},
+        "generator_mode": {"type": "string"},
+        "beats": {"type": "array", "items": {"$ref": "#/$defs/beat"}},
+        "references": {"type": "array", "items": {"$ref": "#/$defs/reference"}},
+        "opening_frame_asset_id": {"type": ["string", "null"]},
+        "closing_frame_asset_id": {"type": ["string", "null"]},
+        "visual_state_in": {"type": "string"}, "visual_state_out": {"type": "string"},
+        "continuation_policy": {"enum": ["last_frame", "new_first_frame", "none", "decide_later", "review_needed"]},
+        "prompt_text": {"type": ["string", "null"]},
+        "generation_asset_id": {"type": ["string", "null"]}
+      }, "additionalProperties": true
+    },
+    "beat": {
+      "type": "object", "required": ["start_s", "end_s", "action"],
+      "properties": {
+        "start_s": {"type": "number", "minimum": 0}, "end_s": {"type": "number", "minimum": 0},
+        "action": {"type": "string"}, "camera": {"type": "string"},
+        "dialogue": {"type": "array", "items": {"$ref": "#/$defs/dialogue"}}
+      }, "additionalProperties": true
+    },
+    "reference": {
+      "type": "object", "required": ["slot", "asset_id", "role"],
+      "properties": {
+        "slot": {"type": "string"}, "asset_id": {"type": "string"},
+        "role": {"enum": ["character", "first_frame", "environment", "style", "voice_sample", "motion_reference", "other"]},
+        "character_id": {"type": ["string", "null"]},
+        "instruction": {"type": "string"}
+      }, "additionalProperties": true
+    },
+    "panel": {
+      "type": "object", "required": ["panel_id", "clip_id", "order", "start_s", "end_s"],
+      "properties": {
+        "panel_id": {"type": "string"}, "clip_id": {"type": "string"},
+        "order": {"type": "integer", "minimum": 0},
+        "start_s": {"type": "number", "minimum": 0}, "end_s": {"type": "number", "minimum": 0},
+        "camera_action": {"type": "string"}, "on_screen_action": {"type": "string"},
+        "dialogue": {"type": "array", "items": {"$ref": "#/$defs/dialogue"}},
+        "image_prompt": {"type": "string"},
+        "image_asset_id": {"type": ["string", "null"]}
+      }, "additionalProperties": true
+    }
+  }
+}

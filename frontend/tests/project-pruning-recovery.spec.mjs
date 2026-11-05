@@ -1,8 +1,9 @@
+import {mockProject} from './fixtures/project.mjs';
 import {test,expect} from '@playwright/test';
 const defaults={mode:'instrumental',tags:'',lyrics:'',duration:30,seed:42,steps:20,cfg:4,scheduler:'euler',adapter_id:'',max_steps:1000,learning_rate:.0001,save_every:100,rank:16,style_name:'',style_description:''};
 for(const tool of ['editor','ace'])test(`${tool}: visible composer, stale session recovery and lazy save preserve the first message`,async({page})=>{
   let project=null,creates=0,text='',fail=true;
-  await page.addInitScript(tool=>{if(!sessionStorage.getItem('seeded')){localStorage.setItem(tool==='editor'?'vibe-editor-project':'vibe-ace-project','removed-project');sessionStorage.setItem('seeded','1');}},tool);
+  await page.addInitScript(tool=>{if(!sessionStorage.getItem('seeded')){localStorage.setItem(tool==='editor'?'vibe-editor-project:tool-library':'vibe-ace-project:tool-library','removed-project');sessionStorage.setItem('seeded','1');}},tool);
   await page.route('**/api/**',async route=>{
     const p=new URL(route.request().url()).pathname,method=route.request().method();
     if(p==='/api/story/workspaces')return route.fulfill({json:{items:[]}});
@@ -19,10 +20,10 @@ for(const tool of ['editor','ace'])test(`${tool}: visible composer, stale sessio
     if(p.startsWith('/api/media/'))return route.fulfill({json:{assets:[],total:0}});
     return route.fulfill({status:404,json:{error:{message:'Unexpected mock route '+p}}});
   });
-  await page.goto(tool==='editor'?'/#/editor':'/#/media-prep?tool=music');
+  await mockProject(page); await page.goto(tool==='editor'?'/#/editor':'/#/media-prep?tool=music');
   const composer=page.locator(tool==='editor'?'#edit-chat':'#ace-chat');
   await expect(composer).toBeVisible();
-  await expect.poll(()=>page.evaluate(tool=>localStorage.getItem(tool==='editor'?'vibe-editor-project':'vibe-ace-project'),tool)).toBe('');
+  await expect.poll(()=>page.evaluate(tool=>localStorage.getItem(tool==='editor'?'vibe-editor-project:tool-library':'vibe-ace-project:tool-library'),tool)).toBe('');
   expect(creates).toBe(0);
   if(tool==='editor')await expect(page.getByRole('link',{name:'← Media Prep'})).toBeVisible();
   else await expect(page.getByRole('button',{name:'Run ACE-Step',exact:true})).toBeVisible();

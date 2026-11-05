@@ -1,10 +1,11 @@
+import {useProjectState} from './lib/project-state';
 import OutputDestination from './OutputDestination';
 import MediaSourcePicker from './MediaSourcePicker';
 import {useEffect,useState} from 'react';
 import {Music2} from 'lucide-react';
 import {createMusicJob,getMusicCapabilities,getMusicJob,getWorkflowGuidance,listMediaAssets,listMusicJobs,MediaAsset,MusicCapabilities,MusicJob,WorkflowGuidance} from './lib/media-api';
 import {listStoryWorkspaces,StoryWorkspace} from './lib/story-api';
-import {mediaWorkspaceOptions,preferredMediaWorkspaceId,rememberMediaWorkspaceId} from './lib/media-workspace';
+import {preferredMediaWorkspaceId,defaultMediaWorkspaceId} from './lib/media-workspace';
 import AceStudioPage from './AceStudioPage';
 import MusicJukebox from './MusicJukebox';
 
@@ -14,12 +15,12 @@ export default function MusicSoundPage({onBack}:{onBack:()=>void}) {
   return <><button className="quiet-button summariser-back" type="button" onClick={onBack}>← Audio tools</button><nav className="summariser-tabs" aria-label="Music and sound tools"><button type="button" className={tool==='ace'?'selected':''} onClick={()=>setTool('ace')}>ACE-Step Music</button><button type="button" className={tool==='jukebox'?'selected':''} onClick={()=>setTool('jukebox')}>Music Jukebox</button><button type="button" className={tool==='foley'?'selected':''} onClick={()=>setTool('foley')}>Control-Foley</button></nav>{tool==='ace'?<AceStudioPage/>:tool==='jukebox'?<MusicJukebox onAce={()=>setTool('ace')}/>:<ControlFoleyPage onBack={onBack}/>}</>;
 }
 function ControlFoleyPage({onBack}:{onBack:()=>void}) {
-  const [workspaces,setWorkspaces]=useState<StoryWorkspace[]>([]);const [workspaceId,setWorkspaceId]=useState('');
+  const [,setWorkspaces]=useState<StoryWorkspace[]>([]);const [workspaceId,setWorkspaceId]=useState(defaultMediaWorkspaceId);
   const [cap,setCap]=useState<MusicCapabilities|null>(null);const [assets,setAssets]=useState<MediaAsset[]>([]);
   const [workflowGuidance,setWorkflowGuidance]=useState<WorkflowGuidance|null>(null);const [guidanceError,setGuidanceError]=useState('');
   const [jobs,setJobs]=useState<MusicJob[]>([]);const [active,setActive]=useState<MusicJob|null>(null);
   const [videoId,setVideoId]=useState('');const [audioId,setAudioId]=useState('');const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
-  const [foley,setFoley]=useState<{mode:string;prompt:string;negative_prompt:string;duration:number;seed:number;steps:'fixed'|number;guidance:number;fps:number;device:string;precision:string}>({mode:'text_audio',prompt:'',negative_prompt:'',duration:8,seed:42,steps:'fixed',guidance:4.5,fps:24,device:'auto',precision:'bf16'});
+  const [foley,setFoley]=useProjectState<{mode:string;prompt:string;negative_prompt:string;duration:number;seed:number;steps:'fixed'|number;guidance:number;fps:number;device:string;precision:string}>('ControlFoley:settings',{mode:'text_audio',prompt:'',negative_prompt:'',duration:8,seed:42,steps:'fixed',guidance:4.5,fps:24,device:'auto',precision:'bf16'});
   useEffect(()=>{void Promise.all([listStoryWorkspaces(),getMusicCapabilities()]).then(([result,ready])=>{
     const rows=result.items||[];setWorkspaces(rows);const requestedWorkspace=new URLSearchParams(window.location.hash.split('?')[1]||'').get('workspace_id')||'';setWorkspaceId(preferredMediaWorkspaceId(rows,requestedWorkspace));setCap(ready);
   }).catch(error=>setMessage((error as Error).message));},[]);
@@ -46,14 +47,14 @@ function ControlFoleyPage({onBack}:{onBack:()=>void}) {
     <button className="quiet-button summariser-back" type="button" onClick={onBack}>← Audio tools</button>
     <header className="summariser-heading"><div><div className="eyebrow">MEDIA PREP / MUSIC &amp; SOUND</div><h1>Control-Foley</h1><p>Generate sound effects with ComfyUI.</p></div><span className="media-prep-state">{ready?'Ready':cap?'Workflow unavailable':'Connection not loaded'}</span></header>
     {message&&<p className="notice" role="status">{message}</p>}
-    <label>Workspace<select aria-label="Music workspace" value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{mediaWorkspaceOptions(workspaces,workspaceId).map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label>
+    <p className="project-context-label">Current project · change with New project or Load project above</p>
     {foley.mode!=='text_audio'&&<MediaSourcePicker workspaceId={workspaceId} kinds={foley.mode==='reference_video_audio'?['video','audio']:['video']} disabled={busy} onAdded={items=>setAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])}/>}
     <section className="card audio-music-form"><h2>Control-Foley</h2><p>Describe a sound or guide it with media from this workspace.</p>
       {guidancePanel}
       <label>Mode<select aria-label="Control-Foley mode" value={foley.mode} onChange={event=>{setFoley(row=>({...row,mode:event.target.value}));setVideoId('');setAudioId('');}}><option value="text_audio">Text → Audio</option><option value="text_video_audio">Text + Video → Audio</option><option value="reference_video_audio">Reference Audio + Video → Audio</option></select></label>
       {foleyNeedsPrompt&&<label>Sound description<textarea aria-label="Sound description" maxLength={4000} value={foley.prompt} onChange={event=>setFoley(row=>({...row,prompt:event.target.value}))} placeholder="Describe the sound to create"/></label>}
-      {foley.mode!=='text_audio'&&<label>Video reference<select aria-label="Foley video reference" value={videoId} onChange={event=>setVideoId(event.target.value)}><option value="">Choose a workspace video</option>{videoOptions.map(asset=><option key={asset.asset_id} value={asset.asset_id}>{asset.filename}</option>)}</select></label>}
-      {foley.mode==='reference_video_audio'&&<label>Audio reference<select aria-label="Foley audio reference" value={audioId} onChange={event=>setAudioId(event.target.value)}><option value="">Choose a workspace audio clip</option>{audioOptions.map(asset=><option key={asset.asset_id} value={asset.asset_id}>{asset.filename}</option>)}</select></label>}
+      {foley.mode!=='text_audio'&&<label>Video reference<select aria-label="Foley video reference" value={videoId} onChange={event=>setVideoId(event.target.value)}><option value="">Choose a project video</option>{videoOptions.map(asset=><option key={asset.asset_id} value={asset.asset_id}>{asset.filename}</option>)}</select></label>}
+      {foley.mode==='reference_video_audio'&&<label>Audio reference<select aria-label="Foley audio reference" value={audioId} onChange={event=>setAudioId(event.target.value)}><option value="">Choose a project audio clip</option>{audioOptions.map(asset=><option key={asset.asset_id} value={asset.asset_id}>{asset.filename}</option>)}</select></label>}
       <div className="summariser-toolbar"><label>Duration (0.7–30 sec)<input type="number" min={0.7} max={30} step="0.1" value={foley.duration} onChange={event=>setFoley(row=>({...row,duration:Number(event.target.value)}))}/></label><label>Seed<input type="number" min={0} value={foley.seed} onChange={event=>setFoley(row=>({...row,seed:Number(event.target.value)}))}/></label><label>Guidance<input type="number" min={0} max={20} step="0.1" value={foley.guidance} onChange={event=>setFoley(row=>({...row,guidance:Number(event.target.value)}))}/></label><label>FPS<input type="number" min={1} max={120} value={foley.fps} onChange={event=>setFoley(row=>({...row,fps:Number(event.target.value)}))}/></label></div>
       <details><summary>Advanced settings</summary><div className="summariser-toolbar"><label>Negative prompt<textarea aria-label="Control-Foley negative prompt" maxLength={4000} value={foley.negative_prompt} onChange={event=>setFoley(row=>({...row,negative_prompt:event.target.value}))} placeholder="Describe sounds to avoid"/></label><label>Inference steps<select aria-label="Control-Foley inference steps" value={String(foley.steps)} onChange={event=>setFoley(row=>({...row,steps:event.target.value==='fixed'?'fixed':event.target.value==='custom'?40:Number(event.target.value)}))}><option value="fixed">Workflow default</option><option value="20">20</option><option value="30">30</option><option value="50">50</option><option value="custom">Custom</option></select></label>{typeof foley.steps==='number'&&![20,30,50].includes(foley.steps)&&<label>Custom inference steps (1–100)<input aria-label="Custom Control-Foley inference steps" type="number" min={1} max={100} value={foley.steps} onChange={event=>setFoley(row=>({...row,steps:Number(event.target.value)}))}/></label>}</div></details>
       {cap?.control_foley&&<details><summary>Workflow readiness</summary><p>{cap.control_foley.status}; model {cap.control_foley.model_ready?'found':'missing'}; API workflows {cap.control_foley.workflow_ready?'found':'missing'}; missing nodes: {cap.control_foley.missing_nodes.join(', ')||'none'}{cap.control_foley.reason?`; ${cap.control_foley.reason}`:''}</p></details>}

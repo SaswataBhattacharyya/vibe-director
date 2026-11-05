@@ -1,0 +1,757 @@
+{
+  "schema_version": 1,
+  "kind": "documentation_catalogue_not_executable_registry",
+  "reviewed_date": "2026-11-05",
+  "runtime_wired": false,
+  "tools": [
+    {
+      "id": "project.manage",
+      "group": "projects",
+      "name": "New / Load / Save project",
+      "choose_when": "Create a project, reopen its work, save or switch to standalone tools.",
+      "inputs": "New: title and parent folder; open: project folder; save: current project and browser memory.",
+      "outputs": "Project identity/folder, restored scoped state and saved project records.",
+      "how_to_use": "Use ProjectController sequence: persist outgoing memory, save outgoing project where applicable, then new/open/select. Read current project before choosing ownership. Use /api/projects/current, /new, /open, /save, /select, /memory; check projects.py for exact body and validation.",
+      "source_files": [
+        "frontend/src/ProjectController.tsx",
+        "backend/story_builder/services/projects.py"
+      ],
+      "ui": "Global project bar",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "output.destination",
+      "group": "projects",
+      "name": "Output folder selection and relink",
+      "choose_when": "Choose where a tool publishes its results.",
+      "inputs": "Tool ID, project/workspace ID, entered path or native folder selection, saved choice/grant.",
+      "outputs": "Validated output grant/preference; recovery location if previous folder disappeared.",
+      "how_to_use": "POST /api/studio-tools/output-folder; /output-destination; /output-relink. Freeze destination into submitted jobs. Do not assume editing a path in chat has granted it.",
+      "source_files": [
+        "frontend/src/OutputDestination.tsx",
+        "backend/story_builder/services/output_destinations.py",
+        "backend/story_builder/services/studio_tools_api.py"
+      ],
+      "ui": "Output folder controls in tools",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "story.styles",
+      "group": "story",
+      "name": "Production type and directing style",
+      "choose_when": "Choose production format, creative treatment or learn style from sources.",
+      "inputs": "Production type/version, directing style/version, context/project; optional uploaded style sources or selected images and intent.",
+      "outputs": "Selection snapshot, published style or source-analysis proposal.",
+      "how_to_use": "Use styles-api.ts catalogue/selections/publishing and source/media analysis helpers. Preview proposals before adopting; styles are guidance, not an execution tool.",
+      "source_files": [
+        "frontend/src/lib/styles-api.ts",
+        "frontend/src/ProductionStylesPage.tsx",
+        "backend/story_builder/services/production_styles.py",
+        "backend/story_builder/services/style_sources.py"
+      ],
+      "ui": "#/styles",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "story.author",
+      "group": "story",
+      "name": "Story write, import, edit and revisions",
+      "choose_when": "Create/import story text or revise it without losing history.",
+      "inputs": "Title, source text or import file; selected text offsets, expected text, instruction and base revision for edits.",
+      "outputs": "Source revision, import preview, edit proposal or restored revision.",
+      "how_to_use": "Use story-api.ts uploadStoryFile then applyStoryImport; source draft/revision helpers; proposeStoryEdit then accept/discard. Preserve optimistic revision checks and idempotency.",
+      "source_files": [
+        "frontend/src/lib/story-api.ts",
+        "backend/story_builder/services/story_imports.py",
+        "backend/story_builder/services/story_authoring.py"
+      ],
+      "ui": "#/story",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "story.graph",
+      "group": "story",
+      "name": "Story facts and entity graph",
+      "choose_when": "Inspect extracted facts, search story context or resolve character/location identities.",
+      "inputs": "Source revision, graph snapshot; query or record edits; identity-decision fingerprints/head.",
+      "outputs": "Graph records, search hits or identity decision.",
+      "how_to_use": "Use buildStoryGraph/getStoryGraph/searchStoryGraph/updateStoryGraphRecord/decideStoryGraphIdentity. Extraction coverage is not proof every narrative fact was found.",
+      "source_files": [
+        "frontend/src/lib/story-api.ts",
+        "backend/story_builder/services/story_authoring.py"
+      ],
+      "ui": "#/story \u2192 Story graph",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "story.screenplay",
+      "group": "story",
+      "name": "Screenplay preparation and whole-screenplay chat",
+      "choose_when": "Draft screenplay or discuss a change across all scenes/shots.",
+      "inputs": "Story revision/graph snapshot, screenplay revision, instruction/history; selected proposal changes.",
+      "outputs": "Structured screenplay revision, conversation, proposal and explicitly applied revision.",
+      "how_to_use": "Use draftStoryScreenplay and screenplay revision/save/accept helpers; storyboard-api.ts conversation/chat/propose/apply for whole-screenplay direction. Discussion and applying changes are separate operations.",
+      "source_files": [
+        "frontend/src/lib/story-api.ts",
+        "frontend/src/lib/storyboard-api.ts",
+        "frontend/src/ScreenplayDirector.tsx",
+        "backend/story_builder/services/storyboard.py"
+      ],
+      "ui": "#/screenplay",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "story.board",
+      "group": "story",
+      "name": "Frame per shot and storyboard",
+      "choose_when": "Prepare optional shot imagery or a scene-based finished storyboard.",
+      "inputs": "Screenplay revision, board revision, shot descriptions/dialogue, chosen image assets and optional preparation choices.",
+      "outputs": "Revisioned board records and scene text/image presentation.",
+      "how_to_use": "getBoard/saveBoard with expected_revision. Frame generation delegates to image services; current board automatic framing includes browser orchestration, not one universal backend tool.",
+      "source_files": [
+        "frontend/src/lib/storyboard-api.ts",
+        "frontend/src/StoryboardPage.tsx",
+        "backend/story_builder/services/storyboard.py"
+      ],
+      "ui": "#/shot-frames or #/storyboard",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "production.setup",
+      "group": "story",
+      "name": "Automation and assisted production setup",
+      "choose_when": "Choose production mode, optional stages and saved generation parameters.",
+      "inputs": "Screenplay revision, mode, automate_steps and workflow/duration/output settings per current schema.",
+      "outputs": "Saved setup/hash, stage skips and planned work.",
+      "how_to_use": "Use getProductionSetup/saveProductionSetup and assisted-stage/frame skip helpers. Inspect production_setup.py: current fully automated policy differs from manual reference workflows. Do not promise every optional stage is accepted in every mode.",
+      "source_files": [
+        "frontend/src/lib/story-api.ts",
+        "frontend/src/ProductionSetupPage.tsx",
+        "backend/story_builder/services/production_setup.py"
+      ],
+      "ui": "#/setup",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "prompts.prepare",
+      "group": "story",
+      "name": "Shot, clip, character and world prompting",
+      "choose_when": "Prepare/edit generation instructions or teach reusable prompting preferences.",
+      "inputs": "Revision/setup, shot or asset target, workflow ID, current prompts, instruction; proposed lessons.",
+      "outputs": "Prompt drafts, per-clip prompts, character/world guidance, proposed lessons and exported skill text.",
+      "how_to_use": "Use prepareStoryPrompt, prompt draft saves and assisted clip planning. prompt-director-api.ts supports chat/propose/learn and exportPromptSkill; review/save lessons explicitly. Read model-specific guidance before preparation. Learning is saved guidance, not model training.",
+      "source_files": [
+        "frontend/src/lib/prompt-director-api.ts",
+        "frontend/src/lib/story-api.ts",
+        "backend/story_builder/services/prompt_director.py",
+        "backend/story_builder/services/workflow_knowledge.py",
+        "skills/video-prompting/SKILL.md"
+      ],
+      "ui": "#/prompts",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "images.generate",
+      "group": "images",
+      "name": "Text-to-image and image editing",
+      "choose_when": "Create an image from text or edit images using a supported reference workflow.",
+      "inputs": "Available workflow, prompt, dimensions/settings, asset role, references and ownership/lineage where required.",
+      "outputs": "Batch/candidate jobs, validated generated image assets and optional export.",
+      "how_to_use": "getImageWorkflows/getImageWorker \u2192 prepareImagePrompt or user prompt \u2192 validateImageRequest \u2192 createImageBatch \u2192 getImageBatch \u2192 acceptImageCandidate/exportImageAsset. Inspect current workflow schemas; Qwen editing uses references and is distinct from pure T2I.",
+      "source_files": [
+        "frontend/src/lib/image-api.ts",
+        "frontend/src/TextToImagePage.tsx",
+        "backend/story_builder/services/production_image_workflows.py",
+        "backend/story_builder/services/production_image_jobs.py"
+      ],
+      "ui": "#/text-to-image",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "images.production",
+      "group": "images",
+      "name": "Character, world, first/last-frame assets and selections",
+      "choose_when": "Prepare identities/backgrounds or explicitly requested first/last images for production.",
+      "inputs": "Screenplay targets, target role/record, selected masters/references, clip/shot IDs and workflow settings.",
+      "outputs": "Generated images, selected target associations and lineage.",
+      "how_to_use": "Use image batch/selection APIs and ImageAssetsPage stage flow. First/last images are an optional manual path; do not infer FFLF automation is enabled. Reuse selected assets instead of silently generating substitutes.",
+      "source_files": [
+        "frontend/src/ImageAssetsPage.tsx",
+        "frontend/src/lib/image-api.ts",
+        "backend/story_builder/services/production_image_selection.py"
+      ],
+      "ui": "#/characters, #/worlds, #/frames",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "images.inspect",
+      "group": "images",
+      "name": "Image Detailer",
+      "choose_when": "Describe an image for search or inspect its content.",
+      "inputs": "Image asset ID and quick/balanced/deep mode.",
+      "outputs": "Analysis job and image analysis/annotations.",
+      "how_to_use": "media-api.ts startImageDetailerJob/getImageDetailerJob with cancel/retry; saveImageAnalysis where appropriate. Check model/runtime availability before claiming vision.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/image_detailer.py"
+      ],
+      "ui": "#/media-prep \u2192 Images \u2192 Image Detailer",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "images.training",
+      "group": "images",
+      "name": "Image training and adapter catalogue",
+      "choose_when": "Explicitly requested image model/LoRA training workflow or checkpoint selection.",
+      "inputs": "Training configuration in training UI, checkpoint/adapter information.",
+      "outputs": "Training launch/status, adapter/checkpoint catalogue and published adapter.",
+      "how_to_use": "/api/studio-tools/training and /training/launch; /loras, /loras/checkpoints, /loras/publish. This is not needed to save a prompting lesson. Inspect image_training.py; launching a training UI is not a completed training run.",
+      "source_files": [
+        "backend/story_builder/services/image_training.py",
+        "backend/story_builder/services/studio_tools_api.py"
+      ],
+      "ui": "Training controls exposed by image tools; inspect current UI",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "video.t2v",
+      "group": "video",
+      "name": "Text to video",
+      "choose_when": "Generate directly from the user final prompt without reference media.",
+      "inputs": "Workflow-specific request including prompt, duration/frames, dimensions, seed, output and idempotency key; optional story linkage.",
+      "outputs": "Durable job, progress, final verified video and take status.",
+      "how_to_use": "video-api.ts getCapability \u2192 validateRequest \u2192 createJob \u2192 getJob/listJobs. Use current T2V contract, not a fabricated request. Manual generation does not require accepting a screenplay recommendation. LTX refinement is part of the configured pipeline, not a separate arbitrary edit.",
+      "source_files": [
+        "frontend/src/lib/video-api.ts",
+        "backend/story_builder/services/isolated_video_contract.py",
+        "backend/story_builder/services/isolated_video_jobs.py",
+        "backend/story_builder/services/t2v_pipeline.py"
+      ],
+      "ui": "#/video \u2192 Text to video",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "video.r2v",
+      "group": "video",
+      "name": "Reference to video",
+      "choose_when": "Generate using selected image/video/audio references and user prompt.",
+      "inputs": "Current reference asset identities/hashes, role/intent/order and workflow-specific prompt/settings.",
+      "outputs": "Durable generation job and final video.",
+      "how_to_use": "Use video-api and isolated_r2v_contract.py/isolated_r2v_assets.py. Read workflow guidance for Picture/Video/Audio tags. Collation helps preparation; do not assume it is mandatory for a manually supplied valid final prompt. Re-read replaced media identities before submission.",
+      "source_files": [
+        "frontend/src/lib/video-api.ts",
+        "backend/story_builder/services/isolated_r2v_contract.py",
+        "backend/story_builder/services/isolated_r2v_assets.py"
+      ],
+      "ui": "#/video \u2192 Reference to video",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "video.fflf",
+      "group": "video",
+      "name": "First + last frame video",
+      "choose_when": "User explicitly chooses video generation between two prepared endpoint images.",
+      "inputs": "Supported first/last asset roles and identities plus FFLF prompt/settings.",
+      "outputs": "Job and final video matching the selected workflow.",
+      "how_to_use": "Use FL2VA capability and contract/assets validators through video-api. User states image quality is why automatic FFLF is paused; runtime readiness and automation policy are separate checks. Do not use automatically while disabled.",
+      "source_files": [
+        "frontend/src/lib/video-api.ts",
+        "backend/story_builder/services/isolated_fl2va_contract.py",
+        "backend/story_builder/services/isolated_fl2va_assets.py",
+        "backend/story_builder/services/storyboard.py"
+      ],
+      "ui": "#/video \u2192 First + last frame",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "video.review",
+      "group": "video",
+      "name": "Take review, accept, retake and continuity",
+      "choose_when": "Review a generated clip, accept it, prepare another take or explicitly reuse its final frame.",
+      "inputs": "Job ID, acceptance/retake choice, keep-original choice; explicit continuity request.",
+      "outputs": "Accepted take, editable retake draft or extracted continuity asset.",
+      "how_to_use": "getJob/acceptJob/prepareRetake/prepareContinuityFrame. Preserve original media and frozen requests. If submission reply is uncertain, find by idempotency key before retry; release only through supported reconciliation.",
+      "source_files": [
+        "frontend/src/lib/video-api.ts",
+        "frontend/src/TakeWorkspace.tsx",
+        "backend/story_builder/services/video_continuity.py"
+      ],
+      "ui": "#/take",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "video.runs",
+      "group": "video",
+      "name": "Assisted and fully automated production runs / batches",
+      "choose_when": "Run multiple planned clips or resume controlled production.",
+      "inputs": "Saved screenplay/setup and prepared clip prompts, mode-compatible reference choices, batch settings.",
+      "outputs": "Clip plan, run state, jobs, retries and pause/resume/stop status.",
+      "how_to_use": "Use story-api assisted-video and automated-run helpers plus t2v_batches/t2v_pipeline entrypoints. Read setup and exact pipeline policy first; full auto currently uses image-free T2V. Recover existing jobs instead of resubmitting blindly.",
+      "source_files": [
+        "frontend/src/lib/story-api.ts",
+        "frontend/src/T2VBatchPanel.tsx",
+        "backend/story_builder/services/t2v_batches.py",
+        "backend/story_builder/services/production_job_worker.py"
+      ],
+      "ui": "#/setup, #/prompts and #/video production controls",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "video.assembly",
+      "group": "video",
+      "name": "Accepted clip assembly and final export",
+      "choose_when": "Combine reviewed production takes with configured audio.",
+      "inputs": "Exact required take selections, assembly settings and selected audio tracks.",
+      "outputs": "Assembly snapshot, preview and durable export.",
+      "how_to_use": "Use AssemblyPreviewPanel and assembly.py/assembly_renderer.py. Existing assembly validates selection completeness; do not describe it as an arbitrary free-form timeline tool. Use Editor for a freely selected edit.",
+      "source_files": [
+        "frontend/src/AssemblyPreviewPanel.tsx",
+        "backend/story_builder/services/assembly.py",
+        "backend/story_builder/services/assembly_renderer.py"
+      ],
+      "ui": "Assembly panel in production review",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "media.browse",
+      "group": "media",
+      "name": "Library, source catalogue and imports",
+      "choose_when": "Find/select local media by project, repertoire, folder or category; import external files.",
+      "inputs": "Current project, kind, source/owner scope, query/order/pagination/folder; file and intended role for upload.",
+      "outputs": "Catalogue rows with identities and content URLs, reused/copied assets or imports.",
+      "how_to_use": "browseMediaCatalogue/listMediaAssets/uploadMediaAsset/reuseCatalogueAsset/refreshDownloadCatalogue. Read media_discovery.py for actual filesystem coverage. Broad scopes include discovered supported files; character/world roles are narrower semantic filters. Never assume the whole disk or Downloads is searched without a configured scope.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "frontend/src/MediaSourcePicker.tsx",
+        "backend/story_builder/services/media_discovery.py",
+        "backend/story_builder/services/media_library.py"
+      ],
+      "ui": "#/media or media source pickers",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "media.semantic",
+      "group": "media",
+      "name": "Semantic search, indexing and annotations",
+      "choose_when": "Find content by meaning rather than filename.",
+      "inputs": "Media kind, scoped assets, natural-language query; annotations or indexing request.",
+      "outputs": "Ranked hits, evidence/descriptions and indexing job status.",
+      "how_to_use": "searchMediaSemantically; updateMediaAnnotations/indexMediaAssetAnnotations; createMediaContentIndexJob and read/retry/cancel helpers. Unanalysed media is not automatically semantically understood. Report actual indexing/search coverage.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/media_semantic_search.py"
+      ],
+      "ui": "#/media \u2192 Search",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "media.download",
+      "group": "media",
+      "name": "YouTube search/URL resolution and download",
+      "choose_when": "User requests online source discovery or imports an online video.",
+      "inputs": "Search query/count or pasted URLs, selected candidates and project.",
+      "outputs": "Resolved candidates, download job and saved source assets.",
+      "how_to_use": "resolveYoutubeSources \u2192 startYoutubeDownload \u2192 getYoutubeJob; cancel when supported. Search resolution is not a completed download or content analysis. Preserve source provenance.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/video_repertoire.py"
+      ],
+      "ui": "#/media-prep \u2192 Video Summariser \u2192 YouTube Download",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "media.analyse_video",
+      "group": "media",
+      "name": "Video Summariser / audio-video analysis",
+      "choose_when": "Understand source clips, locate described actions or inspect recorded audio events.",
+      "inputs": "Selected video IDs and analysis settings.",
+      "outputs": "Analysis jobs, result records, extracted artifacts and searchable evidence as produced by the pipeline.",
+      "how_to_use": "startVideoAnalysis/getVideoAnalysisJob with cancel/retry/delete helpers; staged donor analysis/import helpers. Inspect video_summarizer_results.py for real artifacts/timestamps. Do not claim every file has been analysed or every model understands speech.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/video_summarizer_results.py",
+        "backend/story_builder/services/video_repertoire_worker.py"
+      ],
+      "ui": "#/media-prep \u2192 Video Summariser \u2192 Analyze / Results / Audio Assets",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "media.style_frames",
+      "group": "media",
+      "name": "Style reference frames and associations",
+      "choose_when": "Use selected video frames/images as evidence for a directing style.",
+      "inputs": "Asset ID, style ID, selected timestamps or linked image.",
+      "outputs": "Frame-extraction job and linked style-reference assets.",
+      "how_to_use": "linkMediaAssetToStyle/extractMediaStyleFrames/getStyleFrameJob/cancelStyleFrameJob. This is not generic per-shot video generation.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/style_sources.py"
+      ],
+      "ui": "#/media and style-reference controls",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "media.delete",
+      "group": "media",
+      "name": "Archive and permanent media deletion",
+      "choose_when": "User explicitly requests hiding or deleting selected media.",
+      "inputs": "Asset identity, archive flag or deletion preview/token.",
+      "outputs": "Archive update or confirmed deletion result.",
+      "how_to_use": "setMediaAssetArchived; previewMediaDeletion then permanentlyDeleteMedia. Removing an attachment is a different operation and must not delete the original.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "frontend/src/lib/media-deletion.ts",
+        "backend/story_builder/services/media_library.py"
+      ],
+      "ui": "Search/library selection actions",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.extract",
+      "group": "audio",
+      "name": "Extract MP3 from video/audio",
+      "choose_when": "Extract a soundtrack for listening, analysis or subsequent audio work.",
+      "inputs": "Project/workspace ID, source asset_ids and operation extract_mp3; settings quality 0\u20139.",
+      "outputs": "Audio utility job and registered extracted audio assets.",
+      "how_to_use": "getAudioUtilityCapabilities; createAudioUtilityJob(w,\"extract_mp3\",ids,{quality:2}); poll getAudioUtilityJob. ffmpeg is required. API accepts audio/video; UI output destination is configured separately. Extraction alone neither analyses speech nor proves a requested interval was isolated.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/audio_utilities.py"
+      ],
+      "ui": "#/media-prep \u2192 Audio \u2192 Utilities \u2192 Extract MP3",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.utilities",
+      "group": "audio",
+      "name": "Noise cleanup and stem separation",
+      "choose_when": "Clean a recording or separate soundtrack components.",
+      "inputs": "Audio asset_ids, noise_cleanup or demucs_stems and supported settings.",
+      "outputs": "Utility job and cleaned audio/stems.",
+      "how_to_use": "Check utility capabilities; createAudioUtilityJob then poll results. Cleanup uses the denoiser runtime; stems uses Demucs. Operation readiness is separate from ffmpeg extraction readiness.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/audio_utilities.py"
+      ],
+      "ui": "#/media-prep \u2192 Audio \u2192 Utilities",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.isolate",
+      "group": "audio",
+      "name": "SAM audio event isolation",
+      "choose_when": "Isolate a specific event already identified in analysed video audio.",
+      "inputs": "Analysis run/event IDs, prompt; temporary preview identity for save/discard.",
+      "outputs": "Isolation preview and explicitly saved or discarded asset.",
+      "how_to_use": "getSamAudioCapability \u2192 isolateVideoAudioEvent \u2192 saveSamAudioPreview/discardSamAudioPreview. Requires compatible analysis context; not a universal timestamp cutter or an automatic promise of perfect speech removal.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/sam_audio_vibe.py"
+      ],
+      "ui": "#/media-prep \u2192 Video Summariser results/audio events",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.speech",
+      "group": "audio",
+      "name": "Timed TTS / dialogue generation",
+      "choose_when": "Generate spoken character dialogue or narration with timed text.",
+      "inputs": "SRT content, characters with name/reference_voice_id/language and supported settings.",
+      "outputs": "Timed TTS job and generated speech assets.",
+      "how_to_use": "listAudioVoices/listAudioModels/getAudioCapabilities then createTimedTTSJob/getTimedTTSJob. Preserve exact requested words and speaker assignments; generated speech is distinct from source analysis.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/audio_tts.py"
+      ],
+      "ui": "#/media-prep \u2192 Audio \u2192 Studio",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.voices",
+      "group": "audio",
+      "name": "Record, enrol and bind character voices",
+      "choose_when": "Record/import a voice or associate a chosen voice with a character.",
+      "inputs": "Recording/import asset, name/transcript; character and screenplay identity for binding.",
+      "outputs": "Voice reference/catalogue asset and explicit character-voice association.",
+      "how_to_use": "uploadMediaAsset with recording storage where appropriate; enrollAudioVoice/importComfyVoiceToWorkspace/refreshAudioVoices; story-api setCharacterVoice/auto-match. Browser recording needs user microphone access; matching proposes/selects voices, not actor consent.",
+      "source_files": [
+        "frontend/src/VoiceRecorder.tsx",
+        "frontend/src/lib/media-api.ts",
+        "frontend/src/lib/story-api.ts",
+        "backend/story_builder/services/character_voice_bindings.py"
+      ],
+      "ui": "#/characters and Audio Studio",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.effects",
+      "group": "audio",
+      "name": "Voice effects, repair, conversion and simple CPU effects",
+      "choose_when": "Alter existing audio with a supported effect.",
+      "inputs": "Audio asset ID, operation simple/noise_cleanup/voice_repair/voice_changer/rvc/emotion/style and validated settings.",
+      "outputs": "Effect job and output audio.",
+      "how_to_use": "getAudioEffectCapabilities \u2192 createAudioEffectJob \u2192 getAudioEffectJob. Inspect operation schema/models. Workflow file existence does not establish verified runtime nodes. Do not confuse audio-effects cleanup with utility cleanup; select the ready appropriate service.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/audio_effects.py"
+      ],
+      "ui": "#/media-prep \u2192 Audio \u2192 Studio effects/conversion",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.voice_studio",
+      "group": "audio",
+      "name": "Specialist voice studio and RVC training",
+      "choose_when": "Explicit specialist voice workflow, model training or conversion.",
+      "inputs": "Operation-specific source assets, reference/model/training settings and project identity.",
+      "outputs": "Voice-studio job, logs/progress and resulting audio/model where supported.",
+      "how_to_use": "GET /api/studio-tools/voice/capabilities; POST /voice/jobs; GET job and POST cancel/resume supported routes. Inspect voice_studio.create and UI payload before submission. Training is expensive, separate from preference learning.",
+      "source_files": [
+        "frontend/src/VoiceStudioTools.tsx",
+        "backend/story_builder/services/voice_studio.py",
+        "backend/story_builder/services/studio_tools_api.py"
+      ],
+      "ui": "Audio Studio \u2192 specialist voice tools",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.scene",
+      "group": "audio",
+      "name": "Audio scene surgery: split and stitch",
+      "choose_when": "Cut specific audio intervals, replace passages and reconstruct a scene.",
+      "inputs": "Audio source, edits with start/end/text; split job ID, simple/timed stitch mode, replacement IDs and gaps.",
+      "outputs": "Split/stitch jobs and resulting audio assets.",
+      "how_to_use": "getAudioSceneCapabilities \u2192 createAudioSceneSplit \u2192 getAudioSceneSplit; createAudioSceneStitch \u2192 getAudioSceneStitch. Validate current source/range/format requirements. This is the first candidate for excerpt operations; inspect actual split outputs before claiming an exact requested export.",
+      "source_files": [
+        "frontend/src/AudioSceneSurgery.tsx",
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/audio_scene.py"
+      ],
+      "ui": "Audio Studio \u2192 scene surgery",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.reconstruct",
+      "group": "audio",
+      "name": "Dialogue reconstruction and take selection",
+      "choose_when": "Prepare character speech in parts and choose approved replacement takes.",
+      "inputs": "Character/sentence calibration, ordered parts with expected_text, take audio and transcript.",
+      "outputs": "Reconstruction session/parts/takes and accepted audio association.",
+      "how_to_use": "getReconstructionSession/saveReconstructionCalibration/createReconstructionPart/addReconstructionTake/acceptReconstructionTake. Accepting a take does not automatically replace video sound; route it into a reviewed edit/stitch.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/audio_reconstruct.py"
+      ],
+      "ui": "#/media-prep \u2192 Audio \u2192 Reconstruct",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "audio.finetune",
+      "group": "audio",
+      "name": "F5 dataset preparation",
+      "choose_when": "Prepare an explicitly requested speech fine-tuning dataset.",
+      "inputs": "Dataset name/base model, samples with audio asset_id and text.",
+      "outputs": "Preparation job/dataset artifacts.",
+      "how_to_use": "createF5PreparationJob/getF5PreparationJob. Dataset preparation is not proof model training completed. Use only explicit training intent.",
+      "source_files": [
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/audio_finetune.py"
+      ],
+      "ui": "Audio Studio \u2192 fine-tune preparation",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "music.generate",
+      "group": "audio",
+      "name": "Music and Foley generation",
+      "choose_when": "Generate music or sound effects, including supported reference-conditioned Foley.",
+      "inputs": "Kind ace-music/control-foley, settings, prompt knowledge reference and optional video/audio reference IDs.",
+      "outputs": "Music/Foley jobs and audio outputs.",
+      "how_to_use": "getMusicCapabilities/getWorkflowGuidance; createMusicJob/listMusicJobs/getMusicJob. Follow the selected operation schema and reference support. Do not claim generated SFX are automatically placed in an edit.",
+      "source_files": [
+        "frontend/src/MusicSoundPage.tsx",
+        "frontend/src/lib/media-api.ts",
+        "backend/story_builder/services/music_sound.py",
+        "backend/story_builder/services/control_foley.py"
+      ],
+      "ui": "#/media-prep \u2192 Audio \u2192 Music & Sound",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "music.ace",
+      "group": "audio",
+      "name": "ACE-Step studio, generation and fine-tuning",
+      "choose_when": "Use ACE creation modes or explicitly prepare/train adapters.",
+      "inputs": "ACE session/project, create settings/reference mode; training dataset and configuration for fine-tuning.",
+      "outputs": "Saved ACE session/revisions, runtime job and generated audio or training artifacts.",
+      "how_to_use": "GET /api/ace/state; POST /api/ace/projects; project /command and /dataset; GET /log. Read AceStudioPage and ace_studio.command for valid commands. New visits should use Create; Fine-tune is a distinct intent.",
+      "source_files": [
+        "frontend/src/AceStudioPage.tsx",
+        "backend/story_builder/services/ace_studio_api.py",
+        "backend/story_builder/services/ace_studio.py"
+      ],
+      "ui": "Music & Sound \u2192 ACE-Step studio; nested view, not a guaranteed top-level hash route",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "music.jukebox",
+      "group": "audio",
+      "name": "Music Jukebox / composition / DJ / export",
+      "choose_when": "Arrange/play/edit music or export a composition.",
+      "inputs": "Project, tracks/patterns, tempo/gain/deck/crossfade settings and output selection.",
+      "outputs": "Saved composition, playback state, staged WAV and export job/output.",
+      "how_to_use": "/api/jukebox/state/projects; project save/render/export/copy; jobs and exports. Browser Tone/MIDI playback/render is part of this path. /api/jukebox/chat proposes supported changes; it does not run arbitrary tools.",
+      "source_files": [
+        "frontend/src/MusicJukebox.tsx",
+        "frontend/src/JukeboxDJ.tsx",
+        "backend/story_builder/services/music_jukebox_api.py",
+        "backend/story_builder/services/music_jukebox.py"
+      ],
+      "ui": "Music & Sound \u2192 Music Jukebox",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "editor.edit",
+      "group": "editor",
+      "name": "Vibe Editor: chat, selected ranges and rendering",
+      "choose_when": "Edit supplied clips/images; trim, sequence, transition, caption, frame, filter or retime.",
+      "inputs": "Editor session ID, selected assets/ranges, instruction/style, supported plan and output settings.",
+      "outputs": "Conversation, brief/plan revision, render job and validated final video.",
+      "how_to_use": "GET /api/editor/state; POST /projects; GET/PUT project; POST project /command or /plan. Inspect current command actions and two approval stages. Existing renderer supports bounded JSON operations, not arbitrary audio understanding or all app tools. Coordinate external app services separately.",
+      "source_files": [
+        "frontend/src/VibeEditorPage.tsx",
+        "backend/story_builder/services/vibe_editor_api.py",
+        "backend/story_builder/services/vibe_editor.py",
+        "backend/story_builder/services/vibe_editor_render.py"
+      ],
+      "ui": "#/editor",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "editor.styles",
+      "group": "editor",
+      "name": "Editor style memory and lessons",
+      "choose_when": "Teach reusable editing taste or change a selected style.",
+      "inputs": "Style/session context, explicit preference proposal and confirmation.",
+      "outputs": "Revisioned style guidance and project override.",
+      "how_to_use": "Use Editor style and command contracts. Separate learning confirmation from edit approval; do not store plot/paths as universal preferences. Preserve upstream reference skills without treating their instructions as executable permission.",
+      "source_files": [
+        "backend/story_builder/services/vibe_editor.py",
+        "design/vibe-editor/skills/vibe-editor-director/SKILL.md"
+      ],
+      "ui": "#/editor \u2192 style",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "editor.export",
+      "group": "editor",
+      "name": "Editor save final MP4",
+      "choose_when": "Publish an already rendered edit to the user output folder.",
+      "inputs": "Editor project ID, folder, filename; collision confirmation only when needed.",
+      "outputs": "Verified saved file or explicit collision response.",
+      "how_to_use": "POST /api/editor/projects/{id}/export. Follow export_video schema and UI collision flow; never overwrite original source by treating an output path as permission. Render completion and export completion are distinct.",
+      "source_files": [
+        "frontend/src/VibeEditorPage.tsx",
+        "backend/story_builder/services/vibe_editor.py"
+      ],
+      "ui": "#/editor \u2192 export",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "models.3d",
+      "group": "models",
+      "name": "TRELLIS.2 and Pixal3D image-to-3D",
+      "choose_when": "Create a 3D object from images or aligned multi-view inputs.",
+      "inputs": "Backend, single/batch mode, uploaded inputs, optional view profile/confirmation, preset/settings, output grant.",
+      "outputs": "Per-object durable job, validated GLB and output location/viewer.",
+      "how_to_use": "GET /api/trellis/state; POST upload/output-folder/jobs; GET job/model; POST cancel/resume/recover. TRELLIS multiview may need /service. Supported presets/backends differ. Text alone is not valid image-conditioned input. Blender opening is an explicit separate action.",
+      "source_files": [
+        "frontend/src/TrellisPage.tsx",
+        "frontend/src/MultiViewInputs.tsx",
+        "backend/story_builder/services/trellis_studio.py",
+        "backend/story_builder/services/multiview_3d.py"
+      ],
+      "ui": "#/image-to-3d or #/image-to-3d-pixal3d",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "system.status",
+      "group": "system",
+      "name": "Readiness, provider, jobs and GPU safety",
+      "choose_when": "Explain why a task cannot run or monitor real work.",
+      "inputs": "Workflow/job ID, provider configuration context or status request.",
+      "outputs": "Capability reasons, queue/admission/worker/provider status and diagnostic evidence.",
+      "how_to_use": "Use status-api.ts and workflow-specific capabilities; preserve shared dispatch/thermal/provider guards. GPU 90\u00b0C cutoff and 2100 MHz ceiling are existing policy, not suggestions to change clocks. Clearing holds/changing workload policy requires an appropriate explicit user action.",
+      "source_files": [
+        "frontend/src/lib/status-api.ts",
+        "frontend/src/StatusPage.tsx",
+        "backend/story_builder/services/gpu_runtime.py",
+        "backend/story_builder/services/job_queue_status.py",
+        "backend/story_builder/services/reasoning_status.py"
+      ],
+      "ui": "#/status",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    },
+    {
+      "id": "system.knowledge",
+      "group": "system",
+      "name": "Prompt workflow knowledge and installed Director skills",
+      "choose_when": "Select model-specific prompting rules or inspect current Director knowledge.",
+      "inputs": "Workflow/model IDs, installed skill paths, approved scoped lessons.",
+      "outputs": "Versioned guidance/reference and prompt-knowledge provenance.",
+      "how_to_use": "getWorkflowGuidance plus director_skills.py. Read relevant skills only. Tool descriptions are knowledge; executable adapters are separate. Do not silently rewrite skill approval rules through this glossary.",
+      "source_files": [
+        "backend/story_builder/services/director_skills.py",
+        "backend/story_builder/services/workflow_knowledge.py",
+        "skills/vibe-director/SKILL.md",
+        "skills/video-prompting/SKILL.md"
+      ],
+      "ui": "Prompting/Director settings and skill files",
+      "exposure": "existing application capability; universal Director adapter not established by this glossary",
+      "readiness": "check current capability and operation-specific validation; source presence is not live readiness"
+    }
+  ]
+}

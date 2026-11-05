@@ -543,21 +543,28 @@ def submit_and_wait(workflow: dict[str, Any], *, comfy_url: str, timeout_seconds
             prompt_id=str(prompt_id), remote_state_unknown=True)
 
 
-def collect_outputs(history: dict[str, Any], *, destination_dir: Path, comfy_url: str) -> list[dict[str, Any]]:
+def collect_outputs(history: dict[str, Any], *, destination_dir: Path, comfy_url: str,
+                    output_only: bool = False) -> list[dict[str, Any]]:
     destination_dir.mkdir(parents=True, exist_ok=True)
     collected: list[dict[str, Any]] = []
     for node_output in history.get("outputs", {}).values():
         for image in node_output.get("images", []):
+            if output_only and image.get("type", "output") != "output":
+                continue
             copied = _copy_image_output(image, destination_dir, comfy_url)
             if copied is not None:
                 kind = "video" if copied.suffix.lower() in {".mp4", ".webm", ".mov", ".mkv", ".avi", ".gif"} else "image"
                 collected.append({"kind": kind, "relative_path": copied.name, "filename": copied.name})
         for video in node_output.get("gifs", []) + node_output.get("videos", []):
+            if output_only and video.get("type", "output") != "output":
+                continue
             copied = _copy_binary_output(video, destination_dir, comfy_url)
             if copied is not None:
                 collected.append({"kind": "video", "relative_path": copied.name, "filename": copied.name})
         audio_items = node_output.get("audio", []) + node_output.get("audios", [])
         for audio in audio_items:
+            if output_only and audio.get("type", "output") != "output":
+                continue
             copied = _copy_binary_output(audio, destination_dir, comfy_url)
             if copied is not None:
                 collected.append({"kind": "audio", "relative_path": copied.name, "filename": copied.name})

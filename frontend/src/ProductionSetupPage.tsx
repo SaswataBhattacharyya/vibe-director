@@ -1,3 +1,4 @@
+import {managedProjectId} from './lib/media-workspace';
 import { T2V_QUALITIES, ALL_VIDEO_QUALITIES, VIDEO_ASPECT_RATIOS, VideoAspectRatio } from './lib/video-quality';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, Check, RefreshCw, Save } from 'lucide-react';
@@ -43,7 +44,7 @@ export default function ProductionSetupPage() {
     setBusy(true); setSaving(false); setLoadError(''); setSaveError(''); setNotice(''); setSaved(null); setScreenplayRevisionId('');
     try {
       const requestedWorkspace = new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || '';
-      const id = requestedWorkspace || localStorage.getItem('vibe-story-selected-v1') || '';
+      const id = managedProjectId() || requestedWorkspace || localStorage.getItem('vibe-story-selected-v1') || '';
       if (!id.startsWith('story-')) { if(!requestedWorkspace)localStorage.removeItem('vibe-story-selected-v1'); throw new Error('Open a saved story first.'); }
       setWorkspaceId(id);
       const workspace = await getStoryWorkspace(id);
@@ -162,7 +163,7 @@ export default function ProductionSetupPage() {
   const minDuration = draft.duration_policy.kind === 'director_selected' ? draft.duration_policy.min_seconds : 5;
   const maxDuration = draft.duration_policy.kind === 'director_selected' ? draft.duration_policy.max_seconds : 30;
 
-  return <main className="content-wrap production-setup-page">
+  return <main className="content-wrap production-setup-page"><section className="card" style={{marginBottom:24}}><div className="story-panel-title"><div><h2>Storyboard production</h2><p>Choose optional stages, prepare one image per shot and build a scene storyboard. FFLF remains available manually; automatic endpoint images and FFLF video are paused.</p></div><a className="quiet-button" href="#/shot-frames">Configure storyboard & shot frames</a></div></section>
     <div className="page-heading"><div><div className="eyebrow">SCREENPLAY SETUP</div><h1>Automation &amp; Parameters</h1><p>{screenplayRevisionId ? `Accepted screenplay · ${screenplayRevisionId}` : 'Choose how the stages will run.'}</p></div><button className="quiet-button" type="button" onClick={() => void refresh()} disabled={busy || saving}><RefreshCw size={15}/> Reload</button></div>
     {(loadError || saveError) && <p className="error-banner" role="alert">{loadError || saveError}</p>}{notice && <p className="production-setup-notice" role="status"><Check size={15}/>{notice}</p>}
     {busy ? <section className="card">Loading the current accepted screenplay and saved setup…</section> : loadError ? <section className="card production-setup-blocked"><b>Setup is locked</b><p>Return to Screenplay, save the latest edits, then review and accept the current revision.</p><a className="quiet-button" href="#/screenplay">Open Screenplay <ArrowRight size={15}/></a></section> : <>
@@ -173,7 +174,7 @@ export default function ProductionSetupPage() {
         </div>
       </section>
       {draft.mode === 'assisted_manual' && <section className="card production-steps-card"><div className="production-setup-section-title"><div><h2>Automate these steps</h2><p>Checked means automatic; unchecked means manual. Use Skip to bypass an image stage. Skipping every image stage is allowed; voices are handled separately.</p></div></div>
-        <div className="production-step-list">{stepInfo.map(([key, label]) => <div className="production-step" key={key}><label><input type="checkbox" checked={draft.automate_steps[key]} disabled={saving} onChange={() => toggle(key)}/><span><b>{label}</b><small>{skips.includes(key as ImageStep) ? 'Skipped. Existing images are preserved.' : draft.automate_steps[key] ? 'Runs automatically when its inputs are ready.' : 'You review the prompt and choose when to generate.'}</small></span></label>{imageSteps.includes(key as ImageStep) && <button type="button" className="quiet-button" disabled={saving} aria-pressed={skips.includes(key as ImageStep)} onClick={() => skipStage(key as ImageStep)}>{skips.includes(key as ImageStep) ? 'Undo skip' : 'Skip'}</button>}</div>)}</div><p>For filmmaking, cinematic frame preparation is experimental and currently unreliable. Skip it to continue from Worlds to Video Create with text to video. Frame tools and first/last-frame video remain available when you choose to use them.</p>
+        <div className="production-step-list">{stepInfo.map(([key, label]) => <div className="production-step" key={key}><label><input type="checkbox" checked={draft.automate_steps[key]} disabled={saving || (key === 'frame_images' && !draft.automate_steps[key])} onChange={() => toggle(key)}/><span><b>{label}</b><small>{skips.includes(key as ImageStep) ? 'Skipped. Existing images are preserved.' : draft.automate_steps[key] ? 'Runs automatically when its inputs are ready.' : 'You review the prompt and choose when to generate.'}</small></span></label>{imageSteps.includes(key as ImageStep) && <button type="button" className="quiet-button" disabled={saving} aria-pressed={skips.includes(key as ImageStep)} onClick={() => skipStage(key as ImageStep)}>{skips.includes(key as ImageStep) ? 'Undo skip' : 'Skip'}</button>}</div>)}</div><p>For filmmaking, cinematic frame preparation is experimental and currently unreliable. Skip it to continue from Worlds to Video Create with text to video. Frame tools and first/last-frame video remain available when you choose to use them.</p>
         {imageSteps.filter(step => draft.automate_steps[step]).map(step => {
           const setting = draft.image_stage_settings?.[step] || fallbackImageSetting;
           const workflow = imageWorkflows.find(item => item.workflow_id === setting.workflow_id);
@@ -197,7 +198,7 @@ export default function ProductionSetupPage() {
         {draft.automate_steps.video && <fieldset className="production-image-settings" disabled={saving}>
           <legend>Video Generation · choose one workflow for this run</legend>
           <label>Workflow<select aria-label="Automated video workflow" value={draft.video_workflow_id || ''} onChange={event => setDraft(value => ({ ...value, video_quality: 't2v_standard', video_workflow_id: event.target.value ? event.target.value as NonNullable<ProductionSetup['video_workflow_id']> : undefined }))}>
-            <option value="">Choose workflow</option><option value="minimax_h3_t2v_local_v1">Text to video (no references)</option><option value="minimax_h3_fl2va_first_last_v1" >First and last frame (FFLF)</option><option value="minimax_h3_r2v_dynamic_v1">Reference to video (R2V)</option>
+            <option value="">Choose workflow</option><option value="minimax_h3_t2v_local_v1">Text to video (no references)</option><option value="minimax_h3_fl2va_first_last_v1" disabled>First and last frame · automatic use paused</option><option value="minimax_h3_r2v_dynamic_v1">Reference to video (R2V)</option>
           </select></label>
           <small>Applies to this Assisted manual run. Text to video needs no references. Choose FFLF or R2V only when you want to select references for each clip.</small>
         </fieldset>}

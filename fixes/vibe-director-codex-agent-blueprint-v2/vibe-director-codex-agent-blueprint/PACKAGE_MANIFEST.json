@@ -1,0 +1,282 @@
+{
+  "01_VISION_AND_BEHAVIOR.md": {
+    "sha256": "3596fe1339642037ae6f0dcaef875c65dec4d8eed4486f02f320317c3804e4ef",
+    "bytes": 3420
+  },
+  "02_PLAN_APPROVE_EXECUTE.md": {
+    "sha256": "f9b6dedec31c4dd919d3cdfe720f1641864947d20928b6bb33fde49af26e1dd7",
+    "bytes": 4500
+  },
+  "03_SYSTEM_ARCHITECTURE.md": {
+    "sha256": "d252c8a4b53ae8bbe19277f7477da9bb9d2f776fc91c43b3fcefb488f8b6ec76",
+    "bytes": 7416
+  },
+  "04_GITHUB_CODE_AUDIT.md": {
+    "sha256": "5e17b2f8b834c4bf98eec0dff9f2b6cc635d487029d41863016107f20ea41d29",
+    "bytes": 5420
+  },
+  "05_PROJECT_KNOWLEDGE_GRAPH.md": {
+    "sha256": "01e7a738a3478c04f0bdeff32e24d4fa65062adb54d75055aa72138663fc89ef",
+    "bytes": 4218
+  },
+  "06_TOOL_GRAPH_AND_COMPUTER_ACCESS.md": {
+    "sha256": "da6fd940961b14eeb94350be997d6131b2d66630b7fdbd6679e0bcde68ead47f",
+    "bytes": 4060
+  },
+  "07_END_TO_END_FILM_LOOP.md": {
+    "sha256": "2aaad395d287cd8094136763fe58e79288168da3b5424b67fef7f9d26fba8167",
+    "bytes": 4778
+  },
+  "08_EDITOR_HANDOFF_AND_DELEGATION.md": {
+    "sha256": "e7c6ad681abfe2c25b8e1da867055ee86b1098b021b4128a266cfa6ed6184dc9",
+    "bytes": 5465
+  },
+  "09_UI_CREATIVE_WORKFLOWS.md": {
+    "sha256": "934343b9c156c3c1be15efdf8f54ba148bf3c796c31f731ed7ef5cbd20eaccba",
+    "bytes": 3820
+  },
+  "10_MIGRATION_IMPLEMENTATION_PHASES.md": {
+    "sha256": "d9eb84aed2191421873192f1b606ab5ef2b1122b47b3dde87faba4a3f05fe886",
+    "bytes": 4954
+  },
+  "11_ACCEPTANCE_TESTS.md": {
+    "sha256": "2b69ad58611b0298ec3c76ddcfedbd8008586e08f6184bc95feee4583c7361e9",
+    "bytes": 3723
+  },
+  "12_DESIGN_DECISIONS_AND_OPEN_QUESTIONS.md": {
+    "sha256": "500b4ed633a9adb73e84328d45eaa45fc4ba1da8a176c50fb06228405d3b2e08",
+    "bytes": 1978
+  },
+  "13_EXISTING_SOURCE_SKILL_MERGE.md": {
+    "sha256": "9f8b4323a88b10099a0a785fe1ccbc6ccd7678f7b93b0e2f377e7c9030f62812",
+    "bytes": 2596
+  },
+  "14_GLOBAL_AND_PROJECT_SKILL_ACCESS.md": {
+    "sha256": "81a055ef6b4311897821e37e4d95b7fb1cf43ce453ed54661e4ff6c9be73604a",
+    "bytes": 7474
+  },
+  "15_COMPACT_CODE_AND_TEST_MEDIA_POLICY.md": {
+    "sha256": "cc95d34c9908106802d5e8e06fda5e419daa45659e4f4e4542cce3d8fb05abae",
+    "bytes": 4588
+  },
+  "README.md": {
+    "sha256": "46dc6123620adaada6e1b2e68dcbb6b9e4621d08de3843b22bc21e5ced28a17c",
+    "bytes": 3661
+  },
+  "codex/CODEX_MASTER_VISION.md": {
+    "sha256": "bad0359b69abd1d74b31a6f012532594427547ade095ccf4c178a1c17e5c796d",
+    "bytes": 5979
+  },
+  "codex/IMPLEMENTATION_MODE_PROTOCOL.md": {
+    "sha256": "d69d26b2bc6321f5d518bf0d16a6f3ffd6c11882fb41cb847c500f0baba3a7ab",
+    "bytes": 1319
+  },
+  "codex/PHASE_0_REPO_RECONCILIATION.md": {
+    "sha256": "5293c74643915f0cfacb3f3afafa9f453fcd4b43b6f9d2cf030d6eb16569351f",
+    "bytes": 1561
+  },
+  "codex/PHASE_1_IMPLEMENT_ON_APPROVAL.md": {
+    "sha256": "3f0fbec69bc01b166589b477560e89fdcb204c4b3b13204b21cf4db32ab348e4",
+    "bytes": 1387
+  },
+  "codex/START_HERE_PLAN_THEN_IMPLEMENT.md": {
+    "sha256": "0dc8c44d7ca91b02fd816a0026f46e7b0f3051571fccf31a04247ed887e66951",
+    "bytes": 4519
+  },
+  "contracts/example_r2v_reference_manifest.json": {
+    "sha256": "095c23f65a11e6c0448cd0d5963bb380508b2bf807e97a67231ea3303df87d64",
+    "bytes": 1332
+  },
+  "contracts/example_task_plan.json": {
+    "sha256": "f5f1113e4258ba32d3021569c177d5c6e720a625ac9a88873ff95907cba51012",
+    "bytes": 2390
+  },
+  "contracts/example_tool_adapter.json": {
+    "sha256": "c3d0cf72035649004c4423b3cfe0dc0107d667448bc9ec6d106a9572b0986c0c",
+    "bytes": 1083
+  },
+  "contracts/project_graph_types.json": {
+    "sha256": "23f95bbd4f1e3c6ef447b7fca0b8f452751aeb7b6a9ab7e8a7672af65104e325",
+    "bytes": 1516
+  },
+  "contracts/task_plan.schema.json": {
+    "sha256": "d5a9b4ac813dd38b7ec4e2845430ea0273c551763b37793cd6092c4a1551f8bb",
+    "bytes": 2235
+  },
+  "examples/minimax-h3-scene5-prompt.txt": {
+    "sha256": "919cc22d7e4548c31a25031d80e9581241755361d2a2836c8d0938205ea0c66f",
+    "bytes": 2010
+  },
+  "examples/scene5-rescue.json": {
+    "sha256": "d0aedccc1fcb0983b5e012a9e66539715077b402061c6b9f8f0a70df85a3b064",
+    "bytes": 1937
+  },
+  "glossary/01_PROJECTS.md": {
+    "sha256": "5050b5aadd802b0bdf0cc113e4ef01200f182aab58d1bc1d5139f85ee08dacf3",
+    "bytes": 1903
+  },
+  "glossary/02_STORY_AND_PROMPTS.md": {
+    "sha256": "d43c394576c4ffd91064d8e426de7472cc5c5a301f6a7cc755cb571575828d81",
+    "bytes": 6125
+  },
+  "glossary/03_IMAGES.md": {
+    "sha256": "7ce9cfabc64fc1bef471f89f5b83bc76e2ca01191d92ece171e6a13ce7a8e9b4",
+    "bytes": 3588
+  },
+  "glossary/04_VIDEO.md": {
+    "sha256": "da55cc336decff6f3623cdc5d2ac4f5f9441f81704475045393cb661f1207e6d",
+    "bytes": 5580
+  },
+  "glossary/05_MEDIA_AND_SEARCH.md": {
+    "sha256": "ea3fa86f74dc098438f4039b7ea5cc595dae59c48eb6fc884a9838dd2c6ad179",
+    "bytes": 5046
+  },
+  "glossary/06_AUDIO_AND_MUSIC.md": {
+    "sha256": "941f33433b79617dff740a8e728c7f6c61ec3e53c1fbd7ddb694f0826ece5eda",
+    "bytes": 10615
+  },
+  "glossary/07_EDITOR.md": {
+    "sha256": "a08fab61825c6f18097701895fd413b49a4f8afb20352bf5bdc07ae4425432bb",
+    "bytes": 2702
+  },
+  "glossary/08_3D.md": {
+    "sha256": "6044d3d5381a01c03da438048cf8c9c224e2e39ed7f99ea8c0aad922c5caf5d0",
+    "bytes": 1250
+  },
+  "glossary/09_SYSTEM_AND_KNOWLEDGE.md": {
+    "sha256": "0ea5874ad66681e9a1065b22dad311da3886900b05b5a84b6f53bc9ea2227af8",
+    "bytes": 2154
+  },
+  "glossary/API_HELPERS.md": {
+    "sha256": "46a6bf462d061c7a0a6b0917b50858e5e6b33c0039f0b90c89b6a2299e5b32ed",
+    "bytes": 59519
+  },
+  "glossary/COMPONENTS.md": {
+    "sha256": "b5849a844f2849bfaf11b54d11926a9bae7aed2fb8be7e4e6e85a1b4c1c0b45b",
+    "bytes": 62724
+  },
+  "glossary/DIRECTOR_USAGE.md": {
+    "sha256": "ce758eb6e5a78b1e39b90b9e40fd51bc63e0fdfe9427edb9f9845204fe332084",
+    "bytes": 7757
+  },
+  "glossary/HTTP_ROUTES.md": {
+    "sha256": "1cefb820e1f1920424af66f042c3da3c29396c3f79eb86303094fc8e6b0e0b90",
+    "bytes": 18708
+  },
+  "glossary/INTEGRATION.md": {
+    "sha256": "6ec78d81e374a52827e21a8dc2f0f0e80ec799825b79047212cb1168cea83344",
+    "bytes": 6260
+  },
+  "glossary/README.md": {
+    "sha256": "d3c884d6fbba336dcc6bc1526919fdde66db5ed54995c28561b790e7f9e7105d",
+    "bytes": 5989
+  },
+  "glossary/catalog.json": {
+    "sha256": "0a255a9cf4c66d02b02544827679eb26c6bbf5897732e5f656ff227fe7917b3e",
+    "bytes": 49801
+  },
+  "legacy_skill_pack_docs/AGENTS.md": {
+    "sha256": "b9fe153b44981832f15eb577e690a664edede806a5694af34cbe6cb8f1755f46",
+    "bytes": 1278
+  },
+  "legacy_skill_pack_docs/DIRECTOR_INTEGRATION.md": {
+    "sha256": "a188f545f1aecc95c4c1ce6e73bdc03ec991edd07ba1cf4a690b03ee0c3f0de7",
+    "bytes": 4611
+  },
+  "legacy_skill_pack_docs/DIRECTOR_SYSTEM_PROMPT.md": {
+    "sha256": "19346b2ef73ed1a9c0e81387b55e5654250b517b17b0809efadcd06e86afffe5",
+    "bytes": 2450
+  },
+  "scripts/validate_video_prompt.py": {
+    "sha256": "845d18c676dbd4550b1d33b9d344ae44d7670d28ec8ef8a84404f02a7b993395",
+    "bytes": 2641
+  },
+  "shared/CONTRACT.md": {
+    "sha256": "390cb589a20421e4901f760cbbca884e0fbf7ff9ec8c46cc4c1c3a744b22d608",
+    "bytes": 7692
+  },
+  "shared/capability-registry.example.json": {
+    "sha256": "52e5af099cbbdea1d1d8f0a916f83deff0d1d77a0683e1b4ee20422464263440",
+    "bytes": 2374
+  },
+  "shared/project.schema.json": {
+    "sha256": "7aeba753cbb65e5abda7bd56ac2ed652e7feb39ae283843fb2bfe87dd8e397aa",
+    "bytes": 6620
+  },
+  "skills/README.md": {
+    "sha256": "0c4cd2705fce226d54e65bd75c2da6a365604b80adc9430ed69875677e204bff",
+    "bytes": 880
+  },
+  "skills/character-designer/SKILL.md": {
+    "sha256": "aa6fbb9fbddb278ae0ef305aabce96f9d2eadcfb4ddaec83770e4a9bd89c57c3",
+    "bytes": 4803
+  },
+  "skills/cinematic-prompt-director/SKILL.md": {
+    "sha256": "40ea1cff6a78e42d3d374344546b529c76521a462791e7dced9477ca6d308d31",
+    "bytes": 7124
+  },
+  "skills/computer-coding-agent/SKILL.md": {
+    "sha256": "c709a0928df469ad562880b9a9bf6a6fff267480767ab937be346b1d5c2c9554",
+    "bytes": 1036
+  },
+  "skills/continuity-director/SKILL.md": {
+    "sha256": "902523c0412c583d5f5fd4f5c615efd3007cdc7549f7111aeb53adab2d7a8fbb",
+    "bytes": 5395
+  },
+  "skills/delegation-router/SKILL.md": {
+    "sha256": "844850df594d3ebc56b5f9df8128c4d58a3639f465c2846d3a410bf919fe219d",
+    "bytes": 914
+  },
+  "skills/editor-agent/SKILL.md": {
+    "sha256": "228d6a94d6aecd5ee4f1edfbffa4deee8286f45904fbdb4db5c185be4e17ee87",
+    "bytes": 1023
+  },
+  "skills/environment-designer/SKILL.md": {
+    "sha256": "5cd561952477a564148b5422e380884e824c4c4cd0036452fff753274c0fb6ad",
+    "bytes": 4132
+  },
+  "skills/film-production-orchestrator/SKILL.md": {
+    "sha256": "8f55631f2662cfde533f0d038e227d30115644ad0e6c7dd79fe352f0e3846b85",
+    "bytes": 1135
+  },
+  "skills/film-qa-retake/SKILL.md": {
+    "sha256": "3392a22cfe145386f2307dd3b1299fecf371cc5feb8a9c62053d1192adaa997b",
+    "bytes": 1084
+  },
+  "skills/production-style-director/SKILL.md": {
+    "sha256": "958606dff197d656b4ec7a0dc8463fbe155fc9f80ddb3452075b5c46380df1d5",
+    "bytes": 7028
+  },
+  "skills/project-knowledge-curator/SKILL.md": {
+    "sha256": "7c188f243eb378a96bd127a4b5250000525d4b2f5f5f8aa94e7e34ebc555f32d",
+    "bytes": 937
+  },
+  "skills/screenplay-writer/SKILL.md": {
+    "sha256": "7a50da35e6960b6e2edadb7c946ab1ee181a6ed4c9197867770b88c3ebf66b8d",
+    "bytes": 4805
+  },
+  "skills/storyboard-director/SKILL.md": {
+    "sha256": "805fdc2f9ea8f5d47f956a55850da1a32cd4e06b84a0322398a7556977c48eb8",
+    "bytes": 4759
+  },
+  "source_materials/full_review.md": {
+    "sha256": "2649f4ab0628ca6db7df1789bed7e6987ffa30c2248f562834e32e6857a14aa7",
+    "bytes": 121804
+  },
+  "source_materials/tool_glossary.zip": {
+    "sha256": "7b85913bbaf5f42c80cb5ad4645317095e9ef9a1aa852b5394eaaaeb06cab016",
+    "bytes": 60775
+  },
+  "source_materials/vibe-director-focused-fix.zip": {
+    "sha256": "52de8dd5dea3ab857a400978ffd43c440d20a674b39cf36161ec14227adbb3e1",
+    "bytes": 28109
+  },
+  "source_materials/vibe-director-redesign-plan.zip": {
+    "sha256": "75d65d2974eca78d0873dd151ce8c925c21d4904f5b1dd4f9045c85527c999a7",
+    "bytes": 282965
+  },
+  "source_materials/vibe-director-six-skills.zip": {
+    "sha256": "8aeff2c4f53a9eb0451a84068170343c5512bbb53d30d8d76d7d32b8f5d75603",
+    "bytes": 34969
+  }
+}

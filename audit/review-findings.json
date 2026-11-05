@@ -1,0 +1,349 @@
+{
+  "comparison": "Documentation cleanup review, updated after authorized ACE/Editor implementation; historical observations retained separately. See ace-editor-impact.json for current patch impact.",
+  "mode": "manual source tracing with incomplete Graphify graph",
+  "overall_risk": {
+    "score": 0.7,
+    "level": "high",
+    "scope": "Stale coding-agent instructions; no app runtime read of deletion targets found"
+  },
+  "findings": [
+    {
+      "node": "ACE restored intent versus selected panel",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 55
+      },
+      "anchor": "    setConfig({...extras,...project.settings,...(same?saved!.config:{})});const restoredIntent=project.id?(same?saved!.intent:project.intent):'generate';setIntent(restoredIntent);setTab(current=>current==='settings'||current==='dataset'?restoredIntent==='finetune'?'dataset':'settings':current);setDraft(same?saved!.draft:'');setLoadedKey(`${project.id}:${project.revision}`);setLog('');",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "A saved finetune intent is restored independently of the settings-tab default. The selected Create tab can display fine-tune content. Fresh empty storage defaults to generate, so the reported genuinely first-visit failure remains unproven."
+      ],
+      "status": "RESOLVED"
+    },
+    {
+      "node": "Editor attachment regression test selector",
+      "location": {
+        "file": "frontend/tests/editor-assets.spec.mjs",
+        "line": 26
+      },
+      "anchor": "  await page.getByRole('navigation',{name:'Editor panels'}).getByRole('button',{name:'Asset selection',exact:true}).click();",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Observed test timeout: Asset selection is in preview navigation, outside composer; the test never reaches attachment assertions."
+      ],
+      "status": "RESOLVED"
+    },
+    {
+      "node": "Editor panel navigation",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 107
+      },
+      "anchor": "    <nav className=\"editor-tabs\" aria-label=\"Editor panels\">{['preview','media','timeline','style','export'].map(t=><button key={t} aria-pressed={tab===t} onClick={()=>chooseTab(t)}>{t==='media'?'Asset selection':t}</button>)}</nav>",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Confirms why the existing attachment regression selector does not locate Asset selection."
+      ],
+      "status": "RESOLVED"
+    },
+    {
+      "node": "Internal asset drag/drop gap",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 128
+      },
+      "anchor": "      <form className=\"editor-composer\" onSubmit={submit} onDragOver={e=>{if(e.dataTransfer.types.includes('Files')||e.dataTransfer.types.includes(editorAssetMime))e.preventDefault();}} onDrop={e=>{if(locked)return;if(e.dataTransfer.types.includes(editorAssetMime)){e.preventDefault();const payload=e.dataTransfer.getData(editorAssetMime);void attempt(async()=>{const ids:unknown=JSON.parse(payload);if(!Array.isArray(ids)||!ids.every(id=>typeof id==='string'&&assets.some(a=>a.asset_id===id)))throw new Error('Choose assets from this editing session.');await attachAssets(assets.filter(a=>ids.includes(a.asset_id)));});return;}if(e.dataTransfer.files.length){e.preventDefault();void attempt(()=>attachFiles(Array.from(e.dataTransfer.files)));}}} onPaste={e=>{const files=Array.from(e.clipboardData.files);if(files.length){e.preventDefault();void attempt(()=>attachFiles(files));}}}>",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Drop handler accepts DataTransfer.files only; catalogue asset IDs/ranges are not consumed. This is a gap against the retained new requirement."
+      ],
+      "status": "RESOLVED"
+    },
+    {
+      "node": "Composer removal control gap",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 129
+      },
+      "anchor": "        <div className=\"editor-chat-attachments\" aria-label=\"Chat attachments\">{project.selection.map((r,i)=><span className=\"editor-attachment-chip\" key={`${r.asset_id}:${i}`}><button type=\"button\" title=\"View attachment\" onClick={()=>chooseTab('media')}>{r.filename||assets.find(a=>a.asset_id===r.asset_id)?.filename||r.asset_id} \u00b7 {r.start}\u2013{r.end}s</button><button className=\"editor-attachment-remove\" type=\"button\" aria-label={`Remove attachment ${i+1}`} disabled={locked} onClick={()=>void attempt(()=>updateSelection(project.selection.filter((_,n)=>n!==i)))}>\u00d7</button></span>)}</div>",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Composer chips navigate to media; removal is only offered separately in the media panel. Hover/focus cross is absent."
+      ],
+      "status": "RESOLVED"
+    },
+    {
+      "node": "Editor media browser gap",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 111
+      },
+      "anchor": "      <EditorAssetBrowser assets={assets} kind={kind} disabled={locked} onImport={files=>void attempt(()=>attachFiles(files,false))} onAttach={items=>void attempt(()=>attachAssets(items))} onDelete={ids=>void attempt(async()=>{let message='';try{message=await deleteSelectedMedia(project.workspace_id,ids);}finally{await search();}setNotice(message);})} onPreview={a=>{setSelected(a);setStart(0);setEnd(a.media?.duration_seconds?Math.min(5,a.media.duration_seconds):5);}}/>",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "File input is multiple files without folder choice; local editor browser remains a carousel and lacks Search-equivalent bulk deletion/view controls."
+      ],
+      "status": "RESOLVED"
+    },
+    {
+      "node": "Shared output contract",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 90
+      },
+      "anchor": "def freeze(root, tool, request):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Output choice is frozen into a job request; UI simplification must retain preference/grant/publication recovery semantics."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Output choice is frozen into a job request; UI simplification must retain preference/grant/publication recovery semantics."
+      ],
+      "status": "PRESERVED_CONTRACT"
+    },
+    {
+      "node": "Editor export contract",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 441
+      },
+      "anchor": "def export_video(root, project_id, body):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Editor uses its own explicit export path and filename contract; preserve collision detection and source protection."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Editor uses its own explicit export path and filename contract; preserve collision detection and source protection."
+      ],
+      "status": "PRESERVED_CONTRACT"
+    },
+    {
+      "node": "Project directing Markdown reader",
+      "location": {
+        "file": "backend/story_builder/services/director_skills.py",
+        "line": 17
+      },
+      "anchor": "        content = (_ROOT / relative).read_text(encoding=\"utf-8\")",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Reads explicit skill files, not plans. Preserve their content and reference trees."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Reads explicit skill files, not plans. Preserve their content and reference trees."
+      ],
+      "status": "PRESERVED_CONTRACT"
+    },
+    {
+      "node": "Editor directing Markdown reader",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 392
+      },
+      "anchor": "    guides = (HUB / \"skills\" / \"vibe-editor-director\" / \"SKILL.md\").read_text()",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Reads design/vibe-editor/skills/vibe-editor-director/SKILL.md; preserve the directory."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Reads design/vibe-editor/skills/vibe-editor-director/SKILL.md; preserve the directory."
+      ],
+      "status": "PRESERVED_CONTRACT"
+    },
+    {
+      "node": "Coding instructions conflict",
+      "location": {
+        "file": "AGENTS.md",
+        "line": 5
+      },
+      "anchor": "Read only the source, tests and documentation relevant to the task. `audit/FUNCTIONALITY_AUDIT.md` maps current components, preservation contracts and review findings; consult the relevant section when redesigning. `plans/editor_media_output_ace_plan.md` contains the latest requested Editor/ACE changes. Neither document proves live runtime readiness. Current source and user instructions supersede historical proposals.",
+      "revision": "working-tree",
+      "risk": 0.7,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "observed_before_cleanup": {
+        "location": {
+          "file": "AGENTS.md",
+          "line": 43
+        },
+        "anchor": "Keep `plans/HANDOFF.md` concise and current at meaningful milestones: objective, authoritative files, completed evidence, pending work, blockers/permissions and live job/process handles. Runtime compaction follows configured settings; do not invent usage percentages or claim a written handoff compacted runtime context.",
+        "status": "RESOLVED by approved AGENTS rewrite"
+      },
+      "status": "RESOLVED",
+      "initial_review_evidence": [
+        "Current entrypoint still imposes deleted handoff maintenance and obsolete model/review roles. Replace with short task-neutral repository facts.",
+        "Current replacement instruction requires only task-relevant reads; original observed text is historical evidence, not a current citation."
+      ]
+    },
+    {
+      "node": "ACE obsolete setup help",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 156
+      },
+      "anchor": "    {tab==='runtime'&&<><h2>Standalone ACE-Step</h2><p>{state?.runtime.reason||'Connection has not loaded.'}</p><p>Training encoders: {state?.runtime.training_encoders_cached?'cached':'MERT / mHuBERT not cached'}</p>{Object.entries(state?.runtime.checks||{}).map(([k,v])=><p key={k}>{v?'\u2713':'\u2013'} {k}</p>)}<details><summary>Runtime locations</summary><pre className=\"ace-format\">{JSON.stringify({source:state?.runtime.source,python:state?.runtime.python,checkpoints:state?.runtime.checkpoints},null,2)}</pre></details><p>Check the connection and runtime locations above before starting a job.</p><button disabled={busy} onClick={()=>void attempt(refresh)}>Check connection</button></>}",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "evidence": [
+        "Resolved during the authorized documentation cleanup or ACE/Editor implementation. Current anchor replaces the pre-fix anchor; initial observation is retained separately. See audit/ACE_EDITOR_IMPACT.md for actual validation and limits."
+      ],
+      "verification": "PENDING",
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "risk_upper_bound": 0.7,
+      "test_evidence": "Focused tests executed as documented in audit; no measured source-line coverage. Test gap unknown except stale documentation for which no automated guidance check was found.",
+      "initial_review_evidence": [
+        "Only rendered help text references plans; retarget or remove it during authorized UI changes."
+      ],
+      "status": "RESOLVED"
+    }
+  ],
+  "citation_verifier": {
+    "checked": 12,
+    "rejected": [],
+    "exit_code": 0
+  }
+}

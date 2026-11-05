@@ -94,6 +94,9 @@ def grant_folder(root, value):
 
 def create(root, body):
     layout(root)
+    workspace=body.get('workspace_id') or 'tool-library'
+    from .storage_paths import project_root
+    project_root(root,workspace)
     if body.get('mode','single') not in {'single','batch'}: raise ValueError('Invalid 3D mode.')
     items=body.get('items'); preset=body.get('preset','bounded'); settings=body.get('settings',{})
     if not isinstance(items,list) or not 1<=len(items)<=500 or (body.get('mode','single')=='single' and len(items)!=1): raise ValueError('Select 1–500 images.')
@@ -130,7 +133,7 @@ def create(root, body):
     elif backend=='pixal':multi.pixal_graph(profile,settings,{v:'validation.png' for v in multi.VIEWS[profile]},'validation')
     else:multi.remote_settings(preset,settings)
     output_folder(root,body.get('output_grant'),backend)
-    job=jobs.create_job('trellis',{'preset':preset,'settings':settings,'items':frozen,'output_grant':body.get('output_grant'),'mode':body.get('mode','single'),'backend':backend,'input_mode':input_mode,'view_profile':profile})
+    job=jobs.create_job('trellis',{'workspace_id':workspace,'preset':preset,'settings':settings,'items':frozen,'output_grant':body.get('output_grant'),'mode':body.get('mode','single'),'backend':backend,'input_mode':input_mode,'view_profile':profile})
     write(home(root)/'batches'/f"{job['job_id']}.json",{'items':frozen})
     return jobs.start_job('trellis',job['job_id'])
 
@@ -139,7 +142,12 @@ def result_path(root, job_id, index):
     manifest=json.loads((home(root)/'batches'/f'{job_id}.json').read_text())
     row=next((r for r in manifest['items'] if r['index']==int(index) and r['status']=='completed'),None)
     if not row: raise ValueError('No validated result for this item.')
-    path=output_folder(root,job['request'].get('output_grant'),job['request'].get('backend','trellis'))/job_id/f'{int(index):04d}.glb'
+    try:
+        path=output_folder(root,job['request'].get('output_grant'),job['request'].get('backend','trellis'))/job_id/f'{int(index):04d}.glb'
+    except (ValueError, FileNotFoundError):
+        path=home(root)/'saved-results'/job_id/f'{int(index):04d}.glb'
+    if not path.exists():
+        path=home(root)/'saved-results'/job_id/f'{int(index):04d}.glb'
     if validate_glb(path)!=row['sha256']: raise ValueError('Result changed on disk.')
     return path
 

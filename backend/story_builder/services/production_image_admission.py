@@ -20,11 +20,11 @@ def build_entity_image_batches(*, workspace_id: str, screenplay: dict[str, Any],
                                step: str, run_id: str,
                                selected_targets: set[str] | None = None,
                                style_selection: dict[str, Any] | None = None,
-                               character_prompt_drafter=None) -> list[dict[str, Any]]:
+                               character_prompt_drafter=None, world_prompt_drafter=None) -> list[dict[str, Any]]:
     """Compile one Director-reviewed candidate batch per unselected canonical entity.
 
     The caller must verify accepted-revision, setup, workflow, GPU and worker readiness
-    before enqueuing the returned batches. Only the optional character prompt drafter performs provider I/O; this function never dispatches GPU work.
+    before enqueuing the returned batches. Only optional prompt drafters perform provider I/O; this function never dispatches GPU work.
     """
     if step not in STEP_CONFIG:
         raise ValueError("Automated image admission currently supports character and world image stages.")
@@ -70,8 +70,10 @@ def build_entity_image_batches(*, workspace_id: str, screenplay: dict[str, Any],
         digest = hashlib.sha256(identity.encode()).hexdigest()
         if asset_role == "character_master" and character_prompt_drafter is not None:
             prompt = character_prompt_drafter(target=target, idempotency_key=f"image-stage-{digest}")
-            if not isinstance(prompt, str) or not prompt.strip():
-                raise ValueError("Director did not prepare a character appearance prompt.")
+        if asset_role == "world_master" and world_prompt_drafter is not None:
+            prompt = world_prompt_drafter(target=target, idempotency_key=f"image-stage-{digest}")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("Director did not prepare an image prompt.")
         if len(prompt) > IMAGE_PROMPT_MAX_CODEPOINTS:
             raise ValueError(f"{prompt_label[:-1].capitalize()} image prompt for {name} exceeds the "
                 f"{IMAGE_PROMPT_MAX_CODEPOINTS:,}-character image limit; shorten its graph description "
@@ -108,6 +110,8 @@ def build_clip_frame_image_batches(*, workspace_id: str, screenplay: dict[str, A
                                    selected_frame_images: dict[tuple[str, str], dict[str, str]] | None = None,
                                    style_selection: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     """Compile one Director-reviewed first/last-frame batch per unskipped clip role."""
+    from .storyboard import automatic_route_allowed
+    automatic_route_allowed("fflf")
     step = "frame_images"
     setup_data = setup.get("setup") if isinstance(setup, dict) else None
     if (not isinstance(setup_data, dict) or setup_data.get("mode") != "assisted_manual"

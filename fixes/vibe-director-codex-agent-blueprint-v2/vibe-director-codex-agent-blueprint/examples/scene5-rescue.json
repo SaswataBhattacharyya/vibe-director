@@ -1,0 +1,24 @@
+{
+  "note": "Illustrative app-independent example; file names and slots must come from actual project assets.",
+  "scene_id": "scene-5-rescue",
+  "clip_id": "clip-5-1",
+  "model_id": "minimax-h3",
+  "duration_s": 15,
+  "mode": "image_to_video_first_frame",
+  "references": [
+    {"slot": "<Picture 1>", "asset_id": "mouse-reference-approved-v1", "role": "character", "instruction": "Preserve mouse's exact character design, size and tail."},
+    {"slot": "<Picture 2>", "asset_id": "lion-reference-approved-v1", "role": "character", "instruction": "Preserve lion's face, mane and size."},
+    {"slot": "<Picture 3>", "asset_id": "clip-4-1-lastframe", "role": "first_frame", "instruction": "Start from this precise frame, with mouse beside intact rope knot."},
+    {"slot": "<audio1>", "asset_id": "lion-voice-sample-approved-v1", "role": "voice_sample", "character_id": "lion", "instruction": "Identity voice sample only, generate new line from script."}
+  ],
+  "beats": [
+    {"start_s": 0, "end_s": 2, "action": "Mouse inspects the knot", "camera": "Slight ground-level push in"},
+    {"start_s": 2, "end_s": 6, "action": "Mouse grips rope and gnaws; fibers fray", "camera": "Close view of teeth, rope, lion paw"},
+    {"start_s": 6, "end_s": 9, "action": "Rope snaps, net slackens", "camera": "Pull back and rise"},
+    {"start_s": 9, "end_s": 12, "action": "Lion pulls free, stands; net stays on ground", "camera": "Three-quarter medium-wide"},
+    {"start_s": 12, "end_s": 15, "action": "Lion thanks mouse, lowers head", "camera": "Settle on both faces", "dialogue": [{"speaker_character_id": "lion", "text": "You saved me, little friend!", "voice_sample_asset_id": "lion-voice-sample-approved-v1", "start_s": 12, "end_s": 15}]}
+  ],
+  "continuation_policy": "last_frame",
+  "visual_state_in": "Lion trapped, mouse beside intact rope, knot in reach",
+  "visual_state_out": "Lion free and smiling with mouse, net discarded behind"
+}

@@ -1,0 +1,842 @@
+{
+  "comparison": "Storyboard task changes vs /tmp/storyboard-implementation-baseline where captured; new files vs absent; isolated_video_jobs.py scoped current-source review (no task baseline). Existing unrelated dirty files excluded.; discussion follow-up vs /tmp/screenplay-chat-baseline for chat methods, UI transcript and shared thinking indicator.",
+  "mode": "Graphify discovery + manual source tracing",
+  "traversal": {
+    "graph_nodes": 4529,
+    "graph_edges": 14138,
+    "query": "graphify query Storyboard",
+    "depth": 2,
+    "discovery_nodes": 175,
+    "reported_scope_nodes": 33
+  },
+  "limitations": [
+    "Code-only graph: 466 code files; unsupported JSON workflows/docs are outside AST coverage. Generic graph nodes were filtered after source inspection.",
+    "Table reports the bounded storyboard service/API/UI/persistence consumers, not every repository node or every dynamically called function.",
+    "Test references are evidence associations, not measured branch coverage or TESTED_BY assertions. No GPU/provider generation was performed.",
+    "Caller count is unknown, adding 0.10 upper-bound risk. Historical dirty changes cannot all be attributed to this task."
+  ],
+  "findings": [
+    {
+      "node": "storyboard.py::__init__",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 39
+      },
+      "anchor": "    def __init__(self, ledger, story, root):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::get",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 62
+      },
+      "anchor": "    def get(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::save",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 153
+      },
+      "anchor": "    def save(self, workspace, revision, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::conversations",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 275
+      },
+      "anchor": "    def conversations(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::apply",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 291
+      },
+      "anchor": "    def apply(self, workspace, revision, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "isolated_video_jobs.py::_validate_story_source_lineage",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 145
+      },
+      "anchor": "def _validate_story_source_lineage(db, story, workspace, clip, request, supplied, media_root=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Storyboard handoff \u2192 manual Video create \u2192 current accepted revision and saved-board digest validation.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "projects.py::sql_snapshot",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 102
+      },
+      "anchor": "def sql_snapshot(path, workspace):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "consumer",
+      "evidence": [
+        "Workspace-scoped dynamic table enumeration captures storyboard revisions and Director proposal rows.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "projects.py::open_project",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 424
+      },
+      "anchor": "def open_project(root, folder):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "consumer",
+      "evidence": [
+        "Folder checkpoint \u2192 ledger/media restore \u2192 new pages read current project records.",
+        "Static test reference: backend/story_builder/tests/test_projects.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::automatic_route_allowed",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 22
+      },
+      "anchor": "def automatic_route_allowed(route):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::text",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 27
+      },
+      "anchor": "def text(value, label, limit=16000):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::validate_shot_kind",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 33
+      },
+      "anchor": "def validate_shot_kind(shot):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::screenplay",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 50
+      },
+      "anchor": "    def screenplay(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::assets",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 53
+      },
+      "anchor": "    def assets(self, workspace):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::validate",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 91
+      },
+      "anchor": "    def validate(self, workspace, revision, value):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::readiness",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 168
+      },
+      "anchor": "    def readiness(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::propose",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 219
+      },
+      "anchor": "    def propose(self, workspace, revision, payload, provider):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::changes",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 251
+      },
+      "anchor": "    def changes(screenplay, replacement):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::export",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 311
+      },
+      "anchor": "    def export(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::editor_handoff",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 334
+      },
+      "anchor": "    def editor_handoff(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::digest",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 370
+      },
+      "anchor": "    def digest(value):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::video_handoff",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 373
+      },
+      "anchor": "    def video_handoff(self, workspace, revision, key):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::direct",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 406
+      },
+      "anchor": "    def direct(self, workspace, revision, payload, provider):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay/Storyboard API \u2192 revisioned preparation \u2192 image, Video, Editor or project checkpoint consumers; see flow map below.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "isolated_server.py::storyboard = Storyboard",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 352
+      },
+      "anchor": "    storyboard = Storyboard(ledger, story, root)",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "API dispatch instantiates board service and binds endpoints to the existing ledger and provider guards.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "story_authoring.py::edit_screenplay",
+      "location": {
+        "file": "backend/story_builder/services/story_authoring.py",
+        "line": 1893
+      },
+      "anchor": "    def edit_screenplay(self, *, workspace_id: str, screenplay_revision_id: str,",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Whole-screenplay apply \u2192 existing edit revision/CAS \u2192 acceptance and prompt lineage.",
+        "Static test reference: backend/story_builder/tests/test_story_graph.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "isolated_video_jobs.py::_full_r2v_request",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 468
+      },
+      "anchor": "    def _full_r2v_request(cls, *, setup, prompt, duration_seconds=None, continuity=None,",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Assisted R2V setup \u2192 frozen request aspect ratio; corrected undefined manifest access to setup.",
+        "Static test reference: backend/story_builder/tests/test_storyboard.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "production_image_admission.py::build_clip_frame_image_batches",
+      "location": {
+        "file": "backend/story_builder/services/production_image_admission.py",
+        "line": 102
+      },
+      "anchor": "def build_clip_frame_image_batches(*, workspace_id: str, screenplay: dict[str, Any],",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Legacy automated frame planner \u2192 shared FFLF quality policy \u2192 image admission.",
+        "Static test reference: backend/story_builder/tests/test_production_image_admission.py",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "StoryboardPage.tsx::StoryboardPage",
+      "location": {
+        "file": "frontend/src/StoryboardPage.tsx",
+        "line": 11
+      },
+      "anchor": "export default function StoryboardPage({view}:{view:'frames'|'storyboard'}){",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Routes \u2192 edit/save/local recovery \u2192 existing image jobs \u2192 board assets \u2192 Video/Editor handoff.",
+        "Static test reference: frontend/tests/storyboard.spec.mjs",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "ScreenplayDirector.tsx::ScreenplayDirector",
+      "location": {
+        "file": "frontend/src/ScreenplayDirector.tsx",
+        "line": 7
+      },
+      "anchor": "export default function ScreenplayDirector({workspace, revision, disabled, onApplied}: {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Screenplay UI \u2192 explicit provider proposal \u2192 selected changes \u2192 new revision.",
+        "Static test reference: frontend/tests/storyboard.spec.mjs",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "ProjectController.tsx::const prefix=",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 12
+      },
+      "anchor": "const prefix=/^vibe-(project-settings:|session:|video-|story-|create-chat:|selected-take:|take-position:|image-|text-to-image-|editor-|ace-|studio-chat-|screenplay-|board-|field-edit:|t2v-batch:|trellis-|pixal-|jukebox-|production-|style-setup-context|3d-)/;",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Project memory capture includes board drafts; install restores them under owning project.",
+        "Static test reference: frontend/tests/storyboard.spec.mjs",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard-api.ts::export const saveBoard=",
+      "location": {
+        "file": "frontend/src/lib/storyboard-api.ts",
+        "line": 12
+      },
+      "anchor": "export const saveBoard=(state:BoardState,body:BoardBody)=>request<BoardState>(base(state.workspace_id,state.screenplay_revision_id),{expected_revision:state.revision,body},'PUT');",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Browser edits \u2192 expected_revision PUT \u2192 server CAS, retaining previous rows.",
+        "Static test reference: frontend/tests/storyboard.spec.mjs",
+        "Caller-count factor unknown; no claim of five confirmed callers."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::discussion_context",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 180
+      },
+      "anchor": "    def discussion_context(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Saved discussion \u2192 history context \u2192 explicit proposal \u2192 revision apply; discussion cannot be applied as an edit.",
+        "backend/story_builder/tests/test_storyboard.py; frontend/tests/storyboard.spec.mjs"
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "storyboard.py::chat",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 187
+      },
+      "anchor": "    def chat(self, workspace, revision, payload, provider):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Saved discussion \u2192 history context \u2192 explicit proposal \u2192 revision apply; discussion cannot be applied as an edit.",
+        "backend/story_builder/tests/test_storyboard.py; frontend/tests/storyboard.spec.mjs"
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "StudioChat.tsx::StudioChat",
+      "location": {
+        "file": "frontend/src/StudioChat.tsx",
+        "line": 10
+      },
+      "anchor": "export default function StudioChat({name,context,onApply}:{name:string;context:unknown;onApply?:(settings:Record<string,number>)=>void}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "change_kind": "direct",
+      "evidence": [
+        "Saved discussion \u2192 history context \u2192 explicit proposal \u2192 revision apply; discussion cannot be applied as an edit.",
+        "TypeScript build; existing shared component receives a decorative spinner only."
+      ],
+      "verification": "PENDING"
+    }
+  ]
+}

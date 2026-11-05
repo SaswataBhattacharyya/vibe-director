@@ -4,7 +4,7 @@ import { ChangeEvent, ClipboardEvent, DragEvent, KeyboardEvent, useEffect, useMe
 import { AudioLines, FileUp, GalleryHorizontal, Image as ImageIcon, LayoutGrid, List, RefreshCw, Search, Video, Trash2 } from 'lucide-react';
 import { cancelMediaContentIndexJob, createMediaContentIndexJob, deleteMediaSeoStyle, getMediaContentIndexJob, importComfyVoiceToWorkspace, indexMediaAssetAnnotations, listAudioVoices, listMediaAssets, listMediaContentIndexJobs, listMediaSeoStyles, AudioVoice, MediaAsset, MediaSeoStyle, rankMediaAssets, retryMediaContentIndexJob, saveMediaSeoStyle, searchMediaSemantically, SemanticIndexJob, setMediaAssetArchived, updateMediaAnnotations, uploadMediaAsset } from './lib/media-api';
 import { listStoryWorkspaces, StoryWorkspace } from './lib/story-api';
-import { mediaWorkspaceOptions, preferredMediaWorkspaceId, rememberMediaWorkspaceId } from './lib/media-workspace';
+import { mediaWorkspaceOptions, preferredMediaWorkspaceId } from './lib/media-workspace';
 import { getGpuAdmission } from './lib/status-api';
 import './media-library.css';
 
@@ -449,7 +449,7 @@ export default function MediaLibraryPage() {
     {message && <div className="notice" role="status">{message}</div>}
     <section className="card media-upload-card">
     <MediaSourcePicker workspaceId={workspaceId} kinds={[kind]} onAdded={items=>setAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])}/>
-    <div className="media-fields"><label>Collection<select value={workspaceId} onChange={event => { const nextWorkspaceId = event.target.value; for (const panel of Object.keys(semanticRequestIds.current)) semanticRequestIds.current[panel] += 1; setSemanticBusy({}); if (nextWorkspaceId !== workspaceId) { setAssets([]); setCatalogVoices([]); setContentIndexJobs({}); setSeoStyles([]); setMessage(''); } setWorkspaceId(nextWorkspaceId); rememberMediaWorkspaceId(nextWorkspaceId); }} aria-label="Workspace">{workspaceOptions.map(value => <option key={value.id} value={value.id}>{value.label}</option>)}{!workspaceOptions.length && <option value="">Create a story or video workspace first</option>}</select></label>
+    <div className="media-fields"><p className="project-context-label">Current project · change with New project or Load project above</p>
         <label>Use as<select value={role} onChange={event => setRole(event.target.value)}><option value="style_reference">Style reference</option><option value="character_master">Character image</option><option value="world_master">World image</option><option value="first_frame">First frame</option><option value="last_frame">Last frame</option><option value="action_reference_video">Video reference</option><option value="voice_master">Character voice</option><option value="project_image">Other image</option><option value="project_video">Other video</option><option value="project_audio">Other audio</option></select></label>
         <div className="media-drop-zone" role="button" tabIndex={0} aria-label="Choose, drop, or paste a media file" onClick={event=>{if(event.target!==uploadInput.current)uploadInput.current?.click();}} onKeyDown={onDropZoneKeyDown} onDragOver={event=>event.preventDefault()} onDrop={onDropMedia} onPaste={onPasteMedia}>
           <FileUp size={16}/><span>{file ? file.name : 'Choose, drop, or paste a media file'}</span>

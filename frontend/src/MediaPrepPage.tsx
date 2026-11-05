@@ -1,3 +1,4 @@
+import {useProjectState} from './lib/project-state';
 import {deleteSelectedMedia} from './lib/media-deletion';
 import OutputDestination from './OutputDestination';
 import VoiceConversion from './VoiceConversion';
@@ -12,7 +13,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, AudioLines, Check, Download, FileUp, GalleryHorizontal, Image, LayoutGrid, Library, List, ListVideo, Image as ImageIcon, Mic2, RefreshCw, Search, Video, Trash2, X } from 'lucide-react';
 import { AudioCapabilities, AudioModel, AudioVoice, acceptReconstructionTake, addReconstructionTake, cancelImageDetailerJob, cancelVideoAnalysis, deleteVideoAnalysis, deleteExtractedMediaAsset, cancelYoutubeJob, createAudioEffectJob, createAudioUtilityJob, createF5PreparationJob, createReconstructionPart, createTimedTTSJob, discardSamAudioPreview, enrollAudioVoice, getAudioCapabilities, getAudioEffectCapabilities, getAudioEffectJob, getAudioUtilityCapabilities, getAudioUtilityJob, getF5PreparationJob, getImageDetailerJob, getReconstructionSession, getSamAudioCapability, getStagedDonorAnalysis, getTimedTTSJob, getVideoAnalysisJob, getYoutubeJob, ImageDetailerJob, importStagedDonorAnalysisAudio, importStagedDonorVideos, indexMediaAssetAnnotations, isolateVideoAudioEvent, listAudioEffectJobs, listAudioModels, listAudioUtilityJobs, listAudioVoices, listF5PreparationJobs, listImageDetailerJobs, listMediaAssets, listStagedDonorVideos, listTimedTTSJobs, listVideoAnalysisJobs, listYoutubeJobs, MediaAsset, ReconstructionSession, resolveYoutubeSources, retryImageDetailerJob, retryVideoAnalysis, saveSamAudioPreview, saveImageAnalysis, saveReconstructionCalibration, startImageDetailerJob, startVideoAnalysis, startYoutubeDownload, uploadMediaAsset, VideoAnalysisJob, YoutubeCandidate, StagedDonorAnalysis, StagedDonorVideo, TimedTTSJob, AudioEffectCapabilities, AudioEffectJob, AudioUtilityCapabilities, AudioUtilityJob, AudioUtilityOperation, F5PreparationJob, refreshAudioVoices, SamAudioCapability, SamAudioPreview } from './lib/media-api';
 import { getCharacterVoiceState, listStoryScreenplays, listStoryWorkspaces, CharacterVoiceState, StoryWorkspace } from './lib/story-api';
-import { mediaWorkspaceOptions, preferredMediaWorkspaceId, rememberMediaWorkspaceId } from './lib/media-workspace';
+import { defaultMediaWorkspaceId,  preferredMediaWorkspaceId } from './lib/media-workspace';
 import MusicSoundPage from './MusicSoundPage';
 import { AudioSceneSurgery } from './AudioSceneSurgery';
 import MediaLibraryPage from './MediaLibraryPage';
@@ -76,8 +77,8 @@ function VideoSummariser() {
   const [capability, setCapability] = useState<Capability | null>(null);
   const [gpuAdmission, setGpuAdmission] = useState<GpuAdmission | null>(null);
   const [gpuAdmissionBusy, setGpuAdmissionBusy] = useState(false);
-  const [workspaces, setWorkspaces] = useState<StoryWorkspace[]>([]);
-  const [workspaceId, setWorkspaceId] = useState('');
+  const [, setWorkspaces] = useState<StoryWorkspace[]>([]);
+  const [workspaceId, setWorkspaceId] = useState(defaultMediaWorkspaceId);
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [selectedExtractedIds,setSelectedExtractedIds] = useState<string[]>([]);
   const [deletingExtracted,setDeletingExtracted] = useState(false);
@@ -92,7 +93,7 @@ function VideoSummariser() {
   const donorWorkspaceRef = useRef(workspaceId);
   const donorOperationRef = useRef(0);
   donorWorkspaceRef.current = workspaceId;
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useProjectState('VideoSummariser:query','');
   const visibleDonorVideos = useMemo(() => donorVideos.filter(row => [row.title,row.filename,row.channel].join(' ').toLowerCase().includes(query.trim().toLowerCase())), [donorVideos,query]);
   const [oldestFirst, setOldestFirst] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -111,27 +112,27 @@ function VideoSummariser() {
   }, [existingAnalysis]);
   useEffect(() => setExistingAnalysis(null), [workspaceId]);
   const [samSelection, setSamSelection] = useState('');
-  const [samPrompt, setSamPrompt] = useState('');
+  const [samPrompt, setSamPrompt] = useProjectState('VideoSummariser:samPrompt','');
   const [samPreview, setSamPreview] = useState<SamAudioPreview|null>(null);
   const [samCapability, setSamCapability] = useState<SamAudioCapability|null>(null);
   const [samBusy, setSamBusy] = useState(false);
   const samWorkspaceRef = useRef(workspaceId);
   const samOperationRef = useRef(0);
   samWorkspaceRef.current = workspaceId;
-  const [audioAnalysis, setAudioAnalysis] = useState(true);
-  const [audioSettings, setAudioSettings] = useState<AudioAnalysisSettings>({
+  const [audioAnalysis, setAudioAnalysis] = useProjectState('VideoSummariser:audioAnalysis',true);
+  const [audioSettings, setAudioSettings] = useProjectState<AudioAnalysisSettings>('VideoSummariser:audioSettings',{
     extract_source_audio:true, extract_preview_mp3:true, detect_speech:true, diarize_speakers:true,
     detect_music:true, detect_sfx:true, create_audio_embeddings:true, create_av_embeddings:true,
     run_demucs:'AUTO', extract_fps:4, adaptive_sampling:true, frame_change_threshold:0.08,
     preserve_scene_anchors:true, keep_intermediate_samples:false,
     collect_voice_examples:false, collect_music_clips:false, collect_sfx_clips:false,
   });
-  const [videoCutSettings, setVideoCutSettings] = useState<VideoCutSettings>({
+  const [videoCutSettings, setVideoCutSettings] = useProjectState<VideoCutSettings>('VideoSummariser:videoCutSettings',{
     extract_cut_clips:true, cut_boundary_threshold:0.18, min_cut_seconds:0.5,
   });
-  const [youtubeMode, setYoutubeMode] = useState<'search'|'paste'>('search');
-  const [youtubeQuery, setYoutubeQuery] = useState('');
-  const [youtubeUrls, setYoutubeUrls] = useState('');
+  const [youtubeMode, setYoutubeMode] = useProjectState<'search'|'paste'>('VideoSummariser:youtubeMode','search');
+  const [youtubeQuery, setYoutubeQuery] = useProjectState('VideoSummariser:youtubeQuery','');
+  const [youtubeUrls, setYoutubeUrls] = useProjectState('VideoSummariser:youtubeUrls','');
   const [youtubeCandidates, setYoutubeCandidates] = useState<YoutubeCandidate[]>([]);
   const [youtubeSelected, setYoutubeSelected] = useState<string[]>([]);
   const [youtubeJob, setYoutubeJob] = useState<VideoAnalysisJob|null>(null);
@@ -224,9 +225,6 @@ function VideoSummariser() {
     return () => { active = false; window.clearInterval(timer); };
   }, [workspaceId, activeJob?.job_id, activeJob?.status]);
 
-  const workspaceOptions = useMemo(() => {
-    return mediaWorkspaceOptions(workspaces, workspaceId);
-  }, [workspaces, workspaceId]);
   const isExtracted = (asset:MediaAsset) => !!(asset.metadata?.analyzer_run_id || asset.metadata?.sam_audio?.run_id);
   const sourceVideos = assets.filter(asset=>asset.kind==='video'&&!isExtracted(asset));
   const completedSources = new Set(jobs.filter(job=>job.status==='completed').flatMap(job=>job.request.source_asset_ids||[]));
@@ -537,7 +535,7 @@ function VideoSummariser() {
     <nav className="summariser-tabs" aria-label="Video Summariser pages">{pages.map(({id,label,icon:Icon})=><button type="button" key={id} disabled={deletingExtracted} aria-current={page===id?'page':undefined} className={page===id?'selected':''} onClick={()=>{setPage(id);setMessage('');}}><Icon size={15}/>{label}</button>)}</nav>
     {message && <p className="notice" role="status">{message}</p>}
     {page === 'library' && <>
-      <div className="summariser-toolbar"><label>Workspace<select aria-label="Summariser workspace" value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{workspaceOptions.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}{!workspaceOptions.length&&<option value="">Create a workspace first</option>}</select></label><label className="summariser-upload">Add video<input id="summariser-video-upload" type="file" accept="video/*" onChange={(event:ChangeEvent<HTMLInputElement>)=>{const next=event.currentTarget.files?.[0]||null;event.currentTarget.value='';setFile(next);}}/></label><button className="generate-button" type="button" disabled={busy||!file||!workspaceId} onClick={()=>void addVideo()}><FileUp size={15}/>{busy?'Adding…':'Add to library'}</button></div>
+      <div className="summariser-toolbar"><p className="project-context-label">Current project · change with New project or Load project above</p><label className="summariser-upload">Add video<input id="summariser-video-upload" type="file" accept="video/*" onChange={(event:ChangeEvent<HTMLInputElement>)=>{const next=event.currentTarget.files?.[0]||null;event.currentTarget.value='';setFile(next);}}/></label><button className="generate-button" type="button" disabled={busy||!file||!workspaceId} onClick={()=>void addVideo()}><FileUp size={15}/>{busy?'Adding…':'Add to library'}</button></div>
       <div className="summariser-toolbar"><label className="summariser-search"><Search size={16}/><input aria-label="Search source videos" placeholder="Search video name or notes" value={query} onChange={event=>setQuery(event.target.value)}/></label><button type="button" className="quiet-button" aria-label={oldestFirst?'Sort newest first':'Sort oldest first'} title={oldestFirst?'Oldest first':'Newest first'} onClick={()=>setOldestFirst(value=>!value)}>{oldestFirst?'↑':'↓'}</button><span className="media-prep-state">{visibleAssets.length} videos</span></div>
       <details className="card donor-video-import"><summary>Import copied Story Builder videos</summary><p>Preview and select copied videos. You can select any number; Vibe imports them in sequential batches of up to 20 so each request stays bounded. Original donor files remain untouched; each file must be 512 MiB or smaller.</p><div className="summariser-toolbar"><button type="button" className="quiet-button" disabled={busy||!workspaceId} onClick={()=>void loadDonorVideos()}>{busy?'Loading…':'Show copied videos'}</button>{donorVideos.length>0&&<><span>{donorSelected.length} selected · {donorVideos.length} available</span><SelectionToggle selected={donorSelected} shown={visibleDonorVideos.filter(row=>row.importable).map(row=>row.asset_id)} onChange={setDonorSelected} disabled={busy}/><button className="generate-button" disabled={busy||!donorSelected.length} onClick={()=>void importDonorVideos()}>{busy?'Importing…':'Import selected'}</button></>}</div>{donorVideos.length>0&&<div className="summariser-analysis-picker donor-video-picker">{visibleDonorVideos.map(row=><article className="donor-video-card" key={row.asset_id}><video className="donor-video-preview" src={`/api/video-summariser/${encodeURIComponent(workspaceId)}/library/donor/${encodeURIComponent(row.asset_id)}/content`} controls preload="none" aria-label={`Preview ${row.title}`}/><div className="donor-video-card-details"><label><input type="checkbox" checked={donorSelected.includes(row.asset_id)} disabled={!row.importable||busy} onChange={()=>setDonorSelected(current=>current.includes(row.asset_id)?current.filter(id=>id!==row.asset_id):row.importable?[...current,row.asset_id]:current)}/><span title={`${row.title} · ${row.filename}`}>{row.title}<small>{row.channel||row.filename} · {(row.size_bytes/1024/1024).toFixed(1)} MB{!row.importable&&' · Over the 512 MiB per-file limit; cannot import.'}</small></span></label><button type="button" className="quiet-button" aria-pressed={donorSelected.includes(row.asset_id)} disabled={!row.importable||busy} onClick={()=>setDonorSelected(current=>current.includes(row.asset_id)?current.filter(id=>id!==row.asset_id):row.importable?[...current,row.asset_id]:current)}>{donorSelected.includes(row.asset_id)?'Remove from selection':'Select for import'}</button><button type="button" className="quiet-button" disabled={busy} onClick={()=>void inspectDonorAnalysis(row.asset_id)}>Show analysis</button></div></article>)}</div>}{showDonorVideos&&!donorVideos.length&&<p>No staged copied videos are available.</p>}
         {donorAnalysis&&<section className="donor-analysis-preview" aria-label="Copied video analysis"><h3>Analysis · {donorAnalysis.video_asset_id}</h3>{donorAnalysis.analysis?<><p>{donorAnalysis.analysis.model} · {donorAnalysis.analysis.revision}</p><p>{donorAnalysis.analysis.summary||'No saved video summary.'}</p><h4>Collected audio clips ({donorAnalysis.audio_assets.length})</h4><p>Choose the clips to add. Source video and time range will be saved with each clip.</p><div className="summariser-analysis-picker">{donorAnalysis.audio_assets.map(item=><label key={item.asset_id}><input type="checkbox" checked={donorAudioSelected.includes(item.asset_id)} disabled={!donorAudioSelected.includes(item.asset_id)&&donorAudioSelected.length>=20} onChange={()=>setDonorAudioSelected(current=>current.includes(item.asset_id)?current.filter(id=>id!==item.asset_id):current.length<20?[...current,item.asset_id]:current)}/><span>{item.label} · {item.category} · {item.start_time_sec ?? '?'}–{item.end_time_sec ?? '?'} sec · {(item.size_bytes/1024).toFixed(0)} KB</span></label>)}</div>{donorAnalysis.audio_assets.length>0&&<button type="button" className="generate-button" disabled={busy||!donorAudioSelected.length} onClick={()=>void importDonorAudio()}>{busy?'Importing…':`Import ${donorAudioSelected.length} selected audio clips`}</button>}</>:<p>No linked, readable summary or collected clips were found for this video.</p>}</section>}
@@ -546,7 +544,7 @@ function VideoSummariser() {
       <MediaGrid assets={visibleAssets} empty={workspaceId?'No videos in this workspace yet.':'Create or select a workspace first.'} selectable analyzedIds={[...completedSources]} selectedIds={selectedVideoIds} onToggle={toggleVideo}/>
     </>}
     {page === 'youtube' && <div className="summariser-status youtube-download"><h2>YouTube Download</h2><p>Find or paste YouTube links, then download selected videos once into the shared downloads folder (720p maximum). This workspace links to the original; analysis never requires another source copy.</p>
-      <label>Workspace<select aria-label="YouTube download workspace" value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{workspaceOptions.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label>
+      <p className="project-context-label">Current project · change with New project or Load project above</p>
       <div className="summariser-toolbar"><label><input type="radio" name="youtube-mode" checked={youtubeMode==='search'} onChange={()=>setYoutubeMode('search')}/> Search YouTube</label><label><input type="radio" name="youtube-mode" checked={youtubeMode==='paste'} onChange={()=>setYoutubeMode('paste')}/> Paste links</label></div>
       {youtubeMode==='search' ? <label>Search query<input aria-label="YouTube search query" value={youtubeQuery} onChange={event=>setYoutubeQuery(event.target.value)} placeholder="e.g. cinematic courtroom scene"/></label> : <label>YouTube URLs<textarea aria-label="YouTube URLs" value={youtubeUrls} onChange={event=>setYoutubeUrls(event.target.value)} placeholder="Paste one YouTube URL per line"/></label>}
       <button className="generate-button" type="button" disabled={busy||!workspaceId||(youtubeMode==='search'?!youtubeQuery.trim():!youtubeUrls.trim())} onClick={()=>void findYoutubeSources()}><Search size={15}/>{busy?'Searching…':'Find videos'}</button>
@@ -574,7 +572,7 @@ function VideoSummariser() {
       <button className="generate-button" type="button" disabled={busy||!analysisDestinationReady||gpuAdmissionBusy||!capability?.can_analyze||!gpuAdmission?.available||!selectedVideoIds.length} onClick={()=>void analyzeSelected()}><Activity size={15}/>{busy?'Starting…':'Analyze selected videos'}</button>
       {!capability?.can_analyze&&<small>Analysis becomes available when analyzer files, models, container images and the Vibe adapter pass setup checks. Runtime health and operating limits are checked separately above; reported free memory is informational.</small>}
     </div>}
-    {page === 'results' && <div className="summariser-results"><div className="summariser-results-heading"><div><h2>Analysis results</h2><label>Media library<select aria-label="Analysis results library" value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{workspaceOptions.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label><p>Completed analyses and their published media are retained in the selected library.</p></div><button className="quiet-button" type="button" onClick={()=>void refreshJobs()}>Refresh</button></div>
+    {page === 'results' && <div className="summariser-results"><div className="summariser-results-heading"><div><h2>Analysis results</h2><p>Current project library</p><p>Completed analyses and their published media are retained in the current project library.</p></div><button className="quiet-button" type="button" onClick={()=>void refreshJobs()}>Refresh</button></div>
       {!jobs.length ? <div className="card summariser-empty">No analysis jobs yet. Select videos on Library, then start one from Analyze.</div> : <div className="summariser-job-layout"><nav aria-label="Analysis jobs" className="summariser-jobs">{jobs.map(job=><button type="button" key={job.job_id} className={activeJob?.job_id===job.job_id?'selected':''} onClick={()=>setActiveJob(job)}><strong>{job.request.source_asset_ids?.length || 0} video(s)</strong><span>{job.status} · {new Date(job.created_at).toLocaleString()}</span></button>)}</nav>{activeJob&&<div className="card summariser-job-detail"><div className="summariser-results-heading"><div><h3>{legacyGpuAdmissionFailure?'Earlier analysis stopped by the old memory check':activeJob.message}</h3><p>{activeJob.stage} · {activeJob.progress}% · {activeJob.status}</p></div><div className="summariser-toolbar">{['queued','running','cancel_requested'].includes(activeJob.status)&&<button className="quiet-button" type="button" disabled={busy||activeJob.status==='cancel_requested'} onClick={()=>void cancelActiveJob()}><X size={15}/>Cancel</button>}{['failed','cancelled','interrupted'].includes(activeJob.status)&&<button className="generate-button" type="button" disabled={busy||gpuAdmissionBusy||!capability?.can_analyze||!gpuAdmission?.available} onClick={()=>void retryActiveJob()}>{busy?'Retrying…':'Retry analysis'}</button>}{['completed','failed','cancelled','interrupted'].includes(activeJob.status)&&<button className="quiet-button" type="button" disabled={busy||samBusy} onClick={()=>void deleteActiveAnalysis()}>Delete analysis</button>}</div></div><progress max="100" value={activeJob.progress}/>
         {legacyGpuAdmissionFailure&&<details><summary>Saved failure message</summary><p>{activeJob.message}</p></details>}
         {['failed','cancelled','interrupted'].includes(activeJob.status)&&<><p className="notice notice-warn" role="note">{legacyGpuAdmissionFailure?'This saved failure came from the old 20 GiB free-memory rule. The current app has removed that limit; reported free memory is informational. Retry checks current runtime readiness before resubmitting.':'This message records why the saved attempt ended at that time. Current runtime readiness is shown below and is checked again before retry.'}</p><section className="card summariser-gpu-admission" aria-label="Runtime readiness before retry"><div><strong>Runtime readiness before retry</strong><p role="status">{gpuAdmissionBusy?'Checking GPU health and workload availability…':!gpuAdmission?'Not checked yet.':gpuAdmission.available?`Ready · ${gpuAdmission.free_gib?.toFixed(1)??'Free-memory reading unavailable'}${typeof gpuAdmission.free_gib==='number'?' GiB reported free (informational).':' (diagnostic only).'}`:gpuAdmission.reason||'Not ready.'}</p>{gpuAdmission&&hostMemoryNote(gpuAdmission)&&<small>{hostMemoryNote(gpuAdmission)}</small>}</div><button className="quiet-button" type="button" disabled={gpuAdmissionBusy||!capability?.can_analyze} onClick={()=>void refreshGpuAdmission()}><RefreshCw size={15}/>{gpuAdmissionBusy?'Checking…':'Recheck runtime readiness'}</button></section></>}
@@ -582,25 +580,25 @@ function VideoSummariser() {
         {activeJob.result&&<><details><summary>Extraction stages and limitations</summary>{activeJob.result.audio_analysis?.map(run=><div key={run.run_id}><strong>{run.run_id}</strong>{run.statuses&&<ul>{Object.entries(run.statuses).map(([stage,status])=><li key={stage}>{stage.replaceAll('_',' ')}: {status.replaceAll('_',' ')}</li>)}</ul>}{run.media_collection?.limitations&&<ul>{Object.entries(run.media_collection.limitations).map(([stage,reason])=><li key={stage}>{stage}: {reason}</li>)}</ul>}</div>)}</details><h3>Summaries</h3>{activeJob.result.videos?.map((video,index)=><article className="card summariser-summary" key={`${video.title}-${index}`}><strong>{video.title || `Video ${index+1}`}</strong><p>{video.summary?.detailed_video_summary || video.summary?.brief_video_summary || 'No summary text was returned.'}</p><small>{video.scenes?.length || 0} timestamped scenes</small></article>)}<h3>Added to the shared library</h3><p>Cut clips keep the full video composition. Demucs separates vocals from accompaniment, not overlapping speakers. Music stems may retain sound effects; clean SFX require reviewed sound isolation.</p>{activeJob.result.published_assets?.length ? <MediaGrid assets={assets.filter(asset=>activeJob.result?.published_assets?.some(row=>row.asset_id===asset.asset_id))} empty="All published assets were deleted or archived." onDelete={deleteClip}/> : <p>No derived clips or frames were published for this run.</p>}{samEvents.length>0&&<section className="card summariser-audio-options" aria-label="On-demand sound isolation"><h3>Isolate a detected sound</h3><p>Choose an analyzed event and describe the sound to separate, such as “bird chirping”. SAM Audio makes a temporary preview for you to listen to and explicitly save or discard. Separation quality needs listening review.</p><p role="status">SAM Audio: {samCapability ? samCapability.available ? 'Ready' : samCapability.reason || 'Unavailable' : 'Checking readiness…'}</p><div className="summariser-toolbar"><label>Detected event<select aria-label="Detected audio event" value={samSelection||`${samEvents[0].run_id}|${samEvents[0].event.event_id}`} onChange={event=>setSamSelection(event.target.value)}>{samEvents.map(row=><option key={`${row.run_id}|${row.event.event_id}`} value={`${row.run_id}|${row.event.event_id}`}>{row.event.label||row.event.event_type||'Audio event'} · {Number(row.event.start_time_sec).toFixed(1)}–{Number(row.event.end_time_sec).toFixed(1)}s · {row.asset_id}</option>)}</select></label><label>Sound to isolate<input aria-label="Sound isolation prompt" maxLength={500} value={samPrompt} onChange={event=>setSamPrompt(event.target.value)} placeholder="For example: the distant crowd cheering"/></label><button className="generate-button" type="button" disabled={samBusy||!samPrompt.trim()||!samCapability?.available} onClick={()=>void isolateSamEvent()}>{samBusy?'Working…':'Preview isolation'}</button></div>{samPreview?.status==='preview_ready'&&samPreview.temporary_id&&<div className="summariser-audio-options"><p>Temporary preview · {samPreview.model} · {samPreview.prompt}</p><audio controls preload="metadata" src={`/api/video-summariser/${encodeURIComponent(workspaceId)}/sam/previews/${encodeURIComponent(samPreview.temporary_id)}/audio`}/><div className="summariser-toolbar"><button className="generate-button" type="button" disabled={samBusy} onClick={()=>void saveSamPreview()}>{samBusy?'Saving…':'Save to Audio Assets'}</button><button className="quiet-button" type="button" disabled={samBusy} onClick={()=>void discardSamPreview()}>Discard preview</button></div></div>}</section>}{activeJob.result.gpu_usage?.available&&<small>Observed GPU allocation peak: {activeJob.result.gpu_usage.peak_mib} MiB (delta {activeJob.result.gpu_usage.peak_delta_mib} MiB).</small>}</>}
       </div>}</div>}
     </div>}
-    {(page === 'audio'||page==='video-assets'||page==='image-assets') && <><div className="summariser-toolbar"><label>Workspace<select aria-label="Extracted assets workspace" disabled={deletingExtracted} value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{workspaceOptions.map(row=><option key={row.id} value={row.id}>{row.label}</option>)}{!workspaceOptions.length&&<option value="">Create a workspace first</option>}</select></label><label className="summariser-search"><Search size={16}/><input aria-label="Search extracted assets" placeholder="Search extracted name or notes" value={query} onChange={event=>setQuery(event.target.value)}/></label></div><p>Extracted {page==='audio'?'audio':page==='image-assets'?'images':'video'} only. Sources remain in Library. Semantic search is available in Search library.</p><div className="summariser-toolbar" aria-label="Bulk extracted asset controls"><SelectionToggle selected={selectedExtractedIds} shown={visibleAssets.map(asset=>asset.asset_id)} onChange={setSelectedExtractedIds} disabled={deletingExtracted}/><span>{selectedExtractedIds.length} selected</span><button type="button" className="quiet-button" disabled={deletingExtracted||!selectedExtractedIds.length} onClick={()=>void deleteExtractedBatch(false)}>Delete selected ({selectedExtractedIds.length})</button><button type="button" className="quiet-button" disabled={deletingExtracted||!extractedAssets.length} onClick={()=>void deleteExtractedBatch(true)}>Delete all {extractedKind} assets ({extractedAssets.length})</button>{deletingExtracted&&<span role="status">Deleting assets…</span>}</div>{page==='video-assets'?<>{[...new Set(visibleAssets.map(asset=>asset.metadata?.analyzer_run_id))].map(runId=><section key={runId} className="card"><h3>Video clip group · {runId}</h3><p>{visibleAssets.find(asset=>asset.metadata?.analyzer_run_id===runId)?.metadata?.analysis_summary || jobs.flatMap(job=>job.result?.audio_analysis||[]).find(run=>run.run_id===runId)?.summary || 'The source video summary is available in Results.'}</p><MediaGrid assets={visibleAssets.filter(asset=>asset.metadata?.analyzer_run_id===runId)} empty="" selectable selectedIds={selectedExtractedIds} onToggle={id=>setSelectedExtractedIds(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id])} disabled={deletingExtracted} onDelete={deleteClip}/></section>)}{!visibleAssets.length&&<p>No extracted video clips in this workspace yet.</p>}</>:<MediaGrid assets={visibleAssets} empty={`No extracted ${page==='image-assets'?'images':'audio clips'} in this workspace yet.`} selectable selectedIds={selectedExtractedIds} onToggle={id=>setSelectedExtractedIds(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id])} disabled={deletingExtracted} onDelete={deleteClip}/>}</>}
+    {(page === 'audio'||page==='video-assets'||page==='image-assets') && <><div className="summariser-toolbar"><p className="project-context-label">Current project · change with New project or Load project above</p><label className="summariser-search"><Search size={16}/><input aria-label="Search extracted assets" placeholder="Search extracted name or notes" value={query} onChange={event=>setQuery(event.target.value)}/></label></div><p>Extracted {page==='audio'?'audio':page==='image-assets'?'images':'video'} only. Sources remain in Library. Semantic search is available in Search library.</p><div className="summariser-toolbar" aria-label="Bulk extracted asset controls"><SelectionToggle selected={selectedExtractedIds} shown={visibleAssets.map(asset=>asset.asset_id)} onChange={setSelectedExtractedIds} disabled={deletingExtracted}/><span>{selectedExtractedIds.length} selected</span><button type="button" className="quiet-button" disabled={deletingExtracted||!selectedExtractedIds.length} onClick={()=>void deleteExtractedBatch(false)}>Delete selected ({selectedExtractedIds.length})</button><button type="button" className="quiet-button" disabled={deletingExtracted||!extractedAssets.length} onClick={()=>void deleteExtractedBatch(true)}>Delete all {extractedKind} assets ({extractedAssets.length})</button>{deletingExtracted&&<span role="status">Deleting assets…</span>}</div>{page==='video-assets'?<>{[...new Set(visibleAssets.map(asset=>asset.metadata?.analyzer_run_id))].map(runId=><section key={runId} className="card"><h3>Video clip group · {runId}</h3><p>{visibleAssets.find(asset=>asset.metadata?.analyzer_run_id===runId)?.metadata?.analysis_summary || jobs.flatMap(job=>job.result?.audio_analysis||[]).find(run=>run.run_id===runId)?.summary || 'The source video summary is available in Results.'}</p><MediaGrid assets={visibleAssets.filter(asset=>asset.metadata?.analyzer_run_id===runId)} empty="" selectable selectedIds={selectedExtractedIds} onToggle={id=>setSelectedExtractedIds(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id])} disabled={deletingExtracted} onDelete={deleteClip}/></section>)}{!visibleAssets.length&&<p>No extracted video clips in this workspace yet.</p>}</>:<MediaGrid assets={visibleAssets} empty={`No extracted ${page==='image-assets'?'images':'audio clips'} in this workspace yet.`} selectable selectedIds={selectedExtractedIds} onToggle={id=>setSelectedExtractedIds(current=>current.includes(id)?current.filter(value=>value!==id):[...current,id])} disabled={deletingExtracted} onDelete={deleteClip}/>}</>}
   </section>;
 }
 
 function ImageDetailer({onBack}:{onBack:()=>void}) {
-  const [workspaces,setWorkspaces]=useState<StoryWorkspace[]>([]);
-  const [workspaceId,setWorkspaceId]=useState('');
+  const [,setWorkspaces]=useState<StoryWorkspace[]>([]);
+  const [workspaceId,setWorkspaceId]=useState(defaultMediaWorkspaceId);
   const [assets,setAssets]=useState<MediaAsset[]>([]);
   const [selectedId,setSelectedId]=useState('');
   const [checkedIds,setCheckedIds]=useState<string[]>([]);
   const removeSelected=async()=>{setBusy(true);let result='';try{result=await deleteSelectedMedia(workspaceId,checkedIds);}catch(e){result=(e as Error).message;}finally{await refresh(workspaceId);setCheckedIds([]);setMessage(result);setBusy(false);}};
   const [pendingImageId,setPendingImageId]=useState(()=>new URLSearchParams(window.location.hash.split('?')[1]||'').get('asset_id')||'');
-  const [query,setQuery]=useState('');
+  const [query,setQuery]=useProjectState('ImageDetailer:query','');
   const [oldestFirst,setOldestFirst]=useState(false);
   const [assetView,setAssetView]=useState<'template'|'list'|'carousel'>(()=>{
     try { const saved=localStorage.getItem('vibe-image-detailer-view-v1'); return saved==='list'||saved==='carousel'?saved:'template'; }
     catch { return 'template'; }
   });
-  const [mode,setMode]=useState<'quick'|'balanced'|'deep'>('balanced');
+  const [mode,setMode]=useProjectState<'quick'|'balanced'|'deep'>('ImageDetailer:mode','balanced');
   const [jobs,setJobs]=useState<ImageDetailerJob[]>([]);
   const [activeJob,setActiveJob]=useState<ImageDetailerJob|null>(null);
   const [file,setFile]=useState<File|null>(null);
@@ -692,7 +690,7 @@ function ImageDetailer({onBack}:{onBack:()=>void}) {
     <header className="summariser-heading"><div><div className="eyebrow">MEDIA PREP / IMAGE DETAILER</div><h1>Image Detailer</h1><p>Analyze an image already in the selected collection.</p></div><span className="media-prep-state">Uses the copied local analyzer</span></header>
     {message&&<p className="notice" role="status">{message}</p>}
     <MediaSourcePicker workspaceId={workspaceId} kinds={['image']} disabled={busy} onAdded={items=>setAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])}/>
-    <div className="summariser-toolbar"><label>Collection<select aria-label="Image Detailer workspace" disabled={busy} value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{mediaWorkspaceOptions(workspaces,workspaceId).map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label><label className="summariser-upload">Add image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={event=>{const next=event.currentTarget.files?.[0]||null;event.currentTarget.value='';setFile(next);}}/><small>PNG, JPEG or WebP</small></label><button className="quiet-button" type="button" disabled={busy||!file||!workspaceId} onClick={()=>void addImage()}><FileUp size={15}/>Add to library</button></div>
+    <div className="summariser-toolbar"><p className="project-context-label">Current project · change with New project or Load project above</p><label className="summariser-upload">Add image<input type="file" accept="image/png,image/jpeg,image/webp" onChange={event=>{const next=event.currentTarget.files?.[0]||null;event.currentTarget.value='';setFile(next);}}/><small>PNG, JPEG or WebP</small></label><button className="quiet-button" type="button" disabled={busy||!file||!workspaceId} onClick={()=>void addImage()}><FileUp size={15}/>Add to library</button></div>
     <div className="summariser-toolbar image-detailer-search"><label className="summariser-search"><Search size={16}/><input aria-label="Search image repertoire" placeholder="Search images by name or notes" value={query} onChange={event=>setQuery(event.target.value)}/></label><span className="media-prep-state">{visible.length} images</span><button className="quiet-button media-sort" type="button" onClick={()=>setOldestFirst(value=>!value)} aria-label={oldestFirst?'Sort newest first':'Sort oldest first'} title={oldestFirst?'Oldest first':'Newest first'}>{oldestFirst?'↑':'↓'}</button><div className="asset-view-switch" role="group" aria-label="Image repository view">{([{id:'template',label:'Template view',icon:<LayoutGrid size={15}/>},{id:'list',label:'List view',icon:<List size={15}/>},{id:'carousel',label:'Carousel view',icon:<GalleryHorizontal size={15}/>} ] as const).map(option=><button type="button" key={option.id} className="quiet-button" aria-label={option.label} aria-pressed={assetView===option.id} onClick={()=>chooseAssetView(option.id)}>{option.icon}<span>{option.id === 'template' ? 'Cards' : option.id === 'list' ? 'List' : 'Carousel'}</span></button>)}</div></div>
     <section className="card summariser-gpu-admission" aria-label="Runtime readiness"><div><strong>Runtime readiness for Image Detailer</strong><p role="status">{gpuAdmissionBusy?'Checking GPU health and workload availability…':!gpuAdmission?'Not checked yet.':gpuAdmission.available?`Ready · ${gpuAdmission.free_gib?.toFixed(1)??'Free-memory reading unavailable'}${typeof gpuAdmission.free_gib==='number'?' GiB reported free (informational).':' (diagnostic only).'}`:gpuAdmission.reason||'Not ready.'}</p>{gpuAdmission&&hostMemoryNote(gpuAdmission)&&<small>{hostMemoryNote(gpuAdmission)}</small>}</div><button className="quiet-button" type="button" disabled={gpuAdmissionBusy||busy||!workspaceId} onClick={()=>void refreshGpuAdmission()}><RefreshCw size={15}/>{gpuAdmissionBusy?'Checking…':'Recheck runtime readiness'}</button></section>
     <div className="summariser-toolbar"><label>Analysis depth<select aria-label="Image analysis depth" value={mode} onChange={event=>setMode(event.target.value as typeof mode)}><option value="quick">Quick</option><option value="balanced">Balanced</option><option value="deep">Deep</option></select></label><button className="generate-button" type="button" disabled={busy||gpuAdmissionBusy||!gpuAdmission?.available||!selectedId} onClick={()=>void analyze()}><Activity size={15}/>{busy?'Working…':'Start analysis'}</button></div>
@@ -706,8 +704,8 @@ function ImageDetailer({onBack}:{onBack:()=>void}) {
 
 function AudioStudio({onBack}:{onBack:()=>void}) {
   const [ttsDestinationReady,setTtsDestinationReady]=useState(false),[effectDestinationReady,setEffectDestinationReady]=useState(false);
-  const [workspaces,setWorkspaces]=useState<StoryWorkspace[]>([]);
-  const [workspaceId,setWorkspaceId]=useState('');
+  const [,setWorkspaces]=useState<StoryWorkspace[]>([]);
+  const [workspaceId,setWorkspaceId]=useState(defaultMediaWorkspaceId);
   const [voiceBindings,setVoiceBindings]=useState<CharacterVoiceState|null>(null);
   const [voiceBindingsLoaded,setVoiceBindingsLoaded]=useState(false);
   const [assets,setAssets]=useState<MediaAsset[]>([]);
@@ -715,35 +713,35 @@ function AudioStudio({onBack}:{onBack:()=>void}) {
   const [models,setModels]=useState<AudioModel[]>([]);
   const [capabilities,setCapabilities]=useState<AudioCapabilities|null>(null);
   const [selectedId,setSelectedId]=useState('');
-  const [voiceQuery,setVoiceQuery]=useState('');
-  const [audioQuery,setAudioQuery]=useState('');
-  const [name,setName]=useState('');
-  const [transcript,setTranscript]=useState('');
+  const [voiceQuery,setVoiceQuery]=useProjectState('AudioStudio:voiceQuery','');
+  const [audioQuery,setAudioQuery]=useProjectState('AudioStudio:audioQuery','');
+  const [name,setName]=useProjectState('AudioStudio:name','');
+  const [transcript,setTranscript]=useProjectState('AudioStudio:transcript','');
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
-  const [srt,setSrt]=useState('');
-  const [speakerVoices,setSpeakerVoices]=useState<Record<string,{voiceId:string;language:string}>>({});
-  const [timingMode,setTimingMode]=useState('smart_natural');
-  const [ttsParameters,setTtsParameters]=useState({seed:1,exaggeration:.5,temperature:.8,cfg_weight:.5,enable_audio_cache:true,fade:.01,max_stretch_ratio:1,min_stretch_ratio:.5,timing_tolerance:2,batch_size:0});
+  const [srt,setSrt]=useProjectState('AudioStudio:srt','');
+  const [speakerVoices,setSpeakerVoices]=useProjectState<Record<string,{voiceId:string;language:string}>>('AudioStudio:speakerVoices',{});
+  const [timingMode,setTimingMode]=useProjectState('AudioStudio:timingMode','smart_natural');
+  const [ttsParameters,setTtsParameters]=useProjectState('AudioStudio:ttsParameters',{seed:1,exaggeration:.5,temperature:.8,cfg_weight:.5,enable_audio_cache:true,fade:.01,max_stretch_ratio:1,min_stretch_ratio:.5,timing_tolerance:2,batch_size:0});
   const [ttsJob,setTtsJob]=useState<TimedTTSJob|null>(null);
-  const [f5Dataset,setF5Dataset]=useState('voice_dataset');
-  const [f5Model,setF5Model]=useState('F5TTS_v1_Base');
-  const [f5Samples,setF5Samples]=useState<Record<string,string>>({});
+  const [f5Dataset,setF5Dataset]=useProjectState('AudioStudio:f5Dataset','voice_dataset');
+  const [f5Model,setF5Model]=useProjectState('AudioStudio:f5Model','F5TTS_v1_Base');
+  const [f5Samples,setF5Samples]=useProjectState<Record<string,string>>('AudioStudio:f5Samples',{});
   const [f5Job,setF5Job]=useState<F5PreparationJob|null>(null);
   const [effectCapabilities,setEffectCapabilities]=useState<AudioEffectCapabilities|null>(null);
   const [effectJob,setEffectJob]=useState<AudioEffectJob|null>(null);
-  const [effectOperation,setEffectOperation]=useState<'simple'|'noise_cleanup'|'voice_repair'|'voice_changer'|'rvc'|'emotion'|'style'>('voice_repair');
-  const [simplePreset,setSimplePreset]=useState('deep');
-  const [simpleStrength,setSimpleStrength]=useState(.5);
-  const [effectVoice,setEffectVoice]=useState('');
-  const [effectTranscript,setEffectTranscript]=useState('');
-  const [effectChoice,setEffectChoice]=useState('happy');
-  const [effectRestoration,setEffectRestoration]=useState(0);
-  const [effectAggressiveness,setEffectAggressiveness]=useState(10);
-  const [effectPasses,setEffectPasses]=useState(1);
-  const [effectPitch,setEffectPitch]=useState(0);
-  const [rvcModel,setRvcModel]=useState('');
-  const [rvcIndex,setRvcIndex]=useState('');
+  const [effectOperation,setEffectOperation]=useProjectState<'simple'|'noise_cleanup'|'voice_repair'|'voice_changer'|'rvc'|'emotion'|'style'>('AudioStudio:effectOperation','voice_repair');
+  const [simplePreset,setSimplePreset]=useProjectState('AudioStudio:simplePreset','deep');
+  const [simpleStrength,setSimpleStrength]=useProjectState('AudioStudio:simpleStrength',.5);
+  const [effectVoice,setEffectVoice]=useProjectState('AudioStudio:effectVoice','');
+  const [effectTranscript,setEffectTranscript]=useProjectState('AudioStudio:effectTranscript','');
+  const [effectChoice,setEffectChoice]=useProjectState('AudioStudio:effectChoice','happy');
+  const [effectRestoration,setEffectRestoration]=useProjectState('AudioStudio:effectRestoration',0);
+  const [effectAggressiveness,setEffectAggressiveness]=useProjectState('AudioStudio:effectAggressiveness',10);
+  const [effectPasses,setEffectPasses]=useProjectState('AudioStudio:effectPasses',1);
+  const [effectPitch,setEffectPitch]=useProjectState('AudioStudio:effectPitch',0);
+  const [rvcModel,setRvcModel]=useProjectState('AudioStudio:rvcModel','');
+  const [rvcIndex,setRvcIndex]=useProjectState('AudioStudio:rvcIndex','');
   const refresh=async()=>{
     const [voiceRows,modelRows,ready]=await Promise.all([listAudioVoices(),listAudioModels(),getAudioCapabilities()]);
     setVoices(voiceRows);setModels(modelRows);setCapabilities(ready);
@@ -780,7 +778,7 @@ function AudioStudio({onBack}:{onBack:()=>void}) {
     <header className="summariser-heading"><div><div className="eyebrow">MEDIA PREP / AUDIO STUDIO</div><h1>Audio Studio</h1><p>Browse ComfyUI voice references and explicitly enroll a library clip for voice workflows.</p></div><span className="media-prep-state">{capabilities?.comfyui_online?'ComfyUI online':capabilities?'ComfyUI offline':'Checking'}</span></header>
     {message&&<p className="notice" role="status">{message}</p>}
     <MediaSourcePicker workspaceId={workspaceId} kinds={['audio']} disabled={busy} onAdded={items=>setAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])}/>
-    <div className="summariser-toolbar"><label>Workspace<select aria-label="Audio Studio workspace" value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{mediaWorkspaceOptions(workspaces,workspaceId).map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label><span className="media-prep-state">{voices.length} voices · {models.length} TTS models</span></div>
+    <div className="summariser-toolbar"><p className="project-context-label">Current project · change with New project or Load project above</p><span className="media-prep-state">{voices.length} voices · {models.length} TTS models</span></div>
     {!capabilities?.comfyui_root_exists&&<p className="notice">ComfyUI model folder was not found. Set COMFYUI_ROOT to the configured ComfyUI installation.</p>}
     <VoiceRecorder workspaceId={workspaceId} onSaved={(asset,use)=>{setAssets(rows=>[asset,...rows.filter(r=>r.asset_id!==asset.asset_id)]);setSelectedId(asset.asset_id);if(use==='Use for conversion')setEffectOperation('simple');if(use==='Use in Vibe Editor'){sessionStorage.setItem('vibe-editor-pending-audio',JSON.stringify({workspace_id:workspaceId,asset}));window.location.hash='/editor';}setMessage(use==='Use in Vibe Editor'?'Recording saved. Open Vibe Editor and select it from this workspace’s audio library.':use==='Use as voice reference'?'Recording selected. Enter its exact transcript and voice name in Enroll a library clip below.':'Recording saved and selected.');}}/>
     <VoiceStudioTools key={workspaceId} workspaceId={workspaceId} voices={voices} assets={assets} onAudio={(asset,text)=>{setAssets(rows=>[asset,...rows.filter(r=>r.asset_id!==asset.asset_id)]);setSelectedId(asset.asset_id);setTranscript(text);setMessage('Audio selected. Enter a voice name and click Add to ComfyUI voices below to save it as a reference.');}}/>
@@ -822,17 +820,17 @@ function AudioStudio({onBack}:{onBack:()=>void}) {
 }
 
 function AudioReconstruct({onBack}:{onBack:()=>void}) {
-  const [workspaces,setWorkspaces]=useState<StoryWorkspace[]>([]);
-  const [workspaceId,setWorkspaceId]=useState('');
+  const [,setWorkspaces]=useState<StoryWorkspace[]>([]);
+  const [workspaceId,setWorkspaceId]=useState(defaultMediaWorkspaceId);
   const [assets,setAssets]=useState<MediaAsset[]>([]);
   const [recording,setRecording]=useState<File|null>(null);
   const [session,setSession]=useState<ReconstructionSession|null>(null);
-  const [character,setCharacter]=useState('');
-  const [sentence,setSentence]=useState('This is my calibration sentence for the character voice.');
-  const [partId,setPartId]=useState('scene_001_line_001');
-  const [sequence,setSequence]=useState(1);
-  const [expected,setExpected]=useState('');
-  const [transcript,setTranscript]=useState('');
+  const [character,setCharacter]=useProjectState('AudioReconstruct:character','');
+  const [sentence,setSentence]=useProjectState('AudioReconstruct:sentence','This is my calibration sentence for the character voice.');
+  const [partId,setPartId]=useProjectState('AudioReconstruct:partId','scene_001_line_001');
+  const [sequence,setSequence]=useProjectState('AudioReconstruct:sequence',1);
+  const [expected,setExpected]=useProjectState('AudioReconstruct:expected','');
+  const [transcript,setTranscript]=useProjectState('AudioReconstruct:transcript','');
   const [selectedAsset,setSelectedAsset]=useState('');
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
@@ -857,7 +855,7 @@ function AudioReconstruct({onBack}:{onBack:()=>void}) {
     <header className="summariser-heading"><div><div className="eyebrow">MEDIA PREP / AUDIO RECONSTRUCT</div><h1>Audio Reconstruct</h1><p>Calibrate a character, prepare dialogue parts, then review and accept recorded takes.</p></div><span className="media-prep-state">Story Builder tool reused</span></header>
     {message&&<p className="notice" role="status">{message}</p>}
     <MediaSourcePicker workspaceId={workspaceId} kinds={['audio']} disabled={busy} onAdded={items=>setAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])}/>
-    <div className="summariser-toolbar"><label>Workspace<select aria-label="Reconstruction workspace" value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{mediaWorkspaceOptions(workspaces,workspaceId).map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label></div>
+    <div className="summariser-toolbar"><p className="project-context-label">Current project · change with New project or Load project above</p></div>
     <VoiceRecorder key={workspaceId} workspaceId={workspaceId} onSaved={(asset,use)=>{setAssets(rows=>[asset,...rows.filter(r=>r.asset_id!==asset.asset_id)]);setSelectedAsset(asset.asset_id);if(use==='Use in Vibe Editor'){sessionStorage.setItem('vibe-editor-pending-audio',JSON.stringify({workspace_id:workspaceId,asset}));window.location.hash='/editor';}else setMessage(use==='Use as voice reference'?'Recording saved. Enroll it with its exact transcript in Audio Studio to make a reusable TTS voice.':'Recording ready below for voice conversion or a dialogue take.');}}/>
     <label>Recording to change<select aria-label="Voice conversion source" value={selectedAsset} onChange={e=>setSelectedAsset(e.target.value)}><option value="">Choose a recording</option>{assets.map(a=><option key={a.asset_id} value={a.asset_id}>{a.filename}</option>)}</select></label>
     <VoiceConversion key={'conversion-'+workspaceId} workspaceId={workspaceId} source={selected} onSaved={asset=>{setAssets(rows=>[asset,...rows.filter(r=>r.asset_id!==asset.asset_id)]);setSelectedAsset(asset.asset_id);setMessage('Converted audio selected. Save it as a dialogue take below if needed.');}}/>
@@ -883,15 +881,15 @@ function MediaGrid({assets,empty,selectable=false,selectedIds=[],analyzedIds=[],
 
 function AudioUtilities({onBack}:{onBack:()=>void}) {
   const [utilityDestinationReady,setUtilityDestinationReady]=useState(false);
-  const [workspaces,setWorkspaces]=useState<StoryWorkspace[]>([]);
-  const [workspaceId,setWorkspaceId]=useState('');
+  const [,setWorkspaces]=useState<StoryWorkspace[]>([]);
+  const [workspaceId,setWorkspaceId]=useState(defaultMediaWorkspaceId);
   const [capabilities,setCapabilities]=useState<AudioUtilityCapabilities|null>(null);
   const [assets,setAssets]=useState<MediaAsset[]>([]);
-  const [query,setQuery]=useState('');
+  const [query,setQuery]=useProjectState('AudioUtilities:query','');
   const [importFiles,setImportFiles]=useState<File[]>([]);
   const [selected,setSelected]=useState<string[]>([]);
-  const [operation,setOperation]=useState<AudioUtilityOperation['id']>('extract_mp3');
-  const [settings,setSettings]=useState<Record<string,unknown>>({quality:2,model:'master64',dry:0,stems:2,device:'cuda'});
+  const [operation,setOperation]=useProjectState<AudioUtilityOperation['id']>('AudioUtilities:operation','extract_mp3');
+  const [settings,setSettings]=useProjectState<Record<string,unknown>>('AudioUtilities:settings',{quality:2,model:'master64',dry:0,stems:2,device:'cuda'});
   const [jobs,setJobs]=useState<AudioUtilityJob[]>([]);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
@@ -913,7 +911,7 @@ function AudioUtilities({onBack}:{onBack:()=>void}) {
     <header className="summariser-heading"><div><div className="eyebrow">MEDIA PREP / AUDIO UTILITIES</div><h1>Audio Utilities</h1><p>Clean audio, extract MP3 tracks, or separate stems from shared-library media.</p></div><span className="media-prep-state">Story Builder operations reused</span></header>
     {message&&<p className="notice" role="status">{message}</p>}
     <OutputDestination tool="audio-utilities" onReady={setUtilityDestinationReady} workspaceId={workspaceId} disabled={busy}/>
-    <div className="summariser-toolbar"><label>Workspace<select aria-label="Audio utility workspace" value={workspaceId} onChange={event=>{setWorkspaceId(event.target.value);rememberMediaWorkspaceId(event.target.value);}}>{mediaWorkspaceOptions(workspaces,workspaceId).map(row=><option key={row.id} value={row.id}>{row.label}</option>)}</select></label><label>Operation<select aria-label="Audio utility operation" value={operation} onChange={event=>{const next=event.target.value as AudioUtilityOperation['id'];setOperation(next);setSelected(ids=>ids.filter(id=>assets.some(asset=>asset.asset_id===id&&(next==='extract_mp3'||asset.kind==='audio'))));}}><option value="extract_mp3">Extract MP3</option><option value="noise_cleanup">Noise cleanup</option><option value="demucs_stems">Separate stems</option></select></label></div>
+    <div className="summariser-toolbar"><p className="project-context-label">Current project · change with New project or Load project above</p><label>Operation<select aria-label="Audio utility operation" value={operation} onChange={event=>{const next=event.target.value as AudioUtilityOperation['id'];setOperation(next);setSelected(ids=>ids.filter(id=>assets.some(asset=>asset.asset_id===id&&(next==='extract_mp3'||asset.kind==='audio'))));}}><option value="extract_mp3">Extract MP3</option><option value="noise_cleanup">Noise cleanup</option><option value="demucs_stems">Separate stems</option></select></label></div>
     {available?.status!=='available'&&<p className="notice">{available?.reason||'Checking operation availability…'}</p>}
     {operation==='extract_mp3'&&<label>MP3 quality (0 best, 9 smallest)<input type="number" min={0} max={9} value={String(settings.quality)} onChange={event=>setSettings({...settings,quality:Number(event.target.value)})}/></label>}
     {operation==='noise_cleanup'&&<div className="summariser-toolbar"><label>Model<select value={String(settings.model)} onChange={event=>setSettings({...settings,model:event.target.value})}><option value="master64">Master64</option><option value="dns64">DNS64</option></select></label><label>Dry mix<input type="number" min={0} max={1} step={0.05} value={String(settings.dry)} onChange={event=>setSettings({...settings,dry:Number(event.target.value)})}/></label></div>}

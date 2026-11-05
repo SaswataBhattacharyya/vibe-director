@@ -1,5 +1,9 @@
 import type { StoryWorkspace } from './story-api';
 
+let activeProjectId: string | undefined;
+export function setActiveProjectId(value:string){activeProjectId=value;}
+export function managedProjectId(){return activeProjectId;}
+
 const STORY_SELECTION_KEY = 'vibe-story-selected-v1';
 const VIDEO_DRAFT_KEY = 'vibe-video-draft-v1';
 const ACTIVE_MEDIA_WORKSPACE_KEY = 'vibe-media-active-workspace-v1';
@@ -13,11 +17,13 @@ export function standaloneMediaWorkspaceId(): string {
 }
 
 export function rememberMediaWorkspaceId(workspaceId: string): void {
+  if(activeProjectId!==undefined&&workspaceId!==activeProjectId)return;
   if (!usable(workspaceId)) return;
   try { localStorage.setItem(ACTIVE_MEDIA_WORKSPACE_KEY, workspaceId); } catch { /* Current page state remains usable without persistence. */ }
 }
 
 export function defaultMediaWorkspaceId(): string {
+  if(activeProjectId!==undefined)return activeProjectId;
   try {
     const activeWorkspace = localStorage.getItem(ACTIVE_MEDIA_WORKSPACE_KEY) || '';
     if (usable(activeWorkspace) && (activeWorkspace==='tool-library'||activeWorkspace.startsWith('story-'))) return activeWorkspace;
@@ -28,7 +34,8 @@ export function defaultMediaWorkspaceId(): string {
 }
 
 export function preferredMediaWorkspaceId(workspaces: StoryWorkspace[], requested = ''): string {
-  if (usable(requested)) return requested;
+  if(activeProjectId!==undefined)return activeProjectId;
+  if (usable(requested)&&(requested==='tool-library'||workspaces.some(row=>row.workspace_id===requested))) return requested;
   let storySelection = '';
   let activeWorkspace = '';
   let videoWorkspace = '';
@@ -46,6 +53,7 @@ export function preferredMediaWorkspaceId(workspaces: StoryWorkspace[], requeste
 }
 
 export function mediaWorkspaceOptions(workspaces: StoryWorkspace[], selectedId: string) {
+  if(activeProjectId!==undefined)return [{id:activeProjectId,label:activeProjectId==='tool-library'?'Standalone media':'Current project'}];
   let names: Record<string,string> = {};
   try { names = JSON.parse(localStorage.getItem('vibe-workspace-names-v1') || '{}'); } catch { /* Use saved story titles. */ }
   const rows = workspaces.map(row => ({ id: row.workspace_id, label: row.title || names[row.workspace_id] || 'Unnamed workspace' }));

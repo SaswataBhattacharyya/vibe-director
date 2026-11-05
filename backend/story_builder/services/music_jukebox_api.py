@@ -1,6 +1,7 @@
 """Jukebox HTTP seam. No inference or GPU work occurs during editing/export."""
 import json
 import re
+from urllib.parse import parse_qs
 from . import music_jukebox as music, video_repertoire as jobs
 
 
@@ -12,7 +13,7 @@ def handle(root,environ,start_response,read_json,respond):
     if method not in {'GET','POST'}: return respond(start_response,'405 Method Not Allowed',{'error':{'message':'Unsupported music method.'}})
     if method=='POST' and environ.get('CONTENT_TYPE','').split(';')[0]!='application/json': raise ValueError('Use application/json.')
     body=read_json(environ) if method=='POST' else {}
-    if path=='/api/jukebox/state' and method=='GET': result=music.snapshot(root)
+    if path=='/api/jukebox/state' and method=='GET': result=music.snapshot(root,parse_qs(environ.get('QUERY_STRING','')).get('workspace_id',[None])[0])
     elif path=='/api/jukebox/folder' and method=='POST': result=music.folder(root,body)
     elif path=='/api/jukebox/projects' and method=='POST': result=music.save(root,body,True)
     elif match:=re.fullmatch(r'/api/jukebox/projects/(jukebox-[a-f0-9]{12})/jobs',path):
@@ -32,7 +33,8 @@ def handle(root,environ,start_response,read_json,respond):
             music.write(target,p,overwrite=bool(body.get('overwrite')));result={'path':str(target)}
         elif method=='POST' and action=='export':
             music.claim_export(root,pid,body)
-            job=jobs.create_job('music-jukebox',{**body,'project_id':pid});result=jobs.start_job('music-jukebox',job['job_id'])
+            owner=json.loads(music.project_path(root,pid).read_text())['workspace_id']
+            job=jobs.create_job('music-jukebox',{**body,'project_id':pid,'workspace_id':owner});result=jobs.start_job('music-jukebox',job['job_id'])
         else: raise ValueError('Unsupported music operation.')
     elif match:=re.fullmatch(r'/api/jukebox/jobs/(music-jukebox-[a-f0-9]{12})(?:/(cancel))?',path):
         jid,action=match.groups()
@@ -41,8 +43,7 @@ def handle(root,environ,start_response,read_json,respond):
         else: raise ValueError('Unsupported job operation.')
     elif match:=re.fullmatch(r'/api/jukebox/exports/(music-jukebox-[a-f0-9]{12})',path):
         if method!='GET': raise ValueError('Use GET.')
-        from pathlib import Path
-        record=json.loads((music.home(root)/'exports'/f'{match[1]}.json').read_text());file=Path(record['path'])
+        file=music.export_path(root,match[1])
         start_response('200 OK',[('Content-Type',{'wav':'audio/wav','flac':'audio/flac','mp3':'audio/mpeg'}[file.suffix[1:]]),('Content-Length',str(file.stat().st_size))])
         def stream():
             with file.open('rb') as source:

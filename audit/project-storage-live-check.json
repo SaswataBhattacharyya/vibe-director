@@ -1,0 +1,11 @@
+{
+  "check": "read-only registered asset path resolution; no hashing, decoding or generation",
+  "records": 268,
+  "resolved": 268,
+  "failures": [],
+  "source_manifests": [
+    "library/tool-media/assets.json",
+    "youtube_downloads/catalog.json",
+    "video_repertoire/catalog.json"
+  ]
+}

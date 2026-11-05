@@ -79,11 +79,27 @@ def shared_file(root: Path, location: dict) -> Path:
     if isinstance(location, dict) and location.get("store") == "output":
         from .output_destinations import locate_file
         return locate_file(root, location)
-    stores = {"youtube": shared_downloads_root(root), "repertoire": repertoire_root(root),
+    if isinstance(location, dict) and location.get("store") in {"project", "tool"}:
+        if location["store"] == "tool":
+            base = media_root(root, "tool-library")
+        else:
+            workspace = location.get("workspace_id", "")
+            base = project_root(root, workspace)
+            if location.get("saved"):
+                from .projects import records, folder_path
+                saved = records(root).get(workspace)
+                if not saved:
+                    raise FileNotFoundError("Project source folder is unavailable.")
+                base = folder_path(saved)
+        stores = {location["store"]: base}
+    else:
+        stores = {"youtube": shared_downloads_root(root), "repertoire": repertoire_root(root),
               "audio": checked(root, "audio_studio"), "ace": ace_root(root)}
     if not isinstance(location, dict) or location.get("store") not in stores:
         raise ValueError("Unknown shared media store.")
     base = stores[location["store"]]
+    if any(p.is_symlink() for p in (base, *base.parents)):
+        raise ValueError("Media source folders cannot use symlinks.")
     relative = Path(location.get("path", ""))
     if relative.is_absolute() or ".." in relative.parts or not relative.parts:
         raise ValueError("Invalid shared media path.")
@@ -106,6 +122,15 @@ def shared_file(root: Path, location: dict) -> Path:
 def relocated_path(root: Path, path: Path) -> Path:
     """Translate historical locations without rewriting frozen request payloads."""
     root, path = Path(root).resolve(), Path(path)
+    locations = checked(root, 'library', 'projects', 'runtime-locations.json')
+    if locations.exists():
+        for previous, current in json.loads(locations.read_text()).items():
+            if Path(current).resolve() != root:
+                continue
+            if path.is_relative_to(Path(previous)):
+                candidate = root / path.relative_to(previous)
+                if candidate.exists() and not any(p.is_symlink() for p in (candidate, *candidate.parents)):
+                    return candidate
     moves = [("library/downloads/youtube", "youtube_downloads/files"),
              ("engines/youtube-import/out_videos", "youtube_downloads/files/legacy_import"),
              ("services/media/analyses/video_audio_analyzer", "video_repertoire/runs"),

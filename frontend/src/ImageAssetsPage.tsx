@@ -1,3 +1,4 @@
+import {managedProjectId} from './lib/media-workspace';
 import OutputDestination from './OutputDestination';
 import ZImageLoraControls,{ZImageLora} from './ZImageLoraControls';
 import SelectionToggle from './SelectionToggle';
@@ -13,9 +14,10 @@ import { FL2VA_WORKFLOW_ID, R2V_WORKFLOW_ID, WORKFLOW_ID } from './lib/video-api
 import './image-assets.css';
 import CharacterVoicesPage from './CharacterVoicesPage';
 import SelectionMicroEdit from './SelectionMicroEdit';
+import {getPromptGuidance} from './lib/prompt-director-api';
 import EditorWorkspace from './EditorWorkspace';
 import ModelSelector, { consumeModelCommand } from './ModelSelector';
-import { mediaWorkspaceOptions, preferredMediaWorkspaceId, rememberMediaWorkspaceId } from './lib/media-workspace';
+import { preferredMediaWorkspaceId } from './lib/media-workspace';
 
 type Role = 'character_master'|'world_master'|'character_view'|'world_view'|'first_frame'|'last_frame';
 type FrameTarget = { scene_number: number; shot_number: number; clip_id: string; scene_title: string; summary: string; dialogue: string; camera: string; lighting: string; mood: string };
@@ -157,7 +159,7 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
     const cached = saved.workspaceId || videoWorkspace;
     return preferredMediaWorkspaceId([], requestedWorkspace || (cached==='tool-library'||cached?.startsWith('story-')?cached:''));
   });
-  const [workspaces,setWorkspaces] = useState<StoryWorkspace[]>([]);
+  const [,setWorkspaces] = useState<StoryWorkspace[]>([]);
   const [role,setRole] = useState<Role>(requestedStoryStep ? requestedRole : legacyRoute && Object.hasOwn(stageLabel, saved.role) ? saved.role : section === 'worlds' ? 'world_master' : section === 'frames' ? (saved.role === 'last_frame' ? 'last_frame' : 'first_frame') : 'character_master');
   useEffect(() => { if (!requestedStoryStep && !legacyRoute) setRole(section === 'worlds' ? 'world_master' : section === 'frames' ? (role === 'last_frame' ? 'last_frame' : 'first_frame') : 'character_master'); }, [section]);
   const sameSavedStage = (legacyRoute && !requestedStoryStep) || (requestedStepKey === 'frame_images' ? ['first_frame','last_frame'].includes(saved.role) : saved.role?.startsWith(requestedStepKey === 'world_images' ? 'world_' : 'character_'));
@@ -252,7 +254,6 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
   const active = readActive();
   const workflow = workflows.find(item=>item.workflow_id===workflowId);
   const visibleWorkflows = workflows.filter(item => item.workflow_id !== 'qwen_image_multi_angle_2511' || legacyRoute || section !== 'frames');
-  const workspaceOptions = useMemo(() => mediaWorkspaceOptions(workspaces, workspaceId),[workspaces,workspaceId]);
   useEffect(() => { let active = true; void listStoryWorkspaces().then(result => { if (active) {setWorkspaces(result.items || []);if(!requestedWorkspace)setWorkspaceId(current=>current==='tool-library'||result.items.some(row=>row.workspace_id===current)?current:'tool-library');} }).catch(() => { if (active) setWorkspaces([]); }); return () => { active = false; }; },[]);
   useEffect(() => {
     if (workflowId === 'qwen_image_multi_angle_2511' && !legacyRoute && section === 'frames') {
@@ -262,7 +263,7 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
     }
   }, [workflowId, section, legacyRoute]);
   useEffect(() => {
-    if (requestedWorkspace.trim() && requestedWorkspace.trim() !== workspaceId.trim())
+    if (managedProjectId()===undefined && requestedWorkspace.trim() && requestedWorkspace.trim() !== workspaceId.trim())
       setWorkspaceId(requestedWorkspace.trim());
     if (requestedStoryStep) setRole(requestedRole);
   }, [requestedWorkspace, requestedStoryStep, requestedRole]);
@@ -273,7 +274,7 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
   const selectedFrameTarget = frameTargets.find(target=>`${target.scene_number}.${target.shot_number}`===frameTargetKey);
   const selectedFrameSkipped = skippedFrameClipKeys.includes(frameTargetKey);
   const roleMatchesStep = requestedStepKey === 'frame_images' ? ['first_frame','last_frame'].includes(role) : role === requestedRole;
-  const effectiveWorkspaceId = requestedWorkspace.trim() || workspaceId.trim();
+  const effectiveWorkspaceId = managedProjectId() || requestedWorkspace.trim() || workspaceId.trim();
   const currentStoryContextKey = acceptedScreenplayId
     ? `${effectiveWorkspaceId}:${requestedStepKey}:${acceptedScreenplayId}` : '';
   const linkedStoryStage = requestedStoryStep || (!!acceptedScreenplayId && (!!targetRecordId || !!selectedFrameTarget));
@@ -536,10 +537,20 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
   },[batch?.batch_id,batch?.jobs?.map(job=>`${job.job_id}:${job.status}`).join(','),folderReferences.length,workspaceId]);
   const sourceReferences=selectedReferences.map(asset=>({asset_id:asset.asset_id,sha256:asset.sha256}));
   const currentPromptGuidance = workflows.find(item=>item.workflow_id===workflowId)?.prompt_knowledge_ref;
+  const [projectPromptVersion,setProjectPromptVersion]=useState<{key:string;revision:number}|null>(null);
+  const projectPromptKey=`${workspaceId.trim()}:${acceptedScreenplayId}`;
+  useEffect(()=>{
+    if(!acceptedScreenplayId)return;
+    let alive=true;
+    void getPromptGuidance(workspaceId.trim(),acceptedScreenplayId).then(value=>{if(alive)setProjectPromptVersion({key:projectPromptKey,revision:value.revision});})
+      .catch(()=>{if(alive)setProjectPromptVersion({key:projectPromptKey,revision:0});});
+    return()=>{alive=false;};
+  },[projectPromptKey]);
   const promptContextKey = workflows.some(item=>item.workflow_id===workflowId) && storySetupMode === 'assisted_manual' && (!requestedStoryStep || loadedStoryContextKey === currentStoryContextKey) && acceptedScreenplayId && (!requestedStoryStep || roleMatchesStep) &&
     (requestedStepKey === 'frame_images' ? !!selectedFrameTarget : !!selectedTarget)
     ? JSON.stringify([requestedStepKey==='frame_images'?'frame-brief-v4':workflowId==='qwen_image_multi_angle_2511'?'asset-brief-v6':'asset-brief-v3', workspaceId.trim(), acceptedScreenplayId, role, requestedStepKey==='frame_images'?'':targetRecordId, frameTargetKey, workflowId, currentPromptGuidance?.knowledge_id,
-        referencesRequired ? sourceReferences : [], workflowId === 'qwen_image_multi_angle_2511' ? worldViewCount : null]) : '';
+        referencesRequired ? sourceReferences : [], workflowId === 'qwen_image_multi_angle_2511' ? worldViewCount : null,
+        ...(projectPromptVersion?.key===projectPromptKey&&projectPromptVersion.revision>0?['prompt-rules',projectPromptVersion.revision]:[])]) : '';
   promptContextRef.current = promptContextKey;
   const promptContextReady = !requestedStoryStep || !!promptContextKey;
   const promptLoading = preparingPrompt || (!!promptContextKey && loadedPromptKey !== promptContextKey);
@@ -551,6 +562,7 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
       setPreparingPrompt(false);
       return;
     }
+    if(projectPromptVersion?.key!==projectPromptKey)return;
     let alive = true;
     let cached;
     try { cached = JSON.parse(localStorage.getItem(PROMPTS_KEY) || '{}')[promptContextKey]; } catch { /* Recover with a new draft. */ }
@@ -574,7 +586,7 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
     }).catch(error => { if (alive) setMessage(`Prompt was not prepared: ${(error as Error).message}. Use Prepare prompt to retry.`); })
       .finally(() => { if (alive) { setPreparingPrompt(false); setLoadedPromptKey(promptContextKey); } });
     return () => { alive = false; };
-  }, [promptContextKey, !!pending, JSON.stringify(skippedAssistedStages)]);
+  }, [promptContextKey, !!pending, JSON.stringify(skippedAssistedStages),projectPromptVersion?.key,projectPromptKey]);
   useEffect(() => {
     if (!promptContextKey || loadedPromptKey !== promptContextKey || preparingPrompt || !prompt.trim() || !promptKnowledge) return;
     try {
@@ -700,7 +712,7 @@ function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'cha
         <div className="section-title"><div><h2>{workflowId==='qwen_image_multi_angle_2511'?'Generate directional views':'Generate an image'}</h2><p>{workflowId==='qwen_image_multi_angle_2511'?'One separately labelled image is made for each chosen direction from the selected master image.':'Choose 1, 4 or 8 candidates. Each runs one at a time from consecutive seeds.'}</p></div><span className="mode-pill"><Sparkles size={13}/> Assisted manual</span></div>
         <div className="image-fields">
           <MediaSourcePicker workspaceId={workspaceId} kinds={['image']} disabled={busy||!!pending} onAdded={items=>setAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])}/>
-          <label>Workspace<select aria-label="Image generation workspace" value={workspaceId} onChange={event=>{const next=event.target.value.trim();setWorkspaceId(next);rememberMediaWorkspaceId(next);if(requestedStoryStep&&next!==requestedWorkspace.trim()){const [path,query='']=window.location.hash.slice(1).split('?');const params=new URLSearchParams(query);if(next)params.set('workspace_id',next);else params.delete('workspace_id');window.location.hash=`${path}?${params.toString()}`;}}}><option value="">Choose a workspace</option>{workspaceOptions.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <p className="project-context-label">Current project · change with New project or Load project above</p>
           {requestedStepKey === 'frame_images' && <label>Planned clip<select aria-label="Planned clip" value={frameTargetKey} onChange={event=>setFrameTargetKey(event.target.value)}><option value="">Choose a screenplay shot</option>{frameTargets.map(target=><option key={target.clip_id} value={`${target.scene_number}.${target.shot_number}`}>Scene {target.scene_number} · Shot {target.shot_number} · Clip {target.clip_id.slice(-8)}</option>)}</select>{selectedFrameTarget&&<small>{selectedFrameTarget.scene_title} · {selectedFrameTarget.summary}</small>}</label>}
           {['character_master','world_master'].includes(role)&&<label>{role==='character_master'?'Character target':'Location target'}<select aria-label={role==='character_master'?'Character target':'Location target'} value={targetRecordId} onChange={event=>{const id=event.target.value;setTargetRecordId(id);if(workflowId==='qwen_image_multi_angle_2511')setSourceReferenceIds([masterSelections[selectionKey(acceptedScreenplayId,targetType,id)]].filter(Boolean));const record=compatibleRecords.find(item=>item.record_id===id);if(!requestedStoryStep&&record&&!prompt.trim())setPrompt(`${role==='character_master'?'Character reference portrait':'World/location reference image'}: ${record.name}. ${record.detail}`.trim());}}><option value="">{requestedStoryStep ? `Choose a ${targetType}` : 'Standalone image · no screenplay link'}</option>{compatibleRecords.map(record=><option key={record.record_id} value={record.record_id}>{record.name}</option>)}</select><small>{compatibleRecords.length?lineageStatus:`${lineageStatus} No canonical ${targetType} target is available; standalone generation still works.`}</small>{selectedTarget?.detail&&<small>Story description: {selectedTarget.detail}</small>}<small>{role==='character_master'?'Character assets: one character on a plain white background.':'World assets: environment only, without characters.'}</small></label>}
           {requestedStepKey === 'frame_images' || (!requestedStoryStep && section === 'frames') ? <label>Frame role<select value={role} onChange={event=>{setRole(event.target.value as Role);setTargetRecordId('');setPreview(null);}}>{(['first_frame','last_frame'] as Role[]).map(value=><option key={value} value={value}>{stageLabel[value]}</option>)}</select></label> : legacyRoute ? <label>Asset role<select value={role} onChange={event=>{setRole(event.target.value as Role);setTargetRecordId('');setPreview(null);}}>{Object.entries(stageLabel).filter(([value])=>!['character_view','world_view'].includes(value)).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label> : <input type="hidden" value={role} readOnly aria-label="Asset role" />}

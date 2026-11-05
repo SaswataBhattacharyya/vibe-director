@@ -619,6 +619,13 @@ class StoryGraphTests(unittest.TestCase):
         self.assertTrue(all(chunk["state"] == "uncertain" for chunk in first[1]["chunks"]))
         self.call_with_app(app, "POST", path, payload)
         self.assertEqual(len(calls), first[1]["chunk_total"])
+        for age, expected in ((15, "processing"), (40, "uncertain")):
+            with self.ledger._connect() as db:
+                db.execute("UPDATE story_graph_chunks SET state='processing',updated_at=datetime('now',?) WHERE snapshot_id=? AND chunk_index=(SELECT MIN(chunk_index) FROM story_graph_chunks WHERE snapshot_id=?)",
+                           (f'-{age} minutes', first[1]["snapshot_id"], first[1]["snapshot_id"]))
+            _, replay = self.call_with_app(app, "POST", path, payload)
+            self.assertEqual(replay["chunks"][0]["state"], expected)
+            self.assertEqual(len(calls), first[1]["chunk_total"])
 
     def test_screenplay_draft_edit_and_reload_keep_source_and_graph_lineage(self):
         graph_path = f"/api/story/workspaces/{self.workspace}/graph"
@@ -778,6 +785,14 @@ class StoryGraphTests(unittest.TestCase):
         self.assertEqual(replay["chunks"][0]["state"], "uncertain")
         self.assertTrue(all(chunk["state"] == "pending" for chunk in replay["chunks"][1:]))
         self.assertEqual(len(calls), 1)
+        for age, expected in ((15, "processing"), (40, "uncertain")):
+            with self.ledger._connect() as db:
+                db.execute("UPDATE story_screenplay_task_chunks SET state='processing',updated_at=datetime('now',?) WHERE idempotency_key=? AND chunk_index=(SELECT MIN(chunk_index) FROM story_screenplay_task_chunks WHERE idempotency_key=?)",
+                           (f'-{age} minutes', payload["idempotency_key"], payload["idempotency_key"]))
+            _, replay = self.call_with_app(app, "POST", path, payload)
+            self.assertEqual(replay["chunks"][0]["state"], expected)
+            self.assertTrue(all(chunk["state"] == "pending" for chunk in replay["chunks"][1:]))
+            self.assertEqual(len(calls), 1)
 
     def test_concurrent_screenplay_siblings_allow_only_one_child(self):
         _, graph = self.call("POST", f"/api/story/workspaces/{self.workspace}/graph", {

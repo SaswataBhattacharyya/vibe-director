@@ -25,7 +25,7 @@ export type Job = {
   keep_original?: boolean; progress?: { phase?: string; fraction?: number | null };
   candidate_disposition?: 'keep' | 'discard_requested' | null;
 };
-export type StoryVideoLineage = { planned_clip_id?: string; screenplay_revision_id: string; setup_hash: string; scene_number: number; shot_number: number; workflow_id: string; source_prompt_sha256: string; knowledge_ref?: { knowledge_id: string; guidance_version: number; workflow_sha256: string }; style_ref?: { snapshot_id: string; style_version_id: string; narrative_hash: string; director_profile_hash: string; directing_style_hash: string } };
+export type StoryVideoLineage = { board_revision?: number; planned_clip_id?: string; screenplay_revision_id: string; setup_hash: string; scene_number: number; shot_number: number; workflow_id: string; source_prompt_sha256: string; knowledge_ref?: { knowledge_id: string; guidance_version: number; workflow_sha256: string }; style_ref?: { snapshot_id: string; style_version_id: string; narrative_hash: string; director_profile_hash: string; directing_style_hash: string } };
 export class ApiError extends Error { constructor(message: string, readonly status: number, readonly admissionState?: string) { super(message); } }
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...init, headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) } });
@@ -37,7 +37,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 export function getCapability(workflowId = WORKFLOW_ID, signal?: AbortSignal) { return api<Capability>(`/api/video/capabilities?workflow_id=${encodeURIComponent(workflowId)}`, { signal }); }
 export function validateRequest(request: VideoRequest) { return api<any>('/api/video/validations', { method: 'POST', body: JSON.stringify({ request }) }); }
-export function createJob(workspaceId: string, clipId: string, idempotencyKey: string, request: VideoRequest, retake?: { retake_of_job_id: string; keep_original: boolean }, sourceLineage?: Pick<StoryVideoLineage, 'screenplay_revision_id'|'setup_hash'|'scene_number'|'shot_number'|'source_prompt_sha256'|'knowledge_ref'|'style_ref'|'planned_clip_id'>) {
+export function createJob(workspaceId: string, clipId: string, idempotencyKey: string, request: VideoRequest, retake?: { retake_of_job_id: string; keep_original: boolean }, sourceLineage?: Pick<StoryVideoLineage, 'screenplay_revision_id'|'setup_hash'|'scene_number'|'shot_number'|'source_prompt_sha256'|'knowledge_ref'|'style_ref'|'planned_clip_id'|'board_revision'>) {
   return api<Job>('/api/video/jobs', { method: 'POST', headers: { 'Idempotency-Key': idempotencyKey }, body: JSON.stringify({ workspace_id: workspaceId, clip_id: clipId, idempotency_key: idempotencyKey, request, ...retake, ...(sourceLineage ? { source_lineage: sourceLineage } : {}) }) });
 }
 export function getJob(jobId: string) { return api<Job>(`/api/video/jobs/${encodeURIComponent(jobId)}`); }
@@ -56,6 +56,9 @@ export function prepareRetake(jobId: string, keepOriginal: boolean) { return api
 export function acceptJob(jobId: string) { return api<Job>(`/api/video/jobs/${encodeURIComponent(jobId)}/accept`, { method: 'POST', body: JSON.stringify({}) }); }
 export function findJobByIdempotency(workspaceId: string, idempotencyKey: string) {
   return api<Job>(`/api/video/jobs/by-idempotency/${encodeURIComponent(idempotencyKey)}?workspace_id=${encodeURIComponent(workspaceId)}`);
+}
+export function releaseVideoAttempt(workspaceId: string, idempotencyKey: string) {
+  return api<{released:boolean;job?:Job}>('/api/video/attempts/release', {method:'POST', body:JSON.stringify({workspace_id:workspaceId,idempotency_key:idempotencyKey})});
 }
 
 export function prepareContinuityFrame(jobId: string) { return api<{asset_id:string;sha256:string;role:string;intent:string;character_crops?:{character_id:string;asset_id:string;sha256:string}[]}>(`/api/video/jobs/${encodeURIComponent(jobId)}/continuity-frame`, {method:"POST",body:"{}"}); }

@@ -1,0 +1,215 @@
+{
+  "comparison": "Scoped manual Video admission fix within pre-existing dirty working tree vs HEAD; unrelated prior edits excluded",
+  "mode": "manual + Graphify discovery",
+  "overall_risk": "high (0.70 shared durable SQL job boundary)",
+  "limitations": [
+    "Trace depth: UI -> HTTP -> create_job -> ledger and provenance -> take/assembly consumers, plus internal automation callers. Not a repository-wide review.",
+    "Graph refreshed full scan: 4598 nodes, 14395 edges, 479 code files; 76 zero-node files, 152 non-code, 39 unsupported skipped. Nested App callbacks not indexed; source tracing used.",
+    "No measured coverage or TESTED_BY inference. Focused CPU and mocked browser tests do not establish GPU render quality.",
+    "Whole-file diff stat includes prior work, not just this request."
+  ],
+  "findings": [
+    {
+      "node": "backend/story_builder/services/isolated_video_jobs.py::def create_job(",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2182
+      },
+      "anchor": "    def create_job(self, *, workspace_id: str, clip_id: str, idempotency_key: str,",
+      "revision": "working-tree",
+      "risk": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "evidence": [
+        "Direct: HTTP manual admission; Full/Assisted run callers and internal retakes retain strict default. New CPU tests exercise manual, stale, retake, replay and incompatible mode branches."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/isolated_video_jobs.py::def _validate_story_source_lineage(",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 146
+      },
+      "anchor": "def _validate_story_source_lineage(db, story, workspace, clip, request, supplied, media_root=None):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Indirect: valid metadata retained; stale manual recommendations become unlinked. Default strict rejection asserted."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/isolated_server.py::def app(environ, start_response):",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 480
+      },
+      "anchor": "    def app(environ, start_response):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Direct: POST jobs opts into manual admission; definite pre-admission rejection marked. CPU HTTP tests, capability guard remains."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "frontend/src/App.tsx::const generate = async () => {",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 846
+      },
+      "anchor": "  const generate = async () => {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Direct: definite rejection returns editable prompt; pending network ambiguity retains immutable snapshot. Browser lost response and rejection tests pass."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/production_ledger.py::def queue_take(",
+      "location": {
+        "file": "backend/story_builder/services/production_ledger.py",
+        "line": 232
+      },
+      "anchor": "    def queue_take(self, *, project_id: str, run_id: str, shot_id: str, take_id: str,",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Indirect: durable identity and request snapshot still reject changed-payload replay; CPU regression asserts it."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "backend/story_builder/services/assembly.py::lineage = take.get(\"source_lineage\")",
+      "location": {
+        "file": "backend/story_builder/services/assembly.py",
+        "line": 146
+      },
+      "anchor": "        lineage = take.get(\"source_lineage\")",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Indirect: manual media remains project-owned; stale/unverified shot link omitted rather than claiming screenplay conformance. Assembly permits null lineage; automatic screenplay candidate matching requires valid source lineage."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "frontend/src/App.tsx::const formLocked =",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 457
+      },
+      "anchor": "  const formLocked = busy || uploadingRefs || uploadingFrameRole !== null || hasPendingAttempt || capState === 'loading' || preparingShotPrompt;",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Consumer: planned duration restriction removed separately; in-flight/recovery protections remain. Browser planned-duration edits and final-only prompt checks. Nested callbacks absent from graph."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "release_attempt",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 2670
+      },
+      "anchor": "    def release_attempt(self, *, workspace_id: str, idempotency_key: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared transaction fences delayed admission; existing jobs are recovered, never discarded. CPU tests cover both outcomes and concurrent submit/release; browser tests cover automatic stale attempt release and explicit existing-job recovery."
+      ],
+      "verification": "VERIFIED"
+    },
+    {
+      "node": "returnToEditing",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 558
+      },
+      "anchor": "  const returnToEditing = async (pending: Draft = draft) => {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared transaction fences delayed admission; existing jobs are recovered, never discarded. CPU tests cover both outcomes and concurrent submit/release; browser tests cover automatic stale attempt release and explicit existing-job recovery."
+      ],
+      "verification": "VERIFIED"
+    }
+  ],
+  "graph_discovery": {
+    "create_job_nodes": [
+      {
+        "id": "backend_story_builder_services_isolated_video_jobs_isolatedvideojobs_create_job",
+        "label": ".create_job()",
+        "file_type": "code",
+        "source_file": "backend/story_builder/services/isolated_video_jobs.py",
+        "source_location": "L2177",
+        "_origin": "ast"
+      }
+    ],
+    "incident_edge_count": 21
+  }
+}

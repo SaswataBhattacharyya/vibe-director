@@ -1,3 +1,4 @@
+import {mockProject} from './fixtures/project.mjs';
 import {test,expect} from '@playwright/test';
 test('selection toggle retains hidden items and can deselect a filtered collection',async({page})=>{
   await page.route('**/api/**',route=>{
@@ -13,9 +14,9 @@ test('selection toggle retains hidden items and can deselect a filtered collecti
     }
     return route.fulfill(value===null?{status:503,json:{error:{message:'Not used in this test'}}}:{json:value});
   });
-  await page.goto('/#/media-prep?tool=utilities');
+  await mockProject(page,'ws-test'); await page.goto('/#/media-prep?tool=utilities');
   await expect(page.getByRole('heading',{name:'Audio Utilities',exact:true})).toBeVisible();
-  await page.getByLabel('Audio utility workspace').selectOption('ws-test');
+
   await page.getByRole('button',{name:'Select all shown (2)',exact:true}).click();
   await expect(page.getByRole('button',{name:'Deselect all shown (2)',exact:true})).toBeVisible();
   const search=page.getByRole('searchbox',{name:'Search filenames, descriptions or tags'});

@@ -29,6 +29,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SETTINGS_PATH = PROJECT_ROOT / "storage" / "reasoning_provider.json"
 SUPPORTED_PROVIDERS = {"codex", "ollama", "opencode"}
 DEFAULT_CODEX_MODEL = os.environ.get("CODEX_REASONING_MODEL", "gpt-6-luna")
+REASONING_TIMEOUT_SECONDS = 30 * 60
 _SETTINGS_LOCK = threading.RLock()
 _ACTIVE_PROVIDER: ContextVar[str | None] = ContextVar("story_reasoning_provider", default=None)
 
@@ -185,7 +186,7 @@ def _settings_for(provider, settings):
             "reasoning_effort": profile.get("reasoning_effort", "medium" if provider == "codex" else "default")}
 
 
-def _run_json_command(command: list[str], prompt: str, *, timeout_seconds: int = 300, env=None) -> str:
+def _run_json_command(command: list[str], prompt: str, *, timeout_seconds: int = REASONING_TIMEOUT_SECONDS, env=None) -> str:
     try:
         with tempfile.TemporaryDirectory(prefix="story-builder-reasoning-") as isolated_cwd:
             guarded_command = command

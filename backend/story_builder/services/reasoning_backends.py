@@ -84,7 +84,7 @@ def image_files(paths):
 
 def generate(provider, model, prompt, *, image_paths, output_schema, temperature,
              cpu_only, gpu_admission_timeout_seconds):
-    from .reasoning_provider import ReasoningProviderError, _parse_dict, _run_json_command
+    from .reasoning_provider import REASONING_TIMEOUT_SECONDS, ReasoningProviderError, _parse_dict, _run_json_command
     from .media_jobs import gpu_workload_guard
     from contextlib import nullcontext
 
@@ -102,7 +102,7 @@ def generate(provider, model, prompt, *, image_paths, output_schema, temperature
                     payload["images"] = [base64.b64encode(path.read_bytes()).decode("ascii") for path in images]
                 request = urllib.request.Request(ollama_host() + "/api/generate",
                     data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
-                with urllib.request.urlopen(request, timeout=300) as response:
+                with urllib.request.urlopen(request, timeout=REASONING_TIMEOUT_SECONDS) as response:
                     value = json.load(response)
                 if value.get("error"):
                     raise ReasoningProviderError("Ollama rejected the request; check the model's input capabilities.")

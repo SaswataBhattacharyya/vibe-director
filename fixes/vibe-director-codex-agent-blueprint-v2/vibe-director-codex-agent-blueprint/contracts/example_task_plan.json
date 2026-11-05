@@ -1,0 +1,107 @@
+{
+  "schema_version": "proposal-v1",
+  "project_id": "project-real-id",
+  "plan": {
+    "plan_id": "plan-uuid",
+    "revision": 1,
+    "status": "awaiting_approval",
+    "goal": "Make a short fable film",
+    "target_runtime_s": 90,
+    "approval_scope": [
+      "generate_assets",
+      "generate_video",
+      "edit",
+      "export"
+    ],
+    "cost_policy": {
+      "gpu_jobs_max": 8,
+      "approval_after_gpu_jobs": 4
+    },
+    "steps": [
+      {
+        "id": "story",
+        "kind": "screenplay.revise",
+        "state": "planned",
+        "depends_on": [],
+        "tool_id": "story.screenplay.create",
+        "inputs": {
+          "story_id": "story-revision-id"
+        },
+        "expected_outputs": [
+          "screenplay_revision_id"
+        ]
+      },
+      {
+        "id": "mouse-image",
+        "kind": "image.generate",
+        "depends_on": [
+          "story"
+        ],
+        "tool_id": "images.generate",
+        "inputs": {
+          "prompt_id": "character-prompt-version",
+          "image_model": "z-image"
+        },
+        "expected_outputs": [
+          "mouse_image_asset_id"
+        ]
+      },
+      {
+        "id": "clip-1",
+        "kind": "video.generate",
+        "depends_on": [
+          "mouse-image"
+        ],
+        "tool_id": "video.r2v",
+        "inputs": {
+          "reference_manifest_id": "ref-manifest-1",
+          "duration_seconds": 15,
+          "prompt_id": "clip-1-prompt"
+        },
+        "expected_outputs": [
+          "take_id",
+          "video_asset_id"
+        ]
+      },
+      {
+        "id": "inspect-1",
+        "kind": "qa.inspect",
+        "depends_on": [
+          "clip-1"
+        ],
+        "tool_id": "video.review",
+        "inputs": {},
+        "expected_outputs": [
+          "quality_findings"
+        ]
+      },
+      {
+        "id": "edit",
+        "kind": "editor.compose",
+        "depends_on": [
+          "inspect-1"
+        ],
+        "tool_id": "editor.edit",
+        "inputs": {
+          "handoff_id": "handoff-1"
+        },
+        "expected_outputs": [
+          "editor_session_id",
+          "rendered_asset_id"
+        ]
+      },
+      {
+        "id": "deliver",
+        "kind": "export",
+        "depends_on": [
+          "edit"
+        ],
+        "tool_id": "editor.export",
+        "inputs": {},
+        "expected_outputs": [
+          "verified_mp4_asset_id"
+        ]
+      }
+    ]
+  }
+}

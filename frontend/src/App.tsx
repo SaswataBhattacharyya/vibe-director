@@ -1,3 +1,5 @@
+import {managedProjectId} from './lib/media-workspace';
+import {useProject} from './ProjectController';
 import OutputDestination from './OutputDestination';
 import SelectionToggle from './SelectionToggle';
 import MediaSourcePicker from './MediaSourcePicker';
@@ -8,14 +10,15 @@ import RunClipLiveView from './RunClipLiveView';
 import { T2V_QUALITIES, ALL_VIDEO_QUALITIES, VIDEO_ASPECT_RATIOS, VideoAspectRatio, VideoResolution, qualityDimensions } from './lib/video-quality';
 import { ClipboardEvent, DragEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowRight, AudioLines, BookOpen, Check, ChevronDown, Film, FolderOpen, Gauge, Image, LoaderCircle, Play, RefreshCw, Sparkles, X } from 'lucide-react';
-import { acceptJob, ApiError, Capability, createJob, findJobByIdempotency, getCapability, getJob, Job, listAllJobs, prepareRetake, validateRequest, VideoRequest, StoryVideoLineage, WORKFLOW_ID, WORKFLOW_SHA256, FL2VA_WORKFLOW_ID, FL2VA_WORKFLOW_SHA256, R2V_WORKFLOW_ID, R2V_WORKFLOW_SHA256 } from './lib/video-api';
+import { acceptJob, ApiError, Capability, createJob, releaseVideoAttempt, findJobByIdempotency, getCapability, getJob, Job, listAllJobs, prepareRetake, validateRequest, VideoRequest, StoryVideoLineage, WORKFLOW_ID, WORKFLOW_SHA256, FL2VA_WORKFLOW_ID, FL2VA_WORKFLOW_SHA256, R2V_WORKFLOW_ID, R2V_WORKFLOW_SHA256 } from './lib/video-api';
 import { browseMediaCatalogue, reuseCatalogueAsset, CataloguePage, listMediaAssets, listMediaSeoStyles, MediaAsset, MediaSeoStyle, rankMediaAssets, searchMediaSemantically, uploadMediaAsset } from './lib/media-api';
-import { defaultMediaWorkspaceId, mediaWorkspaceOptions, rememberMediaWorkspaceId, standaloneMediaWorkspaceId } from './lib/media-workspace';
+import { defaultMediaWorkspaceId, mediaWorkspaceOptions, standaloneMediaWorkspaceId } from './lib/media-workspace';
 import { getImageSelection } from './lib/image-api';
 import { AutomatedFirstClipState, controlAutomatedRun, ProductionSetup, getAssistedVideoClipPlan, getAutomatedFirstClip, getProductionSetup, getStoryPromptDrafts, getStoryScreenplay, getStoryScreenplayRevision, getStoryWorkspace, listStoryWorkspaces, StoryWorkspace, listStoryScreenplays, prepareStoryPrompt, resumeAutomatedRun, retryAutomatedRunShot, saveStoryPromptShot, startAutomatedFirstClip } from './lib/story-api';
 import StatusPage from './StatusPage';
 import StoryPage from './StoryPage';
 import ScreenplayPage from './ScreenplayPage';
+import StoryboardPage from './StoryboardPage';
 import './screenplay.css';
 import ProductionStylesPage from './ProductionStylesPage';
 import ProductionSetupPage from './ProductionSetupPage';
@@ -38,8 +41,8 @@ import StudioShell, { StudioRoute } from './StudioShell';
 import './video-references.css';
 
 export type R2VReferenceDraft = { speakerIds?: string[]; assetId: string; role: string; intent: string; startSec?: number; endSec?: number; includePairedSoundtrack?: boolean; audioIntent?: string };
-type SourceLineage = Pick<StoryVideoLineage, 'screenplay_revision_id'|'setup_hash'|'scene_number'|'shot_number'|'source_prompt_sha256'|'knowledge_ref'|'style_ref'|'planned_clip_id'>;
-type StoryHandoff = SourceLineage & { workspace_id: string; clip_id: string; workflow_id: string; prompt: string };
+type SourceLineage = Pick<StoryVideoLineage, 'screenplay_revision_id'|'setup_hash'|'scene_number'|'shot_number'|'source_prompt_sha256'|'knowledge_ref'|'style_ref'|'planned_clip_id'|'board_revision'>;
+type StoryHandoff = SourceLineage & { workspace_id: string; clip_id: string; workflow_id: string; prompt: string; duration?:number; first_frame_id?:string;last_frame_id?:string;r2v_images?:R2VReferenceDraft[] };
 export type Draft = { directorPrepared?: boolean; directorWarnings?: string[]; referenceReviews?: Record<string, string>; prompt: string; r2vMainPrompt?: string; r2vCollatedPrompt?: string; r2vImages?: R2VReferenceDraft[]; r2vVideos?: R2VReferenceDraft[]; r2vAudios?: R2VReferenceDraft[]; duration: number; aspectRatio?: VideoAspectRatio; resolution: VideoResolution; workspaceId: string; clipId: string; workflowId: string; sourceLineage?: SourceLineage; firstFrameAssetId?: string; lastFrameAssetId?: string; pendingKey?: string; pendingRequest?: VideoRequest; retakeOf?: string; keepOriginal?: boolean };
 const DRAFT_KEY = 'vibe-video-draft-v1';
 const shotDraftKey = (draft: Draft) => draft.sourceLineage ? `${DRAFT_KEY}:shot:${draft.workspaceId}:${draft.sourceLineage.screenplay_revision_id}:${draft.sourceLineage.setup_hash}:${draft.workflowId}:${draft.clipId}` : '';
@@ -69,7 +72,7 @@ const readDraft = (workspaceId?: string): Draft => {
   const fallback = defaultDraft();
   try {
     const latest = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null') as Draft | null;
-    const selected = workspaceId || requestedVideoWorkspace() || latest?.workspaceId || fallback.workspaceId;
+    const selected = workspaceId || managedProjectId() || requestedVideoWorkspace() || latest?.workspaceId || fallback.workspaceId;
     const saved = JSON.parse(localStorage.getItem(`${DRAFT_KEY}:${selected}`) || 'null') as Draft | null;
     return {...fallback, ...(saved?.workspaceId === selected ? saved : latest?.workspaceId === selected ? latest : {}), workspaceId: selected};
   } catch { return {...fallback, workspaceId: workspaceId || fallback.workspaceId}; }
@@ -141,12 +144,13 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [preparingShotPrompt, setPreparingShotPrompt] = useState(false);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
+  const [imageLoadError,setImageLoadError] = useState('');
   const [assetsLoading, setAssetsLoading] = useState(false);
   const [assetsError, setAssetsError] = useState('');
   const [libraryRefresh, setLibraryRefresh] = useState(0);
   const [mediaWorkspaceId, setMediaWorkspaceId] = useState('');
   const [workspaces, setWorkspaces] = useState<StoryWorkspace[]>([]);
-  const [workspaceError, setWorkspaceError] = useState('');
+  const [, setWorkspaceError] = useState('');
   const [knownWorkspaceIds] = useState<string[]>(() => {
     try { return [...new Set([draft.workspaceId, ...Object.keys(localStorage).filter(key => key.startsWith(`${DRAFT_KEY}:`) && !key.startsWith(`${DRAFT_KEY}:shot:`)).map(key => key.slice(DRAFT_KEY.length + 1))])]; }
     catch { return [draft.workspaceId]; }
@@ -216,14 +220,6 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
     })().catch(error => { if (alive) setWorkspaceError((error as Error).message); });
     return () => { alive = false; };
   }, [visible]);
-  // A project switch changes the viewing context, never the backend run state.
-  const switchVideoWorkspace = (nextWorkspace: string) => {
-    if (!nextWorkspace || nextWorkspace === draft.workspaceId || busy || fullRunBusy || uploadingRefs || preparingShotPrompt) return;
-    localStorage.setItem(`${DRAFT_KEY}:${draft.workspaceId}`, JSON.stringify(draft));
-    rememberMediaWorkspaceId(nextWorkspace);
-    fullRunLoadRef.current += 1;
-    window.location.hash = `#/${view === 'take' ? 'take' : 'video'}?workspace_id=${encodeURIComponent(nextWorkspace)}`;
-  };
   useEffect(() => {
     localStorage.setItem(`${DRAFT_KEY}:${draft.workspaceId}`, JSON.stringify(draft));
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -231,7 +227,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
   const refreshFullRun = useCallback(async () => {
     const loadId = ++fullRunLoadRef.current;
     if (!visible) return;
-    const requestedWorkspace = new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || '';
+    const requestedWorkspace = managedProjectId() || new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || '';
     const selectedId = requestedWorkspace || workspaceId;
     setFullRunCheckedAt(''); setFullRunRefreshing(false);
     setFullRunSetup(null); setFullRunWorkspace(''); setFullRunRevision(''); setFullRunState(null); setFullRunCapability(null); setFullRunError(''); setFullRunLoading(false);
@@ -360,12 +356,12 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
     const workflowId = handoff.workflow_id;
     setDraft(prev => ({ ...prev, workspaceId: handoff.workspace_id, clipId: handoff.clip_id,
       prompt: handoff.prompt, workflowId, sourceLineage: {
-        screenplay_revision_id: handoff.screenplay_revision_id, setup_hash: handoff.setup_hash,
+        screenplay_revision_id: handoff.screenplay_revision_id, setup_hash: handoff.setup_hash, ...(handoff.board_revision ? {board_revision:handoff.board_revision}:{}),
         scene_number: handoff.scene_number, shot_number: handoff.shot_number,
         source_prompt_sha256: handoff.source_prompt_sha256, knowledge_ref: handoff.knowledge_ref, style_ref: handoff.style_ref,
       }, r2vMainPrompt: workflowId === R2V_WORKFLOW_ID ? handoff.prompt : undefined,
-      r2vCollatedPrompt: undefined, r2vImages: [], r2vVideos: [], r2vAudios: [], directorPrepared:false, directorWarnings:[], referenceReviews:{},
-      firstFrameAssetId: undefined, lastFrameAssetId: undefined, pendingKey: undefined,
+      r2vCollatedPrompt: undefined, r2vImages: handoff.r2v_images || [], r2vVideos: [], r2vAudios: [], duration:handoff.duration||prev.duration,directorPrepared:false, directorWarnings:[], referenceReviews:{},
+      firstFrameAssetId: handoff.first_frame_id, lastFrameAssetId: handoff.last_frame_id, pendingKey: undefined,
       pendingRequest: undefined, retakeOf: undefined, keepOriginal: undefined }));
     setPreview(null); setCapability(null); setCapState('idle');
     setMessage(`Opened saved screenplay Scene ${handoff.scene_number}, Shot ${handoff.shot_number}. Confirm the workflow settings in Video; the job has not started.`);
@@ -416,6 +412,10 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
   };
   const bindR2vSpeakers = (prompt: string) => {
     if (!prompt.trim()) return prompt;
+    // Canonicalize pasted/Director-authored tag spelling, preserving reference indices.
+    // Missing references must still fail backend validation.
+    prompt = prompt.replace(/<(picture|video|audio)\s*(\d+)>/gi,
+      (_tag, kind: string, number: string) => `<${kind[0].toUpperCase()}${kind.slice(1).toLowerCase()} ${Number(number)}>`);
     const bindings: string[] = [];
     let audioIndex = 1 + r2vRefs.videos.filter(ref => ref.includePairedSoundtrack).length;
     r2vRefs.audios.forEach(ref => {
@@ -449,8 +449,8 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
     if (active && isReviewable(active.job.status) && active.job.outputs?.some(output => output.kind === 'video' && output.playback_url))
       setSelectedTakeJobId(previous => previous || active.job.job_id);
   }, [active?.job.job_id, active?.job.status]);
-  const r2vInputError = isR2v && !hasPendingAttempt ? assetsLoading ? 'Wait for this workspace’s image, video and audio library to load.' : assetsError ? 'Reference assets could not be loaded. Refresh the library and retry.' : !r2vTotalRefs ? 'Add at least one image, video or audio reference.' : !r2vUniqueRefs ? 'The same asset cannot be selected more than once.' : r2vRefs.images.length > 9 || r2vRefs.videos.length > 3 || r2vRefs.audios.length > 3 ? 'R2V limits: up to 9 images, 3 videos and 3 standalone audio references.' : [...r2vRefs.images, ...r2vRefs.videos, ...r2vRefs.audios].some(ref => !assetForRef(ref)) ? 'One or more selected references are no longer available in this workspace.' : [...r2vRefs.images, ...r2vRefs.videos, ...r2vRefs.audios].some(ref => !ref.role.trim() || !ref.intent.trim()) ? 'Give every selected reference a role and a short instruction.' : r2vRefs.videos.some(ref => ref.includePairedSoundtrack && !ref.audioIntent?.trim()) ? 'Describe how the selected video soundtrack should guide the new clip.' : !r2vMainPrompt.trim() ? 'Describe the shot before collating references.' : !r2vFinalPrompt ? 'Collate references to prepare the final prompt and required MiniMax labels.' : '' : '';
-  const errors = useMemo(() => ({ prompt: isR2v ? (!effectivePrompt.trim() ? (r2vFinalPrompt ? 'Add a prompt to describe the shot.' : 'Collate the main prompt and reference instructions first.') : effectivePromptLength >= 7000 ? 'Prompt must be fewer than 7,000 characters.' : '') : !draft.prompt.trim() ? 'Add a prompt to describe the shot.' : promptLength >= 7000 ? 'Prompt must be fewer than 7,000 characters.' : '', duration: draft.duration < 5 || draft.duration > (draft.workflowId === FL2VA_WORKFLOW_ID || isR2v ? 15 : 30) ? `Choose 5 to ${draft.workflowId === FL2VA_WORKFLOW_ID || isR2v ? 15 : 30} seconds.` : '', frames: draft.workflowId === FL2VA_WORKFLOW_ID && !hasPendingAttempt && (assetsLoading || !!assetsError || !firstFrame || !lastFrame) ? assetsLoading ? 'Wait for this workspace’s image library to load.' : assetsError ? 'Frame images could not be loaded. Refresh the library and try again.' : 'Choose a first and last image from this workspace library.' : '', r2v: r2vInputError }), [draft.prompt, draft.duration, draft.workflowId, promptLength, effectivePrompt, effectivePromptLength, r2vFinalPrompt, r2vInputError, isR2v, hasPendingAttempt, assetsLoading, assetsError, firstFrame, lastFrame]);
+  const r2vInputError = isR2v && !hasPendingAttempt ? assetsLoading ? 'Wait for this workspace’s image, video and audio library to load.' : !r2vTotalRefs ? 'Add at least one image, video or audio reference.' : !r2vUniqueRefs ? 'The same asset cannot be selected more than once.' : r2vRefs.images.length > 9 || r2vRefs.videos.length > 3 || r2vRefs.audios.length > 3 ? 'R2V limits: up to 9 images, 3 videos and 3 standalone audio references.' : [...r2vRefs.images, ...r2vRefs.videos, ...r2vRefs.audios].some(ref => !assetForRef(ref)) ? 'One or more selected references are no longer available in this workspace.' : [...r2vRefs.images, ...r2vRefs.videos, ...r2vRefs.audios].some(ref => !ref.role.trim() || !ref.intent.trim()) ? 'Give every selected reference a role and a short instruction.' : r2vRefs.videos.some(ref => ref.includePairedSoundtrack && !ref.audioIntent?.trim()) ? 'Describe how the selected video soundtrack should guide the new clip.' : !r2vMainPrompt.trim() && !r2vFinalPrompt ? 'Add a final prompt or describe the shot before collating references.' : !r2vFinalPrompt ? 'Collate references to prepare the final prompt and required MiniMax labels.' : '' : '';
+  const errors = useMemo(() => ({ prompt: isR2v ? (!effectivePrompt.trim() ? (r2vFinalPrompt ? 'Add a prompt to describe the shot.' : 'Collate the main prompt and reference instructions first.') : effectivePromptLength >= 7000 ? 'Prompt must be fewer than 7,000 characters.' : '') : !draft.prompt.trim() ? 'Add a prompt to describe the shot.' : promptLength >= 7000 ? 'Prompt must be fewer than 7,000 characters.' : '', duration: draft.duration < 5 || draft.duration > (draft.workflowId === FL2VA_WORKFLOW_ID || isR2v ? 15 : 30) ? `Choose 5 to ${draft.workflowId === FL2VA_WORKFLOW_ID || isR2v ? 15 : 30} seconds.` : '', frames: draft.workflowId === FL2VA_WORKFLOW_ID && !hasPendingAttempt && (assetsLoading || !!imageLoadError || !firstFrame || !lastFrame) ? assetsLoading ? 'Wait for this workspace’s image library to load.' : imageLoadError ? 'Frame images could not be loaded. Refresh the library and try again.' : 'Choose a first and last image from this workspace library.' : '', r2v: r2vInputError }), [draft.prompt, draft.duration, draft.workflowId, promptLength, effectivePrompt, effectivePromptLength, r2vFinalPrompt, r2vInputError, isR2v, hasPendingAttempt, assetsLoading, imageLoadError, firstFrame, lastFrame]);
   const draftIdentity = JSON.stringify(draft);
   const currentDraftIdentity = useRef(draftIdentity);
   currentDraftIdentity.current = draftIdentity;
@@ -458,13 +458,15 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
 
   useLayoutEffect(() => {
     if (!visible) { setAssetsLoading(false); setMediaWorkspaceId(''); return; }
-    let alive = true; setAssetsLoading(true); setAssetsError(''); setMediaWorkspaceId(''); setCurrentImageIds(new Set()); setPreview(null);
+    let alive = true; setAssetsLoading(true); setAssetsError(''); setImageLoadError(''); setMediaWorkspaceId(''); setCurrentImageIds(new Set()); setPreview(null);
     const kinds = ['image', 'video', 'audio'];
     const styleContextId = currentStyleSetupContext();
-    Promise.all([Promise.all(kinds.map(kind => listMediaAssets(draft.workspaceId, kind, false, styleContextId))),
+    Promise.all([Promise.allSettled(kinds.map(kind => listMediaAssets(draft.workspaceId, kind, false, styleContextId))),
       isR2v ? listMediaSeoStyles(draft.workspaceId).catch(() => ({styles: [] as MediaSeoStyle[]})) : Promise.resolve({styles: [] as MediaSeoStyle[]})])
       .then(async ([results, styles]) => {
-        const assets = results.flatMap(result => result.assets);
+        const failures = results.flatMap((result,index)=>result.status==='rejected'?[`${kinds[index]}: ${result.reason?.message||'Could not load library'}`]:[]);
+        const assets = results.flatMap(result => result.status==='fulfilled'?result.value.assets:[]);
+        if(alive){setAssetsError(failures.join('; '));setImageLoadError(results[0].status==='rejected'?'Image library could not be loaded.':'');}
         const selected = new Set<string>();
         const targets = new Map<string, {revision: string; type: string; id: string}>();
         for (const asset of assets) {
@@ -484,7 +486,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
         }));
         if (alive) { setCurrentImageIds(selected); setMediaAssets(assets); setMediaWorkspaceId(draft.workspaceId); setR2vSeoStyles(Array.isArray(styles?.styles) ? styles.styles : []); }
       })
-      .catch(error => { if (alive) { setMediaAssets([]); setAssetsError((error as Error).message); setMessage(`Could not load ${isR2v ? 'reference assets' : 'frame images'}: ${(error as Error).message}. Add assets in Media Prep for this workspace, then retry.`); } })
+      .catch(error => { if (alive) { setMediaAssets([]); setAssetsError((error as Error).message); setImageLoadError((error as Error).message); setMessage(`Could not load ${isR2v ? 'reference assets' : 'frame images'}: ${(error as Error).message}. Add assets in Media Prep for this workspace, then retry.`); } })
       .finally(() => { if (alive) setAssetsLoading(false); });
     return () => { alive = false; };
   }, [visible, draft.workflowId, draft.workspaceId, isFl2va, isR2v, draft.sourceLineage?.screenplay_revision_id, libraryRefresh]);
@@ -503,6 +505,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
   const prepareCurrentShotPrompt = async () => {
     const lineage = draft.sourceLineage;
     if (!lineage || preparingShotPrompt || formLocked) return;
+    if (lineage.board_revision) { window.location.hash='#/shot-frames'; return; }
     if (lineage.planned_clip_id) {
       try {
         const plan = await getAssistedVideoClipPlan(draft.workspaceId, lineage.screenplay_revision_id);
@@ -552,6 +555,26 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
       setPreparingShotPrompt(false);
     }
   };
+  const returnToEditing = async (pending: Draft = draft) => {
+    if (!pending.pendingKey || !pending.pendingRequest) return;
+    const identity = currentDraftIdentity.current;
+    setBusy(true);
+    try {
+      const result = await releaseVideoAttempt(pending.workspaceId, pending.pendingKey);
+      if (currentDraftIdentity.current !== identity) return;
+      if (!result.released) {
+        if (!result.job) throw new Error('The backend did not confirm the attempt state.');
+        const job = result.job;
+        const saved = { jobId:job.job_id, snapshot:pending.pendingRequest, retakeOf:pending.retakeOf, keepOriginal:pending.keepOriginal, r2vMainPrompt:pending.r2vMainPrompt };
+        saveWorkspaceActive(pending.workspaceId, JSON.stringify(saved));
+        setActive({job, snapshot:pending.pendingRequest, retakeOf:pending.retakeOf, keepOriginal:pending.keepOriginal, r2vMainPrompt:pending.r2vMainPrompt});
+      }
+      const editable = {...pending, pendingKey:undefined, pendingRequest:undefined};
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(editable)); setDraftState(editable);
+      setMessage(result.released ? 'No render was submitted. Your prompt, references and workflow choices are editable again.' : 'Recovered your existing job without submitting another render. Your draft is editable.');
+    } catch (error) { setMessage(`Could not confirm the saved attempt: ${(error as Error).message}. Your draft and references are preserved.`); }
+    finally { setBusy(false); }
+  };
   // Only a confirmed 404 releases recovery; transport errors keep the saved job.
   const forgetMissingJob = useCallback((jobId: string) => {
     if (readWorkspaceActive(draft.workspaceId)?.jobId === jobId) clearWorkspaceActive(draft.workspaceId);
@@ -563,7 +586,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
     });
     setMessage(`Saved job ${jobId} no longer exists. Recovery stopped; your draft prompt is kept. No new job was submitted.`);
   }, []);
-  useEffect(() => { let alive = true; const resume = async () => { let savedActive = readWorkspaceActive(draft.workspaceId); const legacy = readActive(); if (!savedActive && legacy?.jobId) { try { const job = await getJob(legacy.jobId); if (!alive) return; if (job.workspace_id === draft.workspaceId) { savedActive = {...legacy, workspaceId: draft.workspaceId}; saveWorkspaceActive(draft.workspaceId, JSON.stringify(savedActive)); } } catch { /* Legacy pointer is retained until its workspace can be confirmed. */ } } if (savedActive?.jobId) { setActive({ job: { job_id: savedActive.jobId, status: 'recovery_required' }, snapshot: savedActive.snapshot, retakeOf: savedActive.retakeOf, keepOriginal: savedActive.keepOriginal, r2vMainPrompt: savedActive.r2vMainPrompt }); try { const job = await getJob(savedActive.jobId); if (alive) { setActive({ job, snapshot: savedActive.snapshot, retakeOf: savedActive.retakeOf, keepOriginal: savedActive.keepOriginal, r2vMainPrompt: savedActive.r2vMainPrompt });  } } catch (e) { if (alive) { if (e instanceof ApiError && e.status === 404) forgetMissingJob(savedActive.jobId); else setMessage(`Could not reconnect to saved job ${savedActive.jobId}. Its reference and frozen prompt are preserved; no replacement job can start until it is reconciled.`); } } return; } const pending = readDraft(draft.workspaceId); if (pending.pendingKey && pending.pendingRequest) { try { const job = await findJobByIdempotency(pending.workspaceId, pending.pendingKey); if (!alive) return; saveWorkspaceActive(draft.workspaceId, JSON.stringify({ jobId: job.job_id, snapshot: pending.pendingRequest, retakeOf: pending.retakeOf, keepOriginal: pending.keepOriginal, r2vMainPrompt: pending.r2vMainPrompt })); setActive({ job, snapshot: pending.pendingRequest, retakeOf: pending.retakeOf, keepOriginal: pending.keepOriginal, r2vMainPrompt: pending.r2vMainPrompt }); const cleared = { ...pending, pendingKey: undefined, pendingRequest: undefined }; localStorage.setItem(DRAFT_KEY, JSON.stringify(cleared)); setDraftState(cleared); setMessage('Recovered the saved job by its idempotency key. No new job was submitted.');  } catch (e) { if (alive) setMessage(`Saved attempt could not be reconciled: ${(e as Error).message}. The immutable request and key remain saved; no job was submitted during reload.`); } } }; void resume(); return () => { alive = false; }; }, [draft.workspaceId]);
+  useEffect(() => { let alive = true; const resume = async () => { let savedActive = readWorkspaceActive(draft.workspaceId); const legacy = readActive(); if (!savedActive && legacy?.jobId) { try { const job = await getJob(legacy.jobId); if (!alive) return; if (job.workspace_id === draft.workspaceId) { savedActive = {...legacy, workspaceId: draft.workspaceId}; saveWorkspaceActive(draft.workspaceId, JSON.stringify(savedActive)); } } catch { /* Legacy pointer is retained until its workspace can be confirmed. */ } } if (savedActive?.jobId) { setActive({ job: { job_id: savedActive.jobId, status: 'recovery_required' }, snapshot: savedActive.snapshot, retakeOf: savedActive.retakeOf, keepOriginal: savedActive.keepOriginal, r2vMainPrompt: savedActive.r2vMainPrompt }); try { const job = await getJob(savedActive.jobId); if (alive) { setActive({ job, snapshot: savedActive.snapshot, retakeOf: savedActive.retakeOf, keepOriginal: savedActive.keepOriginal, r2vMainPrompt: savedActive.r2vMainPrompt });  } } catch (e) { if (alive) { if (e instanceof ApiError && e.status === 404) forgetMissingJob(savedActive.jobId); else setMessage(`Could not reconnect to saved job ${savedActive.jobId}. Its reference and frozen prompt are preserved; no replacement job can start until it is reconciled.`); } } return; } const pending = readDraft(draft.workspaceId); if (pending.pendingKey && pending.pendingRequest) { try { const job = await findJobByIdempotency(pending.workspaceId, pending.pendingKey); if (!alive) return; saveWorkspaceActive(draft.workspaceId, JSON.stringify({ jobId: job.job_id, snapshot: pending.pendingRequest, retakeOf: pending.retakeOf, keepOriginal: pending.keepOriginal, r2vMainPrompt: pending.r2vMainPrompt })); setActive({ job, snapshot: pending.pendingRequest, retakeOf: pending.retakeOf, keepOriginal: pending.keepOriginal, r2vMainPrompt: pending.r2vMainPrompt }); const cleared = { ...pending, pendingKey: undefined, pendingRequest: undefined }; localStorage.setItem(DRAFT_KEY, JSON.stringify(cleared)); setDraftState(cleared); setMessage('Recovered the saved job by its idempotency key. No new job was submitted.');  } catch (e) { if (alive && e instanceof ApiError && e.status === 404) { await returnToEditing(pending); } else if (alive) setMessage(`Saved attempt could not be reconciled: ${(e as Error).message}. The immutable request and key remain saved; no job was submitted during reload.`); } } }; void resume(); return () => { alive = false; }; }, [draft.workspaceId]);
   useEffect(() => {
     if (!visible || view !== 'take' || !draft.workspaceId) return;
     let alive = true;
@@ -571,7 +594,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
       if (!alive) return;
       const saved = jobs.filter(job => job.candidate_disposition !== 'discard_requested'
         && ['accepted', 'needs_review'].includes(job.status)
-        
+
         && (job.request || job.request_snapshot))
         .map(job => ({ job, snapshot: (job.request || job.request_snapshot)! }));
       const known = new Set(jobs.map(job => job.job_id));
@@ -873,13 +896,13 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
           const retryable = { ...rejected, pendingKey: undefined, pendingRequest: undefined,
             ...(rejected.sourceLineage && !rejected.retakeOf ? { sourceLineage: undefined, clipId: id() } : {}) };
           localStorage.setItem(DRAFT_KEY, JSON.stringify(retryable)); setDraftState(retryable);
-          setMessage(`${e.message} The backend confirmed no job was created. Your prompt and settings remain editable; reopen the shot from an accepted-screenplay workflow to restore story linkage.`);
+          setMessage(`${e.message} The backend confirmed no job was created. Your prompt, references and settings remain editable. You can generate directly without preparing a screenplay shot.`);
         } else setMessage(e.message);
       } else setMessage((e as Error).message || 'Could not create job. The same saved attempt will be reused if the response was lost.');
     }
     finally { setBusy(false); }
   };
-  const startRetake = async () => { if (!active) return; const source = active; setBusy(true); try { const result = await prepareRetake(source.job.job_id, retakeKeep); if (result.submission_created !== false) throw new Error('Backend did not confirm that the retake is only a draft.'); const request = result.request as VideoRequest; setDraft(prev => ({ ...prev, workflowId: request.workflow_id, workspaceId: source.job.workspace_id || prev.workspaceId, clipId: source.job.clip_id || prev.clipId, sourceLineage: result.source_lineage ? { screenplay_revision_id: result.source_lineage.screenplay_revision_id, setup_hash: result.source_lineage.setup_hash, scene_number: result.source_lineage.scene_number, shot_number: result.source_lineage.shot_number, source_prompt_sha256: result.source_lineage.source_prompt_sha256, planned_clip_id: result.source_lineage.planned_clip_id, knowledge_ref: result.source_lineage.knowledge_ref, style_ref: result.source_lineage.style_ref } : undefined, prompt: request.workflow_id===R2V_WORKFLOW_ID?prev.prompt:request.prompt, r2vMainPrompt:request.workflow_id===R2V_WORKFLOW_ID?(source.r2vMainPrompt ?? prev.r2vMainPrompt ?? prev.prompt):prev.r2vMainPrompt, r2vCollatedPrompt:request.workflow_id===R2V_WORKFLOW_ID?request.prompt:undefined, r2vImages:request.images?.map(ref=>({assetId:ref.asset_id,role:ref.role,intent:ref.intent})), r2vVideos:request.videos?.map(ref=>({assetId:ref.asset_id,role:ref.role,intent:ref.intent,startSec:ref.start_sec??undefined,endSec:ref.end_sec??undefined,includePairedSoundtrack:ref.include_paired_soundtrack,audioIntent:ref.audio_intent})), r2vAudios:request.audios?.map(ref=>({assetId:ref.asset_id,role:ref.role,intent:ref.intent,speakerIds:'speaker_ids' in ref ? ref.speaker_ids : ref.speaker_id ? [ref.speaker_id] : undefined})), duration: request.duration_seconds, resolution: request.resolution_preset, aspectRatio: request.aspect_ratio, firstFrameAssetId: request.first_frame?.asset_id, lastFrameAssetId: request.last_frame?.asset_id, pendingKey: undefined, pendingRequest: undefined, retakeOf: source.job.job_id, keepOriginal: result.keep_original })); if (isReviewable(source.job.status)) { const nextHistory = result.keep_original ? [{ job: source.job, snapshot: source.snapshot, r2vMainPrompt: source.r2vMainPrompt }, ...history.filter(h => h.job.job_id !== source.job.job_id)] : history.filter(h => h.job.job_id !== source.job.job_id); setHistory(nextHistory); localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory)); } clearWorkspaceActive(draft.workspaceId); setActive(null); setRetakeDialog(false); const discardedStatus = result.asset_cleanup === 'archived_recoverable' ? 'The candidate is removed from take history and archived from normal library search; Show archived can restore it, and saved references still work.' : result.asset_cleanup === 'retained_shared' ? 'The candidate is removed from take history; its shared-library file stays visible because another video job uses the same asset.' : result.asset_cleanup === 'partially_archived' ? 'The candidate is removed from take history; unshared outputs are archived and shared outputs stay visible.' : 'The candidate is removed from take history; no generated library asset needed archiving.'; const keptStatus = result.asset_cleanup === 'restored' ? 'The current candidate is back in take history and its library output has been restored.' : 'The current candidate is kept in take history.'; setMessage(`Retake draft prepared. ${result.keep_original ? keptStatus : discardedStatus} Nothing has been generated yet.`); window.location.hash = '#/video'; } catch (e) { setMessage(`Could not prepare retake: ${(e as Error).message}`); } finally { setBusy(false); } };
+  const startRetake = async () => { if (!active) return; const source = active; setBusy(true); try { const result = await prepareRetake(source.job.job_id, retakeKeep); if (result.submission_created !== false) throw new Error('Backend did not confirm that the retake is only a draft.'); const request = result.request as VideoRequest; setDraft(prev => ({ ...prev, workflowId: request.workflow_id, workspaceId: source.job.workspace_id || prev.workspaceId, clipId: source.job.clip_id || prev.clipId, sourceLineage: result.source_lineage ? { screenplay_revision_id: result.source_lineage.screenplay_revision_id, setup_hash: result.source_lineage.setup_hash, scene_number: result.source_lineage.scene_number, shot_number: result.source_lineage.shot_number, source_prompt_sha256: result.source_lineage.source_prompt_sha256, planned_clip_id: result.source_lineage.planned_clip_id, ...(result.source_lineage.board_revision ? {board_revision:result.source_lineage.board_revision}:{}), knowledge_ref: result.source_lineage.knowledge_ref, style_ref: result.source_lineage.style_ref } : undefined, prompt: request.workflow_id===R2V_WORKFLOW_ID?prev.prompt:request.prompt, r2vMainPrompt:request.workflow_id===R2V_WORKFLOW_ID?(source.r2vMainPrompt ?? prev.r2vMainPrompt ?? prev.prompt):prev.r2vMainPrompt, r2vCollatedPrompt:request.workflow_id===R2V_WORKFLOW_ID?request.prompt:undefined, r2vImages:request.images?.map(ref=>({assetId:ref.asset_id,role:ref.role,intent:ref.intent})), r2vVideos:request.videos?.map(ref=>({assetId:ref.asset_id,role:ref.role,intent:ref.intent,startSec:ref.start_sec??undefined,endSec:ref.end_sec??undefined,includePairedSoundtrack:ref.include_paired_soundtrack,audioIntent:ref.audio_intent})), r2vAudios:request.audios?.map(ref=>({assetId:ref.asset_id,role:ref.role,intent:ref.intent,speakerIds:'speaker_ids' in ref ? ref.speaker_ids : ref.speaker_id ? [ref.speaker_id] : undefined})), duration: request.duration_seconds, resolution: request.resolution_preset, aspectRatio: request.aspect_ratio, firstFrameAssetId: request.first_frame?.asset_id, lastFrameAssetId: request.last_frame?.asset_id, pendingKey: undefined, pendingRequest: undefined, retakeOf: source.job.job_id, keepOriginal: result.keep_original })); if (isReviewable(source.job.status)) { const nextHistory = result.keep_original ? [{ job: source.job, snapshot: source.snapshot, r2vMainPrompt: source.r2vMainPrompt }, ...history.filter(h => h.job.job_id !== source.job.job_id)] : history.filter(h => h.job.job_id !== source.job.job_id); setHistory(nextHistory); localStorage.setItem(HISTORY_KEY, JSON.stringify(nextHistory)); } clearWorkspaceActive(draft.workspaceId); setActive(null); setRetakeDialog(false); const discardedStatus = result.asset_cleanup === 'archived_recoverable' ? 'The candidate is removed from take history and archived from normal library search; Show archived can restore it, and saved references still work.' : result.asset_cleanup === 'retained_shared' ? 'The candidate is removed from take history; its shared-library file stays visible because another video job uses the same asset.' : result.asset_cleanup === 'partially_archived' ? 'The candidate is removed from take history; unshared outputs are archived and shared outputs stay visible.' : 'The candidate is removed from take history; no generated library asset needed archiving.'; const keptStatus = result.asset_cleanup === 'restored' ? 'The current candidate is back in take history and its library output has been restored.' : 'The current candidate is kept in take history.'; setMessage(`Retake draft prepared. ${result.keep_original ? keptStatus : discardedStatus} Nothing has been generated yet.`); window.location.hash = '#/video'; } catch (e) { setMessage(`Could not prepare retake: ${(e as Error).message}`); } finally { setBusy(false); } };
   const advanceToNext = async () => {
     if (!active || !isReviewable(active.job.status)) return;
     setBusy(true);
@@ -888,6 +911,12 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
       if (active.job.source_lineage) {
         const lineage = active.job.source_lineage;
         if (draft.workspaceId !== active.job.workspace_id || draft.clipId !== active.job.clip_id) throw new Error('This take belongs to another draft. Reopen its saved draft before advancing.');
+        if (lineage.board_revision) {
+          const accepted = active.job.status === 'accepted' ? active.job : await acceptJob(active.job.job_id);
+          setActive({...active,job:accepted});
+          setMessage('Take accepted. Choose its finished clip in Frame per shot, then continue to the next shot.');
+          window.location.hash='#/shot-frames'; return;
+        }
         const [screenplay, promptState, setupState] = await Promise.all([
           getStoryScreenplayRevision(draft.workspaceId, lineage.screenplay_revision_id),
           getStoryPromptDrafts(draft.workspaceId, lineage.screenplay_revision_id),
@@ -968,19 +997,12 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
   const playback = output?.playback_url ? (/^https?:\/\//.test(output.playback_url) ? output.playback_url : `${window.location.origin}${output.playback_url}`) : '';
   const statusLabel = !active ? 'Draft' : active.job.status === 'refinement_pending' ? 'Waiting for LTX video refinement' : active.job.status.replaceAll('_', ' ');
   const markAccepted = async () => { if (!active) return; setBusy(true); try { const job = await acceptJob(active.job.job_id); setActive({ ...active, job }); setMessage('Take acceptance saved.'); } catch (e) { setMessage(`Could not save acceptance: ${(e as Error).message}`); } finally { setBusy(false); } };
-  
+
   return <div className={`app-shell legacy-inner legacy-video-inner ${view==='take'?'take-inner':''}`} onPaste={pasteR2vFiles}>
     <main className="main-content">
       <div className={`content-wrap ${view==='take'?'take-workspace-wrap':'create-workspace-wrap'}`}><CreateWorkspace enabled={view==='create'} key={`create:${draft.workspaceId}:${draft.clipId}`} draft={draft} disabled={formLocked || activeUnresolved} onPrompt={value=>{setDraft(p=>isR2v?({...p,r2vMainPrompt:value,r2vCollatedPrompt:undefined}):({...p,prompt:value}));setPreview(null);}}>
       <TakeWorkspace enabled={view==='take'} workspaceId={draft.workspaceId}><div className="page-heading"><div><div className="eyebrow">STUDIO / VIDEO</div><h1>{view==='take'?'Current take':'Create video'}</h1><p>{view === 'take' && fullRunWorkspace ? `${fullRunTitle} · Fully automated` : view==='take'?'Review your take.':draft.sourceLineage ? `Screenplay · Scene ${draft.sourceLineage.scene_number}, Shot ${draft.sourceLineage.shot_number}` : 'Isolated video · no story linked'}</p></div><button className="quiet-button" onClick={() => { const next = {...defaultDraft(), workspaceId: draft.workspaceId}; setDraftState(next); localStorage.setItem(DRAFT_KEY, JSON.stringify(next)); setMessage(activeUnresolved ? `New draft created. Existing job ${active?.job.job_id} remains active and must settle before another job can start.` : 'New local draft created. Current take and history are preserved.'); }} disabled={formLocked || (view === 'take' && Boolean(fullRunWorkspace))}><span>＋</span> New draft</button></div>
-      {message && <div className={`notice ${message.toLowerCase().includes('unavailable') || message.toLowerCase().includes('error') || message.toLowerCase().includes('could not') ? 'notice-warn' : ''}`} role="status"><span>{message}</span><button onClick={() => setMessage('')} aria-label="Dismiss"><X size={15}/></button></div>}
-      <section className="card settings-card video-workspace-picker" aria-label="Video workspace">
-        <label className="field">Project<select aria-label="Video workspace" value={draft.workspaceId} disabled={busy || fullRunBusy || uploadingRefs || preparingShotPrompt} onChange={event => switchVideoWorkspace(event.target.value)}>
-          {workspaceChoices.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.label}</option>)}
-        </select></label>
-        <small>Each project keeps its saved drafts, jobs and run progress. Switching projects does not pause, stop or restart generation.</small>
-        {workspaceError && <p role="alert">Could not load workspace choices: {workspaceError}</p>}
-      </section>
+      {view === 'take' && message && <div className={`notice ${message.toLowerCase().includes('unavailable') || message.toLowerCase().includes('error') || message.toLowerCase().includes('could not') ? 'notice-warn' : ''}`} role="status"><span>{message}</span><button onClick={() => setMessage('')} aria-label="Dismiss"><X size={15}/></button></div>}
       {view === 'create' && <OutputDestination tool="video-generation" workspaceId={draft.workspaceId} disabled={busy||fullRunBusy||formLocked}/>}
       {view === 'take' && <T2VBatchPanel key={`batch-take:${draft.workspaceId}`} workspaceId={draft.workspaceId} showVideos={false} />}
       {view === 'take' && fullRunLoading && <section className="card" aria-label="Fully automated run">Checking selected story and saved setup…</section>}
@@ -1030,7 +1052,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
         {view === 'create' && !isFl2va && !isR2v && <><div className="generation-footer" role="group" aria-label="Text to video mode"><button type="button" className="quiet-button" aria-pressed={!batchMode} onClick={()=>setBatchMode(false)}>Single prompt</button><button type="button" className="quiet-button" aria-pressed={batchMode} onClick={()=>setBatchMode(true)}>Batch prompts</button></div><T2VBatchPanel key={`batch-create:${draft.workspaceId}`} workspaceId={draft.workspaceId} showVideos={view === 'create'} editor={batchMode} disabled={busy || activeUnresolved || preparingShotPrompt} onActive={setBatchActive} onStarted={()=>{window.location.hash=`#/take?workspace_id=${encodeURIComponent(draft.workspaceId)}`;}}/></>}
         {(!batchMode || isFl2va || isR2v) && <>
         {isFl2va && <div className="card settings-card fl2va-frame-card"><div className="card-header"><div><h3>Frame images</h3><p>Choose a saved frame or add a PNG, JPEG, or WebP for either slot. Each upload keeps its assigned role in this workspace.</p></div><a className="text-button" href="#/media-prep?tool=search">Open Media Prep</a></div>
-          {assetsLoading ? <p role="status">Loading workspace images…</p> : assetsError ? <p role="alert">Could not load frame images. Refresh the library and retry.</p> : <>
+          {assetsLoading ? <p role="status">Loading workspace images…</p> : <>{assetsError&&<p role="alert">{imageLoadError?'Could not load frame images.':'Some library items could not load:'} {assetsError} <button onClick={()=>setLibraryRefresh(value=>value+1)}>Retry library load</button></p>}
             <div className="setting-grid">{([{role:'first_frame',label:'First frame',asset:firstFrame},{role:'last_frame',label:'Last frame',asset:lastFrame}] as const).map(({role,label,asset})=><div className="field fl2va-frame-slot" key={role}>
               <label htmlFor={role === 'first_frame' ? 'first-frame' : 'last-frame'}>{label}</label>
               <div className="select-wrap"><select id={role === 'first_frame' ? 'first-frame' : 'last-frame'} value={role === 'first_frame' ? draft.firstFrameAssetId || '' : draft.lastFrameAssetId || ''} disabled={formLocked} onChange={event => { setDraft(p=>({...p,[role === 'first_frame' ? 'firstFrameAssetId' : 'lastFrameAssetId']:event.target.value || undefined})); setPreview(null); }}><option value="">Choose {role === 'first_frame' ? 'first' : 'last'} frame…</option>{frameCandidates(role).map(candidate=><option value={candidate.asset_id} key={candidate.asset_id}>{frameOption(candidate, role)}</option>)}</select><ChevronDown size={15}/></div>
@@ -1046,7 +1068,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
         {isFl2va && <MediaSourcePicker workspaceId={draft.workspaceId} kinds={['image']} disabled={formLocked} onAdded={items=>{setMediaAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items]);setLibraryRefresh(value=>value+1);}}/>}
         {isR2v && <div className="card settings-card r2v-reference-card"><div className="card-header"><div><h3>Reference assets</h3><p>Select library media and say how each should guide this clip. Files stay in the workspace library.</p></div><a className="text-button" href="#/media-prep?tool=search">Open Media Prep</a></div>
           <ReferenceReview key={`${draft.workspaceId}:${draft.clipId}`} draft={draft} assets={r2vAssets} locked={formLocked} onChange={change=>{setDraft(change);setPreview(null);}}/>
-          {assetsLoading ? <p role="status">Loading workspace references…</p> : assetsError ? <div role="alert"><p>Could not load references for this workspace: {assetsError}</p><button type="button" className="quiet-button" onClick={()=>setLibraryRefresh(value=>value+1)}>Retry library load</button></div> : <>
+          {assetsLoading ? <p role="status">Loading workspace references…</p> : <>{assetsError&&<div role="alert"><p>Some project references could not load: {assetsError}</p><button type="button" className="quiet-button" onClick={()=>setLibraryRefresh(value=>value+1)}>Retry library load</button></div>}
             {([
               {title:'Images', items:[
                 {key:'characters' as const,title:'Characters',kind:'images' as const,singular:'character image',accept:'image/png,image/jpeg,image/webp',matches:(a:MediaAsset)=>(a.roles.includes('character_master')&&(!a.metadata?.production_image_job?.settings?.lineage?.screenplay_revision_id||currentImageIds.has(a.asset_id)))||a.roles.includes('character_view')},
@@ -1067,7 +1089,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
               ]},
             ]).map(group => <details className="r2v-kind" key={group.title} open>
               <summary className="r2v-kind-summary">{group.title}</summary>
-              <label className="field">Reference source<select aria-label={group.title+' reference source'} value={r2vSource[group.title]} onChange={event=>{setR2vSource(current=>({...current,[group.title]:event.target.value}));setR2vCatalogueOffset(current=>({...current,[group.title]:0}));setR2vPickerSelection({});}}><optgroup label="This workspace">{group.items.map(item=><option key={item.key} value={item.key}>{item.title}</option>)}</optgroup><optgroup label="Shared library"><option value="global:all">All sources</option><option value="global:downloaded">YouTube downloads</option><option value="global:repertoire">Analysed repertoire</option><option value="global:generated">Generated media</option>{group.title==='Audio'&&<option value="global:ace_generated">ACE-Step generated audio</option>}<option value="global:imported">Imported files</option></optgroup><optgroup label="Workspaces">{[...new Set([...workspaceChoices.map(row=>row.id),...r2vWorkspaceIds])].map(id=><option key={id} value={'workspace:'+id}>{r2vWorkspaceNames[id]||workspaceChoices.find(row=>row.id===id)?.label||id}</option>)}</optgroup></select></label>
+              <label className="field">Reference source<select aria-label={group.title+' reference source'} value={r2vSource[group.title]} onChange={event=>{setR2vSource(current=>({...current,[group.title]:event.target.value}));setR2vCatalogueOffset(current=>({...current,[group.title]:0}));setR2vPickerSelection({});}}><optgroup label="Current project"><option value={'workspace:'+draft.workspaceId}>All media in this project</option>{group.items.map(item=><option key={item.key} value={item.key}>{item.title}</option>)}</optgroup><optgroup label="Shared library"><option value="global:all">All projects and shared media</option><option value="global:downloaded">YouTube downloads</option><option value="global:repertoire">Video repertoire</option><option value="global:generated">Generated media</option>{group.title==='Audio'&&<option value="global:ace_generated">ACE-Step generated audio</option>}<option value="global:imported">Imported files</option></optgroup><optgroup label="Workspaces">{[...new Set([...workspaceChoices.map(row=>row.id),...r2vWorkspaceIds])].map(id=><option key={id} value={'workspace:'+id}>{r2vWorkspaceNames[id]||workspaceChoices.find(row=>row.id===id)?.label||id}</option>)}</optgroup></select></label>
               {group.items.filter((item,index)=>item.key===r2vSource[group.title] || (index===0 && /^(global|workspace):/.test(r2vSource[group.title]))).map(item => {
                 const {key,title,kind,singular,accept,matches}=item;
                 const remote=/^(global|workspace):/.test(r2vSource[group.title]);
@@ -1082,7 +1104,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
                 const sameKindKeys: R2vCarouselKey[]=kind==='images'?['characters','worlds','first-frames','last-frames','image-assets','imported-images']:kind==='audios'?['voices','audio-clips','imported-audio']:['video-clips','source-videos'];
                 const pending=sameKindKeys.reduce((total,pickerKey)=>total+(r2vPickerSelection[pickerKey]||[]).length,0);
                 return <section className="r2v-subcarousel" key={key} onDragOver={event=>event.preventDefault()} onDrop={event=>dropR2vFiles(event,kind,key)}>
-                  <h4>{title}<small>{used}/{max} {kind==='images'?'images':kind==='videos'?'videos':'audio references'} in request</small></h4>
+                  <h4>{remote?group.title:title}<small>{used}/{max} {kind==='images'?'images':kind==='videos'?'videos':'audio references'} in request</small></h4>
                   <div className="r2v-kind-head"><div className="r2v-add">
                     <input className="r2v-search" aria-label={'Search '+title.toLowerCase()} placeholder={mode==='semantic'?'Describe '+title.toLowerCase()+' to find':'Search '+title.toLowerCase()+' by name or tags'} value={query} onChange={event=>{setR2vSearch(current=>({...current,[key]:event.target.value}));setR2vCatalogueOffset(current=>({...current,[group.title]:0}));}}/>
                     <select disabled={remote} aria-label={'Search '+title.toLowerCase()+' by'} value={mode} onChange={event=>setR2vSearchMode(current=>({...current,[key]:event.target.value as 'keyword'|'semantic'}))}><option value="keyword">Name and tags</option><option value="semantic">Semantic</option></select>
@@ -1117,7 +1139,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
           {errors.r2v && <small className="error-text" role="alert">{errors.r2v}</small>}
         </div>}
         {isR2v && <div className="generation-footer r2v-collate"><span>Tags and reference order are assigned from the selected assets.</span><button type="button" className="quiet-button" onClick={collateR2vPrompt} disabled={formLocked || !r2vMainPrompt.trim() || !r2vTotalRefs}>Collate prompt</button></div>}
-        <div className="card prompt-card"><div className="card-header"><div><b>{isR2v ? 'Main shot prompt' : 'Shot prompt'}</b><p>{isR2v ? 'Describe the new clip; reference instructions are added when you collate.' : 'Describe the action and camera movement.'}</p></div><div className="prompt-meta">{draft.sourceLineage && <button type="button" className="quiet-button" onClick={() => void prepareCurrentShotPrompt()} disabled={formLocked || preparingShotPrompt}>{preparingShotPrompt ? 'Preparing…' : draft.sourceLineage?.planned_clip_id ? 'Restore planned prompt' : 'Prepare from screenplay'}</button>}<span className="saved"><span className="status-dot green"/> Auto-saved</span></div></div>
+        <div className="card prompt-card"><div className="card-header"><div><b>{isR2v ? 'Main shot prompt' : 'Shot prompt'}</b><p>{isR2v ? 'Describe the new clip; reference instructions are added when you collate.' : 'Describe the action and camera movement.'}</p></div><div className="prompt-meta">{draft.sourceLineage && <button type="button" className="quiet-button" onClick={() => void prepareCurrentShotPrompt()} disabled={formLocked || preparingShotPrompt}>{preparingShotPrompt ? 'Preparing…' : draft.sourceLineage?.board_revision ? 'Edit storyboard shot' : draft.sourceLineage?.planned_clip_id ? 'Restore planned prompt' : 'Prepare from screenplay'}</button>}<span className="saved"><span className="status-dot green"/> Auto-saved</span></div></div>
           {draft.sourceLineage && <small className="prompt-source-note">Shows the selected clip’s workflow-aware prompt. You can edit it here; restoring a planned prompt preserves its source coverage and your reference choices.</small>}
           <SelectionMicroEdit label={isR2v ? 'Main shot prompt' : 'Shot prompt'} value={isR2v ? (draft.r2vMainPrompt ?? draft.prompt) : draft.prompt} surface="prompt" workspaceId={draft.workspaceId} revisionId={draft.sourceLineage?.screenplay_revision_id || draft.clipId} fieldKey={`video.${draft.clipId}.${isR2v ? 'main-prompt' : 'prompt'}`} disabled={formLocked || preparingShotPrompt} onChange={value => { if (isR2v) setDraft(p => ({ ...p, r2vMainPrompt: value, r2vCollatedPrompt: undefined })); else setDraft(p => ({ ...p, prompt: value })); setPreview(null); }}/>
           <div className="prompt-footer"><div className="annotation-row"/><div className="prompt-meta"><span id="prompt-help" className="sr-only">Describe the video to generate.</span><span id="prompt-count" className={effectivePromptLength >= 7000 ? 'count error-text' : 'count'}>{(isR2v ? unicodeLength(draft.r2vMainPrompt ?? draft.prompt) : promptLength).toLocaleString()} / 6,999</span></div></div>
@@ -1125,13 +1147,14 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
         </div>
         {isR2v && r2vFinalPrompt && <div className="card prompt-card"><div className="card-header"><div><b>Final prompt</b><p>Review the generated tags and edit the exact text before previewing.</p></div><span className="prompt-meta">{effectivePromptLength.toLocaleString()} / 6,999</span></div><SelectionMicroEdit label="Final prompt" value={r2vFinalPrompt} surface="prompt" workspaceId={draft.workspaceId} revisionId={draft.sourceLineage?.screenplay_revision_id || draft.clipId} fieldKey={`video.${draft.clipId}.collated-prompt`} disabled={formLocked} onChange={value=>{setDraft(prev=>({...prev,r2vCollatedPrompt:value}));setPreview(null);}}/><small>Image, video and audio tags are numbered independently. Editing reference choices clears this collation.</small>{errors.prompt && <small className="error-text" role="alert">{errors.prompt}</small>}</div>}
         <div className="card settings-card"><div className="card-header"><div><h3>Output settings</h3></div><button className="collapse-button" onClick={() => setShowAdvanced(s => !s)} aria-expanded={showAdvanced}>Advanced <ChevronDown size={15} className={showAdvanced?'rotated':''}/></button></div>
-          <div className="setting-grid"><div className="field"><label htmlFor="duration">Duration</label><div className="select-wrap"><select id="duration" value={draft.duration} disabled={formLocked || Boolean(draft.sourceLineage?.planned_clip_id)} onChange={e => {setDraft(p => ({ ...p, duration: Number(e.target.value) }));setPreview(null);}}>{Array.from({length:isFl2va||isR2v?11:26}, (_,i) => i+5).map(n => <option value={n} key={n}>{n} seconds</option>)}</select><ChevronDown size={15}/></div>{draft.sourceLineage?.planned_clip_id && <small>Duration comes from this screenplay clip’s plan.</small>}{errors.duration && <small className="error-text">{errors.duration}</small>}</div><div className="field"><label htmlFor="resolution">Final quality · Turbo + LTX</label><div className="select-wrap"><select id="resolution" value={draft.resolution} disabled={formLocked} onChange={e => {setDraft(p => ({ ...p, resolution: Number(e.target.value) as VideoResolution }));setPreview(null);}}>{!T2V_QUALITIES.some(item => item.preset === draft.resolution) && <option value={draft.resolution}>Legacy · {qualityDimensions(draft.resolution, draft.aspectRatio)}</option>}{T2V_QUALITIES.map(item => <option key={item.key} value={item.preset}>{item.label} · {qualityDimensions(item.preset, draft.aspectRatio)}</option>)}</select><ChevronDown size={15}/></div></div><div className="field"><label htmlFor="aspect-ratio">Aspect ratio</label><div className="select-wrap"><select id="aspect-ratio" value={draft.aspectRatio || '16:9'} disabled={formLocked} onChange={e => {setDraft(p => ({...p, aspectRatio: e.target.value as VideoAspectRatio}));setPreview(null);}}>{VIDEO_ASPECT_RATIOS.map(item => <option key={item.value} value={item.value}>{item.value} · {item.label}</option>)}</select><ChevronDown size={15}/></div><small>Dimensions align to the model’s 32-pixel grid.</small></div></div>
+          <div className="setting-grid"><div className="field"><label htmlFor="duration">Duration</label><div className="select-wrap"><select id="duration" value={draft.duration} disabled={formLocked} onChange={e => {setDraft(p => ({ ...p, duration: Number(e.target.value) }));setPreview(null);}}>{Array.from({length:isFl2va||isR2v?11:26}, (_,i) => i+5).map(n => <option value={n} key={n}>{n} seconds</option>)}</select><ChevronDown size={15}/></div>{draft.sourceLineage?.planned_clip_id && <small>Suggested by the screenplay plan; change it as needed.</small>}{errors.duration && <small className="error-text">{errors.duration}</small>}</div><div className="field"><label htmlFor="resolution">Final quality · Turbo + LTX</label><div className="select-wrap"><select id="resolution" value={draft.resolution} disabled={formLocked} onChange={e => {setDraft(p => ({ ...p, resolution: Number(e.target.value) as VideoResolution }));setPreview(null);}}>{!T2V_QUALITIES.some(item => item.preset === draft.resolution) && <option value={draft.resolution}>Legacy · {qualityDimensions(draft.resolution, draft.aspectRatio)}</option>}{T2V_QUALITIES.map(item => <option key={item.key} value={item.preset}>{item.label} · {qualityDimensions(item.preset, draft.aspectRatio)}</option>)}</select><ChevronDown size={15}/></div></div><div className="field"><label htmlFor="aspect-ratio">Aspect ratio</label><div className="select-wrap"><select id="aspect-ratio" value={draft.aspectRatio || '16:9'} disabled={formLocked} onChange={e => {setDraft(p => ({...p, aspectRatio: e.target.value as VideoAspectRatio}));setPreview(null);}}>{VIDEO_ASPECT_RATIOS.map(item => <option key={item.value} value={item.value}>{item.value} · {item.label}</option>)}</select><ChevronDown size={15}/></div><small>Dimensions align to the model’s 32-pixel grid.</small></div></div>
           {showAdvanced && <div className="advanced-row"><span>Steps <b>{'Turbo 4 → LTX 3'}</b></span><span>Seed <b>1</b></span><span>References <b>{isR2v?`${r2vRefs.images.length} pictures · ${r2vRefs.videos.length} videos · ${r2vRefs.audios.length} audio`:isFl2va?'First + last frame':'None'}</b></span><small>{isR2v?'Pinned workflow defaults':'Fixed settings'}</small></div>}
         </div>
         <div className="video-readiness card"><div className="small-heading">LOCAL ENGINE <span className={`status-dot ${capState==='ready'?'green':capState==='unavailable'?'red':''}`}/></div><p>{capState==='ready' ? 'Ready to generate' : capState==='loading' ? 'Checking readiness…' : capState==='unavailable' ? capability ? capabilityBlocker(capability) : 'Video generation is not ready. Check Status for setup details.' : 'Not checked yet'}</p>{capState==='ready' && capability?.workflow_id===R2V_WORKFLOW_ID && capability.render_verified===false && <p>Ready for your first R2V test. A successful video with audio must be recorded before automated R2V is enabled.</p>}{capState==='unavailable' && <a className="text-button" href="#/status">Open Status</a>}{capState==='unavailable' && capability && capabilityDetails(capability).length > 0 && <details><summary>Technical details</summary><small>{capabilityDetails(capability).join(' ')}</small></details>}<button className="text-button" onClick={refreshCapability} disabled={capState==='loading' || busy}><Activity size={14}/> Check readiness</button></div>
         {preview && <div className="card snapshot"><div className="snapshot-head"><div><span className="eyebrow">PREVIEW ONLY</span><b>Validated request</b></div><span>{preview.workflow_id}</span></div><div className="snapshot-tags"><span>{preview.compiled?.predicted_duration_seconds ?? preview.request?.duration_seconds ?? draft.duration}s</span><span>{preview.compiled?.final_width ?? preview.compiled?.width ?? ALL_VIDEO_QUALITIES.find(item => item.preset === draft.resolution)!.width} × {preview.compiled?.final_height ?? preview.compiled?.height ?? ALL_VIDEO_QUALITIES.find(item => item.preset === draft.resolution)!.height}</span><span>{preview.compiled?.frame_count ? `${preview.compiled.frame_count} frames` : isR2v?`${r2vTotalRefs} references`:'Prompt compiled'}</span></div>{isR2v && <pre className="r2v-preview-map">{JSON.stringify(preview.reference_map,null,2)}</pre>}<small>No job submitted.</small></div>}
+        {view === 'create' && message && <div className="notice notice-warn" role="status" aria-label="Generation feedback"><span>{message}</span><button type="button" onClick={() => setMessage('')} aria-label="Dismiss"><X size={15}/></button></div>}
         <div className="generation-footer"><button className="quiet-button" onClick={preparePreview} disabled={busy || !!errors.prompt || !!errors.duration || !!errors.frames || !!errors.r2v || hasPendingAttempt}>Preview settings</button><button className="generate-button" onClick={generate} disabled={busy || !!errors.prompt || !!errors.duration || !!errors.frames || !!errors.r2v || capState!=='ready' || activeUnresolved || (batchActive && !isFl2va && !isR2v)}>{busy ? <><LoaderCircle size={16} className="spin"/> Preparing…</> : hasPendingAttempt ? <><RefreshCw size={16}/> Recover saved attempt</> : <><Sparkles size={16}/> Generate video <ArrowRight size={16}/></>}</button></div>
-        {hasPendingAttempt && <div className="notice notice-warn" role="status"><span>The saved request and idempotency key are locked until the backend reconciles them. Check readiness, then use Recover saved attempt; the UI will look up that key before any retry.</span></div>}
+        {hasPendingAttempt && <div className="notice notice-warn" role="status"><span>A previous submission needs checking. Return to editing will recover an existing job or safely release the unsubmitted attempt, keeping your prompt and references.</span><button type="button" disabled={busy} onClick={() => void returnToEditing()}>Return to editing</button></div>}
         </>}
       </section>
       <aside className="result-column"><div className="section-title result-title"><div><h2>Current take</h2><p>Job status and output for this draft.</p></div><button className="icon-button" aria-label="Refresh job" disabled={!active} onClick={() => active && getJob(active.job.job_id).then(job => setActive({ ...active, job })).catch(() => setMessage('Could not refresh job status.'))}><RefreshCw size={16}/></button></div>
@@ -1174,24 +1197,27 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
 }
 
 export default function App() {
-  const parseRoute = (): StudioRoute => { const route = window.location.hash.split('?')[0].replace(/^#\/?/, '') || 'home'; return ['home','styles','story','screenplay','setup','prompts','video','take','assets','characters','worlds','frames','text-to-image','image-to-3d-pixal3d','image-to-3d','media-prep','media','editor','status'].includes(route) ? route as StudioRoute : 'home'; };
+  const parseRoute = (): StudioRoute => { const route = window.location.hash.split('?')[0].replace(/^#\/?/, '') || 'home'; return ['home','styles','story','screenplay','shot-frames','storyboard','setup','prompts','video','take','assets','characters','worlds','frames','text-to-image','image-to-3d-pixal3d','image-to-3d','media-prep','media','editor','status'].includes(route) ? route as StudioRoute : 'home'; };
   const [route, setRoute] = useState<StudioRoute>(parseRoute);
   const [videoWorkspace, setVideoWorkspace] = useState(() => readDraft().workspaceId);
   useEffect(() => {
     const onHashChange = () => {
       setRoute(parseRoute());
-      if (['video','take'].includes(parseRoute())) setVideoWorkspace(requestedVideoWorkspace() || readDraft().workspaceId);
+      if (['video','take'].includes(parseRoute())) setVideoWorkspace(managedProjectId() || requestedVideoWorkspace() || readDraft().workspaceId);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
   // Keep the video workspace mounted while Status is open so a running job,
   // pending recovery key, and editor state continue untouched in memory.
-  const context = 'Video draft · no story linked';
+  const project=useProject();
+  const context = project.workspace_id==='tool-library'?'Standalone video':project.title;
   return <StudioShell route={route} context={context}>
     {route==='home' && <div className="content-wrap home-content"><div className="page-heading"><div><div className="eyebrow">LOCAL STUDIO</div><h1>What would you like to make?</h1></div></div><div className="entry-cards"><a className="entry-card" href="#/story"><span className="entry-icon"><BookOpen size={20}/></span><b>Develop a story</b><p>Write, upload, or edit your story.</p><span className="entry-cta">Open Story <span>→</span></span></a><a className="entry-card" href="#/video"><span className="entry-icon"><Film size={20}/></span><b>Create a video</b><p>Generate a video from a prompt.</p><span className="entry-cta">Open Video <span>→</span></span></a></div></div>}
     {route==='story' && <><StoryPage/><div className="content-wrap story-video-entry"><section className="card"><div><b>Create a separate video</b><p>This story is not linked to video generation yet.</p></div><a className="generate-button" href="#/video">Open Video <ArrowRight size={15}/></a></section></div></>}
     {route==='screenplay' && <ScreenplayPage/>}
+    {route==='shot-frames' && <StoryboardPage key="shot-frames" view="frames"/>}
+    {route==='storyboard' && <StoryboardPage key="storyboard" view="storyboard"/>}
     {route==='setup' && <ProductionSetupPage/>}
     {route==='prompts' && <PromptPreparationPage/>}
     {route==='status' && <StatusPage/>}

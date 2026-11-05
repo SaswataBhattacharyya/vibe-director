@@ -44,8 +44,10 @@ from story_builder.services.workflow_knowledge import WorkflowKnowledge
 from story_builder.services.workflow_knowledge_catalog import (seed_audio_workflow_knowledge,
     seed_image_workflow_knowledge, seed_minimax_h3_workflow_knowledge)
 from story_builder.services.prompt_drafts import PromptDrafts
+from story_builder.services.prompt_director import PromptDirector, read_guidance, image_brief
 from story_builder.services.image_prompt_drafts import prepare_image_prompt
 from story_builder.services.field_edit_proposals import FieldEditProposals
+from story_builder.services.storyboard import Storyboard, automatic_route_allowed
 from story_builder.services.story_imports import StoryImportError, StoryImports
 from story_builder.services.media_library import (
     MAX_UPLOAD_BYTES, ProductionAssetError, browse_catalogue, reuse_catalogue_asset, name_media_workspace, reconcile_download_catalogue, asset_path as media_asset_path,
@@ -292,6 +294,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         image_jobs_path.relative_to(root)
     except ValueError as exc:
         raise ValueError("Image jobs DB path must remain under VIBE_DIRECTOR_DATA_DIR.") from exc
+    from story_builder.services import projects as project_folders
+    project_folders.configure(root, configured_db, image_jobs_path)
     image_jobs = ProductionImageJobStore(image_jobs_path)
     image_selection = ProductionImageSelection(image_jobs_path)
     fl2va_provider = fl2va_capability_provider or (lambda: fl2va_capability())
@@ -312,6 +316,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
     audio_workflow_knowledge = seed_audio_workflow_knowledge(workflow_knowledge)
     styles = ProductionStyleService(ledger)
     prompt_drafts = PromptDrafts(ledger, story, workflow_knowledge, styles)
+    prompt_director = PromptDirector(ledger, story, workflow_knowledge)
     jobs.prompt_drafts = prompt_drafts
 
     def current_assembly_preview(workspace_id: str, revision_id: str):
@@ -346,6 +351,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
             offset += len(page["assets"])
         return {record["asset_id"]: record for record in records}
     field_edits = FieldEditProposals(ledger)
+    storyboard = Storyboard(ledger, story, root)
     imports = StoryImports(ledger, root)
     story_limit = (int(os.environ.get("VIBE_DIRECTOR_STORY_BODY_MAX_BYTES", str(_DEFAULT_STORY_BODY_MAX)))
                    if story_body_max_bytes is None else story_body_max_bytes)
@@ -474,7 +480,11 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
     def app(environ, start_response):
         method = environ.get("REQUEST_METHOD", "GET").upper()
         path = unquote(environ.get("PATH_INFO", ""))
+        video_admission_started = False
         try:
+            if path.startswith('/api/projects/'):
+                from story_builder.services.projects import handle
+                return handle(root, story, environ, start_response, _read_json, _json_response)
             if path.startswith('/api/jukebox/'):
                 from story_builder.services.music_jukebox_api import handle
                 return handle(root, environ, start_response, _read_json, _json_response)
@@ -2437,6 +2447,21 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         raise ValueError("Supply screenplay_revision_id, step, and skipped.")
                     return _json_response(start_response, "200 OK", production_setup.set_assisted_stage_skip(
                         workspace_id, payload["screenplay_revision_id"], payload["step"], payload["skipped"]))
+                if len(parts) in (3, 4) and parts[1] == "prompt-director":
+                    revision_id = parts[2]
+                    action = parts[3] if len(parts) == 4 else None
+                    if method == "GET" and action is None:
+                        return _json_response(start_response, "200 OK", prompt_director.get(workspace_id, revision_id))
+                    if method == "GET" and action == "skill":
+                        return _json_response(start_response, "200 OK", {"filename": "SKILL.md", "text": prompt_director.export(workspace_id, revision_id)})
+                    if method == "PUT" and action is None:
+                        return _json_response(start_response, "200 OK", prompt_director.save(workspace_id, revision_id, _read_json(environ)))
+                    if method == "POST" and action in ("chat", "propose", "learn"):
+                        def prompt_chat_provider(*, prompt):
+                            from story_builder.services.reasoning_provider import generate_json, get_settings
+                            return (reasoning_json_provider or generate_json)(prompt=prompt, temperature=0, provider=get_settings()["provider"])
+                        return _json_response(start_response, "200 OK", prompt_director.discuss(
+                            workspace_id, revision_id, action, _read_json(environ), prompt_chat_provider))
                 if len(parts) == 2 and parts[1] == "prompt-drafts" and method == "GET":
                     query = parse_qs(environ.get("QUERY_STRING", ""))
                     screenplay_revision_id = (query.get("screenplay_revision_id") or [None])[0]
@@ -2558,6 +2583,40 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         idempotency_key=payload.get("idempotency_key"), provider_call=selected_edit_provider,
                         context_scope=payload.get("context_scope", "selected"))
                     return _json_response(start_response, "201 Created", result)
+                if len(parts) == 3 and parts[1] == "storyboard":
+                    revision_id = parts[2]
+                    if method == "GET":
+                        return _json_response(start_response, "200 OK", storyboard.get(workspace_id, revision_id))
+                    if method == "PUT":
+                        return _json_response(start_response, "200 OK", storyboard.save(workspace_id, revision_id, _read_story_json(environ, story_limit)))
+                if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "export" and method == "GET":
+                    return _json_response(start_response, "200 OK", storyboard.export(workspace_id, parts[2]))
+                if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "editor" and method == "POST":
+                    if _read_story_json(environ, story_limit) != {}:
+                        raise ValueError("No editor import options are required.")
+                    return _json_response(start_response, "201 Created", storyboard.editor_handoff(workspace_id, parts[2]))
+                if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "direct" and method == "POST":
+                    from story_builder.services.reasoning_provider import generate_json, get_settings
+                    def board_director(prompt):
+                        return (reasoning_json_provider or generate_json)(prompt=prompt, provider=get_settings()["provider"], temperature=0)
+                    return _json_response(start_response, "201 Created", storyboard.direct(workspace_id, parts[2], _read_story_json(environ, story_limit), board_director))
+                if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "video" and method == "POST":
+                    payload = _read_story_json(environ, story_limit)
+                    if set(payload) != {"shot_key"} or type(payload["shot_key"]) is not str:
+                        raise ValueError("Supply one shot_key.")
+                    return _json_response(start_response, "200 OK", storyboard.video_handoff(workspace_id, parts[2], payload["shot_key"]))
+                if len(parts) == 4 and parts[1] == "screenplay-director":
+                    revision_id, action = parts[2:]
+                    if method == "GET" and action == "conversation":
+                        return _json_response(start_response, "200 OK", {"items": storyboard.conversations(workspace_id, revision_id)})
+                    if method == "POST" and action == "apply":
+                        return _json_response(start_response, "201 Created", storyboard.apply(workspace_id, revision_id, _read_story_json(environ, story_limit)))
+                    if method == "POST" and action in ("propose", "chat"):
+                        from story_builder.services.reasoning_provider import generate_json, get_settings
+                        def screenplay_director(prompt):
+                            return (reasoning_json_provider or generate_json)(prompt=prompt, provider=get_settings()["provider"], temperature=0)
+                        operation = storyboard.chat if action == "chat" else storyboard.propose
+                        return _json_response(start_response, "201 Created", operation(workspace_id, revision_id, _read_story_json(environ, story_limit), screenplay_director))
                 if len(parts) == 2 and parts[1] == "field-edit-proposals" and method == "POST":
                     payload = _read_story_json(environ, story_limit)
                     def field_edit_provider(*, field_text, expected_text, instruction, surface, field_key):
@@ -2709,6 +2768,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     raise ValueError("A valid workspace_id and screenplay_revision_id are required.")
                 if step not in {"character_images", "world_images", "frame_images"}:
                     raise ValueError("Choose character_images, world_images, or frame_images.")
+                if step == "frame_images":
+                    automatic_route_allowed("fflf")
                 setup_state = production_setup.get(workspace, revision_id)
                 setup_data = setup_state.get("setup") or {}
                 if (setup_data.get("mode") != "assisted_manual"
@@ -2818,7 +2879,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                                 selected_targets.add(record["record_id"])
                                 if step == "world_images":
                                     selected_worlds.append((record, current))
-                    def draft_character_appearance(*, target, idempotency_key):
+                    def draft_entity_image(*, target, idempotency_key):
                         prior = image_jobs.find_idempotent_batch(project_id=workspace,
                             idempotency_key=idempotency_key)
                         if prior:
@@ -2827,15 +2888,19 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         def image_prompt_provider(*, temperature, prompt):
                             from story_builder.services.reasoning_provider import generate_json, get_settings
                             generate = reasoning_json_provider or generate_json
-                            return generate(prompt=prompt, provider=get_settings()["provider"], temperature=0)
+                            return generate(prompt=prompt + '\n' + read_guidance(ledger, workspace, 'character' if step == 'character_images' else 'world'), provider=get_settings()["provider"], temperature=0)
                         return prepare_image_prompt(workflow_knowledge=workflow_knowledge,
-                            workflow_id=workflow_id, asset_role="character_master", prompt_seed="",
+                            workflow_id=workflow_id, asset_role="character_master" if step == 'character_images' else "world_master", prompt_seed=image_brief(ledger, workspace, revision_id, target['record_id']),
                             target_context=target, style_context=style_selection,
                             provider_call=image_prompt_provider)["prompt"]
                     batches = build_entity_image_batches(workspace_id=workspace, screenplay=screenplay,
                         graph=graph, setup=setup_state, step=step, run_id="pending",
                         selected_targets=selected_targets, style_selection=style_selection,
-                        character_prompt_drafter=draft_character_appearance)
+                        character_prompt_drafter=draft_entity_image,
+                        world_prompt_drafter=draft_entity_image if step == 'world_images' and (
+                            read_guidance(ledger, workspace, 'world') or any(
+                                image_brief(ledger, workspace, revision_id, target['record_id'])
+                                for target in graph.get('records', []) if target.get('kind') == 'entity' and target.get('type', '').lower() == 'location')) else None)
                     if step == "world_images":
                         setup_hash = hashlib.sha256(json.dumps(setup_data, sort_keys=True,
                             separators=(",", ":")).encode()).hexdigest()
@@ -2882,7 +2947,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                             def image_prompt_provider(*, temperature, prompt):
                                 from story_builder.services.reasoning_provider import generate_json, get_settings
                                 generate = reasoning_json_provider or generate_json
-                                return generate(prompt=prompt, provider=get_settings()["provider"], temperature=0)
+                                return generate(prompt=prompt + '\n' + read_guidance(ledger, workspace, 'world'), provider=get_settings()["provider"], temperature=0)
                             drafted = prepare_image_prompt(workflow_knowledge=workflow_knowledge,
                                 workflow_id="qwen_image_multi_angle_2511", asset_role="world_view",
                                 prompt_seed="", story_context={"title": (screenplay.get("screenplay") or {}).get("title")},
@@ -3059,9 +3124,13 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 def image_prompt_provider(*, temperature, prompt):
                     from story_builder.services.reasoning_provider import generate_json, get_settings
                     generate = reasoning_json_provider or generate_json
-                    return generate(prompt=prompt, provider=get_settings()["provider"], temperature=0)
+                    scope = 'character' if str(role).startswith('character') else 'world' if str(role).startswith('world') else 'all'
+                    return generate(prompt=prompt + '\n' + read_guidance(ledger, workspace, scope), provider=get_settings()["provider"], temperature=0)
+                seed = payload.get("prompt", "")
+                if not seed and lineage and lineage.get("target_record_id") and role in ('character_master', 'world_master'):
+                    seed = image_brief(ledger, workspace, lineage['screenplay_revision_id'], lineage['target_record_id'])
                 result = prepare_image_prompt(workflow_knowledge=workflow_knowledge,
-                    workflow_id=workflow_id, asset_role=role, prompt_seed=payload.get("prompt", ""),
+                    workflow_id=workflow_id, asset_role=role, prompt_seed=seed,
                     story_context=screenplay_context, target_context=target_context,
                     style_context=style_context, references=reference_context,
                     world_view_count=payload.get("world_view_count"), provider_call=image_prompt_provider)
@@ -3205,6 +3274,13 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     return _json_response(start_response, "503 Service Unavailable", {
                         "error": {"code": "image_workflow_not_ready", "message": (workflow or {}).get("disabled_reason", "Unknown image workflow.")},
                         "workflow": workflow})
+                if payload.get("storyboard_automatic") is not None:
+                    if type(payload["storyboard_automatic"]) is not bool:
+                        raise ValueError("storyboard_automatic must be boolean.")
+                    if payload["storyboard_automatic"] and not workflow.get("automation_available"):
+                        return _json_response(start_response, "409 Conflict", {
+                            "error": {"code": "image_automation_not_ready", "message": workflow.get("automation_disabled_reason") or "Review a successful manual run before automatic image preparation."},
+                            "admission_state": "not_created"})
                 compiled["settings"]["workflow_template_sha256"] = compiled["workflow_sha256"]
                 runtime = _runtime_guard(gpu_reader)
                 if not runtime.get("safe_to_submit"):
@@ -3443,11 +3519,15 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                                 "A selected reference is missing or unreadable in this workspace.") from exc
                         if media_type != record.get("media_type") or actual_digest.hexdigest() != reference["sha256"]:
                             raise ProductionAssetError(
-                                "A selected reference's media bytes changed after selection.")
+                                f"Reference {record['filename']!r} ({reference['asset_id']}) no longer matches "
+                                "the selected version. Reload the media library and select the current file again. "
+                                "No generation job was created.")
+                video_admission_started = True
                 result = jobs.create_job(workspace_id=payload.get("workspace_id"),
                     clip_id=payload.get("clip_id"), idempotency_key=payload.get("idempotency_key"),
                     request=payload.get("request"), retake_of_job_id=payload.get("retake_of_job_id"),
-                    keep_original=payload.get("keep_original"), source_lineage=payload.get("source_lineage"))
+                    keep_original=payload.get("keep_original"), source_lineage=payload.get("source_lineage"),
+                    _manual_submission=True)
                 return _json_response(start_response, "202 Accepted", result)
             if method == "GET" and path == "/api/video/jobs":
                 query = parse_qs(environ.get("QUERY_STRING", ""))
@@ -3461,6 +3541,10 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     raise ValueError("limit must be an integer.") from exc
                 return _json_response(start_response, "200 OK", {
                     "jobs": jobs.list_jobs(workspace_id=workspace, limit=limit, offset=int((query.get("offset") or ["0"])[0]))})
+            if method == "POST" and path == "/api/video/attempts/release":
+                payload = _read_json(environ)
+                return _json_response(start_response, "200 OK", jobs.release_attempt(
+                    workspace_id=payload.get("workspace_id"), idempotency_key=payload.get("idempotency_key")))
             if method == "GET" and path.startswith("/api/video/jobs/by-idempotency/"):
                 key = path.removeprefix("/api/video/jobs/by-idempotency/")
                 query = parse_qs(environ.get("QUERY_STRING", ""))
@@ -3515,13 +3599,16 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 return _serve_asset(environ, start_response, media_path)
             return _json_response(start_response, "404 Not Found", {"error": {"code": "not_found", "message": "Route not found."}})
         except IsolatedVideoContractError as exc:
-            return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": exc.code, "message": str(exc)}})
+            # Contract validation in create_job precedes durable admission too.
+            admission = {"admission_state": "not_created"} if method == "POST" and path == "/api/video/jobs" else {}
+            return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": exc.code, "message": str(exc)}, **admission})
         except StoryHandoffRejected as exc:
             return _json_response(start_response, "409 Conflict", {"error": {"code": "story_handoff_rejected", "message": str(exc)}, "admission_state": "not_created"})
         except (IsolatedJobConflict, LedgerConflict) as exc:
             return _json_response(start_response, "409 Conflict", {"error": {"code": "conflict", "message": str(exc)}})
         except RuntimeNotReady as exc:
-            return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "runtime_not_ready", "message": str(exc)}, "capability": exc.capability})
+            admission = {"admission_state": "not_created"} if method == "POST" and path == "/api/video/jobs" and not video_admission_started else {}
+            return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "runtime_not_ready", "message": str(exc)}, "capability": exc.capability, **admission})
         except LedgerNotFound:
             message = ("Image candidate or batch not found." if path.startswith("/api/images/") else
                        "Story workspace, revision, or import not found." if path.startswith("/api/story/") else
@@ -3538,7 +3625,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         except StyleSourceError as exc:
             return _json_response(start_response, "422 Unprocessable Entity", {"error": exc.as_dict()})
         except ProductionAssetError as exc:
-            return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_media_request", "message": str(exc)}})
+            admission = {"admission_state": "not_created"} if method == "POST" and path == "/api/video/jobs" and not video_admission_started else {}
+            return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_media_request", "message": str(exc)}, **admission})
         except ImageWorkflowError as exc:
             return _json_response(start_response, "422 Unprocessable Entity", {"error": exc.as_dict()})
         except (RuntimeError, MediaJobError) as exc:
@@ -3551,7 +3639,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_story_request", "message": str(exc)}})
             if path.startswith("/api/styles/"):
                 return _json_response(start_response, "422 Unprocessable Entity", {"error": {"code": "invalid_style_request", "message": str(exc)}})
-            return _json_response(start_response, "400 Bad Request", {"error": {"code": "invalid_request", "message": str(exc)}})
+            admission = {"admission_state": "not_created"} if method == "POST" and path == "/api/video/jobs" and not video_admission_started else {}
+            return _json_response(start_response, "400 Bad Request", {"error": {"code": "invalid_request", "message": str(exc)}, **admission})
         except ReasoningProviderError:
             if path in {"/api/styles/sources/analyze", "/api/styles/media/analyze"}:
                 return _json_response(start_response, "503 Service Unavailable", {"error": {

@@ -73,12 +73,12 @@ class ProductionImageAdmissionTests(unittest.TestCase):
                 setup = saved_setup()
                 setup['automate_steps']['world_images'] = True
                 workspace, revision_id = 'story-0123456789ab', 'sp-1'
-                ledger = ProductionLedger(root / 'storage/production/ledger.sqlite3')
+                ledger = ProductionLedger(root / 'services/production/ledger.sqlite3')
                 with ledger._connect() as db:
                     db.execute('INSERT INTO story_production_setups(workspace_id,screenplay_revision_id,setup_json) VALUES(?,?,?)',
                         (workspace, revision_id, json.dumps(setup)))
-                store = ProductionImageJobStore(root / 'storage/production/image-jobs.sqlite3')
-                selections = ProductionImageSelection(root / 'storage/production/image-jobs.sqlite3')
+                store = ProductionImageJobStore(root / 'services/production/image-jobs.sqlite3')
+                selections = ProductionImageSelection(root / 'services/production/image-jobs.sqlite3')
                 records = [{'kind': 'entity', 'type': 'location', 'record_id': 'loc-1'}]
                 if already_selected:
                     records.append({'kind': 'entity', 'type': 'character', 'record_id': 'char-1'})
@@ -96,7 +96,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
                      patch('story_builder.isolated_server.image_workflow_catalog', return_value={'workflows': [
                         {'workflow_id': 'z_image_turbo', 'automation_available': True}]}), \
                      patch('story_builder.isolated_server._runtime_guard', return_value={'safe_to_submit': True}), \
-                     patch('story_builder.services.reasoning_provider.provider_catalog', return_value={'providers': [
+                     patch('story_builder.services.reasoning_provider.provider_catalog', return_value={'provider': 'codex', 'providers': [
                         {'id': 'codex', 'available': True}]}):
                     result = json.loads(b''.join(app({'REQUEST_METHOD': 'POST',
                         'PATH_INFO': '/api/images/automated-stage', 'QUERY_STRING': '',
@@ -551,7 +551,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
                     "workflow_id": "z_image_turbo", "available": True,
                     "automation_available": True}]}), \
                  patch("story_builder.isolated_server._runtime_guard", return_value={"safe_to_submit": True}), \
-                 patch("story_builder.services.reasoning_provider.provider_catalog", return_value={"providers": [{
+                 patch("story_builder.services.reasoning_provider.provider_catalog", return_value={"provider": "codex", "providers": [{
                     "id": "codex", "available": True}]}):
                 result = json.loads(b"".join(app(environ, lambda status, headers: response.append(status))))
             self.assertEqual(response[0], "202 Accepted", result)
@@ -591,7 +591,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
                     "workflow_id": "z_image_turbo", "available": True,
                     "automation_available": True}]}), \
                  patch("story_builder.isolated_server._runtime_guard", return_value={"safe_to_submit": True}), \
-                 patch("story_builder.services.reasoning_provider.provider_catalog", return_value={"providers": [{
+                 patch("story_builder.services.reasoning_provider.provider_catalog", return_value={"provider": "codex", "providers": [{
                     "id": "codex", "available": True}]}):
                 status, result = request()
                 self.assertEqual(status, "202 Accepted")
@@ -611,6 +611,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
             self.assertEqual(sum(len(store.list_batch(project_id="story-0123456789ab", batch_id=item["batch_id"])["jobs"])
                 for item in result["batches"]), 2)
 
+    @patch("story_builder.services.storyboard.FFLF_AUTOMATION_ENABLED", True)
     def test_checked_frame_stage_admission_skips_user_skipped_clips(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -641,7 +642,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
                     "workflow_id": "z_image_turbo", "available": True,
                     "automation_available": True}]}), \
                  patch("story_builder.isolated_server._runtime_guard", return_value={"safe_to_submit": True}), \
-                 patch("story_builder.services.reasoning_provider.provider_catalog", return_value={"providers": [{
+                 patch("story_builder.services.reasoning_provider.provider_catalog", return_value={"provider": "codex", "providers": [{
                     "id": "codex", "available": True}]}):
                 result = json.loads(b"".join(app(environ, lambda status, headers: response.append(status))))
             self.assertEqual(response[0], "202 Accepted")
@@ -675,6 +676,13 @@ class ProductionImageAdmissionTests(unittest.TestCase):
         world_setup["image_stage_settings"]["world_images"] = dict(world_setup["image_stage_settings"]["character_images"])
         worlds = build_entity_image_batches(**{**kwargs, "step":"world_images", "setup":{"setup":world_setup}})
         self.assertIn("No people or characters", worlds[0]["prompt"])
+        drafted_worlds = build_entity_image_batches(**{**kwargs, "step":"world_images", "setup":{"setup":world_setup}},
+            world_prompt_drafter=lambda **_: "Owner-approved empty dock, worn concrete and diffuse daylight.")
+        self.assertEqual(drafted_worlds[0]["prompt"], "Owner-approved empty dock, worn concrete and diffuse daylight.")
+        self.assertEqual(drafted_worlds[0]["settings"], worlds[0]["settings"])
+        for step, callback in [("character_images", "character_prompt_drafter"), ("world_images", "world_prompt_drafter")]:
+            with self.subTest(step=step), self.assertRaisesRegex(ValueError, "Director did not prepare"):
+                build_entity_image_batches(**{**kwargs, "step":step, "setup":{"setup":world_setup}, callback:lambda **_: None})
         self.assertTrue(batches[0]["settings"]["director_review_required"])
         self.assertEqual(batches[0]["settings"]["director_provider"], "codex")
         self.assertIn("Hard shadows and restrained colors", batches[0]["prompt"])
@@ -708,6 +716,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "complete graph"):
             build_entity_image_batches(**{**base, "graph": {"status": "building", "records": []}})
 
+    @patch("story_builder.services.storyboard.FFLF_AUTOMATION_ENABLED", True)
     def test_checked_frame_stage_builds_deterministic_first_last_batches_and_respects_skips(self):
         setup = saved_setup()
         setup["automate_steps"]["frame_images"] = True
@@ -743,6 +752,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "exceeds the 6,999-character image limit"):
             build_clip_frame_image_batches(**{**args, "screenplay": oversized, "selected_frames": set()})
 
+    @patch("story_builder.services.storyboard.FFLF_AUTOMATION_ENABLED", True)
     def test_qwen_frame_batches_attach_only_selected_images_for_screenplay_cited_entities(self):
         setup = saved_setup()
         setup["automate_steps"]["frame_images"] = True
@@ -773,6 +783,7 @@ class ProductionImageAdmissionTests(unittest.TestCase):
         self.assertNotIn("unmentioned-image", json.dumps(last["settings"]["image_references"]))
         self.assertIn("Reference 1: opening frame", last["prompt"])
 
+    @patch("story_builder.services.storyboard.FFLF_AUTOMATION_ENABLED", True)
     def test_qwen_automated_frames_fail_with_clear_error_when_no_cited_image_is_selected(self):
         setup = saved_setup()
         setup["automate_steps"]["frame_images"] = True

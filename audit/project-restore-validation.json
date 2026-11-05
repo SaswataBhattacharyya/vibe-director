@@ -1,0 +1,46 @@
+{
+  "backend": {
+    "test_projects_and_named_storage": 23,
+    "test_storage_migration_and_output_destinations": 15,
+    "result": "passed"
+  },
+  "browser": {
+    "projects_ace_editor_pruning_output_destinations": 12,
+    "additional_ace_project_restore": 1,
+    "result": "passed"
+  },
+  "typecheck": "passed",
+  "live": {
+    "workspace_id": "story-f4e3e594089b",
+    "title": "trial 1 scar",
+    "folder": "/home/riki/Documents/ChatGPT/Vibe Director/local_data/projects/trial 1 scar",
+    "screenplay_revision_id": "screenplay-ff8e72d4d4a56c98",
+    "saved": true,
+    "fresh_browser_storage_restored": true,
+    "posts": [
+      "/api/studio-tools/output-destination",
+      "/api/projects/memory",
+      "/api/projects/save",
+      "/api/projects/open",
+      "/api/debug/events"
+    ],
+    "accepted": true,
+    "scene_count": 22
+  },
+  "actual_folder_isolated_restore": {
+    "workspace_id": "story-f4e3e594089b",
+    "title": "trial 1 scar",
+    "screenplay_revision_id": "screenplay-ff8e72d4d4a56c98",
+    "accepted": true,
+    "scene_count": 22,
+    "isolated_restore": true
+  },
+  "generation_started": false,
+  "service_reload": "idle API reloaded and standard launcher restarted; no durable active jobs before reload",
+  "limits": [
+    "Graph dynamic API imports, React callbacks, browser keys and persistence edges require manual confirmation. Report enumerates the traced boundaries, not every transitive application function.",
+    "67 JSON/data/fixture sources have zero AST nodes; documents intentionally excluded. No measured coverage.",
+    "Existing local checkpoint reopening preserves newer working data; same-installation reopen is not a substitute for independent portable-restore validation.",
+    "Native folder chooser and new provider/GPU generation not run. Shared repertoire is not wholly bundled; only owned/referenced saved media is included."
+  ]
+}

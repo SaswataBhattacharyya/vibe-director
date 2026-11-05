@@ -1,0 +1,478 @@
+{
+  "comparison": "task-scoped working-tree changes vs HEAD; untracked new Prompt Director files included; unrelated earlier project/editor/storyboard changes excluded",
+  "mode": "Graphify discovery plus manual source and persistence tracing",
+  "graph": {
+    "nodes": 4574,
+    "edges": 14292,
+    "depth": 2,
+    "discovery_query": "PromptDrafts",
+    "discovery_count": 117,
+    "limitations": "Graphify is a discovery aid; source confirms reported consumers. Code-only extraction skips documentation and unsupported/empty files. No TESTED_BY or measured coverage claim."
+  },
+  "overall_risk": "high (maximum known score 0.60; unknown factors allow 0.80)",
+  "limitations": [
+    "Scores are review priorities, not defect probabilities. Caller counts are unknown. Null test gap means a specific new adapter branch has no direct execution evidence.",
+    "66 focused CPU tests, 10 prompt/storyboard/image-cache browser tests and production build passed. Exported SKILL.md passed skill-creator validation.",
+    "Broader image UI suite: 11 pass, 28 failures. Many fixtures require removed workspace controls or incomplete project mocks. Entire suite is not green and failures have not all been baseline-isolated.",
+    "Full clip-plan suite: 3 failures and 1 error; the same four names fail using the unchanged HEAD implementation in memory.",
+    "Provider response quality and generated media were not tested by this validation; no provider or GPU work was initiated as a check."
+  ],
+  "findings": [
+    {
+      "node": "automated image prompt adapter",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 2881
+      },
+      "anchor": "                    def draft_entity_image(*, target, idempotency_key):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; character/world admission consumes saved briefs and scoped rules; callback unit evidence, new world closure branch not directly covered"
+    },
+    {
+      "node": "assisted clip-plan preparation",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 819
+      },
+      "anchor": "                prompt_guidance=read_guidance(self.ledger, workspace, 'video'))",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct caller; only new plans consume rules; frozen requests unchanged; specific adapter branch not directly exercised"
+    },
+    {
+      "node": "read_guidance",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 14
+      },
+      "anchor": "def read_guidance(ledger, workspace, scope):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "image_brief",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 29
+      },
+      "anchor": "def image_brief(ledger, workspace, revision, target):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "PromptDirector.__init__",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 36
+      },
+      "anchor": "    def __init__(self, ledger, story, workflow_knowledge=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "PromptDirector.get",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 60
+      },
+      "anchor": "    def get(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "PromptDirector.save",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 79
+      },
+      "anchor": "    def save(self, workspace, revision, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "sql_snapshot",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 102
+      },
+      "anchor": "def sql_snapshot(path, workspace):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "indirect persistence consumer; fresh-root checkpoint test restores rules, image briefs and history"
+    },
+    {
+      "node": "open_project",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 424
+      },
+      "anchor": "def open_project(root, folder):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "indirect project restoration consumer; project-specific rows restored by generic snapshot schema"
+    },
+    {
+      "node": "FieldEditProposals.propose",
+      "location": {
+        "file": "backend/story_builder/services/field_edit_proposals.py",
+        "line": 57
+      },
+      "anchor": "    def propose(self, workspace_id, payload, provider_call):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "indirect; unchanged durable idempotency ledger used by discussions and proposals"
+    },
+    {
+      "node": "PromptDirector.conversations",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 105
+      },
+      "anchor": "    def conversations(self, workspace):",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "risk_upper_bound": 0.55,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow_participation": 1,
+        "cross_community": 0,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "PromptDirector.discuss",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 122
+      },
+      "anchor": "    def discuss(self, workspace, revision, mode, payload, provider):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "PromptDirector.export",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 197
+      },
+      "anchor": "    def export(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "HTTP prompt Director routes",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 2449
+      },
+      "anchor": "                if len(parts) in (3, 4) and parts[1] == \"prompt-director\":",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; validates project/revision; durable discussion and approval API"
+    },
+    {
+      "node": "manual image prompt adapter",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 2887
+      },
+      "anchor": "                        def image_prompt_provider(*, temperature, prompt):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; HTTP test verifies exact saved character brief, scope and workflow guidance"
+    },
+    {
+      "node": "PromptDrafts.prepare",
+      "location": {
+        "file": "backend/story_builder/services/prompt_drafts.py",
+        "line": 105
+      },
+      "anchor": "    def prepare(self, workspace_id, revision_id, shot_key, workflow_id, *, setup_snapshot=None,",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; approved video rules reach new drafts; focused scope-isolation test"
+    },
+    {
+      "node": "generate_clip_plan",
+      "location": {
+        "file": "backend/story_builder/services/fully_automated_clip_plan.py",
+        "line": 33
+      },
+      "anchor": "def generate_clip_plan(*, workspace_id: str, screenplay_revision_id: str,",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; optional guidance supplied only by new assisted planning; default stays empty"
+    },
+    {
+      "node": "build_entity_image_batches",
+      "location": {
+        "file": "backend/story_builder/services/production_image_admission.py",
+        "line": 18
+      },
+      "anchor": "def build_entity_image_batches(*, workspace_id: str, screenplay: dict[str, Any],",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; optional world drafting callback; tests verify prompt replacement, settings preservation and invalid output rejection"
+    },
+    {
+      "node": "PromptDirector UI",
+      "location": {
+        "file": "frontend/src/PromptDirector.tsx",
+        "line": 6
+      },
+      "anchor": "export default function PromptDirector({workspace,revision,shotPrompts,shotWorkflows,disabled,onApplyShots,onBusy}:{",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; chat, animation, review and learning tested; saving rules preserves unrelated unsaved image edits"
+    },
+    {
+      "node": "Prompt Preparation integration",
+      "location": {
+        "file": "frontend/src/PromptPreparationPage.tsx",
+        "line": 263
+      },
+      "anchor": "      <PromptDirector key={`${workspaceId}:${revision.screenplay_revision_id}`} workspace={workspaceId} revision={revision.screenplay_revision_id}",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; accepted-project chat proposals update local shot drafts, require explicit existing Save"
+    },
+    {
+      "node": "ImageAssetsPage guidance version",
+      "location": {
+        "file": "frontend/src/ImageAssetsPage.tsx",
+        "line": 541
+      },
+      "anchor": "  const projectPromptKey=`${workspaceId.trim()}:${acceptedScreenplayId}`;",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; browser test verifies owner-edited image draft cache survives reload and refreshes after project guidance changes; no image jobs submitted"
+    },
+    {
+      "node": "prompt Director API client",
+      "location": {
+        "file": "frontend/src/lib/prompt-director-api.ts",
+        "line": 12
+      },
+      "anchor": "export const getPromptGuidance=(w:string,r:string)=>request<PromptGuidance>(path(w,r));",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "reason": "direct; project/revision API, save CAS, discussion and portable skill download"
+    },
+    {
+      "node": "PromptDirector.targets",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 46
+      },
+      "anchor": "    def targets(self, workspace, revision):",
+      "revision": "working-tree",
+      "risk": 0.25,
+      "risk_upper_bound": 0.35,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 0,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    },
+    {
+      "node": "PromptDirector.validate_lessons",
+      "location": {
+        "file": "backend/story_builder/services/prompt_director.py",
+        "line": 70
+      },
+      "anchor": "    def validate_lessons(lessons):",
+      "revision": "working-tree",
+      "risk": 0.25,
+      "risk_upper_bound": 0.35,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow_participation": 1,
+        "cross_community": 0,
+        "caller_count": null
+      },
+      "reason": "direct; prompt execution flow; focused behavioral test evidence"
+    }
+  ]
+}

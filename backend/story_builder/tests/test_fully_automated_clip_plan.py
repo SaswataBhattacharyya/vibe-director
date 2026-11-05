@@ -216,10 +216,17 @@ class FullyAutomatedClipPlanTests(unittest.TestCase):
             {"clips": [item for item in responses if item["scene_number"] == 1]},
             {"clips": [item for item in responses if item["scene_number"] == 2]},
         ]
+        calls = []
+        def guided_generator(**kwargs):
+            calls.append(kwargs["prompt"])
+            return scene_responses.pop(0)
         plan = generate_clip_plan(workspace_id="workspace-a", screenplay_revision_id="revision-a",
             screenplay=self.screenplay, drafts=drafts, min_seconds=5, max_seconds=10,
-            generate_json=lambda **kwargs: scene_responses.pop(0), fixed_workflow_id=R2V_WORKFLOW_ID)
+            generate_json=guided_generator, fixed_workflow_id=R2V_WORKFLOW_ID,
+            prompt_guidance="Approved rule: one concrete camera move per clip.")
         self.assertEqual([item["workflow_id"] for item in plan["clips"]], [R2V_WORKFLOW_ID] * 4)
+        self.assertEqual(len(calls), 2)
+        self.assertTrue(all("Approved rule: one concrete camera move per clip." in prompt for prompt in calls))
 
         for key in drafts:
             drafts[key]["workflow_id"] = FL2VA_WORKFLOW_ID

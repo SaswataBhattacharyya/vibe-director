@@ -35,7 +35,8 @@ def generate_clip_plan(*, workspace_id: str, screenplay_revision_id: str,
                        min_seconds: int, max_seconds: int,
                        has_style_video: bool = False, generate_json=None,
                        fixed_workflow_id: str | None = None,
-                       scene_start_identity_refs: bool = False) -> dict[str, Any]:
+                       scene_start_identity_refs: bool = False,
+                       prompt_guidance: str = '') -> dict[str, Any]:
     """Ask the configured reasoning provider to segment each scene, then validate it.
 
     Planning one scene per provider call keeps long screenplays out of a single
@@ -124,7 +125,7 @@ def generate_clip_plan(*, workspace_id: str, screenplay_revision_id: str,
             + director_skill_context(video=True) + "\n\nINPUT JSON:\n"
             + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         )
-        result = generate_json(prompt=prompt, temperature=0.2)
+        result = generate_json(prompt=prompt + ('\n' + prompt_guidance if prompt_guidance else ''), temperature=0.2)
         if not isinstance(result, Mapping) or type(result.get("clips")) is not list:
             raise ClipPlanError(f"The Director returned an invalid clip plan for Scene {scene['scene_number']}.")
         for row in result["clips"]:

@@ -1,0 +1,30 @@
+{
+  "status": "EXAMPLE_UNMAPPED_NOT_CONNECTED",
+  "notice": "All actions are initially unavailable until verified against the user's app source code.",
+  "capabilities": [
+    {"id": "project.read", "available": false, "adapter": null, "category": "context"},
+    {"id": "assets.list", "available": false, "adapter": null, "category": "media"},
+    {"id": "assets.get", "available": false, "adapter": null, "category": "media"},
+    {"id": "assets.import", "available": false, "adapter": null, "category": "media"},
+    {"id": "models.get_profile", "available": false, "adapter": null, "category": "models"},
+    {"id": "images.generate", "available": false, "adapter": null, "category": "generation"},
+    {"id": "screenplay.save", "available": false, "adapter": null, "category": "creative"},
+    {"id": "characters.save", "available": false, "adapter": null, "category": "creative"},
+    {"id": "environments.save", "available": false, "adapter": null, "category": "creative"},
+    {"id": "storyboard.panels.save", "available": false, "adapter": null, "category": "creative"},
+    {"id": "storyboard.render", "available": false, "adapter": null, "category": "generation"},
+    {"id": "video.prompts.save", "available": false, "adapter": null, "category": "creative"},
+    {"id": "video.generate", "available": false, "adapter": null, "category": "generation"},
+    {"id": "frames.extract_first", "available": false, "adapter": null, "category": "media"},
+    {"id": "frames.extract_last", "available": false, "adapter": null, "category": "media"},
+    {"id": "frames.extract_at", "available": false, "adapter": null, "category": "media"},
+    {"id": "audio.extract", "available": false, "adapter": null, "category": "media"},
+    {"id": "voice.generate", "available": false, "adapter": null, "category": "generation"},
+    {"id": "video.lipsync", "available": false, "adapter": null, "category": "generation"},
+    {"id": "video.upscale.set_enabled", "available": false, "adapter": null, "category": "settings"},
+    {"id": "editor.add_clip", "available": false, "adapter": null, "category": "editor"},
+    {"id": "editor.trim", "available": false, "adapter": null, "category": "editor"},
+    {"id": "editor.preview", "available": false, "adapter": null, "category": "editor"},
+    {"id": "export.render", "available": false, "adapter": null, "category": "export"}
+  ]
+}

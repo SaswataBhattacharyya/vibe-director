@@ -39,4 +39,4 @@ Source limitation found during implementation: in this fork, `1024_cascade` uses
 
 Preparation completed 2026-11-01: locked image rebuild, actual HTTP health/rejection tests, container recreation, dependency checks, native imports/linkage and offline CPU auxiliary-model loading passed. Final idle health includes `cuda_initialized=false`. Model manifests contain the published revisions/checksums and reused files. Native import diagnostics briefly initialize CUDA for FlexGEMM device detection in a separate process; they do not render. Owner GPU generation, model quality, timing and actual Blender import/render remain untested.
 
-For Vibe integration and input/output bindings see [the integration handoff](../../../../docs/MULTIVIEW_VIBE_DIRECTOR_HANDOFF_2026-11-01.md). Keep the separate service lifecycle; existing Comfy/local-AI-stack launchers are unchanged.
+Vibe integration is implemented in `backend/story_builder/services/multiview_3d.py` and `trellis_studio.py`. Confirm current input/output bindings there and in the workflow JSON. Keep the separate service lifecycle; existing Comfy/local-AI-stack launchers are unchanged.

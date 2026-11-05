@@ -1,3 +1,4 @@
+import {mockProject} from './fixtures/project.mjs';
 import assert from 'node:assert/strict';
 import { test } from '@playwright/test';
 
@@ -22,11 +23,11 @@ test('Audio Utilities imports shared media and filters operation-compatible sour
     const matching = assets.filter(asset=>asset.kind===kind);
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({assets:matching,total:matching.length})});
   });
-  await page.goto(`${process.env.VIBE_UI_BASE_URL || 'http://127.0.0.1:5180'}/#/media-prep`);
+  await mockProject(page,'ws-test'); await page.goto(`${process.env.VIBE_UI_BASE_URL || 'http://127.0.0.1:5180'}/#/media-prep`);
   await page.getByRole('button',{name:'Open Audio'}).click();
   await page.getByRole('button',{name:'Open',exact:true}).last().click();
   await page.getByRole('heading',{name:'Audio Utilities'}).waitFor();
-  await page.getByLabel('Audio utility workspace').selectOption('ws-test');
+
   const inputs = page.locator('input[type=file]');
   await inputs.nth(0).setInputFiles([
     {name:'voice.wav',mimeType:'audio/wav',buffer:Buffer.from('audio')},

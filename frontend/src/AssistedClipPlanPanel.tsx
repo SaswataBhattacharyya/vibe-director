@@ -1,3 +1,4 @@
+import {managedProjectId} from './lib/media-workspace';
 import RunClipLiveView from './RunClipLiveView';
 import { useEffect, useRef, useState } from 'react';
 import { listMediaAssets, MediaAsset, rankMediaAssets } from './lib/media-api';
@@ -37,9 +38,9 @@ export default function AssistedClipPlanPanel({ visible }: { visible: boolean })
   const refresh = async () => {
     const currentRequest = ++requestId.current;
     const requestedWorkspace = new URLSearchParams(window.location.hash.split('?')[1] || '').get('workspace_id') || '';
-    const workspaceId = requestedWorkspace || localStorage.getItem('vibe-story-selected-v1') || '';
+    const workspaceId = managedProjectId() || requestedWorkspace || localStorage.getItem('vibe-story-selected-v1') || '';
     setContext(null); setPlan(null); setRun(null); setMaps({}); setSavedMaps({}); setContinuity({}); setSavedContinuity({}); setClipPrompts({}); setChoice({}); setError(''); setLoading(false);
-    if (!workspaceId || !visible) return;
+    if (!workspaceId || workspaceId==='tool-library' || !visible) return;
     setLoading(true);
     try {
       const workspace = await getStoryWorkspace(workspaceId);

@@ -28,7 +28,13 @@ def identity(value):
 
 
 def project_path(root, value):
-    return Path(root) / 'projects' / identity(value) / 'music' / 'jukebox' / 'project.json'
+    from .storage_paths import checked, project_root
+    value = identity(value)
+    registry = checked(root, 'library', 'jukebox-sessions.json')
+    owners = json.loads(registry.read_text()) if registry.exists() else {}
+    if value in owners:
+        return checked(project_root(root, owners[value]), 'music', 'jukebox', value, 'project.json')
+    return checked(root, 'projects', value, 'music', 'jukebox', 'project.json')
 
 
 def write(path, value, overwrite=True):
@@ -145,7 +151,15 @@ def save(root, body, creating=False):
         if not isinstance(p,dict): raise ValueError('Expected a music project.')
         if creating:
             p={**p,'id':'jukebox-'+uuid.uuid4().hex[:12],'revision':0}
-            p['workspace_id']=p['id']
+            p['workspace_id']=p.get('workspace_id') or p['id']
+            from .storage_paths import checked, project_root
+            project_root(root, p['workspace_id'])
+            registry=checked(root,'library','jukebox-sessions.json')
+            owners=json.loads(registry.read_text()) if registry.exists() else {}
+            owners[p['id']]=p['workspace_id']
+            # Validate before publishing a locator for the new session.
+            validate(root,p)
+            write(registry,owners)
         path=project_path(root,p['id'])
         current=json.loads(path.read_text()) if path.exists() else None
         if not creating and (current is None or current['revision'] != body.get('revision')): raise ValueError('Project changed in another tab. Reopen before saving.')
@@ -160,13 +174,31 @@ def save(root, body, creating=False):
         return p
 
 
-def snapshot(root):
-    result=[]
-    for path in (Path(root)/'projects').glob('*/music/jukebox/project.json'):
+def export_path(root, job_id):
+    """Keep frozen export metadata; verified project copies recover missing originals."""
+    record=json.loads((home(root)/'exports'/f'{job_id}.json').read_text())
+    from .storage_paths import relocated_path
+    path=relocated_path(root,Path(record['path']))
+    if path.is_file() and not any(p.is_symlink() for p in (path,*path.parents)):
+        return path
+    copy=home(root)/'saved-exports'/job_id/record['name']
+    if copy.is_file() and not any(p.is_symlink() for p in (copy,*copy.parents)):
+        return copy
+    raise ValueError('Locate the saved music export before opening it.')
+
+
+def snapshot(root, workspace=None):
+    result=[]; legacy=[]
+    for path in [*(Path(root)/'projects').glob('*/music/jukebox/project.json'), *(Path(root)/'projects').glob('*/music/jukebox/*/project.json')]:
         try:
-            p=json.loads(path.read_text());result.append({'id':p['id'],'name':p['name'],'revision':p['revision']})
+            p=json.loads(path.read_text())
+            if workspace and p.get('workspace_id') != workspace:
+                if p.get('workspace_id') == p.get('id'):
+                    legacy.append({'id':p['id'],'name':p['name'],'revision':p['revision']})
+                continue
+            result.append({'id':p['id'],'name':p['name'],'revision':p['revision']})
         except (ValueError,KeyError): continue
-    return {'projects':result,'output':str(home(root)/'output')}
+    return {'projects':result,'legacy_projects':legacy,'output':str(home(root)/'output')}
 
 
 def folder(root, body):

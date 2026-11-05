@@ -1,0 +1,314 @@
+{
+  "comparison": "Latest timeout and separate project-dialog task, scoped working-tree review",
+  "mode": "manual source tracing plus Graphify depth-2 discovery",
+  "overall_risk": "high possible (maximum known 0.60; maximum upper bound 0.80)",
+  "limitations": [
+    "Scoped task impact review in an already dirty checkout; HEAD diff includes unrelated earlier edits and untracked ProjectController/tests. Those earlier changes are excluded from this assessment.",
+    "Manual source traversal: provider dispatch and API handlers to graph/screenplay persistence, and project dialogs through action to save/open/install. Graphify affected _run_json_command --depth 2 confirmed CLI callers and tests; no completeness claim for all downstream Director features.",
+    "Graphify full refresh: 4579 nodes, 14309 edges; 73 zero-node source files and 39 unsupported files omitted, 150 non-code files skipped.",
+    "Scores are prioritization heuristics, not failure probabilities. Caller-count factor unknown; Ollama duration branch has no direct test evidence in this run. Other test_gap=0 values are static/reference evidence, not measured coverage.",
+    "58 focused backend tests, 8 API-mocked browser project tests and production build passed. Browser tests inspect 390px layout and both picker request payloads; native OS picker and actual 30-minute model completion were not exercised.",
+    "Runtime restarted only after no active work was found. Read-only API verification retained Lion_mouse project. No provider/GPU generation or real project switch used as validation."
+  ],
+  "findings": [
+    {
+      "node": "backend/story_builder/services/reasoning_backends.py::def generate(",
+      "location": {
+        "file": "backend/story_builder/services/reasoning_backends.py",
+        "line": 85
+      },
+      "anchor": "def generate(provider, model, prompt, *, image_paths, output_schema, temperature,",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.4,
+      "upper_bound": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "OpenCode inherits CLI timeout; Ollama urlopen uses the same constant. Model-selection tests pass but no real Ollama socket-duration acceptance."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/story_authoring.py::def build_story_graph(",
+      "location": {
+        "file": "backend/story_builder/services/story_authoring.py",
+        "line": 1005
+      },
+      "anchor": "    def build_story_graph(self, *, workspace_id: str, source_revision_id: str,",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Graph route -> build_story_graph -> injected generator -> generate_json. Duplicate-request claim expiry now 35 minutes. Graph replay test covers 15 and 40 minutes without resubmitting uncertain work."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/story_authoring.py::def draft_screenplay(",
+      "location": {
+        "file": "backend/story_builder/services/story_authoring.py",
+        "line": 1612
+      },
+      "anchor": "    def draft_screenplay(self, *, workspace_id: str, source_revision_id: str,",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Screenplay route -> draft_screenplay -> injected generator -> generate_json. Same 35-minute durable claim window; replay test preserves later pending chunks and avoids duplicate calls."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def handle(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 647
+      },
+      "anchor": "def handle(root, story, environ, start_response, read_json, respond):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "New and Open retain separate existing API routes; 22 project backend tests included in the 58 focused tests. No storage schema or identity changes in this task."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def save(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 338
+      },
+      "anchor": "def save(root, workspace, folder, memory):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Controller action checkpoints outgoing project before switch; existing save/restore and active-job guards retained."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def open_project(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 424
+      },
+      "anchor": "def open_project(root, folder):",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Open receives selected exact project folder and restores saved content through the existing service."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/reasoning_provider.py::def _run_json_command(",
+      "location": {
+        "file": "backend/story_builder/services/reasoning_provider.py",
+        "line": 189
+      },
+      "anchor": "def _run_json_command(command: list[str], prompt: str, *, timeout_seconds: int = REASONING_TIMEOUT_SECONDS, env=None) -> str:",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Codex and OpenCode CLI execution now waits 1800 seconds; process-group termination and isolated working directories preserved. ReasoningTimeoutTests asserts timeout and cleanup."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/reasoning_provider.py::def _codex_json(",
+      "location": {
+        "file": "backend/story_builder/services/reasoning_provider.py",
+        "line": 256
+      },
+      "anchor": "def _codex_json(prompt: str, *, image_paths: list[str | Path] | None = None,",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Calls _run_json_command; image-input invocation regression tests pass."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "backend/story_builder/services/reasoning_provider.py::def generate_json(",
+      "location": {
+        "file": "backend/story_builder/services/reasoning_provider.py",
+        "line": 309
+      },
+      "anchor": "def generate_json(",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared Director generator dispatches Codex or reasoning_backends.generate; all reasoning requests inherit the larger timeout, not only screenplay."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "frontend/src/ProjectController.tsx::export default function ProjectController(",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 39
+      },
+      "anchor": "export default function ProjectController({children}:{children:ReactNode}){",
+      "revision": "working-tree",
+      "changed": true,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Two CompactPopover dialogs reuse existing choose/action handlers. Eight browser project cases exercise default/custom save parent, load path, A-B-A memory, blocked switching, Editor and ACE restore."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "frontend/src/ProjectController.tsx::const action=async(",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 81
+      },
+      "anchor": " const action=async(operation:string,target?:string)=>{if(!project||actionBusy.current)return;actionBusy.current=true;setBusy(true);setError('');try{",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "New sends parent_folder and title, Open sends exact folder; outgoing memory/checkpoint and returned identity installation remain the shared path."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "frontend/src/ProjectController.tsx::function install(",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 25
+      },
+      "anchor": "function install(project:Project,restore:boolean){",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Returned active identity and browser memory reinstall across page remounts. Existing project switching and stale-memory browser checks pass."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    },
+    {
+      "node": "frontend/src/CompactPopover.tsx::export default function CompactPopover(",
+      "location": {
+        "file": "frontend/src/CompactPopover.tsx",
+        "line": 6
+      },
+      "anchor": "export default function CompactPopover({label,children,onOpenChange,disabled=false}:{label:string;children:ReactNode;onOpenChange?:(open:boolean)=>void;disabled?:boolean}) {",
+      "revision": "working-tree",
+      "changed": false,
+      "risk": 0.4,
+      "upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing shared portal dialog provides outside-click/Escape dismissal and responsive positioning; no component code changes."
+      ],
+      "verification": "VERIFIED (bundled source citation verifier; 13 checked, 0 rejected)"
+    }
+  ]
+}

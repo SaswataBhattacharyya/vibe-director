@@ -1,0 +1,64 @@
+{
+  "model": "MiniMax H3",
+  "route": "r2v",
+  "duration_seconds": 15,
+  "prompt_max_unicode_codepoints_exclusive": 7000,
+  "references": [
+    {
+      "slot": "<Picture 1>",
+      "asset_id": "mouse-canonical-master-asset",
+      "binding": "character_appearance",
+      "role": "mouse"
+    },
+    {
+      "slot": "<Picture 2>",
+      "asset_id": "lion-canonical-master-asset",
+      "binding": "character_appearance",
+      "role": "lion"
+    },
+    {
+      "slot": "<Picture 3>",
+      "asset_id": "prior-take-continuity-frame",
+      "binding": "image_reference_not_guaranteed_first_frame",
+      "role": "continuity-visual"
+    },
+    {
+      "slot": "<audio1>",
+      "asset_id": "lion-voice-sample",
+      "binding": "speaker_voice_identity",
+      "role": "lion"
+    }
+  ],
+  "mode_warning": "The reviewed R2V schema has images/videos/audios, NOT a dedicated first_frame field; use FFLF only for actual first/last frame route when both required images are supplied.",
+  "dialogue": [
+    {
+      "speaker": "lion",
+      "text": "You saved me, little friend!",
+      "t_start_s": 12,
+      "t_end_s": 15,
+      "voice_slot": "<audio1>"
+    }
+  ],
+  "beat_windows": [
+    [
+      0,
+      2
+    ],
+    [
+      2,
+      6
+    ],
+    [
+      6,
+      9
+    ],
+    [
+      9,
+      12
+    ],
+    [
+      12,
+      15
+    ]
+  ]
+}

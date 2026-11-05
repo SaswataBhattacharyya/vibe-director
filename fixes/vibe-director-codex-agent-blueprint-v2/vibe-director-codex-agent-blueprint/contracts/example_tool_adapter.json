@@ -1,0 +1,40 @@
+{
+  "schema_version": "proposal-v1",
+  "tool_id": "audio.extract_mp3",
+  "group": "audio.extract",
+  "execution_kind": "app_api",
+  "status": "source_confirmed_runtime_unverified",
+  "permission_tier": "R1",
+  "endpoint_template": "POST /api/audio/{workspace_id}/utilities/jobs",
+  "input_schema": {
+    "type": "object",
+    "required": [
+      "workspace_id",
+      "asset_ids",
+      "operation"
+    ],
+    "properties": {
+      "workspace_id": {
+        "type": "string"
+      },
+      "asset_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1
+      },
+      "operation": {
+        "const": "extract_mp3"
+      },
+      "settings": {
+        "type": "object"
+      }
+    }
+  },
+  "capability_endpoint": "GET /api/audio/utilities/capabilities",
+  "result": "registered audio asset and durable job",
+  "reconciliation": "existing audio utility jobs API",
+  "ui_target": "Media Prep > Audio Tools > Extract MP3",
+  "notes": "Verify actual code current branch before wiring. Source video original must remain unchanged."
+}

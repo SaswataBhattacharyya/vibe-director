@@ -16,7 +16,7 @@ from story_builder.services.isolated_video_jobs import IsolatedVideoJobs
 from story_builder.services.isolated_r2v_assets import R2VStagingError
 from story_builder.services.production_ledger import ProductionLedger, stable_hash
 from story_builder.services.production_r2v_capability import r2v_capability, record_successful_r2v_smoke
-from story_builder.services.minimax_h3_graph_compiler import ResolvedAsset, compile_r2v_graph
+from story_builder.services.minimax_h3_graph_compiler import GraphPlanError, ResolvedAsset, compile_r2v_graph, validate_comfy_capabilities
 from story_builder.services.isolated_video_jobs import prepare_isolated_take
 from story_builder.isolated_server import create_app
 
@@ -34,6 +34,45 @@ def request(**changes):
         "videos": [], "audios": []}
     row.update(changes)
     return row
+
+
+class R2VSocketCapabilityTests(TestCase):
+    def nodes(self):
+        nodes = {name: {} for name in ("MiniMaxH3ReferenceToVideo", "LoadImage", "LoadAudio", "VHS_LoadVideo", "CreateVideo", "SaveVideo")}
+        nodes["MiniMaxH3ReferenceToVideo"] = {"input": {
+            "required": {key: [] for key in ("clip", "prompt", "width", "height", "length", "ref_image_size")},
+            "optional": {key: [] for key in ("vae", "audio_vae", "ref_images", "ref_videos", "ref_video_audios", "ref_audios")}}}
+        nodes["VHS_LoadVideo"] = {"input": {"required": {key: [] for key in
+            ("video", "force_rate", "custom_width", "custom_height", "frame_load_cap", "skip_first_frames", "select_every_nth")}}}
+        return nodes
+
+    def test_installed_optional_vae_sockets_are_supported(self):
+        self.assertEqual(validate_comfy_capabilities(self.nodes())["status"], "ready")
+
+    def test_legacy_required_vae_sockets_remain_supported(self):
+        nodes = self.nodes(); inputs = nodes["MiniMaxH3ReferenceToVideo"]["input"]
+        for key in ("vae", "audio_vae"):
+            inputs["required"][key] = inputs["optional"].pop(key)
+        self.assertEqual(validate_comfy_capabilities(nodes)["status"], "ready")
+
+    def test_missing_workflow_sockets_are_rejected_with_names(self):
+        for key in ("clip", "prompt", "width", "height", "length", "ref_image_size", "vae", "audio_vae"):
+            with self.subTest(socket=key):
+                nodes = self.nodes(); inputs = nodes["MiniMaxH3ReferenceToVideo"]["input"]
+                for group in ("required", "optional"):
+                    inputs[group].pop(key, None)
+                with self.assertRaisesRegex(GraphPlanError, "lacks workflow inputs: " + key):
+                    validate_comfy_capabilities(nodes)
+
+    def test_reference_groups_and_video_loader_still_required(self):
+        for key in ("ref_images", "ref_videos", "ref_video_audios", "ref_audios"):
+            with self.subTest(group=key):
+                nodes = self.nodes(); del nodes["MiniMaxH3ReferenceToVideo"]["input"]["optional"][key]
+                with self.assertRaisesRegex(GraphPlanError, "autogrow reference input"):
+                    validate_comfy_capabilities(nodes)
+        nodes = self.nodes(); del nodes["VHS_LoadVideo"]["input"]["required"]["video"]
+        with self.assertRaisesRegex(GraphPlanError, "loader lacks required inputs"):
+            validate_comfy_capabilities(nodes)
 
 
 class IsolatedR2VContractTests(TestCase):

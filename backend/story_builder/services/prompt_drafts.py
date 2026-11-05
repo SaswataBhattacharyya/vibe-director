@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from story_builder.services.director_skills import director_skill_context
+from story_builder.services.prompt_director import read_guidance
 
 import hashlib
 import json
@@ -161,6 +162,7 @@ class PromptDrafts:
             "Write short, crisp production prompts: concrete subject and essential setting/light, one observable event or tightly linked action, at most one camera move, and a clear endpoint. Aim for 60–120 words of visual direction, fewer when sufficient; this is a soft target excluding exact dialogue and required workflow fields. Never pad to the target or truncate source action or speech. Remove repeated instructions, decorative adjective/lens lists, reasoning and story summaries. Keep mandatory model section names, exact speaker-labelled dialogue and essential sound balance. "
             "Keep the final prompt strictly below 7000 Unicode code points. The user will review and edit it.\n\n"
             f"{director_skill_context(video=True)}\n\n"
+            f"{read_guidance(self.ledger, workspace_id, 'video')}\n\n"
             f"MODEL: minimax_h3\nWORKFLOW: {workflow_id}\n"
             f"SOURCE-LINKED WORKFLOW GUIDANCE: {json.dumps(facts, ensure_ascii=False)}\n"
             f"PINNED CREATIVE STYLE (direction only; never new story canon): {json.dumps(style_context, ensure_ascii=False)}\n"

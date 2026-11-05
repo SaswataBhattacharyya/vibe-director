@@ -1,0 +1,385 @@
+{
+  "comparison": "task-scoped working tree vs HEAD; previous request-metadata fix and unrelated repo changes excluded",
+  "mode": "source trace plus refreshed Graphify affected(depth=2)",
+  "overall_risk": "high (.60 known/.70 possible)",
+  "limitations": [
+    "Fresh graph: 4457 nodes / 13858 edges, 458 code files. Reverse depth-2 graph discovery returned 18 candidates; dynamic video closure confirmed in source because graph omitted that call.",
+    "The six other service callers retain default behavior. Broad import-only and transitive graph candidates are not evidence of behavioral change; raw discovery saved in /tmp/vibe-ltx-affected.txt.",
+    "Real CPU media integration, mocked transport; no new GPU acceptance job submitted. Existing owner-submitted job resumed via normal recovery."
+  ],
+  "findings": [
+    {
+      "node": "media_jobs.py::collect_outputs",
+      "location": {
+        "file": "backend/story_builder/services/media_jobs.py",
+        "line": 546
+      },
+      "anchor": "def collect_outputs(history: dict[str, Any], *, destination_dir: Path, comfy_url: str,",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.5,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "evidence": [
+        "Seven source-confirmed service callers. Only video opts into output_only=True; default behavior regression-tested for all five media groups.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "isolated_video_jobs.py::make_output_collector",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 3013
+      },
+      "anchor": "def make_output_collector(*, data_root: Path, ledger: ProductionLedger, comfy_url: str,",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Nested collect excludes input/temp history entries before downloading/probing. Existing original/chunk checkpoints remain private; final result alone reaches library/output relocation.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ltx_chunks.py::collect_chunk",
+      "location": {
+        "file": "backend/story_builder/services/ltx_chunks.py",
+        "line": 135
+      },
+      "anchor": "def collect_chunk(take, source, *, data_root, joined_path):",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Collector -> collect_chunk -> join_chunks: validates enhanced dimensions/frame count and checkpoints each non-final chunk. Exact live first-chunk replay passed.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ltx_chunks.py::join_chunks",
+      "location": {
+        "file": "backend/story_builder/services/ltx_chunks.py",
+        "line": 59
+      },
+      "anchor": "def join_chunks(chunks, output, width, height):",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Final chunk collection joins saved windows with bounded overlap blending. Real FFmpeg test covers all three chunks and exact final frames.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "t2v_pipeline.py::remux_final",
+      "location": {
+        "file": "backend/story_builder/services/t2v_pipeline.py",
+        "line": 100
+      },
+      "anchor": "def remux_final(take, refined, destination, *, data_root):",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Collector -> remux_final validates canvas/frame count and copies original audio onto stitched result. Real CPU test verifies audio and final 144 frames.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "production_job_worker.py::_commit_collected_stage",
+      "location": {
+        "file": "backend/story_builder/services/production_job_worker.py",
+        "line": 107
+      },
+      "anchor": "    def _commit_collected_stage(self, take, outputs):",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Original/chunk records go to internal ledger checkpoints; only final asset outputs transition to needs_review.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "production_job_worker.py::reconcile_existing_once",
+      "location": {
+        "file": "backend/story_builder/services/production_job_worker.py",
+        "line": 314
+      },
+      "anchor": "    def reconcile_existing_once(self) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Known completed engine prompt -> collect -> checkpoint. Live recovered chunk 0 without a new base-video submission.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "production_ledger.py::save_ltx_chunk",
+      "location": {
+        "file": "backend/story_builder/services/production_ledger.py",
+        "line": 317
+      },
+      "anchor": "    def save_ltx_chunk(self, take, output):",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Worker -> save_ltx_chunk checks collecting ownership and ordered chunk completion before advancing; immutable request unchanged.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "media_library.py::register_generated_video",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 962
+      },
+      "anchor": "def register_generated_video(root: Path, workspace_id: str, relative_path: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Collector registers only stitched/remuxed final; real CPU test asserts one library video and one MP4 under chosen output folder.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "production_image_worker.py::_collect_completed",
+      "location": {
+        "file": "backend/story_builder/services/production_image_worker.py",
+        "line": 426
+      },
+      "anchor": "    def _collect_completed(self, job: dict[str, Any], prompt_id: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared collector call omits output_only; behavior unchanged.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "audio_effects.py::run_effect_job",
+      "location": {
+        "file": "backend/story_builder/services/audio_effects.py",
+        "line": 235
+      },
+      "anchor": "def run_effect_job(*, project_id: str, project_dir: Path, output_root: Path, comfy_input_dir: Path, comfy_url: str, job: dict[str, Any], source: Path, update: Callable[[dict[str, Any]], None], workspace_output: Path | None = None) -> None:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared collector call omits output_only; behavior unchanged.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "audio_tts.py::run_timed_job",
+      "location": {
+        "file": "backend/story_builder/services/audio_tts.py",
+        "line": 186
+      },
+      "anchor": "def run_timed_job(*, project_id: str, project_dir: Path, output_root: Path, job: dict[str, Any], workflow: dict[str, Any], comfy_url: str, update: Callable[[dict[str, Any]], None], workspace_output: Path | None = None) -> None:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared collector call omits output_only; behavior unchanged.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "control_foley.py::run_job",
+      "location": {
+        "file": "backend/story_builder/services/control_foley.py",
+        "line": 141
+      },
+      "anchor": "def run_job(job: dict[str, Any], *, project_dir: Path, output_root: Path, comfy_url: str, progress: Callable[[dict[str, Any]], None], workspace_output: Path | None = None) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared collector call omits output_only; behavior unchanged.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "music_sound.py::run_music_job",
+      "location": {
+        "file": "backend/story_builder/services/music_sound.py",
+        "line": 89
+      },
+      "anchor": "def run_music_job(job: dict[str, Any], *, project_dir: Path, output_root: Path, comfy_url: str, progress: Callable[[dict[str, Any]], None], workspace_output: Path | None = None) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared collector call omits output_only; behavior unchanged.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "voice_studio.py::run",
+      "location": {
+        "file": "backend/story_builder/services/voice_studio.py",
+        "line": 141
+      },
+      "anchor": "def run(root,identity,request,update):",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared collector call omits output_only; behavior unchanged.",
+        "Test evidence is source-reference/CPU execution, not measured coverage. Security score marks hash/SQL/publication integrity boundaries, not a vulnerability."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ],
+  "live_acceptance": {
+    "job_id": "d4ac1943-ea19-44a1-98f7-04b4d3fb7fdc",
+    "status": "needs_review",
+    "published_outputs": 1,
+    "width": 1344,
+    "height": 768,
+    "video_frames": 144,
+    "fps": 24,
+    "video_seconds": 6,
+    "original_audio": true,
+    "saved_file_hash_verified": true,
+    "playback_http": 206
+  }
+}

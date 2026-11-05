@@ -54,11 +54,12 @@ from story_builder.services.media_library import register_generated_video, set_a
 from story_builder.services.media_library import list_assets as list_workspace_media_assets
 from story_builder.services.fully_automated_clip_plan import generate_clip_plan, generate_scene_clip_plan, validate_clip_plan
 from story_builder.services.fully_automated_clip_plan import ClipPlanError
+from story_builder.services.prompt_director import read_guidance
 
 _SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$")
 _WORKSPACE_NS = uuid.UUID("ec00c6b2-2bbb-4a36-9f50-755d47913f0e")
 _SOURCE_LINEAGE_FIELDS = {"screenplay_revision_id", "setup_hash", "scene_number", "shot_number", "source_prompt_sha256"}
-_OPTIONAL_SOURCE_LINEAGE_FIELDS = {"knowledge_ref", "style_ref", "planned_clip_id"}
+_OPTIONAL_SOURCE_LINEAGE_FIELDS = {"knowledge_ref", "style_ref", "planned_clip_id", "board_revision"}
 
 
 class IsolatedJobConflict(ValueError):
@@ -106,6 +107,10 @@ def _lineage_identity(value):
     result = {"screenplay_revision_id": revision, "setup_hash": setup_hash,
             "source_prompt_sha256": source_prompt_sha256,
             "scene_number": scene, "shot_number": shot}
+    if "board_revision" in value:
+        if type(value["board_revision"]) is not int or value["board_revision"] < 1:
+            raise ValueError("source_lineage.board_revision must identify a saved storyboard revision.")
+        result["board_revision"] = value["board_revision"]
     if "planned_clip_id" in value:
         result["planned_clip_id"] = _identifier(value["planned_clip_id"], "planned_clip_id")
     if "knowledge_ref" in value:
@@ -146,6 +151,21 @@ def _validate_story_source_lineage(db, story, workspace, clip, request, supplied
         (workspace, identity["screenplay_revision_id"])).fetchone()
     if revision is None or not story._screenplay_is_currently_accepted(db, revision):
         raise StoryHandoffRejected("Story-linked video requires the current accepted screenplay revision.")
+    if "board_revision" in identity:
+        from .storyboard import Storyboard
+        if media_root is None:
+            raise StoryHandoffRejected("Storyboard project storage is unavailable.")
+        board = Storyboard(story.ledger, story, media_root)
+        shot_key = f"{identity['scene_number']}.{identity['shot_number']}"
+        expected = board.video_handoff(workspace, identity['screenplay_revision_id'], shot_key)
+        if any(identity.get(k) != expected[k] for k in ('board_revision','setup_hash','source_prompt_sha256')) or clip != expected['clip_id']:
+            raise StoryHandoffRejected("Storyboard changed. Reopen this shot from Frame per shot before generating.")
+        if request['workflow_id'] != expected['workflow_id'] or request['duration_seconds'] != expected['duration']:
+            raise StoryHandoffRejected("Video workflow and duration must match the saved storyboard shot.")
+        if expected['first_frame_id'] and request['workflow_id'] == FL2VA_WORKFLOW_ID:
+            if request.get('first_frame',{}).get('asset_id') != expected['first_frame_id'] or request.get('last_frame',{}).get('asset_id') != expected['last_frame_id']:
+                raise StoryHandoffRejected("FFLF endpoints must match the saved storyboard shot.")
+        return {**identity, "workflow_id": request['workflow_id']}
     setup_row = db.execute("SELECT setup_json FROM story_production_setups WHERE workspace_id=? AND screenplay_revision_id=?",
         (workspace, identity["screenplay_revision_id"])).fetchone()
     if setup_row is None:
@@ -243,6 +263,11 @@ class IsolatedVideoJobs:
                 );
                 CREATE INDEX IF NOT EXISTS isolated_video_jobs_clip_idx
                     ON isolated_video_jobs(workspace_id, clip_id, created_at);
+                CREATE TABLE IF NOT EXISTS isolated_video_released_attempts (
+                    workspace_id TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL,
+                    PRIMARY KEY(workspace_id, idempotency_key)
+                );
                 CREATE TABLE IF NOT EXISTS isolated_video_assets (
                     asset_id TEXT PRIMARY KEY,
                     job_id TEXT NOT NULL REFERENCES isolated_video_jobs(job_id) ON DELETE CASCADE,
@@ -471,7 +496,7 @@ class IsolatedVideoJobs:
         return {"workflow_id": R2V_WORKFLOW_ID, "workflow_version": R2V_WORKFLOW_VERSION,
             "workflow_sha256": R2V_GRAPH_SHA256,
             "prompt": compiled_prompt,
-            "duration_seconds": duration, "aspect_ratio": manifest["setup"].get("aspect_ratio", "16:9"),
+            "duration_seconds": duration, "aspect_ratio": setup.get("aspect_ratio", "16:9"),
             "resolution_preset": cls._quality_preset(setup["video_quality"]), "steps": 4, "seed": 1,
             "ref_image_size": "match", "images": images, "audios": [], "videos": videos}
 
@@ -795,7 +820,8 @@ class IsolatedVideoJobs:
         try:
             plan = generate_clip_plan(workspace_id=workspace, screenplay_revision_id=revision_id,
                 screenplay=screenplay, drafts=drafts, min_seconds=minimum, max_seconds=maximum,
-                fixed_workflow_id=workflow, generate_json=self.full_clip_plan_provider)
+                fixed_workflow_id=workflow, generate_json=self.full_clip_plan_provider,
+                prompt_guidance=read_guidance(self.ledger, workspace, 'video'))
         except ClipPlanError as exc:
             raise StoryHandoffRejected(str(exc)) from exc
         with self.ledger._connect() as db:
@@ -929,6 +955,12 @@ class IsolatedVideoJobs:
         if len(references) != len(expected) or {row["clip_id"] for row in references} != expected:
             raise ValueError("Map every planned clip exactly once; no shot-level maps are accepted.")
         planned_workflow = clips[0]["workflow_id"]
+        if planned_workflow == FL2VA_WORKFLOW_ID:
+            from .storyboard import automatic_route_allowed
+            try:
+                automatic_route_allowed('fflf')
+            except ValueError as error:
+                raise StoryHandoffRejected(str(error)) from error
         if any(clip["workflow_id"] != planned_workflow for clip in clips):
             raise StoryHandoffRejected("Assisted plans must keep one video workflow for every clip.")
         workspace_state = self.story.get_workspace(workspace, include_source=False)
@@ -1141,6 +1173,11 @@ class IsolatedVideoJobs:
                 "resolution_preset": QUALITY[manifest["setup"]["video_quality"]],
                 "steps": 4, "seed": 1, "references": []}
         if workflow == FL2VA_WORKFLOW_ID:
+            from .storyboard import automatic_route_allowed
+            try:
+                automatic_route_allowed('fflf')
+            except ValueError as error:
+                raise StoryHandoffRejected(str(error)) from error
             if style_refs:
                 raise StoryHandoffRejected("Selected style videos require R2V; this Assisted clip is configured for FFLF.")
             first = next((ref for ref in refs if ref["role"] == "first_frame"), None)
@@ -2146,6 +2183,7 @@ class IsolatedVideoJobs:
                    request: Mapping[str, Any], retake_of_job_id: str | None = None,
                    keep_original: bool | None = None,
                    source_lineage: Mapping[str, Any] | None = None,
+                   _manual_submission: bool = False,
                    _frozen_source_lineage: Mapping[str, Any] | None = None,
                    _full_run_binding: tuple[str, str] | None = None,
                    _full_run_manifest: Mapping[str, Any] | None = None,
@@ -2157,6 +2195,11 @@ class IsolatedVideoJobs:
         workspace = _identifier(workspace_id, "workspace_id")
         clip = _identifier(clip_id, "clip_id")
         key = _identifier(idempotency_key, "idempotency_key")
+        if _manual_submission and any((
+                _full_run_binding, _full_run_manifest, _full_run_clip,
+                _assisted_run_clip, _full_run_continuation, _full_run_retry,
+                _assisted_run_retry, _frozen_source_lineage)):
+            raise ValueError("Manual admission cannot override a frozen automated run.")
         if isinstance(request, Mapping) and request.get("workflow_id") == T2V_WORKFLOW_ID and request.get("workflow_version") != T2V_WORKFLOW_VERSION:
             raise IsolatedVideoContractError("workflow_version_retired", "New T2V jobs require Turbo + LTX. Reload the draft or restart from the saved screenplay; existing job recovery remains available.")
         if isinstance(request, Mapping) and request.get("workflow_id") in {FL2VA_WORKFLOW_ID, R2V_WORKFLOW_ID} and request.get("workflow_version") != 2:
@@ -2233,6 +2276,9 @@ class IsolatedVideoJobs:
         keep = None if keep_original is None else int(keep_original)
 
         def store_metadata(db, durable_take):
+            if db.execute("SELECT 1 FROM isolated_video_released_attempts WHERE workspace_id=? AND idempotency_key=?",
+                    (workspace, key)).fetchone():
+                raise StoryHandoffRejected("This unsubmitted attempt was released for editing. Generate with a new attempt key.")
             if _full_run_binding is not None:
                 run_workspace, run_revision = _full_run_binding
                 frozen = dict(_full_run_manifest or {})
@@ -2321,7 +2367,11 @@ class IsolatedVideoJobs:
                     frozen = None if original is None else json.loads(original["source_lineage_json"] or "null")
                     if _frozen_source_lineage is not None and frozen != dict(_frozen_source_lineage):
                         raise IsolatedJobConflict("Retake source lineage does not match its frozen source job.")
-                    if source_lineage is not None:
+                    if _manual_submission:
+                        # A retake inherits provenance from its durable source, never
+                        # from editable browser state or today's screenplay.
+                        pass
+                    elif source_lineage is not None:
                         if frozen is None or _lineage_identity(source_lineage) != _lineage_identity({key: frozen[key] for key in _SOURCE_LINEAGE_FIELDS | _OPTIONAL_SOURCE_LINEAGE_FIELDS if key in frozen}):
                             raise StoryHandoffRejected("Retake cannot replace or drop its frozen story lineage.")
                     elif frozen is not None and _frozen_source_lineage is None:
@@ -2488,8 +2538,15 @@ class IsolatedVideoJobs:
                             raise StoryHandoffRejected("The frozen Assisted prompt source changed before job admission.")
                         lineage["workflow_id"] = frozen_clip["workflow_id"]
                     else:
-                        lineage = (_validate_story_source_lineage(db, self.story, workspace, clip, normalized, source_lineage, self.media_root)
-                            if source_lineage is not None else None)
+                        try:
+                            lineage = (_validate_story_source_lineage(db, self.story, workspace, clip, normalized, source_lineage, self.media_root)
+                                if source_lineage is not None else None)
+                        except ValueError:
+                            if not _manual_submission:
+                                raise
+                            # Manual prompts/references/settings take precedence over
+                            # shot recommendations. Do not publish a false story link.
+                            lineage = None
                 db.execute("INSERT INTO isolated_video_jobs(job_id,workspace_id,clip_id,idempotency_key,request_hash,request_json,retake_of_job_id,attempt,keep_original,source_lineage_json) VALUES(?,?,?,?,?,?,?,?,?,?)",
                     (durable_take["job_id"], workspace, clip, key, request_hash,
                      json.dumps(normalized, sort_keys=True, ensure_ascii=False), retake_of, attempt, keep,
@@ -2558,7 +2615,11 @@ class IsolatedVideoJobs:
                     or saved["keep_original"] != keep):
                 raise IsolatedJobConflict("Idempotency key conflicts with the saved isolated job.")
             frozen_lineage = json.loads(saved["source_lineage_json"] or "null")
-            if source_lineage is None and _frozen_source_lineage is None:
+            if _manual_submission:
+                # Render identity is already checked above. Advisory browser
+                # metadata cannot prevent recovery of the same submitted render.
+                supplied_matches = True
+            elif source_lineage is None and _frozen_source_lineage is None:
                 supplied_matches = frozen_lineage is None
             elif _frozen_source_lineage is not None:
                 supplied_matches = frozen_lineage == dict(_frozen_source_lineage)
@@ -2605,6 +2666,19 @@ class IsolatedVideoJobs:
                 (workspace, bounded_limit, offset),
             ).fetchall()
         return [self._public_job(self.ledger._row(row), workspace, row["clip_id"], row) for row in rows]
+
+    def release_attempt(self, *, workspace_id: str, idempotency_key: str) -> dict[str, Any]:
+        """Fence delayed submission before releasing an unsubmitted browser draft."""
+        workspace = _identifier(workspace_id, "workspace_id")
+        key = _identifier(idempotency_key, "idempotency_key")
+        with self.ledger._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT job_id FROM production_takes WHERE project_id=? AND idempotency_key=?",
+                (workspace, f"isolated:{key}")).fetchone()
+            if row is None:
+                db.execute("INSERT OR IGNORE INTO isolated_video_released_attempts VALUES(?,?)", (workspace, key))
+            db.commit()
+        return {"released": True} if row is None else {"released": False, "job": self.get_job(row["job_id"])}
 
     def get_by_idempotency_key(self, *, workspace_id: str, idempotency_key: str) -> dict[str, Any]:
         """Read-only recovery lookup used after a lost HTTP response."""
@@ -2658,7 +2732,7 @@ class IsolatedVideoJobs:
                     actor=excluded.actor,
                     chosen_at=CURRENT_TIMESTAMP""",
                 (job_id, meta["workspace_id"], disposition))
-        return {"source_job_id": job_id, "request": json.loads(meta["request_json"]),
+        return {"source_job_id": job_id, "request": _workflow_request(json.loads(meta["request_json"])),
                 "source_lineage": json.loads(meta["source_lineage_json"] or "null"),
                 "keep_original": keep_original, "submission_created": False,
                 "candidate_disposition": disposition,
@@ -2720,7 +2794,7 @@ class IsolatedVideoJobs:
         source_take, source_meta = self._take_and_meta(job_id)
         if source_take["status"] not in {"needs_review", "accepted", "failed", "cancelled", "stale"}:
             raise IsolatedJobConflict("Retake is unavailable until the source job has a settled or reviewable result.")
-        saved = json.loads(source_meta["request_json"])
+        saved = _workflow_request(json.loads(source_meta["request_json"]))
         changes = dict(overrides or {})
         if set(changes) - set(saved):
             raise IsolatedVideoContractError("unknown_fields", "Retake overrides contain unsupported request fields.")
@@ -2814,6 +2888,11 @@ class IsolatedVideoJobs:
             "source_lineage": None if meta is None else json.loads(meta["source_lineage_json"] or "null")}
 
 
+def _workflow_request(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    # Publication metadata stays frozen in the ledger, outside the workflow schema.
+    return {key: value for key, value in snapshot.items() if key != "output_destination"}
+
+
 def _normalize_workflow_request(request: Mapping[str, Any], t2v_graph: Path,
                                 fl2va_graph: Path, r2v_graph: Path = R2V_GRAPH_PATH) -> dict[str, Any]:
     if isinstance(request, Mapping) and request.get("workflow_id") == FL2VA_WORKFLOW_ID:
@@ -2865,6 +2944,7 @@ def prepare_isolated_take(take: dict[str, Any], *, graph_path: Path | None = Non
         raise ValueError("Durable isolated request snapshot is missing.")
     if take.get("input_hash") != stable_hash(request):
         raise IsolatedVideoContractError("snapshot_hash_mismatch", "Durable input snapshot does not match its ledger hash.")
+    request = _workflow_request(request)
     t2v_graph = Path(graph_path) if graph_path is not None else T2V_GRAPH_PATH
     fl_graph = Path(fl2va_graph_path) if fl2va_graph_path is not None else FL2VA_GRAPH_PATH
     r2v_graph = Path(r2v_graph_path) if r2v_graph_path is not None else R2V_GRAPH_PATH
@@ -3023,7 +3103,9 @@ def make_output_collector(*, data_root: Path, ledger: ProductionLedger, comfy_ur
         final_dir = generated_root(root, workspace)
         final_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="isolated-video-") as temporary:
-            downloaded = collect_outputs(history, destination_dir=Path(temporary), comfy_url=comfy_url)
+            # LoadVideo previews can precede SaveVideo results in Comfy history.
+            downloaded = collect_outputs(history, destination_dir=Path(temporary), comfy_url=comfy_url,
+                                         output_only=True)
             records = []
             for item in downloaded:
                 if item.get("kind") != "video":

@@ -1,0 +1,1480 @@
+{
+  "comparison": "working tree vs HEAD, including relevant untracked source",
+  "scope": "Folder projects, common context, output destinations, Video library recovery and Editor/ACE UX. Earlier authorized Markdown deletions excluded from application impact.",
+  "mode": "Fresh Graphify AST graph, undirected two-hop candidate discovery, followed by manual source traces across API and persisted-data boundaries",
+  "graph": {
+    "nodes": 4433,
+    "edges": 13767,
+    "changed_source_files": 41,
+    "seed_nodes": 554,
+    "two_hop_candidates": 2567,
+    "confirmed_boundary_nodes": 62
+  },
+  "overall_risk": "high",
+  "maximum_lower_bound": 0.6,
+  "maximum_upper_bound": 1.0,
+  "limitations": [
+    "Candidate reachability includes import/rationale edges; it does not prove runtime calls. The table maps confirmed boundaries, not every function in the candidate set.",
+    "Dynamic dispatch, JSON references and browser ownership require manual traces. No measured coverage or indexed TESTED_BY evidence; test-gap and caller-count factors remain unknown.",
+    "Native chooser, live owner state, real media generation and every-page A/B acceptance remain unverified.",
+    "136-test regression suite has 54 failing cases; all also fail in an isolated HEAD baseline (56 cases). No newly failing case names, not proof of all-path compatibility."
+  ],
+  "findings": [
+    {
+      "node": "Durable media job path",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 794
+      },
+      "anchor": "def job_path(kind: str, job_id: str) -> Path:",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "create_job/read_job/worker recovery use services/media/jobs; copying project folder alone omits history.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Editor state",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 54
+      },
+      "anchor": "def state(root):",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Editor API snapshot/mutations use services/editor registry and project-local documents; snapshot exits through writer.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Server database setup",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 271
+      },
+      "anchor": "def create_app(*, data_root: Path, ledger_path: Path | None = None,",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Initializes shared production and image databases under services/production, not project folder.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Story listing",
+      "location": {
+        "file": "backend/story_builder/services/story_authoring.py",
+        "line": 477
+      },
+      "anchor": "    def list_workspaces(self, *, limit: int = 50, offset: int = 0) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StoryPage and library context list read story_workspaces SQL records, not directories.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ACE state",
+      "location": {
+        "file": "backend/story_builder/services/ace_studio.py",
+        "line": 88
+      },
+      "anchor": "def state(root):",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "ACE API uses ace_step registry plus project-local documents; state also owns global adapter data.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Assembly export queue",
+      "location": {
+        "file": "backend/story_builder/services/assembly.py",
+        "line": 344
+      },
+      "anchor": "    def enqueue(self, workspace_id: str, revision_id: str, manifest_record: dict[str, Any], *, output_destination=None):",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Assembly export uses SQL manifest/job identity and saved output_destination, outside folder-only state.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Generated media root",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 57
+      },
+      "anchor": "def generated_root(root: Path, workspace_id: str) -> Path:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Output resolve and media_library.asset_path/register_generated_image consume this.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Historical path resolver",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 106
+      },
+      "anchor": "def relocated_path(root: Path, path: Path) -> Path:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "ACE runner, ACE state and video_repertoire staging/read_job translate old locations.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Media root",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 53
+      },
+      "anchor": "def media_root(root: Path, workspace_id: str) -> Path:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "media_library.media_root calls this; asset_path/list_assets depend on resulting location.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Output destination resolver",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 62
+      },
+      "anchor": "def resolve(root, tool, workspace, choice):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "preference calls resolve; default image/video destinations use generated_root of selected project.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Output freeze",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 90
+      },
+      "anchor": "def freeze(root, tool, request):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "video_repertoire.create_job and isolated_video_jobs submission freeze destinations before work.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Output relink",
+      "location": {
+        "file": "backend/story_builder/services/output_destinations.py",
+        "line": 235
+      },
+      "anchor": "def locate_saved_folder(root, tool, workspace, selected_grant):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "studio_tools_api output-relink verifies registered content before changing grants.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Project document reader",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 157
+      },
+      "anchor": "def load_project_documents(root: Path, data: dict) -> dict:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "ACE and Editor state expand service registry project_files; paths currently restricted to projects beneath data root.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Project document writer",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 176
+      },
+      "anchor": "def save_project_documents(root: Path, data: dict, tool: str, write) -> dict:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "ACE and Editor state write project-local documents and global registries; relative_to(root) prevents a naive external-folder substitution.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Project root / deletion guard",
+      "location": {
+        "file": "backend/story_builder/services/storage_paths.py",
+        "line": 39
+      },
+      "anchor": "def project_root(root: Path, workspace_id: str) -> Path:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "media_root/generated_root and save_project_documents/revision_root/render depend on project ownership and tombstones.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Registered asset resolver",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 819
+      },
+      "anchor": "def asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Content endpoints and video/image reference staging use owned IDs and shared_file; 268 live records resolved.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Shared asset reuse",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1375
+      },
+      "anchor": "def reuse_catalogue_asset(root: Path, workspace_id: str, *, source_workspace_id: str, asset_id: str, role: str | None = None, mode: str = \"reference\") -> dict[str, Any]:",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "MediaSourcePicker Add registers reference/copy in target owner; R2V/FFLF cannot bypass owner validation.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Story revision folder",
+      "location": {
+        "file": "backend/story_builder/services/production_story_revisions.py",
+        "line": 15
+      },
+      "anchor": "def revision_root(output_root: Path, project_id: str, run_id: str) -> Path:",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "write_revision/load_revision use project_root but enforce containment under data root.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Video output collector",
+      "location": {
+        "file": "backend/story_builder/services/isolated_video_jobs.py",
+        "line": 3007
+      },
+      "anchor": "def make_output_collector(*, data_root: Path, ledger: ProductionLedger, comfy_url: str,",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Worker publishes validated media and relocates using frozen destination; protect retry and hashes.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::sql_snapshot",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 98
+      },
+      "anchor": "def sql_snapshot(path, workspace):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project folder API \u2192 scoped checkpoint \u2192 existing ledgers/document registries \u2192 restored workers/media consumers. test_projects exercises this contract."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::assert_idle",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 131
+      },
+      "anchor": "def assert_idle(root, workspace):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project folder API \u2192 scoped checkpoint \u2192 existing ledgers/document registries \u2192 restored workers/media consumers. test_projects exercises this contract."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::owned_files",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 151
+      },
+      "anchor": "def owned_files(root, workspace, memory=None):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project folder API \u2192 scoped checkpoint \u2192 existing ledgers/document registries \u2192 restored workers/media consumers. test_projects exercises this contract."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::session_grants",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 253
+      },
+      "anchor": "def session_grants(root, workspace, folder, memory):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project folder API \u2192 scoped checkpoint \u2192 existing ledgers/document registries \u2192 restored workers/media consumers. test_projects exercises this contract."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::save",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 302
+      },
+      "anchor": "def save(root, workspace, folder, memory):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project folder API \u2192 scoped checkpoint \u2192 existing ledgers/document registries \u2192 restored workers/media consumers. test_projects exercises this contract."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::open_project",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 385
+      },
+      "anchor": "def open_project(root, folder):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project folder API \u2192 scoped checkpoint \u2192 existing ledgers/document registries \u2192 restored workers/media consumers. test_projects exercises this contract."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::handle",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 600
+      },
+      "anchor": "def handle(root, story, environ, start_response, read_json, respond):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project folder API \u2192 scoped checkpoint \u2192 existing ledgers/document registries \u2192 restored workers/media consumers. test_projects exercises this contract."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "trellis_studio.py::result_path",
+      "location": {
+        "file": "backend/story_builder/services/trellis_studio.py",
+        "line": 140
+      },
+      "anchor": "def result_path(root, job_id, index):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "3D job/result API \u2192 frozen output \u2192 validated checkpoint fallback; test_projects completed GLB round trip."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "music_jukebox.py::export_path",
+      "location": {
+        "file": "backend/story_builder/services/music_jukebox.py",
+        "line": 177
+      },
+      "anchor": "def export_path(root, job_id):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Music export API/checkpoint \u2192 relocated original or saved export; project test preserves completed audio without library registration."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "music_jukebox_api.py::def handle(root,environ,start_response,read_json,respond):",
+      "location": {
+        "file": "backend/story_builder/services/music_jukebox_api.py",
+        "line": 8
+      },
+      "anchor": "def handle(root,environ,start_response,read_json,respond):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "studio_tools_api.py::def handle(root,environ,start_response,read_json,respond):",
+      "location": {
+        "file": "backend/story_builder/services/studio_tools_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root,environ,start_response,read_json,respond):",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "test_projects.py::import json",
+      "location": {
+        "file": "backend/story_builder/tests/test_projects.py",
+        "line": 2
+      },
+      "anchor": "import json",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.6,
+      "risk_upper": 1.0,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Default context resolver",
+      "location": {
+        "file": "frontend/src/lib/media-workspace.ts",
+        "line": 25
+      },
+      "anchor": "export function defaultMediaWorkspaceId(): string {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Cached story ID syntax is checked but backend existence is not; defaultDraft consumes it.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Foley context",
+      "location": {
+        "file": "frontend/src/MusicSoundPage.tsx",
+        "line": 17
+      },
+      "anchor": "function ControlFoleyPage({onBack}:{onBack:()=>void}) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Calls preferredMediaWorkspaceId then passes project to selected audio and output controls.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Image assets context",
+      "location": {
+        "file": "frontend/src/ImageAssetsPage.tsx",
+        "line": 147
+      },
+      "anchor": "function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'characters'|'worlds'|'frames'; onSection: (value: 'characters'|'worlds'|'frames') => void; legacyRoute: boolean }) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Initial cached story is passed as explicit requested ID with empty available list; generation/reference/output consumers inherit it.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Media Prep context",
+      "location": {
+        "file": "frontend/src/MediaPrepPage.tsx",
+        "line": 57
+      },
+      "anchor": "function VideoSummariser() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Calls preferredMediaWorkspaceId with URL context; explicit deleted ID survives available-list check.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Search context",
+      "location": {
+        "file": "frontend/src/MediaLibraryPage.tsx",
+        "line": 29
+      },
+      "anchor": "export default function MediaLibraryPage() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Calls preferredMediaWorkspaceId from URL and supplies context to media browser/picker.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Shared context resolver",
+      "location": {
+        "file": "frontend/src/lib/media-workspace.ts",
+        "line": 36
+      },
+      "anchor": "export function preferredMediaWorkspaceId(workspaces: StoryWorkspace[], requested = ''): string {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Explicit valid-looking requested ID returned before checking existence; MediaPrep/Search/Foley call it.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Video Director chat",
+      "location": {
+        "file": "frontend/src/CreateWorkspace.tsx",
+        "line": 19
+      },
+      "anchor": "function CreateChat({draft, disabled, onPrompt}: {draft: Draft; disabled: boolean; onPrompt: (text: string)=>void}) {",
+      "revision": "working-tree",
+      "change": "indirect persistence/execution consumer; contract retained",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation exchanges saved only under browser key workspace+clip; field-edit requests use durable service separately.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Output folder controls",
+      "location": {
+        "file": "frontend/src/OutputDestination.tsx",
+        "line": 6
+      },
+      "anchor": "export default function OutputDestination({tool,workspaceId,disabled=false,onReady}:{tool:string;workspaceId:string;disabled?:boolean;onReady?:(ready:boolean)=>void}) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Failed initial destination fetch leaves choice null; input/chooser disabled by !choice. All output consumers share this.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Shared source picker",
+      "location": {
+        "file": "frontend/src/MediaSourcePicker.tsx",
+        "line": 9
+      },
+      "anchor": "export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false}: {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "FFLF/Editor/ACE and other consumers use explicit target owner for Add.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Video draft restore",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 70
+      },
+      "anchor": "const readDraft = (workspaceId?: string): Draft => {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "App initial route restores latest workspace verbatim; VideoWorkspace loader calls listMediaAssets for all three kinds.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Video workspace",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 128
+      },
+      "anchor": "function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: 'create'|'take'; visible?: boolean; workspaceId: string }) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Media loader and R2V catalogue/FFLF picker/output destination all use restored draft.workspaceId.",
+        "Relevant behavior checked by focused project/output/UI tests; measured branch coverage and graph TESTED_BY edges are unavailable."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ProjectController.tsx::ProjectController",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 39
+      },
+      "anchor": "export default function ProjectController({children}:{children:ReactNode}){",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "main.tsx \u2192 shared controller \u2192 managedProjectId/page remount \u2192 project-scoped browser memory. projects.spec.mjs covers switching, failed switch, storage clearing and stale links."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ProjectController.tsx::capture",
+      "location": {
+        "file": "frontend/src/ProjectController.tsx",
+        "line": 14
+      },
+      "anchor": "function capture(workspace:string){",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared controller captures only project keys; switching persists memory via /api/projects/memory and Save. Project A/B UI fixture covers isolation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "project-state.ts::useProjectState",
+      "location": {
+        "file": "frontend/src/lib/project-state.ts",
+        "line": 5
+      },
+      "anchor": "export function useProjectState<T>(name:string, initial:T|(()=>T)): [T, Dispatch<SetStateAction<T>>] {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Tool pages \u2192 owner-scoped settings key \u2192 controller capture/restore. Browser tests exercise image settings; other tool state has source review only."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "EditorAssetBrowser.tsx::EditorAssetBrowser",
+      "location": {
+        "file": "frontend/src/EditorAssetBrowser.tsx",
+        "line": 5
+      },
+      "anchor": "export default function EditorAssetBrowser({assets,kind,disabled,onImport,onAttach,onDelete,onPreview}:{assets:MediaAsset[];kind:string;disabled:boolean;onImport:(files:File[])=>void;onAttach:(assets:MediaAsset[])=>void;onDelete:(ids:string[])=>void;onPreview:(asset:MediaAsset)=>void}) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "VibeEditorPage \u2192 typed imports/library selection \u2192 existing media APIs \u2192 attachment IDs; ace-editor-ux and editor-assets specs."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "AceStudioPage.tsx::export default function AceStudioPage() {",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 26
+      },
+      "anchor": "export default function AceStudioPage() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "AssistedClipPlanPanel.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/AssistedClipPlanPanel.tsx",
+        "line": 19
+      },
+      "anchor": "export default function AssistedClipPlanPanel({ visible }: { visible: boolean }) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "CharacterVoicesPage.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/CharacterVoicesPage.tsx",
+        "line": 10
+      },
+      "anchor": "export default function CharacterVoicesPage({ onAssets, embedded = false, contextWorkspaceId }: { onAssets?: () => void; embedded?: boolean; contextWorkspaceId?:string }) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "CompactPopover.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/CompactPopover.tsx",
+        "line": 6
+      },
+      "anchor": "export default function CompactPopover({label,children,onOpenChange,disabled=false}:{label:string;children:ReactNode;onOpenChange?:(open:boolean)=>void;disabled?:boolean}) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "MusicJukebox.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/MusicJukebox.tsx",
+        "line": 34
+      },
+      "anchor": "function download(blob: Blob, name: string) { const url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ProductionSetupPage.tsx::export default function ProductionSetupPage() {",
+      "location": {
+        "file": "frontend/src/ProductionSetupPage.tsx",
+        "line": 27
+      },
+      "anchor": "export default function ProductionSetupPage() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ProductionStylesPage.tsx::function readForm(): CustomForm {",
+      "location": {
+        "file": "frontend/src/ProductionStylesPage.tsx",
+        "line": 20
+      },
+      "anchor": "function readForm(): CustomForm {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "PromptPreparationPage.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/PromptPreparationPage.tsx",
+        "line": 27
+      },
+      "anchor": "function basePrompt(scene: ScreenplayRevision['screenplay']['scenes'][number], shot: ScreenplayRevision['screenplay']['scenes'][number]['shots'][number], workflowId: WorkflowId) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ScreenplayPage.tsx::export default function ScreenplayPage() {",
+      "location": {
+        "file": "frontend/src/ScreenplayPage.tsx",
+        "line": 12
+      },
+      "anchor": "export default function ScreenplayPage() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "StoryPage.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/StoryPage.tsx",
+        "line": 18
+      },
+      "anchor": "function readObject<T>(key: string, fallback: T): T { try { const value = localStorage.getItem(key); return value ? JSON.parse(value) as T : fallback; } catch { return fallback; } }",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "StudioChat.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/StudioChat.tsx",
+        "line": 9
+      },
+      "anchor": "export default function StudioChat({name,context,onApply}:{name:string;context:unknown;onApply?:(settings:Record<string,number>)=>void}) {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "StudioShell.tsx::function PalettePicker() {",
+      "location": {
+        "file": "frontend/src/StudioShell.tsx",
+        "line": 16
+      },
+      "anchor": "function PalettePicker() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "TextToImagePage.tsx::function temporaryWorkspaceId() {",
+      "location": {
+        "file": "frontend/src/TextToImagePage.tsx",
+        "line": 26
+      },
+      "anchor": "function temporaryWorkspaceId() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "TrellisPage.tsx::module boundary",
+      "location": {
+        "file": "frontend/src/TrellisPage.tsx",
+        "line": 22
+      },
+      "anchor": "export default function TrellisPage({backend='trellis'}:{backend?:'trellis'|'pixal'}){",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "VibeEditorPage.tsx::export default function VibeEditorPage() {",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 17
+      },
+      "anchor": "export default function VibeEditorPage() {",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "main.tsx::import React from 'react';",
+      "location": {
+        "file": "frontend/src/main.tsx",
+        "line": 1
+      },
+      "anchor": "import React from 'react';",
+      "revision": "working-tree",
+      "change": "directly changed boundary",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Changed app boundary: inspect imports/callers and API dispatch. Shared project context/settings or output/result adapter consumed by existing page/service; focused tests are evidence of behavior, not coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ]
+}

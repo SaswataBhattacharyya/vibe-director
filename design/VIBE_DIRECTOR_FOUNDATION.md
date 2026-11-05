@@ -1,6 +1,6 @@
-# Vibe Director design foundation — handoff for the current app
+# Vibe Director design foundation
 
-This document accompanies the [interactive workspace prototype](prototypes/vibe-director-flow-proposal.html) and [interactive Clapper character sheet](prototypes/vibe-director-mascot-sheet.html). It records Ashu's latest reviewed direction for Saswat to adapt to the existing app. The prototype is a local simulation, not a production implementation or evidence that users have tested the emotional response. The older `ux-shared-video-review.md` records the original PR #16 review and predates the refinements below.
+This document accompanies the [interactive workspace prototype](prototypes/vibe-director-flow-proposal.html) and [interactive Clapper character sheet](prototypes/vibe-director-mascot-sheet.html). It provides general visual and interaction guidance. The prototypes are local simulations, not production implementations or evidence of user testing. Current user requests govern redesign; these examples do not freeze routes, layouts or terminology.
 
 ## Intended experience
 
@@ -9,7 +9,7 @@ Vibe Director should feel like a creative studio with a distinct personality whi
 ## Visual foundation
 
 - Dark canvas, restrained comic expression and rounded Nunito typography. Use Nunito Bold 700 for headings and controls, Regular 400 for longer copy. The font files and license are bundled beside the prototypes.
-- Keep **Concrete & ink** and **Midnight mixtape** as the two palette options in this proposal. Quiet comic was removed at Ashu's request. Concrete & ink opens the prototype for comparison; selecting a palette in Profile & settings saves only in that browser. The current production app still contains three themes, so removing Quiet comic there is an implementation decision for Saswat to review explicitly.
+- **Concrete & ink** and **Midnight mixtape** are palette examples in the prototype. They do not require removing other production themes. Verify actual theme controls and persistence in the app before changing them.
 - Concentrate character in the brand and key transitions. Use flat, readable editor surfaces, visible focus, clear selected states, and adequate control contrast. Avoid repeated cards, decorative labels, and long explanations around every action.
 
 | Role | Concrete & ink | Midnight mixtape |
@@ -32,7 +32,7 @@ The full role tokens are in the prototype CSS. Before production adoption, check
 - The bottom taskbar keeps project/clip context, preview controls, and the next action available while editing. Preview controls are explicitly a simulation and should not be mistaken for production engine controls.
 - Keep the primary action after its required inputs. Show a readiness blocker beside Generate. Preserve an editable draft separately from the submitted request, generated take, and accepted take. Retake returns to editing without submitting. Uncertain submission status requires recovery of the existing request before retrying.
 
-The existing app already has `frontend/src/StudioShell.tsx`, `frontend/src/App.tsx`, and `frontend/src/style.css` from the earlier PR #16 adaptation. Saswat can map these refinements onto that shell rather than replace working backend behavior with the HTML simulation. The current product plans in `plans/README.md` govern production routes, workflow rules, and backend capability; the prototype is interaction and visual guidance.
+The application shell is implemented in `frontend/src/StudioShell.tsx`, `frontend/src/App.tsx` and `frontend/src/style.css`. Adapt the actual components while preserving working backend contracts. See the [functionality audit](../audit/FUNCTIONALITY_AUDIT.md) for the source map; the prototypes provide visual examples.
 
 ## Clapper, the visual companion
 

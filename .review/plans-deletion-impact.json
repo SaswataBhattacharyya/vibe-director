@@ -1,0 +1,234 @@
+{
+  "comparison": "Hypothetical deletion of current plans/ and the three named root/design Markdown documents; no deletion performed. Existing documentation cleanup diff is prior work, not an application code patch.",
+  "mode": "Graphify consulted; manual source dependency tracing used because graph coverage is incomplete",
+  "limitations": [
+    "Graph has 21 nodes and 128 edges, insufficient for this repository-wide documentation audit.",
+    "Searched current first-party backend/frontend/tools, configuration, repository Markdown references and explicit Markdown readers; generated/vendor/runtime-state directories excluded. Confirmed doc consumers and producer-to-consumer paths, including skill reader to prompt builders to isolated reasoning subprocess. Arbitrary external scripts and future changes are outside this audit.",
+    "Scores are prioritization heuristics, not failure probabilities. Overall high score concerns coding-agent instructions; no runtime read of deletion targets was found.",
+    "Test-gap=1 for affected documentation means no automated test-reference evidence for its guidance/retention, not measured uncovered application code. ACE and migration have associated tests, but those were not run and do not establish deletion coverage. No deletion simulation, app/browser test, provider call or GPU generation performed.",
+    "Citation verification validates locations/anchors only, not dependency completeness or performance. No latency benchmark was run."
+  ],
+  "overall": {
+    "max_risk": 0.7,
+    "level": "high",
+    "scope": "Coding-agent guidance; runtime breakage not found in scoped source tracing"
+  },
+  "findings": [
+    {
+      "node": "Codex repository entrypoint",
+      "location": {
+        "file": "AGENTS.md",
+        "line": 43
+      },
+      "anchor": "Keep `plans/HANDOFF.md` concise and current at meaningful milestones: objective, authoritative files, completed evidence, pending work, blockers/permissions and live job/process handles. Runtime compaction follows configured settings; do not invent usage percentages or claim a written handoff compacted runtime context.",
+      "revision": "working-tree",
+      "risk": 0.7,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Requires maintaining an already-deleted handoff. Lines 5,14,21,47,51,55 also impose obsolete read lists and model/review schedules. Deleting plans without rewriting this entrypoint leaves broken instructions on the coding-agent execution path."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Project onboarding",
+      "location": {
+        "file": "README.md",
+        "line": 5
+      },
+      "anchor": "Start with [current product plans](plans/README.md), then [collaboration and issue backlog](plans/issue_backlog.md). These govern the new product. [COLLABORATION.md](COLLABORATION.md) records the proposed working agreement for owner `SaswataBhattacharyya` and collaborator `ashucodesbio`.",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Links plans, deleted issue backlog and COLLABORATION.md; lines 3 and 19 link deleted handoffs. Documentation consumers lose guidance; no runtime file read."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Backend contributor guidance",
+      "location": {
+        "file": "backend/README.md",
+        "line": 9
+      },
+      "anchor": "Do not run `unittest discover` here as a routine check: it now discovers the maintained application suite, not just the original 20-test T2V slice described when this file was written. Use the narrow test module(s) for the code changed, and consult `plans/progress_review.md` / `plans/HANDOFF.md` before repeating recorded passing checks. Tests with mocked Comfy responses do not prove installed model compatibility or live generation.",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Requires consulting deleted handoff/progress records before checks. Other paragraphs link retained implementation evidence which deleting plans would remove."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Frontend contributor guidance",
+      "location": {
+        "file": "frontend/README.md",
+        "line": 3
+      },
+      "anchor": "> Historical implementation details below describe the first isolated text-to-video slice. They are not a current feature inventory or navigation specification. Use the [top-level README](../README.md), [current plans](../plans/README.md), and [implementation handoff](../plans/HANDOFF.md) for the current product and status. Do not restore routes or limitations described here without checking those sources.",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Directs readers to plans and a deleted handoff. No runtime import of this README found."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Saved Editor and ACE requirements",
+      "location": {
+        "file": "plans/editor_media_output_ace_plan.md",
+        "line": 3
+      },
+      "anchor": "Status: saved requirements and implementation plan. Not implemented by this documentation task. This request supersedes conflicting older Editor/workspace UI instructions.",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Whole-folder deletion loses the newly saved, unimplemented requirements. The previous pre-cleanup backup predates this new file; preserve it separately first."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Collaboration proposal",
+      "location": {
+        "file": "COLLABORATION.md",
+        "line": 22
+      },
+      "anchor": "4. Use short branches and PRs linked to issues. The other collaborator reviews before merge; either can merge after that approval. Follow this rule by agreement and enforce it in repository settings where available. Add meaningful automated checks as implementation starts.",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Proposes peer review and merge workflow; root README references it. Removing the file does not change actual GitHub permissions or branch protections."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Prototype design foundation",
+      "location": {
+        "file": "design/VIBE_DIRECTOR_FOUNDATION.md",
+        "line": 3
+      },
+      "anchor": "This document accompanies the [interactive workspace prototype](prototypes/vibe-director-flow-proposal.html) and [interactive Clapper character sheet](prototypes/vibe-director-mascot-sheet.html). It records Ashu's latest reviewed direction for Saswat to adapt to the existing app. The prototype is a local simulation, not a production implementation or evidence that users have tested the emotional response. The older `ux-shared-video-review.md` records the original PR #16 review and predates the refinements below.",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Human design/prototype guidance, with mixed historical and proposed behavior. No runtime reader found. The prototype HTML and implemented CSS/components are separate files."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Historical UX proposal",
+      "location": {
+        "file": "design/ux-shared-video-review.md",
+        "line": 3
+      },
+      "anchor": "Design review for [#3](https://github.com/SaswataBhattacharyya/vibe-director/issues/3) and [#4](https://github.com/SaswataBhattacharyya/vibe-director/issues/4). Start from the `issue-2-isolated-t2v-reuse` branch / draft PR #15. This PR carries a standalone [clickable prototype](prototypes/vibe-director-flow-proposal.html), its Nunito font, and proposed design decisions. It does not alter the production frontend or backend.",
+      "revision": "working-tree",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 1,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Proposal, not a runtime component. Foundation document and plans/implementation/ashu_ui_adaptation.md refer to it. Removing it loses historical reasoning and creates documentation references to repair."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "ACE setup hint",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 155
+      },
+      "anchor": "    {tab==='runtime'&&<><h2>Standalone ACE-Step</h2><p>{state?.runtime.reason||'Connection has not loaded.'}</p><p>Training encoders: {state?.runtime.training_encoders_cached?'cached':'MERT / mHuBERT not cached'}</p>{Object.entries(state?.runtime.checks||{}).map(([k,v])=><p key={k}>{v?'\u2713':'\u2013'} {k}</p>)}<details><summary>Runtime locations</summary><pre className=\"ace-format\">{JSON.stringify({source:state?.runtime.source,python:state?.runtime.python,checkpoints:state?.runtime.checkpoints},null,2)}</pre></details><p>Setup instructions: plans/ace_step_studio.md</p><button disabled={busy} onClick={()=>void attempt(refresh)}>Check connection</button></>}",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Only a rendered text path to plans/ace_step_studio.md; no fetch/read. Deleting plans makes the advice unusable but does not prevent ACE page rendering."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "Legacy layout migration",
+      "location": {
+        "file": "tools/migrate_local_layout.py",
+        "line": 13
+      },
+      "anchor": "    for old,new in [('migration_plan','plans/migration'),('My idea','plans/archive/ideas'),('PLAN.md','plans/archive/PLAN.md'),('REUSE_AUDIT.md','plans/archive/REUSE_AUDIT.md'),('Vibe Editor','design/vibe-editor'),('images.png','design/reference/images.png'),('test-results','local_data/test-results')]:add(root/old,root/new)",
+      "revision": "working-tree",
+      "risk": 0.15,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Explicit migration maps old files into plans subfolders. It may recreate destinations if manually invoked with legacy inputs; it is not an app startup dependency. Static migration tests exist; not run for this audit."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ],
+  "citation_verifier": {
+    "checked": 10,
+    "rejected": [],
+    "exit_code": 0,
+    "scope": "Source anchors only"
+  }
+}

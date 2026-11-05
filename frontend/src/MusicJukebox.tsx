@@ -1,3 +1,6 @@
+import {useProject} from './ProjectController';
+import {defaultMediaWorkspaceId} from './lib/media-workspace';
+import {useProjectState} from './lib/project-state';
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import EditorWorkspace from './EditorWorkspace';
@@ -5,7 +8,7 @@ import ModelSelector, { consumeModelCommand } from './ModelSelector';
 import MediaSourcePicker from './MediaSourcePicker';
 import VoiceRecorder from './VoiceRecorder';
 import JukeboxDJ from './JukeboxDJ';
-import { MediaAsset, uploadMediaAsset, nameMediaWorkspace } from './lib/media-api';
+import { MediaAsset, uploadMediaAsset, reuseCatalogueAsset } from './lib/media-api';
 import { Clip, MusicProject, Source, Track, fresh, track, uid, length, loadSource, peaks, renderMusic, wav, midiImport, midiExport, houseBeat, splitClip, ripple, clearUnused, forgetBuffers } from './lib/jukebox-engine';
 import './music-jukebox.css';
 async function api<T>(path: string, body?: unknown): Promise<T> { const r = await fetch('/api/jukebox/' + path, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const v = await r.json(); if (!r.ok)
@@ -56,21 +59,24 @@ function Wave({ source, clip, position, rate, onSeek }: {
 export default function MusicJukebox({ onAce }: {
     onAce: () => void;
 }) {
-    const [p, setP] = useState<MusicProject>(fresh), [projects, setProjects] = useState<{
+    const project=useProject();
+    const workspaceId=defaultMediaWorkspaceId();
+    const [legacy,setLegacy]=useState<Array<{id:string;name:string}>>([]);
+    const [p, setP] = useState<MusicProject>(()=>({...fresh(),workspace_id:workspaceId})), [projects, setProjects] = useState<{
         id: string;
         name: string;
         revision: number;
     }[]>([]), [saved, setSaved] = useState('');
-    const [view, setView] = useState<'edit' | 'compose' | 'dj'>('edit'), [selected, setSelected] = useState(''), [clipId, setClip] = useState(''), [noteId, setNote] = useState('');
-    const [djActive, setDjActive] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState(''), [position, setPosition] = useState(0), [playing, setPlaying] = useState(false), [loop, setLoop] = useState(false), [loopIn, setLoopIn] = useState(0), [loopOut, setLoopOut] = useState(8), [metro, setMetro] = useState(false), [countIn, setCountIn] = useState(false), [snap, setSnap] = useState(true);
+    const [view, setView] = useProjectState<'edit' | 'compose' | 'dj'>('MusicJukebox:view','edit'), [selected, setSelected] = useState(''), [clipId, setClip] = useState(''), [noteId, setNote] = useState('');
+    const [djActive, setDjActive] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [notice, setNotice] = useState(''), [position, setPosition] = useState(0), [playing, setPlaying] = useState(false), [loop, setLoop] = useState(false), [loopIn, setLoopIn] = useProjectState('MusicJukebox:loopIn',0), [loopOut, setLoopOut] = useProjectState('MusicJukebox:loopOut',8), [metro, setMetro] = useProjectState('MusicJukebox:metro',false), [countIn, setCountIn] = useProjectState('MusicJukebox:countIn',false), [snap, setSnap] = useProjectState('MusicJukebox:snap',true);
     const [past, setPast] = useState<MusicProject[]>([]), [future, setFuture] = useState<MusicProject[]>([]), [clipboard, setClipboard] = useState<Clip | null>(null), [rippleDelete, setRipple] = useState(false);
-    const [output, setOutput] = useState(''), [grant, setGrant] = useState(''), [exportName, setExportName] = useState('mix'), [format, setFormat] = useState('wav'), [job, setJob] = useState<Job | null>(null), [previewUrl, setPreviewUrl] = useState(''), [peak, setPeak] = useState(0);
+    const [output, setOutput] = useProjectState('MusicJukebox:output',''), [grant, setGrant] = useProjectState('MusicJukebox:grant',''), [exportName, setExportName] = useProjectState('MusicJukebox:exportName','mix'), [format, setFormat] = useProjectState('MusicJukebox:format','wav'), [job, setJob] = useState<Job | null>(null), [previewUrl, setPreviewUrl] = useState(''), [peak, setPeak] = useState(0);
     const [chatSources,setChatSources]=useState<string[]>([]);
-    const [message, setMessage] = useState(''), [model, setModel] = useState(false), [conversation, setConversation] = useState<{
+    const [message, setMessage] = useProjectState('MusicJukebox:message',''), [model, setModel] = useState(false), [conversation, setConversation] = useProjectState<{
         text: string;
         reply: string;
-    }[]>([]), [proposal, setProposal] = useState<Proposal | null>(null), [approved, setApproved] = useState(false), [proposalBase, setProposalBase] = useState('');
-    const [bar, setBar] = useState(0), [velocity, setVelocity] = useState(.75), [noteLength, setNoteLength] = useState(.25), [video, setVideo] = useState(''), [zoom, setZoom] = useState(50), [pendingAsset, setPendingAsset] = useState<MediaAsset | null>(() => { try {
+    }[]>('MusicJukebox:conversation',[]), [proposal, setProposal] = useState<Proposal | null>(null), [approved, setApproved] = useState(false), [proposalBase, setProposalBase] = useState('');
+    const [bar, setBar] = useState(0), [velocity, setVelocity] = useState(.75), [noteLength, setNoteLength] = useState(.25), [video, setVideo] = useState(''), [zoom, setZoom] = useProjectState('MusicJukebox:zoom',50), [pendingAsset, setPendingAsset] = useState<MediaAsset | null>(() => { try {
         return JSON.parse(sessionStorage.getItem('vibe-jukebox-pending-audio') || 'null');
     }
     catch {
@@ -97,15 +103,16 @@ export default function MusicJukebox({ onAce }: {
     const quant = (v: number) => snap ? Math.round(v * p.bpm / 60 * 4) / 4 * 60 / p.bpm : v;
     const refresh = async () => { const s = await api<{
         projects: typeof projects;
+        legacy_projects?:typeof legacy;
         output: string;
-    }>('state'); setProjects(s.projects); return s; };
+    }>(`state?workspace_id=${workspaceId}`); setProjects(s.projects);setLegacy(s.legacy_projects||[]); return s; };
     const open = async (id: string) => { stop(); const next = await api<MusicProject>('projects/' + id); let recovered: MusicProject | null = null; try {
         const d = JSON.parse(localStorage.getItem('vibe-jukebox-draft-' + id) || 'null');
         if (d?.revision === next.revision)
             recovered = d;
     }
-    catch { /* Use atomic server save. */ } setP(recovered || next); setSaved(JSON.stringify(next)); setPast([]); setFuture([]); setSelected(''); setClip(''); setConversation([]); setProposal(null);setPreviewUrl('');setPosition(0);setJob(null);void api<{jobs:Job[]}>('projects/'+id+'/jobs').then(r=>setJob(r.jobs[0]||null)).catch(e=>setError(e.message)); setNotice(recovered && JSON.stringify(recovered) !== JSON.stringify(next) ? 'Recovered an unsaved browser draft. Save to keep it.' : 'Opened saved project.'); localStorage.setItem('vibe-jukebox-project', id); };
-    useEffect(() => { void refresh().then(state => { const id = localStorage.getItem('vibe-jukebox-project'); if (id && state.projects.some(row=>row.id===id))
+    catch { /* Use atomic server save. */ } setP(recovered || next); setSaved(JSON.stringify(next)); setPast([]); setFuture([]); setSelected(''); setClip(''); setProposal(null);setPreviewUrl('');setPosition(0);setJob(null);void api<{jobs:Job[]}>('projects/'+id+'/jobs').then(r=>setJob(r.jobs[0]||null)).catch(e=>setError(e.message)); setNotice(recovered && JSON.stringify(recovered) !== JSON.stringify(next) ? 'Recovered an unsaved browser draft. Save to keep it.' : 'Opened saved project.'); localStorage.setItem('vibe-jukebox-project', id); };
+    useEffect(() => { void refresh().then(state => { if(!output&&project.folder)void api<{path:string;grant:string}>('folder',{path:project.folder+'/outputs/audio'}).then(f=>{setOutput(f.path);setGrant(f.grant);}).catch(e=>setError(e.message)); const id = localStorage.getItem('vibe-jukebox-project'); if (id && state.projects.some(row=>row.id===id))
         void open(id).catch(e => setError(e.message)); else if(id){localStorage.removeItem('vibe-jukebox-project');setNotice('The previous session was removed. Your browser recovery drafts have been kept.');} }).catch(e => setError(e.message)); return () => { node.current?.stop(); cancelAnimationFrame(raf.current); void context.current?.close(); forgetBuffers(); }; }, []);
     useEffect(() => { if (p.id)
         try {
@@ -126,10 +133,21 @@ export default function MusicJukebox({ onAce }: {
     useEffect(() => () => { if (previewUrl)
         URL.revokeObjectURL(previewUrl); }, [previewUrl]);
     const save = async () => { if (!p.id)
-        throw Error('Create a named project first.'); const next = await api<MusicProject>('projects/' + p.id + '/save', { project: p, revision: p.revision }); setP(next); setSaved(JSON.stringify(next)); await refresh(); setNotice('Project saved. Source recordings are unchanged.'); return next; };
+        throw Error('Create a music session first.'); const next = await api<MusicProject>('projects/' + p.id + '/save', { project: p, revision: p.revision }); setP(next); setSaved(JSON.stringify(next)); await refresh(); setNotice('Project saved. Source recordings are unchanged.'); return next; };
+    const importSession = async (candidate:MusicProject) => {
+        const sources:Source[]=[];
+        for(const source of candidate.sources){
+            if(source.workspace_id===workspaceId){sources.push(source);continue;}
+            const asset=await reuseCatalogueAsset(workspaceId,{workspace_id:source.workspace_id,asset_id:source.asset_id} as MediaAsset,'project_audio','copy');
+            sources.push({...source,workspace_id:workspaceId,asset_id:asset.asset_id,url:asset.content_url});
+        }
+        const next=await api<MusicProject>('projects',{project:{...candidate,id:'',revision:0,workspace_id:workspaceId,sources}});
+        setP(next);setJob(null);setSaved(JSON.stringify(next));localStorage.setItem('vibe-jukebox-project',next.id);await refresh();
+    };
     const create = async () => { if (p.id && dirty && !confirm('Start a new project? Your browser draft will be retained.'))
-        return; const next = await api<MusicProject>('projects', { project: { ...fresh(), name: p.name || 'Untitled jukebox' } }); await nameMediaWorkspace(next.workspace_id, next.name); setP(next); setSaved(JSON.stringify(next)); localStorage.setItem('vibe-jukebox-project', next.id);setPosition(0);setJob(null);setPreviewUrl(''); setPast([]); setFuture([]); await refresh(); };
-    const addAssets = async (assets: MediaAsset[]) => { let next = { ...latest.current, sources: [...latest.current.sources], tracks: [...latest.current.tracks] }; for (const a of assets) {
+        return; const next = await api<MusicProject>('projects', { project: { ...fresh(), workspace_id:workspaceId, name: p.name || 'Untitled jukebox' } });  setP(next); setSaved(JSON.stringify(next)); localStorage.setItem('vibe-jukebox-project', next.id);setPosition(0);setJob(null);setPreviewUrl(''); setPast([]); setFuture([]); await refresh(); };
+    const addAssets = async (assets: MediaAsset[]) => { let next = { ...latest.current, sources: [...latest.current.sources], tracks: [...latest.current.tracks] }; for (const input of assets) {
+        const a=input.workspace_id===p.workspace_id?input:await reuseCatalogueAsset(p.workspace_id,input,'project_audio','copy');
         if (a.kind !== 'audio')
             continue;
         const s: Source = { id: a.asset_id, workspace_id: a.workspace_id, asset_id: a.asset_id, name: a.filename, url: a.content_url, duration: a.media?.duration_seconds || 1 };
@@ -197,12 +215,12 @@ export default function MusicJukebox({ onAce }: {
         return;
     } change({ ...p, sources: p.sources.filter(r => r.id !== s.id) }); }}>Remove unused source</button></div>)}</details>{p.id && <fieldset className="jb-edit-lock" disabled={locked}><VoiceRecorder purpose="music" workspaceId={p.workspace_id} onSaved={asset => void run(() => addAssets([asset]))}/></fieldset>}<button onClick={onAce}>Generate with ACE-Step</button></>;
     const controls = <div className="jb-controls"><header><h1>Music Jukebox</h1><p>Edit recordings, compose beats and melodies, or capture a DJ mix.</p></header><section className="card"><div className="jb-fields"><label>Music project<select disabled={locked} value={p.id} onChange={e => { if (!dirty || confirm('Discard unsaved changes and open another project?'))
-        void run(() => open(e.target.value)); }}><option value="">New project</option>{projects.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select></label><label>Project name<input value={p.name} disabled={locked} onChange={e => change({ ...p, name: e.target.value })}/></label></div><div className="jb-toolbar"><button disabled={locked} onClick={() => void run(create)}>New named project</button><button disabled={!p.id || locked} onClick={() => void run(save)}>Save project</button><button disabled={!p.id || locked} onClick={() => void run(async () => { const copy = { ...p, id: '', revision: 0, name: p.name + ' copy' }; const next = await api<MusicProject>('projects', { project: copy }); await nameMediaWorkspace(next.workspace_id,next.name);setP(next);setJob(null);setPreviewUrl('');setSaved(JSON.stringify(next));localStorage.setItem('vibe-jukebox-project',next.id);await refresh(); })}>Save as new project</button><button disabled={locked || !past.length} onClick={() => { setFuture(r => [p, ...r]); setP({ ...past[past.length - 1], revision: p.revision }); setPast(r => r.slice(0, -1)); }}>Undo</button><button disabled={locked || !future.length} onClick={() => { setPast(r => [...r, p]); setP({ ...future[0], revision: p.revision }); setFuture(r => r.slice(1)); }}>Redo</button><span>{dirty ? 'Unsaved changes' : 'Saved'} · revision {p.revision}</span></div><details><summary>Project files and recovery</summary><p>Atomic server saves retain 30 checkpoints. Imported recordings are shared media assets. Browser drafts recover unsaved edits on this device.</p><button disabled={!p.id || locked} onClick={() => download(new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }), `${p.name}.jukebox.json`)}>Download project JSON</button><button disabled={locked} onClick={() => projectFile.current?.click()}>Open project JSON</button><input ref={projectFile} hidden type="file" accept=".json" onChange={e => void run(async () => { const f = e.target.files?.[0]; if (!f || f.size > 2e6)
-        throw Error('Choose a project JSON under 2 MB.'); const candidate = JSON.parse(await f.text()); const next = await api<MusicProject>('projects', { project: candidate }); setP(next);setJob(null);setSaved(JSON.stringify(next));localStorage.setItem('vibe-jukebox-project',next.id);await refresh(); })}/><button disabled={!p.id || locked} onClick={() => void run(async () => { await save(); const chosen = await api<{
+        void run(() => open(e.target.value)); }}><option value="">New music session</option>{projects.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select></label><label>Session name<input value={p.name} disabled={locked} onChange={e => change({ ...p, name: e.target.value })}/></label></div><div className="jb-toolbar"><button disabled={locked} onClick={() => void run(create)}>New music session</button><button disabled={!p.id || locked} onClick={() => void run(save)}>Save music session</button><button disabled={!p.id || locked} onClick={() => void run(async () => { await importSession({...p,name:p.name+' copy'}); })}>Copy music session</button><button disabled={locked || !past.length} onClick={() => { setFuture(r => [p, ...r]); setP({ ...past[past.length - 1], revision: p.revision }); setPast(r => r.slice(0, -1)); }}>Undo</button><button disabled={locked || !future.length} onClick={() => { setPast(r => [...r, p]); setP({ ...future[0], revision: p.revision }); setFuture(r => r.slice(1)); }}>Redo</button><span>{dirty ? 'Unsaved changes' : 'Saved'} · revision {p.revision}</span></div><details><summary>Music session files and recovery</summary>{legacy.length>0&&<label>Import older music session<select value="" disabled={locked} onChange={e=>{const id=e.target.value;if(id)void run(async()=>{if(dirty&&p.id&&!confirm('Keep the current draft and import this older session?'))return;await importSession(await api<MusicProject>('projects/'+id));});}}><option value="">Choose an older session to copy into this project</option>{legacy.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}<p>Atomic server saves retain 30 checkpoints. Imported recordings are shared media assets. Browser drafts recover unsaved edits on this device.</p><button disabled={!p.id || locked} onClick={() => download(new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }), `${p.name}.jukebox.json`)}>Download music session JSON</button><button disabled={locked} onClick={() => projectFile.current?.click()}>Import music session JSON</button><input ref={projectFile} hidden type="file" accept=".json" onChange={e => void run(async () => { const f = e.target.files?.[0]; if (!f || f.size > 2e6)
+        throw Error('Choose a project JSON under 2 MB.'); const candidate = JSON.parse(await f.text()); await importSession(candidate); })}/><button disabled={!p.id || locked} onClick={() => void run(async () => { await save(); const chosen = await api<{
         grant: string;
     }>('folder', {}); const result = await api<{
         path: string;
-    }>('projects/' + p.id + '/copy', { folder: chosen.grant, overwrite: confirm('Allow replacing this project’s JSON if it already exists in the chosen folder?') }); setNotice('Project JSON saved: ' + result.path); })}>Save project JSON to folder</button></details></section>{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
+    }>('projects/' + p.id + '/copy', { folder: chosen.grant, overwrite: confirm('Allow replacing this project’s JSON if it already exists in the chosen folder?') }); setNotice('Project JSON saved: ' + result.path); })}>Export music session JSON</button></details></section>{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
  <nav className="jb-tabs" aria-label="Jukebox views">{(['edit', 'compose', 'dj'] as const).map(v => <button disabled={busy || djActive} aria-pressed={view === v} key={v} onClick={() => { stop(); setView(v); }}>{v === 'edit' ? 'Edit & Arrange' : v === 'compose' ? 'Compose & Beats' : 'DJ Mix'}</button>)}</nav>
  <section className="card jb-transport"><div className="jb-toolbar"><button disabled={!p.id || busy || djActive} onClick={() => void run(play)}>{playing ? 'Pause' : 'Play'}</button><button onClick={() => { stop(); setPosition(0); }}>Stop</button><output aria-label="Play position">{position.toFixed(2)} s · bar {Math.floor(position * p.bpm / 240) + 1}</output>{num('BPM', p.bpm, v => change({ ...p, bpm: v }), 30, 300)}{num('Bars (4/4)', p.bars, v => change({ ...p, bars: v }), 1, 128)}<label>Playback source<select value={p.mode} disabled={locked} onChange={e => change({ ...p, mode: e.target.value as MusicProject['mode'] })}><option value="arrange">Arrangement</option><option value="dj">Captured DJ performance</option></select></label></div><input aria-label="Playhead" type="range" min={0} max={Math.max(seconds, 1)} step={.01} value={position} disabled={playing} onChange={e => setPosition(Number(e.target.value))}/><div className="jb-toolbar"><label><input type="checkbox" checked={loop} disabled={playing} onChange={e => setLoop(e.target.checked)}/>Loop</label>{num('Loop in', loopIn, setLoopIn, 0, Math.max(0, loopOut - .05), .01)}{num('Loop out', loopOut, setLoopOut, loopIn + .05, 600, .01)}<label><input type="checkbox" checked={metro} disabled={playing} onChange={e => setMetro(e.target.checked)}/>Metronome (preview only)</label><label><input type="checkbox" checked={countIn} onChange={e => setCountIn(e.target.checked)}/>4-beat pre-roll</label><label><input type="checkbox" checked={snap} onChange={e => setSnap(e.target.checked)}/>Snap to 1/16</label></div><small>Playback prepares the processed mix first, using the same rendering graph as export. Pre-roll waits one bar; start microphone recording separately. Formats are stereo 44.1 kHz, up to 10 minutes.</small></section>
  {view === 'dj' ? <fieldset className="jb-edit-lock" disabled={busy||playing||!p.id}><JukeboxDJ key={p.id} project={p} onChange={change} onActivity={setDjActive}/></fieldset> : <fieldset className="jb-edit-lock" disabled={locked}><section className="card"><div className="jb-toolbar"><button disabled={!p.id || locked} onClick={() => newTrack('audio')}>Add audio track</button>{view === 'compose' && <><button disabled={!p.id || locked} onClick={() => newTrack('synth')}>Add synth</button><button disabled={!p.id || locked} onClick={() => change({ ...p, tracks: [...p.tracks, ...houseBeat(p)] })}>Add house drum pattern</button><button disabled={!p.id || locked || !p.sources.length} onClick={() => newTrack('sample')}>Add sampler</button><button disabled={locked} onClick={() => midi.current?.click()}>Import MIDI</button><button disabled={!p.tracks.some(t => t.notes.length)} onClick={() => download(midiExport(p), p.name + '.mid')}>Export MIDI</button><input ref={midi} hidden type="file" accept=".mid,.midi" onChange={e => void run(async () => { const f = e.target.files?.[0]; if (!f || f.size > 2e6)

@@ -3,7 +3,7 @@
 No rewrite-all, no mass deleting historical behavior. Feature flags, small adapters, branch-based changes and tests at every phase. Ordering represents dependency, not mandatory USER navigation.
 
 ## Phase 0 — reconcile and baseline (read-only)
-- In user's actual checkout: `git status`, current SHA/branch, local uncommitted diff. Compare to inspected GitHub `vibe-director-current` (Nov 1) and Nov 5 review. Identify whether editor source and media-discovery fixes differ.
+- In user's actual checkout: `git status`, current SHA/branch, local uncommitted diff. Start from the currently checked-out branch/HEAD. The `vibe-director-current` branch now includes the Nov 5 review, tool glossary, project and media-discovery changes; initial Nov 1 GitHub findings are historical. Inspect current Editor source and media-discovery fixes directly, then compare any remaining local-only changes.
 - Run existing unit/frontend tests safely, produce baseline failure matrix. Inventory true app tools/APIs, tool glossary, actual source schemas, runtime/computer access. No code modifications until plan approved.
 - Output detailed change plan, files and risk/permission gates; ask owner "Implement?".
 

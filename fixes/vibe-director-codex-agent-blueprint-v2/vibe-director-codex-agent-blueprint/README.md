@@ -1,6 +1,6 @@
 # Vibe Director — Codex-Class Filmmaking Agent Blueprint
 
-**Status: architecture and implementation instructions, NOT an app patch, working computer-control integration, or proven media render.**
+**Status: architecture and implementation instructions, NOT an app patch, working computer-control integration, or proven media render.** The repository `fixes/` directory is the in-repo source of this blueprint; Codex should read it directly, not require a separate ZIP upload.
 
 ## One-sentence vision
 Vibe Director is a project-aware Codex-like filmmaking workstation: a user may operate any existing filmmaking page manually, or ask the persistent Director agent to plan and—AFTER user approval—use software tools, computer/browser automation, coding, and specialist agents to make, inspect, repair, edit and deliver an entire film.
@@ -16,10 +16,11 @@ Vibe Director is a project-aware Codex-like filmmaking workstation: a user may o
 8. `08_EDITOR_HANDOFF_AND_DELEGATION.md` — Editor, HyperFrames, OpenMontage, Backlot.
 9. `09_UI_CREATIVE_WORKFLOWS.md` — keep sidebar and Media Prep intact, redesign production.
 10. `10_MIGRATION_IMPLEMENTATION_PHASES.md` and `11_ACCEPTANCE_TESTS.md` — incremental work.
-11. `codex/CODEX_MASTER_VISION.md`, `codex/PHASE_0_REPO_RECONCILIATION.md`, `codex/PHASE_1_IMPLEMENT_ON_APPROVAL.md` — give directly to Codex.
-12. `skills/` — 13 `SKILL.md` files. Original six plus Production Style plus six operating skills.
-13. `contracts/` — example JSON machine-readable structures and schemas. Must be reconciled with actual app before use.
-14. `source_materials/` — original provided review, glossary ZIP, and original skill package; docs also unzipped in `glossary/`.
+11. `codex/START_HERE_PLAN_THEN_IMPLEMENT.md`, `codex/CODEX_MASTER_VISION.md`, `codex/PHASE_0_REPO_RECONCILIATION.md`, `codex/PHASE_1_IMPLEMENT_ON_APPROVAL.md` — in-repository Codex instructions; planning first, implementation only after approval.
+12. `16_UPDATED_GITHUB_RECONCILIATION.md` — what the newly pushed 2026-11-05 source does and does not establish.
+13. `skills/` — 13 `SKILL.md` files. Original six plus Production Style plus six operating skills.
+14. `contracts/` — example JSON machine-readable structures and schemas. Must be reconciled with actual app before use.
+15. `source_materials/` — original provided review, glossary ZIP, and original skill package; docs also unzipped in `glossary/`.
 
 ## Non-negotiables
 - Preserve current left navigation and all Media Prep tools/UI and runtime services.
@@ -34,4 +35,4 @@ Vibe Director is a project-aware Codex-like filmmaking workstation: a user may o
 - Production-type, visual-style and directing-language profiles are independent, optional, versioned creative jackets.
 
 ## Provenance
-The uploaded `full_review.md` documents a **local checkout with uncommitted changes on 2026-11-05**. GitHub inspection was of `SaswataBhattacharyya/vibe-director`, **`vibe-director-current` at `65e9717932547cad2ef8b55e9beb2c83f7686b05`** (GitHub commit 2026-11-01). These are not necessarily identical. Before modifying any source, Codex must inspect the user's actual working tree and reconcile differences. No source files in the user's repository are modified by this blueprint.
+The uploaded `full_review.md` documents a **local checkout with uncommitted changes on 2026-11-05**. The initial GitHub inspection was at `65e9717932547cad2ef8b55e9beb2c83f7686b05` (2026-11-01). The `vibe-director-current` branch was then updated to `3b9db20304c1073c674271c8f60fc66859a7a044`, which includes `full_review.md`, `tool_glossary/`, and the `fixes/` package. The supplied review still describes a local checkout at its review time, so Codex must check the actual current working tree before implementation. This blueprint modifies documentation only; it does not implement agent/runtime changes.

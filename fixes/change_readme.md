@@ -5,6 +5,9 @@
 ## Objective
 Build a **Codex-class, project-aware filmmaking Director and Editor** using the already-existing engines and tools. Each page works independently; a user may also request plan → approve → execute for a full film. Both agents have *the same* project/global/app skill resolver and typed tool gateway, with specialized creative/Editor contexts. Computer/terminal/Git/browser capability requires a separately installed authorized runtime, not skill text.
 
+## Codex entry points
+Read [CODEX_CHANGE_README_PROMPT.md](CODEX_CHANGE_README_PROMPT.md) and the [file-by-file change matrix](FILE_CHANGE_MATRIX.md) before implementation. Two **project-local proposal skills**, not globally installed or live app skills, are [blast-radius-review](skills/blast-radius-review/SKILL.md) and [compact-code-craft](skills/compact-code-craft/SKILL.md). They help identify downstream risks and keep patches maintainable. The latest proposed guides are in the code directories listed below.
+
 ## Placement-specific guides
 - `backend/story_builder/change_readme.md`: add one safe API routing seam, task storage/checkpoint and no duplicate dispatcher logic.
 - `backend/story_builder/services/change_readme.md`: implement shared tool registry, agent plans, graph/skill service and media operations; model-safe exact APIs, LTX follow-up.

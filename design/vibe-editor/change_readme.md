@@ -1,20 +1,11 @@
-# Vibe Editor — remaining integration, not a renderer rewrite
+# Vibe Editor — post-UX03 status and shared-media integration
 
-Read [current code review](../../fixes/CODE_REVIEW_2026-11-06.md), [UX migration spec](../../fixes/UNIFIED_CHAT_AND_PANES.md), [active UX02/UX03 tasks](../../fixes/ACTIVE_FIXES_2026-11-06.md). **Q08 MP3-to-Editor handoff is implemented and reported tested.** Do not repeat it.
+**UX02/UX03 completed as bounded implementation** in latest source: VibeEditorPage.tsx uses DirectorEditor typed session context, central agent_editor creative brief adapter, Editor session/pending clearance/timeline/preview/history in right work surface. No old Editor chat textarea remains. Do not regress the Editor-specific fix.
 
-## Confirmed defect
-`frontend/src/VibeEditorPage.tsx:138–153` renders a second Editor chat log/composer and an `EditorWorkspace` nested split in the **right** work area. The new persistent `DirectorConversation` already occupies the middle column; screenshot confirms redundancy.
+Current remaining design:
+- MED01 one reusable media picker across Editor and other pages. Today VibeEditorPage uses MediaSourcePicker plus EditorAssetBrowser and manual upload controls; unify browser search/selection UI with image/video/audio filters and source scope, but **keep EditorRange start/end, project session, revision, selected media and approvals distinct from chat attachments and model references**.
+- UX08 compact Editor page: main current video/timeline and clearance/action status first; preview/media/timeline/style/export reachable via small tabs, controls and accessible drawers. Old legacy messages remain read-only history; no second chat UI.
+- AG01 more tools for genuine Editor specialist, and AG02 evidence-backed QA/retake/export; current Editor brief adapter alone does not provide general agent film editing. Trust boundary remains vibe_editor_render.py HyperFrames/FFmpeg; never feed LLM-authored shell into renderer.
+- External HyperFrames Studio, OpenMontage and Backlot adapters remain optional after verified install/license/auth, no speculative UI embedding.
 
-## Exact safe migration order
-1. `VibeEditorPage.submit` currently calls `POST /api/editor/projects/{id}/command` with `action:'chat'`, `revision`, `text`. **This is the only current route to initiate an Editor creative brief from its UI.** Do not simply delete it.
-2. Add a shared tool/action adapter `editor.prepare_brief` that resolves real `workspace_id`, separate `editor_session_id`, selected in/out ranges, expected Editor revision and text; validates session ownership and selection; invokes existing `vibe_editor.command`. The center chat becomes the authorizing/request surface.
-3. Keep `editor.command` transitions: brief → clearance 1 → selected media/plan → clearance 2 → trusted HyperFrames/FFmpeg render. Proposal/clearance action cards may live in the right Editor work area while central chat is the only freeform composer. One approval must not silently substitute for another.
-4. Preserve `project.messages` as **read-only legacy session history** (collapsed details), `project.revisions`, `pending`, style rules, saved selections and exact media ranges.
-5. After real central-chat Editor requests succeed, remove old `editor-messages` as primary chat, old `editor-composer`, second model picker/send and nested `<EditorWorkspace name="editor">`. Move attach/browse/style/session operations into existing right tabs. Do **not** remove `EditorWorkspace.tsx` (used elsewhere) or Editor backend services.
-6. Add persistent session context to `DirectorRuntime`; current `surface:'editor'` has no session ID/selected ranges. Server must reject wrong project, stale session/revision and unselected media.
-7. Regression: new edit → brief → clarification/clearance → media plan → final clearance → trusted render; saved sessions, pause/stop/retry and output/export preserved. No automatic render from asking in chat.
-
-## Later
-Evidence-backed QA, retakes, project graph, multi-clip assembly and optional HyperFrames Studio/OpenMontage/Backlot adapters remain separate phases. Model text alone is not audiovisual inspection. The old `vibe_editor.run_job` JSON planner's “Do not run tools” protects the renderer; do not remove it to enable the new agent, which operates through shared typed gateway.
-
-No editing engine or Media Prep rewrites are authorized by this guide.
+Read fixes/UNIFIED_MEDIA_AND_PROJECT_ASSETS.md, fixes/COMPACT_CREATIVE_WORKSPACE_UX.md and fixes/PAGE_BY_PAGE_CHAT_AND_LAYOUT.md. Keep Media Prep, saved Editor sessions, approved brief/plan, exact media ranges, style rules, job history, output and export grants. Verify current tests and don't delete EditorWorkspace.tsx (Take/TRELLIS/Media Prep may use it until their own migration).

@@ -32,8 +32,8 @@
     "bytes": 5465
   },
   "09_UI_CREATIVE_WORKFLOWS.md": {
-    "sha256": "934343b9c156c3c1be15efdf8f54ba148bf3c796c31f731ed7ef5cbd20eaccba",
-    "bytes": 3820
+    "sha256": "1616581c1ee07f3ea294145e5533f4db1b5ec80a023feac04d0366027d098da4",
+    "bytes": 4675
   },
   "10_MIGRATION_IMPLEMENTATION_PHASES.md": {
     "sha256": "8fe02711ccea87c260f5587f327304e1effb1978333d7629b43b4e537210f344",
@@ -60,12 +60,12 @@
     "bytes": 4588
   },
   "README.md": {
-    "sha256": "3fbc0996c3bd82e81bd8175e7756cc7aab72fa7e092d7563d4a8ff6713736d2a",
-    "bytes": 4148
+    "sha256": "081e4600f062ecd97f08041e8dae68fe7a90a86a005b803e069ba972e964a551",
+    "bytes": 5003
   },
   "codex/CODEX_MASTER_VISION.md": {
-    "sha256": "bad0359b69abd1d74b31a6f012532594427547ade095ccf4c178a1c17e5c796d",
-    "bytes": 5979
+    "sha256": "4cab179dad77e1a41dfccb36e8993650946a6bbb76ecc37727ad0fb92f5990bf",
+    "bytes": 6834
   },
   "codex/IMPLEMENTATION_MODE_PROTOCOL.md": {
     "sha256": "d69d26b2bc6321f5d518bf0d16a6f3ffd6c11882fb41cb847c500f0baba3a7ab",
@@ -80,8 +80,8 @@
     "bytes": 1387
   },
   "codex/START_HERE_PLAN_THEN_IMPLEMENT.md": {
-    "sha256": "17562b531514b4f3aa93053ffc1503a38bb44d4b9c885c44a9977d2b71af5ca5",
-    "bytes": 4931
+    "sha256": "bb7c1cf1896b32dbd122930fd99f04cbf855edae09b4d494fa5724644ed1f722",
+    "bytes": 5786
   },
   "contracts/example_r2v_reference_manifest.json": {
     "sha256": "095c23f65a11e6c0448cd0d5963bb380508b2bf807e97a67231ea3303df87d64",

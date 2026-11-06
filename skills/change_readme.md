@@ -1,18 +1,11 @@
-# Shared skills: discovery before activation
+# Skills — current implementation vs remaining work (2026-11-06)
 
-Read [Q04](../fixes/QUICK_FIX_TASKS.md) and [global/project design](../fixes/14_GLOBAL_AND_PROJECT_SKILL_ACCESS.md). Both Director and Editor use one resolver; no separate permission model.
+Current source review: [code review](../fixes/CODE_REVIEW_2026-11-06.md) and [active work](../fixes/ACTIVE_FIXES_2026-11-06.md).
 
-Preserve live paths and references:
-- `skills/vibe-director/SKILL.md`
-- `skills/video-prompting/SKILL.md` and references
-- `design/vibe-editor/skills/vibe-editor-director/SKILL.md` and references/assets
+**Done as bounded foundation:** `agent_skills.py` provides one metadata/selected-context resolver for Director/Editor; the 13 blueprint craft skills are registered alongside existing app craft roots; launcher configures global Codex skill roots (see historical `Q07_Q08_RESULTS.md`). Respect availability/blocked entries and safe-root rules; no implicit skill activation or permission grant.
 
-The 13 blueprint skills under fixes and two local engineering proposal skills are not automatically live app skills. Register an explicitly approved bundled package root or install under stable namespaced IDs after validation; do not recursively activate every Markdown file in fixes.
+**Still incomplete:** project-owned custom skills/bindings with versioned portability, optional type/visual/directing “jackets” at project scope, rule/learning revisions across scenes, ability to use a newly installed global skill when its configured provider becomes available, and actual runtime adapters for skills' suggested tools. Avoid silently assuming every global skill supports the app's filesystem sandbox or that loaded SKILL.md grants computer use.
 
-Global skills come from explicitly configured installed roots/providers; no whole-home scan. The owner's global Codex `code-simplification`, `blast-radius` and `ponytail` can exist without the app discovering them today. Keep availability truthful. Metadata first, relevant bounded content/reference reads with canonical safe paths, provider/scope/id, version/hash and collision handling. Preserve current loader output before sharing its implementation.
+**For UX migration:** central Director and Editor must use the same resolver; old page-specific agents should contribute narrowly selected craft guidance, not spawn new chat stores. Preserve screenplay and prompt revision/proposal data, source hashes and already accepted skill references.
 
-Phase 1 can discover existing approved project-owned content without writing it. Phase 3 adds revisioned bindings and creative jackets plus checkpoint portability tests. Save project-owned content and global references/hashes, not private global installations or secrets. Missing/changed global source requires review; preserve historical decisions.
-
-Explicit user request and applicable project creative guidance shape selected craft skills; tool permissions, exact workflow contracts, ownership/provenance and runtime reality remain enforced by code. A skill cannot enable terminal/browser/GPU operations.
-
-Use disposable test-owned global/project roots, never install/remove real global skills as a test. Cover refresh/removal, hash drift, duplicates, missing sources, safe references/budgets and Director/Editor parity. Project jacket choices must not silently rewrite published style history.
+**Tests:** global/bundled/project discovery, unsafe symlinks/root absence, hash drift and invalidation, project A/B isolation, bounded context, duplicate names, Editor/Director parity, save/reload. Cleanup only synthetic test skill roots. Do not delete or alter global installations during tests.

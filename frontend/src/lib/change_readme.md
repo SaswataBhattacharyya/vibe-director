@@ -1,13 +1,21 @@
-# Typed agent client and handoff boundaries
+# Frontend lib — remaining typed handoff additions
 
-Read [Q06](../../../fixes/QUICK_FIX_TASKS.md) and matching backend [API guide](../../../backend/story_builder/change_readme.md). Add `agent-api.ts`/`agent-context.ts` only for implemented endpoints. Existing editor/video/media/storyboard clients stay authoritative.
+The Q06 `agent-api.ts` and `agent-context.ts`, Q07 task client and existing media/editor/video clients **already exist**. Do not recreate or fork their request logic. Read [current UX spec](../../../fixes/UNIFIED_CHAT_AND_PANES.md).
 
-Phase 1 exposes tool metadata, skill metadata and derived project context only. Proposed tool fields/statuses are in Q03; skill fields in Q04. Match the actual error envelope and runtime response checks. A TypeScript `as T` cast is not validation. Do not build future task/control functions before Q07 exists.
+## Needed: typed page/session context for the ONE shared chat
+`DirectorRuntime.send` currently passes `{text,asset_ids,skill_refs,surface}`; `surface:'editor'` alone is not enough. Add a versioned, typed context that can carry:
+```ts
+type AgentTarget = {
+  surface: 'editor'|'screenplay'|'storyboard'|'video'|'image'|'prompt'|'tools';
+  editor_session_id?: string;
+  expected_revision?: number;
+  selected_ranges?: Array<{asset_id:string;start:number;end:number}>;
+  scene_id?: string; shot_id?: string;
+  draft_hash?: string; source_revision_id?: string;
+};
+```
+This is a **proposal**, not a new API that already exists. Reuse `EditorRange` from `editor-api.ts`, `StoryVideoLineage` from `video-api.ts`, and current asset IDs/hashes. Type validation must also happen server-side. Version request payload/idempotency carefully to avoid corrupting history from previous five-field messages. A target identifies context, **not** permission to submit a render.
+ 
+Expose minimal shared actions to page components such as `setAgentTarget(target)` and `focusDirector()`; do not have pages mount `StudioChat` or send hidden requests on navigation. Keep media selection/Editor state authoritative in current services and invalidate stale targets on project/session switch.
 
-Context carries workspace owner and optional actual asset IDs, scene/shot IDs and Editor session/ranges. Reuse `EditorRange` from `editor-api.ts`; session ID is not workspace owner. Encode route parameters and discard late responses after project change. Server revalidates every handoff; navigation never admits generation.
-
-Q07 lifecycle requests include expected plan revision/hash, approved scope and idempotency identity. No generic exec client. Q08 maps approved typed intent to that lifecycle and returns registered assets.
-
-Reuse current `listMediaAssets`/`searchMediaSemantically`, `editorApi`, `getBoard/saveBoard`, and `prepareContinuityFrame`. The last-frame helper applies to supported generated job outputs; it is not arbitrary uploaded video frame extraction. Do not fork duplicate fetch/business logic or mutate exact video serializer unions for UI convenience.
-
-Test no submit during discovery/planning, project/selection preservation, unsupported fields, slow/lost responses and recovery IDs. Mock responses at the boundary; integration tests must also exercise the real matching backend contract.
+**Tests:** owner A/B, no stale asset from former Editor session, validated ranges, selected shot revision, chat persistence across route, no duplicate fetch handler. Page collapse must not clear drafts. `studioRequest` export in `StudioChat.tsx` has other consumers, so extract only after enumerating imports and testing.

@@ -1,25 +1,23 @@
-# Source/change routing matrix
+# Active source change matrix — 2026-11-06
 
-Current implementation: [Q07–Q08 results](Q07_Q08_RESULTS.md), including persistent conversation, notes and shell foundation. Remaining phase rows are future work.
+**Current:** [review](CODE_REVIEW_2026-11-06.md), [active tasks](ACTIVE_FIXES_2026-11-06.md), [single-chat UI spec](UNIFIED_CHAT_AND_PANES.md). **Completed** Q01–Q08 are archived as [results](Q01_Q06_RESULTS.md) and [results](Q07_Q08_RESULTS.md); do not reimplement.
 
-Canonical scope: [master](change_readme.md). Detailed instructions: [task cards](QUICK_FIX_TASKS.md). Evidence: [assessment](SOURCE_ASSESSMENT.md). Service names below live in `backend/story_builder/services/`.
+| Task | Files / symbols needing review | Actual change needed | Critical consumers and tests |
+|---|---|---|---|
+| R01 | `backend/story_builder/services/agent_tasks.py::poll,_find_job,_validate_job,_map_job`; `frontend/src/DirectorConversation.tsx::TaskCard` | Map frozen job after crash; do not create on GET; show recoverable state | task store, audio/continuity/computer jobs; no duplicate side effects |
+| R02 | `backend/story_builder/services/agent_computer.py::run` | Bound stdin delivery along with runtime/journal, child cancellation | Linux sandbox, process-group kill, mock non-reading child; no real model call |
+| UX01 | `frontend/src/{StudioShell,DirectorWorkspace,DirectorRuntime,DirectorConversation}.tsx`, `director-runtime.css` | Controlled chat/work visible state + always-visible restore; keep nav existing and all panes mounted | Playwright: each pane alone/collapsed; mobile, resize, project A/B, drafts |
+| UX02 | `frontend/src/{VibeEditorPage,DirectorRuntime}.tsx`, `lib/agent-context.ts`, `backend/story_builder/services/{agent_conversation,agent_tools,agent_tasks,vibe_editor}.py` | Editor session/selection context and existing brief/plan command as typed shared action | old Editor range/CAS, exact approvals, no render on draft chat |
+| UX03 | `frontend/src/{VibeEditorPage,EditorWorkspace}.tsx`, `vibe-editor.css` | Remove old Editor composer/log and nested two-pane only after UX02; keep right-hand controls and history | existing Editor session, two clearances, timeline/export, H3 source unaffected |
+| UX04a | `ScreenplayDirector.tsx`, `ScreenplayPage.tsx`, story revision services | Replace secondary conversation with central scene/shot proposal; keep Apply selector | revision/CAS, transcript history |
+| UX04b | `PromptDirector.tsx`, `PromptPreparationPage.tsx` | Central prompt/rule chat with work-surface diff+apply, preserve learning | exact prompt fields, saved lessons, stale revision |
+| UX04c | `CreateWorkspace.tsx`, `TextToImagePage.tsx`, `ImageAssetsPage.tsx` | Remove old prompts chats after central typed refine+apply/field recovery parity | freeze base prompt, idempotency, reference/order, manual generation |
+| UX04d | `TrellisPage.tsx`, `MediaPrepPage.tsx`, `StudioChat.tsx` | Retire only redundant chat component after settings Apply parity; **keep Media Prep processing intact** | `studioRequest` imports, EditorWorkspace reusable layout, tool APIs |
+| AG01 | `agent_conversation,agent_api,agent_tools,agent_skills,agent_graph,agent_tasks` + typed frontend clients | Expand tool registry, pass real page/session/ranges, never generic unsafe executor | each new tool from Director and Editor, strict validation, project graph |
+| AG02 | NEW small agent planning/QA/handoff modules + existing workers/Editor | Durable film step DAG, real media defect evidence and retakes, verified final assembly | existing jobs/ledger/save-load, Editor selected media, no fake completed film |
+| CR01 | `ProductionStylesPage,ScreenplayPage,StoryboardPage` + style/story services | Optional production type, visual/directing jackets and comic panels | historical style snapshots, manual paths, scene/shot/clip identities |
+| VID01 | `PromptPreparationPage,video-api.ts,isolated_*_contract.py,production_job_worker.py,production_ledger.py,t2v_pipeline.py` | Actual upload manifest; new separately versioned LTX-off route | exact H3 request schemas/digests, never alter old v2 jobs |
 
-| Card / phase | Inspect existing anchors | Proposed edit boundary | Consumers / acceptance |
-| --- | --- | --- | --- |
-| Q01 / preflight | `audio_utilities.stage_assets/run_job`, `media_discovery._discover_locked`, `media_library.list_assets` | Managed staging discovery exclusion; preserve job path compatibility | Audio utility and recursive discovery regressions; originals/legitimate outputs retained |
-| Q02 / 2 | Utility route in `isolated_server.py`, `video_repertoire.create_job/start_job` | One shared submission helper; manual route delegates | All three operations, 202/503 errors, configured roots, frozen destinations, uncertain dispatch |
-| Q03 / 1 | `isolated_server.create_app`, capability adapters | New `agent_tools.py`, `agent_api.py`, narrow dispatch seam | Metadata only; strict routes, owner checks, no execution |
-| Q04 / 1 | `director_skills.director_skill_context`, Editor `run_job` skill reader | New `agent_skills.py`; compatibility facade after parity test | Story/video/Editor context, global/app/project isolation, budgets |
-| Q05 / 1 | Story/board records, manifests, job JSON, Editor state | New `agent_graph.py`, owned context endpoint | Derived IDs/hashes; no mutating browse/recovery calls under read-only label |
-| Q06 / 1 | `StudioShell.tsx`, `App.tsx`, `ProjectController.tsx`, `lib/editor-api.ts` | `AgentInspector.tsx`, `lib/agent-api.ts`, `lib/agent-context.ts`, narrow shell wiring | Same discovery on Director/Editor; project switch/direct routes/mobile; no submit |
-| Q07 / 2 | `production_ledger.py`, `projects.sql_snapshot/assert_idle`, media job store | Small `agent_tasks.py`, immutable plan/call/event tables, lifecycle API | Stale approval, crash/reconcile, duplicate request, Save/Load |
-| Q08 / 2 | Director/Editor chat entry points, Q02/Q07 | One-operation chat bridge; registered result/attachment proposal | Real CPU MP3, session/workspace/ranges, late responses; no soundtrack replacement |
-| Phase 3 | Q07, checkpoints and shell | Persistent chat, multistep execution, reviewed knowledge/skill bindings | New schema/transition plan; no parallel story authority/task engine |
-| Phase 4 | Style/screenplay/storyboard pages and services | Optional jackets, scene proposals, comic panels; independent board schema separate | Published history, revision/CAS, panel/shot/clip distinctions, no manual gates |
-| Phase 5 | Prompt/video clients, continuity, exact video contracts | Reference manifests/adapters; separately version LTX-off | Route fields/durations, hashes, voice vs dialogue, frozen jobs |
-| Phase 6 | Editor/render/assembly services | Verified QA/retakes/handoff/export; extend renderer for proven gaps only | Actual observations, immutable takes, ranges, audio/timeline limits |
-| Phase 7 | Real installed runtime/license/auth interfaces | Optional scoped computer/browser/coding/external adapters | Permissions/audit/output registration; native workflow independent |
+**Minimal first UI milestone:** UX01 → UX02 → UX03; R01/R02 independently in parallel only with explicit authorization. Then remove old chats progressively under UX04. These are engineering phases, not a mandatory user filmmaking wizard.
 
-Large files are not rewrite targets. Extract only the approved seam; do not append a second business implementation to the dispatcher or App.
-
-Current continuation: approved CPU last-frame PNG and scoped Codex computer tasks are implemented alongside MP3. Both surfaces offer Application tools, Project only and Full access; each computer task freezes scope and requires exact approval. Offline sandbox and mocked worker tests differ from unperformed live model acceptance. Browser/desktop automation and general film orchestration remain incomplete. See `Q07_Q08_RESULTS.md` for evidence and changed files.
+**Code review rule:** do not delete `EditorWorkspace.tsx` or `StudioChat.tsx` until every remaining import is migrated; the latter exports `studioRequest` used across pages. Do not touch `MediaPrepPage` business logic or replace `vibe_editor_render.py` to solve UI duplication. Preserve project state and legacy message history. Original generation and editor services remain the source of truth.

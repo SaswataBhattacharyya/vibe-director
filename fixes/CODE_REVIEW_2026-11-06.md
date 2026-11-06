@@ -1,5 +1,7 @@
 # Vibe Director code review — 2026-11-06
 
+> **HISTORICAL REVIEW at 2d4878db.** The then-missing Editor bridge, old Editor composer, three-pane collapse, R01 and R02 have **since been implemented** in the 603b1fcb branch; use [latest source review](REFRESH_REVIEW_2026-11-06_603b1fcb.md), [reported results](R01_UX03_RESULTS.md) and [active fixes](ACTIVE_FIXES_2026-11-06.md). This old assessment remains solely for issue provenance.
+
 **Reviewed source:** `SaswataBhattacharyya/vibe-director`, branch `vibe-director-current`, Git SHA `2d4878db60d6c8b5ffbcb3254dddc66d5db402ac`. This document is a **static source review** against the user's current UI screenshot and the preceding `fixes` requirements. **No new application build, browser test, live Codex request, GPU run or media test was performed in this review.** Prior test totals are reported, not independently reproduced, in `Q07_Q08_RESULTS.md`.
 
 ## Executive assessment

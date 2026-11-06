@@ -43,8 +43,10 @@ class AgentApiTests(unittest.TestCase):
              patch('story_builder.services.agent_tools.shutil.which', return_value=None):
             status, value = self.call('/api/agent/tools', 'workspace_id=tool-library')
             self.assertEqual(status, '200 OK')
-            self.assertEqual(len(value['tools']), 3)
-            self.assertTrue(all(t['status'] == 'blocked' and t['execution_enabled'] is False for t in value['tools']))
+            self.assertEqual(len(value['tools']), 4)
+            self.assertTrue(all(t['status'] == 'blocked' and t['execution_enabled'] is False
+                                for t in value['tools'] if t['id'] != 'editor.prepare_brief'))
+            self.assertEqual(next(t['status'] for t in value['tools'] if t['id'] == 'editor.prepare_brief'), 'available')
             self.assertEqual(self.call('/api/agent/tools', 'workspace_id=tool-library', 'POST')[0], '405 Method Not Allowed')
             self.assertEqual(self.call('/api/agent/run')[0], '404 Not Found')
         for query in ('', 'workspace_id=', 'workspace_id=../x', 'workspace_id=tool-library&actor=x',

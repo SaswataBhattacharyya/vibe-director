@@ -2,7 +2,7 @@
 .director-workspace {display:grid;grid-template-columns:minmax(280px,var(--director-width,34%)) 8px minmax(0,1fr);align-items:start;min-width:0}
 .director-slot {position:sticky;top:0;min-width:0;background:var(--studio-bg)}
 .director-conversation {height:var(--director-height,calc(100dvh - 240px));min-height:240px;display:flex;flex-direction:column;color:var(--studio-text)}
-.director-conversation-header {flex-shrink:0;display:flex;align-items:center;gap:12px;padding:20px 20px 16px;border-bottom:1px solid color-mix(in srgb,var(--studio-line),transparent 75%)}
+.director-conversation-header {flex-shrink:0;display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid color-mix(in srgb,var(--studio-line),transparent 75%)}
 .director-conversation-header>div {flex:1;min-width:0}
 .director-conversation-header strong,.director-conversation-header small {display:block}
 .director-conversation small {color:var(--studio-muted);font-size:12px;line-height:1.5}
@@ -17,7 +17,11 @@
 .director-hint {font-size:12px;color:var(--studio-muted)}
 .director-message {margin-bottom:28px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
 .director-user-message {background:var(--studio-surface);padding:12px 16px;border-radius:16px 16px 4px 16px;margin:0 0 16px 20px}
-.director-composer-wrap {padding:16px 20px 24px;flex-shrink:0;min-height:0;max-height:calc(100% - 64px);overflow:auto;scrollbar-gutter:stable}
+.director-composer-wrap {display:flex;flex-direction:column;gap:12px;padding:12px 20px 16px;flex-shrink:0;min-height:0;max-height:calc(100% - 64px);overflow:auto;scrollbar-gutter:stable}
+.director-composer-context {min-height:0;overflow:auto;flex:1 1 auto}
+.director-composer-options {display:flex;align-items:center;gap:8px}
+.director-composer-options>* {flex:1;min-width:0}
+.director-composer-wrap>.director-composer {flex-shrink:0}
 .studio-shell .director-context-button {display:flex;gap:8px;align-items:center;padding:8px 0;background:transparent;border-color:transparent;font-size:12px;color:var(--studio-muted)}
 .director-context {max-height:300px;overflow:auto;padding:16px;background:var(--studio-surface);border:1px solid var(--studio-line);border-radius:12px;margin-bottom:12px;font-size:12px}
 .director-context fieldset {border:0;padding:12px 0;margin:0;min-width:0}
@@ -27,9 +31,11 @@
 .director-context .director-knowledge label {display:grid;gap:8px}
 .director-knowledge textarea {width:100%;resize:vertical;min-height:100px}
 .director-composer {padding:12px;border:1px solid var(--studio-line);border-radius:18px;background:var(--studio-field);box-shadow:0 4px 24px #00000012}
-.studio-shell .director-composer textarea {width:100%;border:0;background:transparent;resize:vertical;min-height:72px;max-height:240px;padding:4px;font-size:14px;line-height:1.6}
-.director-composer>div {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}
-.studio-shell .director-composer button {border-radius:50%;min-height:36px;width:36px;padding:8px;display:grid;place-items:center;background:var(--studio-accent);color:var(--studio-ink)}
+.studio-shell .director-composer textarea {width:100%;border:0;background:transparent;resize:vertical;height:72px;min-height:72px;max-height:240px;padding:4px;font-size:14px;line-height:1.6}
+.director-composer>div {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;margin-top:12px}
+.director-composer>div>small {grid-row:2;grid-column:1/-1}
+.director-composer>div>button {grid-column:2;grid-row:1}
+.studio-shell .director-composer>div>button {border-radius:50%;min-height:36px;width:36px;padding:8px;display:grid;place-items:center;background:var(--studio-accent);color:var(--studio-ink)}
 .director-task {padding:16px;margin-bottom:16px;border:1px solid color-mix(in srgb,var(--studio-line),transparent 40%);border-radius:12px;background:var(--studio-surface);font-size:13px}
 .director-task-heading {display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
 .director-status {font-size:11px;color:var(--studio-muted)}
@@ -44,11 +50,11 @@
 .director-output audio {width:100%;height:40px}
 .director-error {padding:12px;border:1px solid var(--studio-error);border-radius:10px;color:var(--studio-error);font-size:12px;overflow-wrap:anywhere}
 .director-sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.director-workspace:has(.director-collapsed) {grid-template-columns:minmax(0,1fr)}
-.director-workspace:has(.director-collapsed) .director-slot {position:static;border-right:0;border-bottom:1px solid var(--studio-line)}
-.director-workspace:has(.director-collapsed) .director-resizer {display:none}
-.director-collapsed {height:auto;min-height:0}
-.director-collapsed .director-conversation-header {padding:8px 20px}
+.director-workspace[data-chat-open=false],.director-workspace[data-work-open=false] {grid-template-columns:minmax(0,1fr)}
+.director-workspace>[hidden] {display:none!important}
+.director-pane-toolbar {display:flex;gap:8px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--studio-line)}
+.studio-shell .director-pane-toolbar button {min-height:36px;padding:8px 12px;font-size:12px;background:transparent}
+.director-empty-panes {padding:24px;color:var(--studio-muted)}
 .director-workspace .studio-page-content {min-width:0}
 .create-tools {display:grid;gap:24px;min-width:0}
 .create-tools .layout-grid {grid-template-columns:minmax(0,1fr)}
@@ -59,7 +65,7 @@
 .create-prompt-assistant[open] summary {margin-bottom:24px}
 .create-prompt-assistant .create-chat {gap:16px}
 @media (max-width:1100px) {.director-workspace .content-wrap {padding:24px 20px 40px}.director-conversation-header,.director-composer-wrap {padding-inline:16px}}
-@media (max-width:760px) {.director-workspace {display:block}.director-slot {position:static;border-right:0;border-bottom:1px solid var(--studio-line)}.director-conversation {height:var(--director-height,66dvh);min-height:240px}.director-collapsed {height:auto;min-height:0}.director-transcript {padding:20px}.director-welcome {padding:12px 4px}.director-composer-wrap {padding-bottom:16px}}
+@media (max-width:760px) {.director-workspace {display:block}.director-slot {position:static;border-right:0;border-bottom:1px solid var(--studio-line)}.director-conversation {height:var(--director-height,66dvh);min-height:240px}.director-transcript {padding:20px}.director-welcome {padding:12px 4px}.director-composer-wrap {padding-bottom:16px}}
 @media (prefers-reduced-motion:no-preference) {.director-composer {transition:border-color .15s ease}.director-composer:focus-within {border-color:var(--studio-accent)}}
 @media (max-width:680px) {.studio-sidebar:not(.mobile-open) {visibility:hidden;pointer-events:none}.studio-nav-toggle {display:none}}
 
@@ -75,4 +81,29 @@
   .director-workspace[data-surface=chat]>.studio-page-content,.director-workspace:not([data-surface=chat])>.director-slot {display:none}
 }
 
-.director-access{display:flex;align-items:center;gap:12px;font-size:12px;margin:12px 0}.director-access select{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--studio-line);border-radius:8px;background:var(--studio-field);color:inherit}
+.studio-shell .director-access:has(>select){display:flex;align-items:center;gap:12px;font-size:12px;margin:0}.director-access select{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--studio-line);border-radius:8px;background:var(--studio-field);color:inherit}
+
+.editor-session-controls {display:grid;gap:20px;margin:24px 0}
+.editor-session-controls .editor-project-status {display:flex;gap:12px;flex-wrap:wrap}
+.editor-session-history {padding:16px;border:1px solid var(--studio-line);border-radius:12px}
+.editor-session-history summary {cursor:pointer;color:var(--studio-muted)}
+.editor-attachments {padding:20px;border:1px solid var(--studio-line);border-radius:12px;background:var(--studio-surface)}
+.editor-attachments:focus-visible {outline:2px solid var(--studio-accent);outline-offset:3px}
+.editor-style-actions {display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.editor-work-surface {min-width:0;padding:24px;border:1px solid var(--studio-line);border-radius:12px;background:var(--studio-surface)}
+
+.director-composer .model-selector {display:flex;align-items:center;gap:4px;min-width:0}
+.studio-shell .director-composer .model-selector>button {min-height:32px;font-size:11px;padding:6px 8px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Composer dialogs stay above the sidebar and outside the scrolling transcript. */
+.director-slot:has(.model-picker,.provider-status) {z-index:150}
+.director-composer :is(.model-picker,.provider-status) {position:fixed;z-index:151;top:16px;bottom:auto;left:max(8px,calc(50vw - 195px));right:auto;width:min(390px,calc(100vw - 16px));max-height:calc(100dvh - 32px);overflow:auto}
+
+.editor-session-history .editor-messages {min-height:0;max-height:240px}
+
+/* The shared right pane has its own gutter; keep Editor session chrome compact. */
+.director-workspace .vibe-editor-page>.summariser-back {margin-bottom:12px}
+.director-workspace .editor-header {gap:12px}
+.director-workspace .editor-header h1 {margin:0 0 4px;font-size:24px}
+.director-workspace .editor-projects.session-toolbar {margin:16px 0;padding:0;gap:12px}
+.director-workspace .editor-session-controls {margin:16px 0}

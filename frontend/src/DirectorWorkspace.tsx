@@ -1,8 +1,9 @@
 import {useRef, type CSSProperties, type ReactNode} from 'react';
-import {DirectorSlot} from './DirectorRuntime';
+import {DirectorSlot, useDirectorPanes} from './DirectorRuntime';
 import {useProjectState} from './lib/project-state';
 
 export default function DirectorWorkspace({children}: {children: ReactNode}) {
+  const {panes, togglePane, openPane} = useDirectorPanes();
   const [width, setWidth] = useProjectState('DirectorWorkspace:width', 34);
   const [surface, setSurface] = useProjectState('DirectorWorkspace:surface', 'workspace');
   const container = useRef<HTMLDivElement>(null);
@@ -13,14 +14,19 @@ export default function DirectorWorkspace({children}: {children: ReactNode}) {
     if (bounds?.width) setWidth(bounded((clientX - bounds.left) / bounds.width * 100));
   };
   return <>
-    <div className="director-surface-switch" aria-label="Workspace view">
-      <button aria-pressed={surface === 'chat'} onClick={() => setSurface('chat')}>Director chat</button>
-      <button aria-pressed={surface !== 'chat'} onClick={() => setSurface('workspace')}>Workspace</button>
+    <div className="director-pane-toolbar" role="group" aria-label="Workspace panes">
+      <button aria-expanded={panes.chat} onClick={() => togglePane('chat')}>{panes.chat ? 'Hide' : 'Show'} Director conversation</button>
+      <button aria-expanded={panes.work} onClick={() => togglePane('work')}>{panes.work ? 'Hide' : 'Show'} workspace</button>
     </div>
-    <div ref={container} className="director-workspace" data-surface={surface}
+    <div className="director-surface-switch" aria-label="Workspace view">
+      <button aria-pressed={surface === 'chat' && panes.chat} onClick={() => {openPane('chat'); setSurface('chat');}}>Director chat</button>
+      <button aria-pressed={surface !== 'chat' && panes.work} onClick={() => {openPane('work'); setSurface('workspace');}}>Workspace</button>
+    </div>
+    {!panes.chat && !panes.work && <p className="director-empty-panes" role="status">Both panes are hidden. Use the controls above to restore your workspace.</p>}
+    <div ref={container} className="director-workspace" data-surface={!panes.work ? 'chat' : !panes.chat ? 'workspace' : surface} data-chat-open={panes.chat} data-work-open={panes.work}
       style={{'--director-width': `${percent}%`} as CSSProperties}>
-      <DirectorSlot/>
-      <div className="director-resizer" role="separator" tabIndex={0} aria-label="Resize Director conversation"
+      <DirectorSlot hidden={!panes.chat}/>
+      <div className="director-resizer" hidden={!panes.chat || !panes.work} role="separator" tabIndex={0} aria-label="Resize Director conversation"
         aria-orientation="vertical" aria-valuemin={28} aria-valuemax={60} aria-valuenow={Math.round(percent)}
         onDoubleClick={() => setWidth(34)}
         onKeyDown={event => {
@@ -30,7 +36,7 @@ export default function DirectorWorkspace({children}: {children: ReactNode}) {
         onPointerDown={event => {if (event.button === 0) {event.currentTarget.setPointerCapture(event.pointerId); resize(event.clientX);}}}
         onPointerMove={event => {if (event.currentTarget.hasPointerCapture(event.pointerId)) resize(event.clientX);}}
         onPointerUp={event => {if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);}}/>
-      <div className="studio-page-content">{children}</div>
+      <div className="studio-page-content" hidden={!panes.work}>{children}</div>
     </div>
   </>;
 }

@@ -1,6 +1,7 @@
 """Explicitly approved Codex work; durable media jobs own dispatch and cancellation."""
 import json
 import os
+import selectors
 import signal
 import subprocess
 import sys
@@ -61,7 +62,33 @@ def submit(root, owner, settings, invocation, on_created):
         raise WorkerUnavailable(str(exc)) from exc
 
 
-def run(root, job_id, request):
+def _supervise(process, content, journal, timeout):
+    deadline = time.monotonic() + timeout
+    remaining = memoryview(content)
+    os.set_blocking(process.stdin.fileno(), False)
+    with selectors.DefaultSelector() as selector:
+        selector.register(process.stdin, selectors.EVENT_WRITE)
+        while process.poll() is None:
+            if time.monotonic() >= deadline or journal.stat().st_size > 16_000_000:
+                raise RuntimeError('Computer execution reached its time or journal limit. Inspect before a new task.')
+            for key, _ in selector.select(timeout=min(0.2, max(0, deadline - time.monotonic()))):
+                try:
+                    count = os.write(key.fd, remaining[:65536])
+                except BlockingIOError:
+                    continue
+                except BrokenPipeError as exc:
+                    raise RuntimeError('Codex stopped reading its approved instruction. Inspect before a new task.') from exc
+                remaining = remaining[count:]
+                if not remaining:
+                    selector.unregister(process.stdin)
+                    process.stdin.close()
+            if not selector.get_map():
+                time.sleep(min(0.2, max(0, deadline - time.monotonic())))
+    if remaining:
+        raise RuntimeError('Codex exited before receiving its approved instruction.')
+
+
+def run(root, job_id, request, *, timeout=1800):
     owner, settings = request['workspace_id'], request['settings']
     if request.get('operation') != 'computer' or request.get('inputs') != []:
         raise ValueError('Invalid frozen computer request.')
@@ -89,13 +116,7 @@ def run(root, job_id, request):
         process = subprocess.Popen(command, cwd=settings['workspace_path'], stdin=subprocess.PIPE,
             stdout=log, stderr=subprocess.STDOUT, start_new_session=True, umask=0o077)
         try:
-            process.stdin.write(prompt.encode())
-            process.stdin.close()
-            deadline = time.monotonic() + 1800
-            while process.poll() is None:
-                if time.monotonic() > deadline or journal.stat().st_size > 16_000_000:
-                    raise RuntimeError('Computer execution reached its time or journal limit. Inspect before a new task.')
-                time.sleep(0.2)
+            _supervise(process, prompt.encode(), journal, timeout)
             if process.returncode or not report.is_file():
                 raise RuntimeError('Codex execution failed. Inspect the private job journal; it will not be replayed.')
         finally:
@@ -106,6 +127,8 @@ def run(root, job_id, request):
                 except subprocess.TimeoutExpired:
                     os.killpg(process.pid, signal.SIGKILL)
                     process.wait()
+            if not process.stdin.closed:
+                process.stdin.close()
     os.chmod(report, 0o600)
     with report.open('rb') as stream:
         text = stream.read(64001)

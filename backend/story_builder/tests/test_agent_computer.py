@@ -97,9 +97,10 @@ class AgentComputerTests(AgentTaskFixture):
         self.tasks.approve(self.owner, row['task_id'], self.approval(row))
         started = self.tasks.run(self.owner, row['task_id'], self.approval(row))
         job_id = started['invocation']['job_id']
+        popen = subprocess.Popen
         def launch(command, **kwargs):
-            Path(command[command.index('--output-last-message') + 1]).write_text('Prepared a shot list; review it.')
-            return Mock(stdin=io.BytesIO(), poll=Mock(return_value=0), returncode=0)
+            report = command[command.index('--output-last-message') + 1]
+            return popen([sys.executable, '-c', 'import sys,pathlib;sys.stdin.buffer.read();pathlib.Path(sys.argv[1]).write_text("Prepared a shot list; review it.")', report], **kwargs)
         from story_builder.services import video_repertoire_worker as worker
         with patch.object(agent_computer.subprocess, 'Popen', side_effect=launch) as provider, \
                 patch('sys.argv', ['worker', agent_computer.KIND, job_id]), patch.object(worker.signal, 'signal'), \
@@ -123,7 +124,7 @@ class AgentComputerTests(AgentTaskFixture):
         request = video_repertoire.read_job(agent_computer.KIND, job_id)['request']
         process = Mock(stdin=io.BytesIO(), pid=999999, poll=Mock(return_value=None))
         with patch.object(agent_computer.subprocess, 'Popen', return_value=process), \
-                patch.object(agent_computer.time, 'sleep', side_effect=KeyboardInterrupt), \
+                patch.object(agent_computer, '_supervise', side_effect=KeyboardInterrupt), \
                 patch.object(agent_computer.os, 'killpg') as terminate:
             with self.assertRaises(KeyboardInterrupt):
                 agent_computer.run(self.root, job_id, request)
@@ -131,6 +132,28 @@ class AgentComputerTests(AgentTaskFixture):
             process.wait.assert_called_once_with(timeout=5)
         with self.assertRaises(ValueError):
             agent_computer.run(self.root, job_id, request)
+
+    def test_cpu_child_input_delivery_is_bounded_and_reaped(self):
+        popen = subprocess.Popen
+        for script in ('import time;time.sleep(10)', 'import sys;sys.stdin.close()',
+                       'import sys,time;\nwhile sys.stdin.buffer.read(1024):time.sleep(.05)'):
+            row = self.tasks.propose(self.owner, self.proposal())
+            self.tasks.approve(self.owner, row['task_id'], self.approval(row))
+            started = self.tasks.run(self.owner, row['task_id'], self.approval(row))
+            job_id = started['invocation']['job_id']
+            request = video_repertoire.read_job(agent_computer.KIND, job_id)['request']
+            request['settings']['instruction'] = '🎬' * 12000
+            children = []
+            def launch(command, **kwargs):
+                child = popen([sys.executable, '-c', script], **kwargs)
+                children.append(child)
+                return child
+            with patch.object(agent_computer.subprocess, 'Popen', side_effect=launch), self.assertRaises(RuntimeError):
+                agent_computer.run(self.root, job_id, request, timeout=.2)
+            self.assertIsNotNone(children[0].poll())
+            self.assertTrue(children[0].stdin.closed)
+            with self.assertRaises(ValueError):
+                agent_computer.run(self.root, job_id, request, timeout=.2)
 
     @unittest.skipUnless(os.environ.get('VIBE_TEST_CODEX_SANDBOX') == '1', 'Opt-in offline Linux sandbox acceptance')
     def test_real_project_sandbox_hides_sibling_and_blocks_network(self):

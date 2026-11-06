@@ -1,10 +1,9 @@
 import {test,expect} from '@playwright/test';
-import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
-import {tmpdir} from 'node:os';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
 const defaults={mode:'instrumental',tags:'warm',lyrics:'',duration:30,seed:42,steps:20,cfg:4,scheduler:'euler',adapter_id:'',max_steps:1000,learning_rate:.0001,save_every:100,rank:16};
 
-test('ACE fresh Create, restored fine-tune and new session keep panels and settings consistent',async({page})=>{
+test('ACE fresh Create, restored fine-tune and new session keep panels and settings consistent',async({page},info)=>{
  const training={id:'training',name:'Saved training',workspace_id:'tool-library',revision:2,settings:{...defaults,rank:32},intent:'finetune',summary:'',questions:[],messages:[],dataset:{count:1,songs:['song']},assets:[],adapters:[],job_id:null};
  const writes=[];
  await page.route('**/api/**',route=>{
@@ -43,7 +42,7 @@ test('ACE fresh Create, restored fine-tune and new session keep panels and setti
  await page.getByRole('button',{name:'New session',exact:true}).click();
  await expect(nav.getByRole('button',{name:'Create',exact:true})).toHaveAttribute('aria-pressed','true');
  await expect(page.getByRole('heading',{name:'Create music',exact:true})).toBeVisible();
- await page.screenshot({path:'/tmp/vibe-ace-create.png',fullPage:true});
+ await page.screenshot({path:info.outputPath('ace-create.png'),fullPage:true});
  await page.setViewportSize({width:390,height:844});
  await page.getByRole('button',{name:'Open session',exact:true}).click();
  const popup=await page.getByRole('dialog',{name:'Open session',exact:true}).boundingBox();
@@ -54,8 +53,9 @@ test('ACE fresh Create, restored fine-tune and new session keep panels and setti
  expect(writes.filter(path=>path.startsWith('/api/ace/'))).toEqual([]);
 });
 
-test('nested folder imports filter by kind, attach/drop/remove persist and deletion stays confirmed',async({page})=>{
- const root=mkdtempSync(join(tmpdir(),'vibe-editor-folder-'));
+test('nested folder imports filter by kind, attach/drop/remove persist and deletion stays confirmed',async({page},info)=>{
+ const root=mkdtempSync(join(process.cwd(),'.test-editor-folder-'));
+ try{
  mkdirSync(join(root,'nested','deeper'),{recursive:true});
  writeFileSync(join(root,'one.png'),'image');writeFileSync(join(root,'nested','deeper','two.png'),'image');writeFileSync(join(root,'nested','skip.wav'),'audio');writeFileSync(join(root,'skip.txt'),'text');
  let assets=[],uploads=[],deletes=0,project={id:'edit-folder',name:'Folder edit',workspace_id:'tool-library',revision:0,style_id:null,messages:[],revisions:[],selection:[],overrides:{},view:{tab:'media'}};
@@ -78,7 +78,6 @@ test('nested folder imports filter by kind, attach/drop/remove persist and delet
   if(path==='/api/story/workspaces')return route.fulfill({json:{items:[]}});
   return route.fulfill({status:404,json:{error:{message:'Unexpected mock endpoint'}}});
  });
- try{
   await page.goto('/#/editor');
   await page.getByRole('combobox',{name:'Kind',exact:true}).selectOption('image');
   await page.getByLabel('Choose asset folder',{exact:true}).setInputFiles(root);
@@ -87,7 +86,7 @@ test('nested folder imports filter by kind, attach/drop/remove persist and delet
   await expect(page.getByRole('button',{name:'Attach selected',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Select all shown (2)',exact:true}).click();
   await page.getByRole('button',{name:'Attach selected',exact:true}).click();
-  await expect(page.getByLabel('Chat attachments')).toContainText('one.png');
+  await expect(page.getByLabel('Editing attachments')).toContainText('one.png');
   await expect.poll(()=>project.selection.length).toBe(2);
   await page.getByRole('button',{name:'Delete selected permanently'}).click();
   await expect(page.getByRole('alert').filter({hasText:'Files are still used'})).toBeVisible();
@@ -95,22 +94,22 @@ test('nested folder imports filter by kind, attach/drop/remove persist and delet
   await page.getByRole('combobox',{name:'Asset view',exact:true}).selectOption('list');
   await page.getByRole('combobox',{name:'Sort assets',exact:true}).selectOption('name');
   await expect(page.locator('.editor-asset-list .editor-asset-card')).toHaveCount(2);
-  await page.screenshot({path:'/tmp/vibe-editor-assets.png',fullPage:true});
-  await page.getByLabel('Chat attachments').locator('.editor-attachment-chip').first().getByTitle('View attachment').focus();
+  await page.screenshot({path:info.outputPath('editor-assets.png'),fullPage:true});
+  await page.getByLabel('Editing attachments').locator('.editor-attachment-chip').first().getByTitle('View attachment').focus();
   await expect(page.getByRole('button',{name:'Remove attachment 1',exact:true})).toHaveCSS('opacity','1');
-  await page.getByLabel('Chat attachments').locator('.editor-attachment-chip').first().hover();
+  await page.getByLabel('Editing attachments').locator('.editor-attachment-chip').first().hover();
   await page.getByRole('button',{name:'Remove attachment 1',exact:true}).click();
   await expect.poll(()=>project.selection.length).toBe(1);
-  await expect(page.locator('#edit-chat')).toBeEnabled();
+  await expect(page.locator('#project-director-message')).toBeEnabled();
   expect(deletes).toBe(0);
-  await page.locator('.editor-composer').evaluate(el=>{const data=new DataTransfer();data.setData('application/x-vibe-editor-assets',JSON.stringify(['asset-1','asset-2']));el.dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));});
+  await page.locator('.editor-attachments').evaluate(el=>{const data=new DataTransfer();data.setData('application/x-vibe-editor-assets',JSON.stringify(['asset-1','asset-2']));el.dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));});
   await expect.poll(()=>project.selection.length).toBe(2);
-  await page.locator('.editor-composer').evaluate(el=>{const data=new DataTransfer();data.setData('application/x-vibe-editor-assets',JSON.stringify(['asset-1']));el.dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));});
-  await expect(page.locator('#edit-chat')).toBeEnabled();
+  await page.locator('.editor-attachments').evaluate(el=>{const data=new DataTransfer();data.setData('application/x-vibe-editor-assets',JSON.stringify(['asset-1']));el.dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));});
+  await expect(page.locator('#project-director-message')).toBeEnabled();
   expect(project.selection.length).toBe(2);
   await page.reload();
-  await expect(page.getByLabel('Chat attachments').locator('.editor-attachment-chip')).toHaveCount(2);
-  for(let i=0;i<2;i++){await page.getByLabel('Chat attachments').locator('.editor-attachment-chip').first().hover();await page.getByRole('button',{name:'Remove attachment 1',exact:true}).click();await expect.poll(()=>project.selection.length).toBe(1-i);}
+  await expect(page.getByLabel('Editing attachments').locator('.editor-attachment-chip')).toHaveCount(2);
+  for(let i=0;i<2;i++){await page.getByLabel('Editing attachments').locator('.editor-attachment-chip').first().hover();await page.getByRole('button',{name:'Remove attachment 1',exact:true}).click();await expect.poll(()=>project.selection.length).toBe(1-i);}
   await page.getByRole('combobox',{name:'Kind',exact:true}).selectOption('image');
   await page.getByRole('button',{name:'Select all shown (2)',exact:true}).click();
   page.once('dialog',dialog=>dialog.dismiss());
@@ -124,10 +123,10 @@ test('nested folder imports filter by kind, attach/drop/remove persist and delet
   await page.getByRole('button',{name:'export',exact:true}).click();
   await page.getByRole('button',{name:'Choose folder',exact:true}).click();
   await expect(page.getByLabel('Output folder',{exact:true})).toHaveValue('/chosen/editor');
- }finally{rmSync(root,{recursive:true,force:true});}
+ }finally{rmSync(root,{recursive:true,force:true});expect(existsSync(root)).toBe(false);}
 });
 
-test('first Editor import keeps successful files visible after a partial failure',async({page})=>{
+test('first Editor import keeps successful files visible after a partial failure',async({page},info)=>{
  let project=null,uploads=0;
  const asset={asset_id:'first',workspace_id:'tool-library',kind:'video',filename:'first.mp4',created_at:'2026-11-03',content_url:'/mock/video',roles:[]};
  await page.route('**/api/**',route=>{
@@ -154,7 +153,7 @@ test('first Editor import keeps successful files visible after a partial failure
  await expect.poll(()=>project.selection.length).toBe(1);
 });
 
-test('Audio Studio recordings can be reused after removing the workspace selector',async({page})=>{
+test('Audio Studio recordings can be reused after removing the workspace selector',async({page},info)=>{
  const recording={asset_id:'recording',workspace_id:'story-other',kind:'audio',filename:'recording.wav',created_at:'2026-11-03',content_url:'/mock/recording',roles:[],media:{duration_seconds:4}};
  let project={id:'record-edit',name:'Recording edit',workspace_id:'tool-library',revision:0,messages:[],revisions:[],selection:[],overrides:{},view:{}};
  const reused=[];
@@ -170,7 +169,7 @@ test('Audio Studio recordings can be reused after removing the workspace selecto
  });
  await page.goto('/#/editor');
  await page.getByRole('button',{name:'Preview for this project',exact:true}).click();
- await page.getByRole('button',{name:'Add to chat selection',exact:true}).click();
+ await page.getByRole('button',{name:'Add to edit selection',exact:true}).click();
  await expect.poll(()=>project.selection.length).toBe(1);
  expect(project.selection[0]).toMatchObject({asset_id:'local-recording',start:0,end:4});
  expect(reused).toEqual([{source_workspace_id:'story-other',asset_id:'recording',role:'project_audio',mode:'reference'}]);

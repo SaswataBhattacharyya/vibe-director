@@ -12,7 +12,8 @@ test('editor library selections and pasted/dropped attachments persist into chat
     if(path==='/api/director/settings')return route.fulfill({json:{settings:{provider:'codex',model:'test',reasoning_effort:'default',lessons:[]},models:[]}});
     if(path==='/api/story/workspaces')return route.fulfill({json:{items:[]}});
     if(path==='/api/editor/state')return route.fulfill({json:{projects:[project],styles:[],runtime:{ready:false,checks:{}}}});
-    if(path==='/api/editor/projects/edit-assets/command'){chatSelection=structuredClone(project.selection);return route.fulfill({json:project});}
+    if(path.endsWith('/conversation')){if(req.method()==='POST')chatSelection=req.postDataJSON().target.selected_ranges;return route.fulfill({json:{messages:[]}});}
+    if(path.endsWith('/tasks'))return route.fulfill({json:{tasks:[]}});
     if(path==='/api/editor/projects/edit-assets'){
       if(req.method()==='PUT'){const body=req.postDataJSON();if(body.selection)body.selection=body.selection.map(r=>({...r,filename:known.get(r.asset_id)?.filename}));project={...project,...body,view:{...project.view,...body.view},revision:project.revision+1};}
       return route.fulfill({json:project});
@@ -26,22 +27,22 @@ test('editor library selections and pasted/dropped attachments persist into chat
   await mockProject(page,'w'); await page.goto('/#/editor');
   await page.getByRole('navigation',{name:'Editor panels'}).getByRole('button',{name:'Asset selection',exact:true}).click();
   await page.getByRole('button',{name:'Preview clip.mp4',exact:true}).click();
-  await page.getByRole('button',{name:'Add to chat selection',exact:true}).click();
-  await expect(page.getByLabel('Chat attachments')).toContainText('clip.mp4 · 0–3s');
+  await page.getByRole('button',{name:'Add to edit selection',exact:true}).click();
+  await expect(page.getByLabel('Editing attachments')).toContainText('clip.mp4 · 0–3s');
   await page.locator('.editor-preview').getByLabel('Kind').selectOption('image');
   await page.getByRole('button',{name:'Preview portrait.png',exact:true}).click();
-  await page.getByRole('button',{name:'Add to chat selection',exact:true}).click();
-  await expect(page.locator('#edit-chat')).toBeEnabled();
-  await page.locator('#edit-chat').evaluate(el=>{const data=new DataTransfer();data.items.add(new File(['png'],'pasted.png',{type:'image/png'}));el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));});
-  await expect(page.getByLabel('Chat attachments')).toContainText('pasted.png');
-  await expect(page.locator('#edit-chat')).toBeEnabled();
-  await page.locator('.editor-composer').evaluate(el=>{const data=new DataTransfer();data.items.add(new File(['png'],'dropped.png',{type:'image/png'}));el.dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));});
-  await expect(page.getByLabel('Chat attachments')).toContainText('dropped.png');
+  await page.getByRole('button',{name:'Add to edit selection',exact:true}).click();
+  await expect(page.locator('#project-director-message')).toBeEnabled();
+  await page.locator('.editor-attachments').evaluate(el=>{const data=new DataTransfer();data.items.add(new File(['png'],'pasted.png',{type:'image/png'}));el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));});
+  await expect(page.getByLabel('Editing attachments')).toContainText('pasted.png');
+  await expect(page.locator('#project-director-message')).toBeEnabled();
+  await page.locator('.editor-attachments').evaluate(el=>{const data=new DataTransfer();data.items.add(new File(['png'],'dropped.png',{type:'image/png'}));el.dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));});
+  await expect(page.getByLabel('Editing attachments')).toContainText('dropped.png');
   await page.reload();
-  await expect(page.getByLabel('Chat attachments')).toContainText('clip.mp4');
-  await expect(page.getByLabel('Chat attachments')).toContainText('dropped.png');
-  await page.locator('#edit-chat').fill('Use these clips and images for the edit.');
-  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.getByLabel('Editing attachments')).toContainText('clip.mp4');
+  await expect(page.getByLabel('Editing attachments')).toContainText('dropped.png');
+  await page.locator('#project-director-message').fill('Use these clips and images for the edit.');
+  await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
   await expect.poll(()=>chatSelection?.length).toBe(4);
   expect(chatSelection.map(r=>r.asset_id)).toEqual(['v','i','upload1','upload2']);
 });

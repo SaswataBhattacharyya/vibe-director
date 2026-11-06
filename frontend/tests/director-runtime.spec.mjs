@@ -3,6 +3,8 @@ const owner = 'story-aaaaaaaaaaaa';
 const taskId = 'task-' + 'a'.repeat(32);
 async function fixture(page, continuity = false) {
   const writes = [];
+  const edit = {id: 'edit-shared', workspace_id: owner, name: 'Shared edit', revision: 1, selection: [], messages: [], revisions: [], overrides: {}, view: {}};
+  await page.addInitScript(owner => localStorage.setItem(`vibe-editor-project:${owner}`, 'edit-shared'), owner);
   let messages = [], tasks = [], knowledge = {workspace_id: owner, revision: 0, content: ''};
   await page.route('**/api/**', async route => {
     const request = route.request(), path = new URL(request.url()).pathname;
@@ -43,7 +45,8 @@ async function fixture(page, continuity = false) {
     else if (path.endsWith('/context')) json = {workspace_id: owner, nodes: [{id: 'asset:pa-owned', kind: 'asset', source_id: 'pa-owned', owner, label: continuity ? 'shot.mp4' : 'shot.wav', sha256: 'b'.repeat(64)}], relations: [], truncated: []};
     else if (path === '/api/director/settings') json = {settings: {provider: 'codex', model: 'test', lessons: []}, models: []};
     else if (path === '/api/story/workspaces') json = {items: []};
-    else if (path === '/api/editor/state') json = {projects: [], styles: [], runtime: {ready: false, checks: {}}};
+    else if (path === '/api/editor/projects/edit-shared') json = edit;
+    else if (path === '/api/editor/state') json = {projects: [edit], styles: [], runtime: {ready: false, checks: {}}};
     else if (path.endsWith('/assets')) json = {assets: [{workspace_id: owner, asset_id: 'pa-room', kind: 'image', filename: 'base-room.png', roles: ['world_master'], metadata: {}, content_url: '/test-owned/base-room.png', sha256: 'e'.repeat(64)}], total: 1};
     else return route.fulfill({status: 404, json: {error: {message: 'Unused mock ' + path}}});
     return route.fulfill({json});
@@ -201,4 +204,150 @@ for (const surface of ['video', 'editor']) test(`${surface} freezes explicit com
   expect(computerWrites.filter(path => path.endsWith('/run'))).toHaveLength(1);
   expect(writes.filter(path => path.endsWith('/conversation'))).toEqual([]);
   expect(await card.locator('audio,img').count()).toBe(0);
+});
+
+test('all eight desktop pane combinations retain the same mounted prompt and restore after reload', async ({page}) => {
+  await fixture(page);
+  await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto('/#/video');
+  const shot = page.getByLabel('Shot prompt', {exact: true});
+  await shot.fill('An unsaved shot in a ruined room');
+  await page.getByLabel('Message the project Director', {exact: true}).fill('Keep this conversation draft');
+  for (const left of [true, false]) for (const chat of [true, false]) for (const work of [true, false]) {
+    for (const [name, open] of [['navigation', left], ['Director conversation', chat], ['workspace', work]]) {
+      const hide = page.getByRole('button', {name: 'Hide '+name, exact: true});
+      const current = await hide.count() > 0;
+      if (current !== open) await page.getByRole('button', {name: (current ? 'Hide ' : 'Show ')+name, exact: true}).click();
+    }
+    await expect(page.locator('.director-slot')).toBeVisible({visible: chat});
+    await expect(page.locator('.director-workspace>.studio-page-content')).toBeVisible({visible: work});
+    expect(await shot.inputValue()).toBe('An unsaved shot in a ruined room');
+    expect(await page.locator('#project-director-message').inputValue()).toBe('Keep this conversation draft');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.reload();
+  await expect(page.getByRole('button', {name: 'Show navigation', exact: true})).toBeVisible();
+  await expect(page.getByRole('button', {name: 'Show workspace', exact: true})).toBeVisible();
+  await page.getByRole('button', {name: 'Show Director conversation', exact: true}).click();
+  await expect(page.locator('#project-director-message')).toHaveValue('Keep this conversation draft');
+  await page.setViewportSize({width: 390, height: 844});
+  await expect(page.locator('#project-director-message')).toBeVisible();
+});
+
+test('one Editor composer freezes the session and ranges, preserves history and uses both existing clearances', async ({page}, info) => {
+  const writes = await fixture(page);
+  let edit = {id: 'edit-shared', workspace_id: owner, name: 'Shared edit', revision: 4,
+    selection: [{asset_id: 'pa-image', filename: 'frame.png', start: 1, end: 2}],
+    messages: [{id: 'old-message', role: 'assistant', content: 'Preserved earlier session history'}], revisions: [], overrides: {}, view: {}};
+  const other = {...edit, id: 'edit-other', name: 'Other saved edit', revision: 8};
+  let messages = [], task, sent;
+  const commands = [];
+  await page.route('**/api/editor/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/state')) return route.fulfill({json: {projects: [edit, other], styles: [], runtime: {ready: false, checks: {}}}});
+    if (path.endsWith('/command')) {
+      const body = route.request().postDataJSON(); commands.push(body);
+      expect(body.action).toBe('approve'); expect(body.revision).toBe(edit.revision);
+      edit = {...edit, revision: edit.revision + 1, pending: {kind: 'plan', revision: edit.revision + 1,
+        value: {summary: 'Review exact media and tools', tools: ['FFmpeg'], width: 320, height: 180, fps: 24, clips: edit.selection}}};
+    }
+    return route.fulfill({json: path.endsWith('/edit-other') ? other : edit});
+  });
+  await page.route('**/api/agent/projects/**', async route => {
+    const request = route.request(), path = new URL(request.url()).pathname;
+    if (path.endsWith('/conversation')) {
+      if (request.method() === 'POST') {
+        sent = request.postDataJSON();
+        messages = [{request_id: sent.request_id, text: sent.text, reply: 'Review brief preparation.', status: 'answered'}];
+        task = {project_id: owner, task_id: taskId, status: 'draft', current_revision: 1, plan_hash: 'f'.repeat(64),
+          plan: {tool_id: 'editor.prepare_brief', scope: 'Prepare brief; rendering requires both Editor clearances.',
+            assets: [{asset_id: 'pa-image', filename: 'frame.png'}], settings: {instruction: sent.text, target: sent.target}}, invocation: null, events: []};
+      }
+      return route.fulfill({json: {messages}});
+    }
+    if (path.endsWith('/tasks')) return route.fulfill({json: {tasks: task ? [task] : []}});
+    if (path.includes('/tasks/')) {
+      if (path.endsWith('/approve')) task.status = 'approved';
+      if (path.endsWith('/run')) {
+        task.status = 'completed'; task.report = 'Creative brief ready for clearance 1.';
+        edit = {...edit, revision: 5, pending: {kind: 'brief', revision: 5, value: {summary: 'A calm edit', questions: []}}};
+      }
+      return route.fulfill({json: task});
+    }
+    return route.fallback();
+  });
+  await page.goto('/#/editor');
+  await expect(page.locator('#edit-chat,.editor-composer,.editor-workspace')).toHaveCount(0);
+  await expect(page.locator('#project-director-message')).toBeVisible();
+  await page.getByText('Previous Editor session history', {exact: true}).click();
+  await expect(page.getByText('Preserved earlier session history', {exact: true})).toBeVisible();
+  await page.locator('#project-director-message').fill('Make a calm one-second edit');
+  await page.getByRole('button', {name: 'Send to project Director', exact: true}).click();
+  const card = page.getByRole('article', {name: `Task ${taskId}`});
+  await expect(card).toContainText('Prepare Editor brief');
+  expect(sent.target).toEqual({version: 1, editor_session_id: 'edit-shared', expected_revision: 4, selected_ranges: [{asset_id: 'pa-image', start: 1, end: 2}]});
+  expect(commands).toEqual([]);
+  await card.getByRole('button', {name: 'Approve this plan', exact: true}).click();
+  await card.getByRole('button', {name: 'Run approved task', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Clearance 1 · creative brief'})).toBeVisible();
+  await page.getByRole('button', {name: 'Approve this revision', exact: true}).click();
+  await expect(page.getByRole('heading', {name: 'Clearance 2 · media and tools'})).toBeVisible();
+  expect(commands).toHaveLength(1); // Never approve clearance 2 or render in this regression.
+  await page.getByRole('button', {name: 'Edit timeline', exact: true}).click();
+  const timeline = page.getByLabel('Editable timeline JSON', {exact: true});
+  const unsaved = (await timeline.inputValue()).replace('Review exact media and tools', 'Unsaved timeline proposal');
+  await timeline.fill(unsaved);
+  await page.getByRole('button', {name: 'Hide workspace', exact: true}).click();
+  await expect(timeline).toBeHidden();
+  await page.getByRole('button', {name: 'Show workspace', exact: true}).click();
+  await expect(timeline).toHaveValue(unsaved);
+  await page.getByRole('button', {name: 'Open session', exact: true}).click();
+  await page.getByLabel('Editing project', {exact: true}).selectOption('edit-other');
+  await expect(page.getByText('Other saved edit · revision 8', {exact: true})).toBeVisible();
+  await expect(card).toContainText('Editor session edit-shared · revision 4');
+  expect(writes.filter(path => path.includes('/command'))).toEqual([]);
+  await page.getByRole('button', {name: 'Close Open session'}).click();
+  await page.getByText('Previous Editor session history', {exact: true}).click();
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect.poll(() => page.evaluate(() => {
+    const send = document.querySelector('[aria-label="Send to project Director"]').getBoundingClientRect();
+    const footer = document.querySelector('.studio-taskbar').getBoundingClientRect();
+    const access = document.querySelector('[aria-label="Director access mode"]').getBoundingClientRect();
+    const controls = document.querySelector('.director-composer-context').getBoundingClientRect();
+    return send.bottom <= footer.top && send.top >= 0 && access.top >= controls.top && access.bottom <= controls.bottom;
+  })).toBe(true);
+  await expect(page.getByRole('button', {name:'Context & skills', exact:true})).toBeInViewport();
+  await expect(page.getByLabel('Director access mode')).toBeInViewport();
+  await page.screenshot({path: info.outputPath('unified-editor-desktop.png'), animations: 'disabled'});
+});
+
+
+test('pane preferences and conversation drafts remain isolated across project A → B → A', async ({page}) => {
+  await fixture(page);
+  let ownerNow = owner;
+  const memories = {};
+  await page.route('**/api/projects/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith('/memory')) {const body = route.request().postDataJSON(); memories[body.workspace_id] = body.browser_state; return route.fulfill({json: {saved: true}});}
+    if (path.endsWith('/open')) ownerNow = route.request().postDataJSON().folder === '/test-owned/A' ? owner : 'story-bbbbbbbbbbbb';
+    return route.fulfill({json: {workspace_id: ownerNow, title: ownerNow === owner ? 'Project A' : 'Project B', folder: '/test-owned/' + (ownerNow === owner ? 'A' : 'B'), browser_state: memories[ownerNow] || {}}});
+  });
+  const open = async (folder) => {
+    await page.getByRole('button', {name: 'Load project', exact: true}).click();
+    await page.getByLabel('Project folder path', {exact: true}).fill(folder);
+    await page.getByRole('button', {name: 'Open project', exact: true}).click();
+    await page.keyboard.press('Escape');
+  };
+  await page.goto('/#/video');
+  await page.locator('#project-director-message').fill('Only project A');
+  await page.getByRole('button', {name: 'Hide workspace', exact: true}).click();
+  await open('/test-owned/B');
+  await expect(page.getByLabel('Project controls')).toContainText('Project B');
+  await expect(page.locator('#project-director-message')).toHaveValue('');
+  await expect(page.getByRole('button', {name: 'Hide workspace', exact: true})).toBeVisible();
+  await page.locator('#project-director-message').fill('Only project B');
+  await open('/test-owned/A');
+  await expect(page.getByLabel('Project controls')).toContainText('Project A');
+  await expect(page.locator('#project-director-message')).toHaveValue('Only project A');
+  await expect(page.getByRole('button', {name: 'Show workspace', exact: true})).toBeVisible();
 });

@@ -1,3 +1,4 @@
+import {mockProject} from './fixtures/project.mjs';
 import { test, expect } from '@playwright/test';
 
 const pageOf = items => ({ items, total: items.length, offset: 0, limit: 50 });
@@ -12,7 +13,9 @@ async function fixtures(page) {
   });
   await page.route('**/api/**', async route => {
     const req=route.request(), path=new URL(req.url()).pathname;
-    if(req.method()!=='GET')writes.push(path);
+    // Output-destination reads use POST; they do not send chat or change the model.
+    if(req.method()!=='GET'&&path!=='/api/studio-tools/output-destination')writes.push(path);
+    if(path==='/api/studio-tools/output-destination')return route.fulfill({json:{mode:'folder',path:'/test-owned/output',available:true}});
     if(path==='/api/director/status')return route.fulfill({json:{provider:settings.provider,model:settings.model,quota:'metered',quota_note:'Shared account allowance.',windows:[{bucket:'Codex',window:'primary',used_percent:23,remaining_percent:77,window_minutes:300,resets_at:null}],context_remaining_percent:null,context_note:'Each request is separate.',checked_at:Date.now()/1000,last_request:null}});
     if(path==='/api/director/settings') {
       if(req.method()==='PUT') settings={...req.postDataJSON(),revision:settings.revision+1};
@@ -35,27 +38,28 @@ async function fixtures(page) {
     if(path.startsWith('/api/media/'))return route.fulfill({json:{assets:[],items:[]}});
     return route.fulfill({status:404,json:{error:{code:'not_found',message:'Not part of the model picker fixture'}}});
   });
+  await mockProject(page,'story-model');
   return writes;
 }
 
 test('header picker saves provider and synchronizes with the Story picker',async({page})=>{
   const writes=await fixtures(page);
   await page.goto('/#/home');
-  await page.getByRole('button',{name:'Model: codex / gpt-test ▾'}).click();
+  await page.getByRole('button',{name:'Model: codex / gpt-test ▾'}).first().click();
   const picker=page.getByRole('dialog',{name:'Choose Director model'});
   await expect(picker.getByRole('option',{name:'Missing local alias · offline'})).toHaveAttribute('disabled','');
   await picker.getByLabel('Available models').selectOption(JSON.stringify(['ollama','qwen-test']));
   await picker.getByRole('button',{name:'Use model',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Model: ollama / qwen-test ▾'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Model: ollama / qwen-test ▾'}).first()).toBeVisible();
   await page.goto('/#/story');
   await expect(page.locator('#story-chat')).toBeVisible();
-  await expect(page.getByRole('button',{name:'Model: ollama / qwen-test ▾'})).toHaveCount(2);
+  await expect(page.getByRole('button',{name:'Model: ollama / qwen-test ▾'})).toHaveCount(3);
   expect(writes).toEqual(['/api/director/settings']);
 });
 
 test('slash model in all three composers keeps drafts and does not send chat',async({page})=>{
   const writes=await fixtures(page);
-  for(const [path,id] of [['/#/story','story-chat'],['/#/editor','edit-chat'],['/#/media-prep?tool=music','ace-chat']]) {
+  for(const [path,id] of [['/#/story','story-chat'],['/#/editor','project-director-message'],['/#/media-prep?tool=music','ace-chat']]) {
     await page.goto(path);
     const composer=page.locator(`#${id}`);
     await expect(composer).toBeVisible();
@@ -76,9 +80,10 @@ test('slash model in all three composers keeps drafts and does not send chat',as
 test('slash status in all four composers reads usage without sending chat',async({page})=>{
   const writes=await fixtures(page);
   await page.addInitScript(()=>localStorage.setItem('vibe-video-draft-v1',JSON.stringify({workspaceId:'story-model',clipId:'clip-status',workflowId:'minimax_h3_t2v_local_v1',prompt:'A boat at dawn.',duration:6,resolution:0.98,aspectRatio:'16:9'})));
-  for(const [path,id] of [['/#/story','story-chat'],['/#/editor','edit-chat'],['/#/media-prep?tool=music','ace-chat'],['/#/video','create-chat-message']]){
+  for(const [path,id] of [['/#/story','story-chat'],['/#/editor','project-director-message'],['/#/media-prep?tool=music','ace-chat'],['/#/video','create-chat-message']]){
     await page.goto(path);
     const composer=page.locator(`#${id}`);
+    if(id==='create-chat-message')await page.locator('.create-prompt-assistant summary').click();
     await expect(composer).toBeVisible();
     await composer.fill('Keep my draft /status');
     await expect(composer).toHaveValue('Keep my draft ');
@@ -98,7 +103,7 @@ test('slash status in all four composers reads usage without sending chat',async
 test('model picker controls use the studio palette in all themes', async ({page}) => {
   await fixtures(page);
   await page.goto('/#/home');
-  await page.getByRole('button',{name:'Model: codex / gpt-test ▾'}).click();
+  await page.getByRole('button',{name:'Model: codex / gpt-test ▾'}).first().click();
   const picker=page.getByRole('dialog',{name:'Choose Director model'});
   for (const palette of ['studio','grit','mixtape']) {
     await page.evaluate(value=>document.documentElement.dataset.palette=value,palette);

@@ -8,7 +8,7 @@ class AgentToolsTests(unittest.TestCase):
         with patch('story_builder.services.agent_tools.shutil.which', return_value='/test/ffmpeg'), \
              patch('subprocess.run', side_effect=AssertionError('Passive discovery must not launch commands')):
             rows = {row['id']: row for row in tools()['tools']}
-        self.assertEqual(set(rows), {'audio.extract_mp3', 'video.continuity_last_frame', 'computer.execute'})
+        self.assertEqual(set(rows), {'audio.extract_mp3', 'video.continuity_last_frame', 'computer.execute', 'editor.prepare_brief'})
         self.assertTrue(all(row['status'] == 'available' for row in rows.values()))
         self.assertTrue(rows['audio.extract_mp3']['execution_enabled'])
         self.assertTrue(rows['video.continuity_last_frame']['execution_enabled'])

@@ -8,7 +8,7 @@ First read:
 3. `fixes/ACTIVE_FIXES_2026-11-06.md`
 4. `fixes/UNIFIED_CHAT_AND_PANES.md`
 5. `fixes/FILE_CHANGE_MATRIX.md` and applicable directory `change_readme.md`
-6. Historical `fixes/Q01_Q06_RESULTS.md`, `fixes/Q07_Q08_RESULTS.md`, blueprint skills and glossary only where needed.
+6. Current `fixes/R01_UX03_RESULTS.md`; historical `fixes/Q01_Q06_RESULTS.md`, `fixes/Q07_Q08_RESULTS.md`, blueprint skills and glossary only where needed.
 
 ## Updated product/UI requirements
 The existing **left sidebar stays intact**. The shared **middle Director chat must be the only active conversational composer**, and the **right pane is the actual editable tool page** (Vibe Editor/Screenplay/Storyboard/Video/Media Prep/Images, etc.). **All three panes independently collapse/restore** without losing page state. The new Director follows the project across pages and can plan, prepare reviewed actions, run approved tools, inspect outputs and delegate editing.
@@ -18,7 +18,7 @@ The screenshot shows a duplicate **old Vibe Editor chat** within its own EditorW
 ## Current correctness risks
 R01: an abrupt stop between task submitting and job mapping can leave the task stuck.
 R02: computer task stdin.write blocks before timeout supervision.
-They are still open. Any code modifications must be authorized for the current phase; this request asked for review and guidance.
+R01/R02 and UX01–UX03 now have local implementations and focused regression evidence in `fixes/R01_UX03_RESULTS.md`. Inspect that record and the current diff; do not repeat completed repairs. Later cards remain open. Follow the current owner instruction for authorization.
 
 ## Plan/implementation procedure
 1. Show current branch/HEAD/status. Inspect real code and relevant tests before edits. Do not reset/switch/pull without owner approval.

@@ -18,6 +18,6 @@
 | CR01 | `ProductionStylesPage,ScreenplayPage,StoryboardPage` + style/story services | Optional production type, visual/directing jackets and comic panels | historical style snapshots, manual paths, scene/shot/clip identities |
 | VID01 | `PromptPreparationPage,video-api.ts,isolated_*_contract.py,production_job_worker.py,production_ledger.py,t2v_pipeline.py` | Actual upload manifest; new separately versioned LTX-off route | exact H3 request schemas/digests, never alter old v2 jobs |
 
-**Minimal first UI milestone:** UX01 → UX02 → UX03; R01/R02 independently in parallel only with explicit authorization. Then remove old chats progressively under UX04. These are engineering phases, not a mandatory user filmmaking wizard.
+**Implemented first milestone:** R01/R02 and UX01 → UX02 → UX03; see [evidence and rollback](R01_UX03_RESULTS.md). Next remove old chats progressively under UX04, after each typed bridge reaches parity. These are engineering phases, not a mandatory user filmmaking wizard.
 
 **Code review rule:** do not delete `EditorWorkspace.tsx` or `StudioChat.tsx` until every remaining import is migrated; the latter exports `studioRequest` used across pages. Do not touch `MediaPrepPage` business logic or replace `vibe_editor_render.py` to solve UI duplication. Preserve project state and legacy message history. Original generation and editor services remain the source of truth.

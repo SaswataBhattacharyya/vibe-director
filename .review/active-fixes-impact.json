@@ -1,0 +1,830 @@
+{
+  "comparison": "working tree vs HEAD 39680fa382698890542f0751613f33c36fe15241",
+  "mode": "manual, with Graphify affected depth-2 discovery",
+  "limitations": [
+    "Only the R01/R02/UX01\u2013UX03 execution slice is assessed. Graphify AgentTasks depth-2 candidates include unrelated test server fixtures and are filtered by current source.",
+    "Manual traversal traces API \u2192 service \u2192 job/worker and StudioShell \u2192 shared runtime \u2192 Editor bridge. Named confirmed nodes are listed below; this is not a repository-wide audit.",
+    "Generated graph/cache, documentation, CSS declarations and test fixtures are not function nodes. No measured test coverage, exhaustive caller count or real provider/GPU acceptance.",
+    "Scores prioritize impact, not defect probability; test_gap=0 indicates located test evidence, not proof every branch was executed. Source verifier checks anchors only.",
+    "Final forced Graphify extraction verified at 5,170 nodes and 15,649 edges; incremental extraction emitted only changed nodes, so it was replaced by the forced full scan. 90 zero-node JSON files and 45 unsupported files are not covered."
+  ],
+  "overall_risk": "high, maximum lower bound 0.60; unknowns can raise individual upper bounds",
+  "findings": [
+    {
+      "node": "agent_computer.py::_supervise",
+      "location": {
+        "file": "backend/story_builder/services/agent_computer.py",
+        "line": 65
+      },
+      "anchor": "def _supervise(process, content, journal, timeout):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "video_repertoire_worker \u2192 agent_computer.run \u2192 supervised subprocess stdin/process group. Test_agent_computer uses real CPU children and mocked Codex launch.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_computer.py::run",
+      "location": {
+        "file": "backend/story_builder/services/agent_computer.py",
+        "line": 91
+      },
+      "anchor": "def run(root, job_id, request, *, timeout=1800):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "video_repertoire_worker \u2192 agent_computer.run \u2192 supervised subprocess stdin/process group. Test_agent_computer uses real CPU children and mocked Codex launch.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_editor.py::check_target",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 17
+      },
+      "anchor": "def check_target(project, owner, target):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation/AgentTasks \u2192 agent_editor \u2192 saved vibe_editor session/command. Owner, revision, selection and style are checked; test_agent_editor covers mismatches and recovery.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_editor.py::context",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 41
+      },
+      "anchor": "def context(root, owner, target):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation/AgentTasks \u2192 agent_editor \u2192 saved vibe_editor session/command. Owner, revision, selection and style are checked; test_agent_editor covers mismatches and recovery.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_editor.py::prepare",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 50
+      },
+      "anchor": "def prepare(root, owner, settings):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation/AgentTasks \u2192 agent_editor \u2192 saved vibe_editor session/command. Owner, revision, selection and style are checked; test_agent_editor covers mismatches and recovery.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_editor.py::ranges",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 13
+      },
+      "anchor": "def ranges(selection):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation/AgentTasks \u2192 agent_editor \u2192 saved vibe_editor session/command. Owner, revision, selection and style are checked; test_agent_editor covers mismatches and recovery.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_editor.py::style_snapshot",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 34
+      },
+      "anchor": "def style_snapshot(data, project):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation/AgentTasks \u2192 agent_editor \u2192 saved vibe_editor session/command. Owner, revision, selection and style are checked; test_agent_editor covers mismatches and recovery.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_editor.py::submit",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 70
+      },
+      "anchor": "def submit(root, owner, plan, invocation, on_created):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation/AgentTasks \u2192 agent_editor \u2192 saved vibe_editor session/command. Owner, revision, selection and style are checked; test_agent_editor covers mismatches and recovery.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_editor.py::validate_job",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 58
+      },
+      "anchor": "def validate_job(row, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation/AgentTasks \u2192 agent_editor \u2192 saved vibe_editor session/command. Owner, revision, selection and style are checked; test_agent_editor covers mismatches and recovery.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::_check_inputs",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 151
+      },
+      "anchor": "    def _check_inputs(self, owner, plan):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::_find_job",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 192
+      },
+      "anchor": "    def _find_job(self, owner, invocation, kind=\"audio-utilities\"):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::_kind",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 19
+      },
+      "anchor": "    def _kind(plan):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::_map_job",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 184
+      },
+      "anchor": "    def _map_job(self, owner, task, invocation, job):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::_observe",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 276
+      },
+      "anchor": "    def _observe(self, owner, task, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::_plan",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 44
+      },
+      "anchor": "    def _plan(self, owner, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::_validate_job",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 204
+      },
+      "anchor": "    def _validate_job(row, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::approve",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 163
+      },
+      "anchor": "    def approve(self, owner, task, payload):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::cancel",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 343
+      },
+      "anchor": "    def cancel(self, owner, task):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::poll",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 320
+      },
+      "anchor": "    def poll(self, owner, task):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tasks.py::run",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 221
+      },
+      "anchor": "    def run(self, owner, task, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentTasks \u2192 durable video_repertoire jobs; persisted invocation/plan approval is reused on poll and run. Tests: test_agent_tasks, test_agent_editor, test_agent_continuity.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "vibe_editor.py::_enqueue",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 224
+      },
+      "anchor": "def _enqueue(p, operation, **extra):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Editor API and agent_editor.submit \u2192 command/_enqueue \u2192 existing worker/run_job. Existing brief/plan approvals and renderer remain downstream. Tests: test_agent_editor and backend.test_editor_clearance.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "vibe_editor.py::command",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 232
+      },
+      "anchor": "def command(root, project_id, body, *, agent_request=None, on_created=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Editor API and agent_editor.submit \u2192 command/_enqueue \u2192 existing worker/run_job. Existing brief/plan approvals and renderer remain downstream. Tests: test_agent_editor and backend.test_editor_clearance.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "vibe_editor.py::run_job",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 391
+      },
+      "anchor": "def run_job(root, job_id, request, progress):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Editor API and agent_editor.submit \u2192 command/_enqueue \u2192 existing worker/run_job. Existing brief/plan approvals and renderer remain downstream. Tests: test_agent_editor and backend.test_editor_clearance.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "video_repertoire_worker.py::main",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire_worker.py",
+        "line": 1135
+      },
+      "anchor": "def main() -> int:",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.4,
+      "risk_upper": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing worker dispatches vibe-editor and agent-computer kinds. Not rewritten; real provider/GPU execution not tested.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "DirectorConversation.tsx::DirectorConversation",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 45
+      },
+      "anchor": "export default function DirectorConversation(props: Props) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "DirectorConversation.tsx::TaskCard",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 18
+      },
+      "anchor": "function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> & {task: AgentTask}) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "DirectorEditor.tsx::useDirectorEditor",
+      "location": {
+        "file": "frontend/src/DirectorEditor.tsx",
+        "line": 8
+      },
+      "anchor": "export function useDirectorEditor() {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "DirectorRuntime.tsx::DirectorRuntime",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 42
+      },
+      "anchor": "export default function DirectorRuntime({children}: {children: ReactNode}) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "DirectorRuntime.tsx::DirectorSlot",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 19
+      },
+      "anchor": "export function DirectorSlot({hidden = false}: {hidden?: boolean}) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "DirectorRuntime.tsx::useDirectorPanes",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 14
+      },
+      "anchor": "export function useDirectorPanes() {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "DirectorWorkspace.tsx::DirectorWorkspace",
+      "location": {
+        "file": "frontend/src/DirectorWorkspace.tsx",
+        "line": 5
+      },
+      "anchor": "export default function DirectorWorkspace({children}: {children: ReactNode}) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "VibeEditorPage.tsx::VibeEditorPage",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 17
+      },
+      "anchor": "export default function VibeEditorPage() {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell \u2192 DirectorWorkspace/DirectorSlot \u2192 persistent DirectorRuntime portal; VibeEditorPage \u2192 typed DirectorEditor bridge \u2192 agent API. ProjectController/project-state restore project-scoped drafts and pane preferences. Browser tests: director-runtime, editor-assets/effects, model-selection, agent-inspector, project-pruning-recovery.",
+        "Static references plus executed browser interactions; no measured coverage or exhaustive caller census."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_conversation.py::send",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 26
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent API \u2192 AgentConversation.send \u2192 AgentTasks.propose \u2192 typed Editor adapter; existing request IDs remain unchanged. Tests: test_agent_editor and test_agent_editor_tool_handoff.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tools.py::tools",
+      "location": {
+        "file": "backend/story_builder/services/agent_tools.py",
+        "line": 5
+      },
+      "anchor": "def tools() -> dict:",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Agent discovery API \u2192 tool manifest \u2192 Inspector/Director. Tests: test_agent_tools/test_agent_api.",
+        "Caller count not exhaustively enumerated; cross-community uses module boundaries because extraction omitted clustering. Test references are not measured coverage."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    }
+  ]
+}

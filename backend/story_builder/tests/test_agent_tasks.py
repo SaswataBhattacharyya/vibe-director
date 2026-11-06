@@ -124,6 +124,49 @@ class AgentTaskTests(AgentTaskFixture):
             self.assertIsNotNone(recovered['invocation']['job_id'])
         self.assertEqual(len(list((self.root / 'services/media/jobs/audio-utilities').glob('*/job.json'))), 2)
 
+    def test_poll_recovers_abrupt_exit_at_each_submission_boundary_without_dispatch(self):
+        for boundary in ('before_create', 'before_map', 'after_map'):
+            row = self.ready()
+            original_map = self.tasks._map_job
+            def crash(*args):
+                if boundary == 'after_map':
+                    original_map(*args)
+                raise KeyboardInterrupt('simulated process death')
+            target = patch.object(video_repertoire, 'create_job', side_effect=crash) if boundary == 'before_create' else patch.object(self.tasks, '_map_job', side_effect=crash)
+            with target, self.assertRaises(KeyboardInterrupt):
+                self.tasks.run(self.owner, row['task_id'], self.approval(row))
+            before = list((self.root / 'services/media/jobs/audio-utilities').glob('*/job.json'))
+            recovered = self.tasks.poll(self.owner, row['task_id'])
+            if boundary == 'before_create':
+                self.assertEqual(recovered['status'], 'recovery_required')
+                self.assertIsNone(recovered['invocation']['job_id'])
+            else:
+                self.assertEqual(recovered['status'], 'running')
+                self.assertIsNotNone(recovered['invocation']['job_id'])
+                self.assertEqual(self.tasks.poll(self.owner, row['task_id'])['invocation'], recovered['invocation'])
+            self.assertEqual(list((self.root / 'services/media/jobs/audio-utilities').glob('*/job.json')), before)
+        self.dispatch.assert_not_called()
+
+    def test_poll_rejects_mismatched_or_duplicate_unmapped_jobs(self):
+        row = self.ready()
+        with patch.object(self.tasks, '_map_job', side_effect=KeyboardInterrupt), self.assertRaises(KeyboardInterrupt):
+            self.tasks.run(self.owner, row['task_id'], self.approval(row))
+        path = next((self.root / 'services/media/jobs/audio-utilities').glob('*/job.json'))
+        job = json.loads(path.read_text())
+        changed = json.loads(path.read_text())
+        changed['request']['settings']['quality'] = 9
+        path.write_text(json.dumps(changed))
+        with self.assertRaises(LedgerConflict):
+            self.tasks.poll(self.owner, row['task_id'])
+        path.write_text(json.dumps(job))
+        duplicate = path.parent.parent / 'duplicate' / 'job.json'
+        duplicate.parent.mkdir()
+        duplicate.write_text(json.dumps(job))
+        with self.assertRaises(LedgerConflict):
+            self.tasks.poll(self.owner, row['task_id'])
+        self.assertIsNone(self.tasks.get(self.owner, row['task_id'])['invocation']['job_id'])
+        self.dispatch.assert_not_called()
+
     def test_changed_input_and_changed_staged_bytes_never_dispatch(self):
         row = self.ready()
         self.original.write_bytes(self.before + b'changed')

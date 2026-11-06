@@ -229,11 +229,19 @@ def _enqueue(p, operation, **extra):
     return job
 
 
-def command(root, project_id, body):
+def command(root, project_id, body, *, agent_request=None, on_created=None):
     start = None
     with state(root) as data:
         p = project(data, project_id)
         action = body.get("action", "chat")
+        if agent_request is not None:
+            from . import agent_editor
+            if action != 'prepare_brief':
+                raise ValueError('The agent bridge can only prepare an Editor brief.')
+            settings = agent_request['agent_settings']
+            agent_editor.check_target(p, agent_request['workspace_id'], settings['target'])
+            if agent_editor.style_snapshot(data, p) != settings['style_snapshot']:
+                raise ValueError('Editor style changed. Prepare a new proposal.')
         if action == "stop":
             if p.get("job_id"):
                 video_repertoire.cancel_job("vibe-editor", p["job_id"])
@@ -279,7 +287,7 @@ def command(root, project_id, body):
             assent = content.casefold().strip(".! ") in {"yes", "approve", "yes apply", "yes, apply", "apply", "go ahead", "approved"}
             if action == "prepare_plan":
                 pass
-            elif action == "approve" or (pending and assent):
+            elif action == "approve" or (action == 'chat' and pending and assent):
                 if not pending or pending["revision"] != p["revision"]:
                     raise ValueError("There is no current clearance to approve.")
                 message(p, "user", content)
@@ -303,7 +311,7 @@ def command(root, project_id, body):
                     p["pause_requested"] = False
                     message(p, "assistant", "Media and tool plan approved. Rendering this exact revision.")
             else:
-                if action != "chat":
+                if action not in {"chat", "prepare_brief"}:
                     raise ValueError("Unknown editor action.")
                 p["revision"] += 1
                 p.pop("pending", None)
@@ -312,10 +320,13 @@ def command(root, project_id, body):
                 selected_style["rules"] = [r for r in selected_style["rules"] if r["confirmed"]]
                 selected_style["project_override"] = p["overrides"].get(p.get("style_id") or "default", "")
                 message(p, "user", content)
-                start = _enqueue(p, "brief", prompt=content, selection=p["selection"], style_snapshot=selected_style)
+                start = _enqueue(p, "brief", prompt=content, selection=p["selection"], style_snapshot=selected_style,
+                                 **({k: v for k, v in agent_request.items() if k != 'workspace_id'} if agent_request else {}))
         p["updated_at"] = now()
         result = copy.deepcopy(p)
     if start:
+        if on_created:
+            on_created(start)
         video_repertoire.start_job("vibe-editor", start["job_id"])
     return result
 

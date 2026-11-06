@@ -23,6 +23,24 @@ def tools() -> dict:
         for row in rows:
             row['reason'] = 'Propose a task, approve its exact plan, then run it through the shared task gateway.'
     computer = bool(shutil.which('codex'))
+    editor_target = {
+        'type': 'object', 'additionalProperties': False,
+        'required': ['version', 'editor_session_id', 'expected_revision', 'selected_ranges'],
+        'properties': {
+            'version': {'const': 1}, 'editor_session_id': {'type': 'string'},
+            'expected_revision': {'type': 'integer', 'minimum': 0},
+            'selected_ranges': {'type': 'array', 'maxItems': 100, 'items': {
+                'type': 'object', 'additionalProperties': False, 'required': ['asset_id', 'start', 'end'],
+                'properties': {'asset_id': {'type': 'string'}, 'start': {'type': 'number'}, 'end': {'type': 'number'}}}},
+        },
+    }
+    rows.append({'id': 'editor.prepare_brief', 'effect': 'submit', 'status': 'available', 'execution_enabled': True,
+        'reason': 'Requires a saved Editor session and exact task approval. Prepares clearance 1; never approves or renders.',
+        'input_schema': {'type': 'object', 'additionalProperties': False, 'required': ['asset_ids', 'settings'],
+            'properties': {'asset_ids': {**asset_ids, 'minItems': 0}, 'settings': {
+                'type': 'object', 'additionalProperties': False, 'required': ['instruction', 'target'],
+                'properties': {'instruction': {'type': 'string', 'minLength': 1, 'maxLength': 12000},
+                    'target': editor_target}}}}})
     rows.append({'id': 'computer.execute', 'effect': 'submit',
         'status': 'available' if computer else 'blocked', 'execution_enabled': computer,
         'reason': 'Requires an open project, explicit access mode and exact-plan approval. Terminal, coding and filesystem; interactive browser control is unavailable.' if computer else 'Codex CLI is unavailable.',

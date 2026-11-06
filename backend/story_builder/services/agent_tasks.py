@@ -3,7 +3,7 @@ import json
 import uuid
 from pathlib import Path
 
-from . import agent_computer, agent_continuity, agent_graph, audio_utilities, media_library, projects, video_repertoire
+from . import agent_computer, agent_continuity, agent_editor, agent_graph, audio_utilities, media_library, projects, video_repertoire
 from .agent_task_schema import SCHEMA
 from .production_ledger import LedgerConflict, LedgerNotFound, _now, stable_hash
 from .storage_paths import generated_root, media_root
@@ -18,7 +18,7 @@ class AgentTasks:
     @staticmethod
     def _kind(plan):
         return {"video.continuity_last_frame": "continuity-frame", "computer.execute": "agent-computer",
-                "audio.extract_mp3": "audio-utilities"}[plan["tool_id"]]
+                "audio.extract_mp3": "audio-utilities", 'editor.prepare_brief': 'vibe-editor'}[plan["tool_id"]]
 
     def _assets(self, owner, ids, *, extensions=None):
         if not isinstance(ids, list) or not 1 <= len(ids) <= 100 or any(not isinstance(i, str) for i in ids):
@@ -44,7 +44,14 @@ class AgentTasks:
     def _plan(self, owner, payload):
         if not isinstance(payload, dict) or set(payload) != {'tool_id', 'asset_ids', 'settings'}:
             raise ValueError('Supply tool_id, asset_ids and settings.')
-        if payload['tool_id'] == 'computer.execute':
+        if payload['tool_id'] == 'editor.prepare_brief':
+            settings = agent_editor.prepare(self.root, owner, payload['settings'])
+            ids = list(dict.fromkeys(r['asset_id'] for r in settings['target']['selected_ranges']))
+            if payload['asset_ids'] != ids:
+                raise ValueError('Use the saved Editor selection for this brief.')
+            assets = self._assets(owner, ids, extensions=agent_editor.EXTENSIONS) if ids else []
+            scope = 'Prepare a creative brief in the selected Editor session. Both Editor clearances remain required.'
+        elif payload['tool_id'] == 'computer.execute':
             if payload['asset_ids'] != []:
                 raise ValueError('Computer tasks use the approved project folder, not staged inputs.')
             assets = []
@@ -144,6 +151,12 @@ class AgentTasks:
     def _check_inputs(self, owner, plan):
         if plan['tool_id'] == 'computer.execute':
             agent_computer.validate(self.root, owner, plan['settings'])
+        elif plan['tool_id'] == 'editor.prepare_brief':
+            settings = plan['settings']
+            if agent_editor.prepare(self.root, owner, {k: settings[k] for k in ('instruction', 'target')}) != settings:
+                raise LedgerConflict('Editor context changed. Propose a new plan.')
+            if plan['assets'] and self._assets(owner, [a['asset_id'] for a in plan['assets']], extensions=agent_editor.EXTENSIONS) != plan['assets']:
+                raise LedgerConflict('Editor media changed. Propose a new plan.')
         elif self._assets(owner, [a['asset_id'] for a in plan['assets']]) != plan['assets']:
             raise LedgerConflict('Inputs changed. Propose a new plan.')
 
@@ -190,6 +203,13 @@ class AgentTasks:
     @staticmethod
     def _validate_job(row, job):
         request, plan = job.get('request', {}), row['plan']
+        if plan['tool_id'] == 'editor.prepare_brief':
+            if (request.get('workspace_id') != row['project_id']
+                    or request.get('agent_invocation_id') != row['invocation']['invocation_id']
+                    or row['invocation']['job_id'] and row['invocation']['job_id'] != job['job_id']):
+                raise LedgerConflict('Editor invocation does not match its frozen job.')
+            agent_editor.validate_job(row, job)
+            return
         inputs = request.get('inputs', [])
         if (request.get('workspace_id') != row['project_id']
                 or request.get('agent_invocation_id') != row['invocation']['invocation_id']
@@ -234,7 +254,9 @@ class AgentTasks:
                 plan = row['plan']
                 self._check_inputs(owner, plan)
                 created = lambda job: self._map_job(owner, task, invocation, job)
-                if plan['tool_id'] == 'computer.execute':
+                if plan['tool_id'] == 'editor.prepare_brief':
+                    job = agent_editor.submit(self.root, owner, plan, invocation, created)
+                elif plan['tool_id'] == 'computer.execute':
                     job = agent_computer.submit(self.root, owner, plan['settings'], invocation, created)
                 elif plan['tool_id'] == 'video.continuity_last_frame':
                     job = agent_continuity.submit(self.root, owner, plan['assets'], invocation, created)
@@ -255,7 +277,13 @@ class AgentTasks:
         state = job['status']
         outputs = []
         report = None
-        if state == 'completed' and self._kind(self.get(owner, task)['plan']) == agent_computer.KIND:
+        plan = self.get(owner, task)['plan']
+        if state == 'completed' and plan['tool_id'] == 'editor.prepare_brief':
+            result = job.get('result') or {}
+            if result.get('pending_clearance') != 'brief' or result.get('revision') != plan['settings']['target']['expected_revision'] + 1:
+                raise LedgerConflict('Editor job has no verified brief clearance result.')
+            report = 'Creative brief prepared. Review clearance 1 in Vibe Editor; no render was authorized.'
+        elif state == 'completed' and self._kind(plan) == agent_computer.KIND:
             result = job.get('result') or {}
             report = result.get('report')
             if result.get('workspace_id') != owner or not isinstance(report, str) or len(report.encode()) > 64000:
@@ -292,8 +320,22 @@ class AgentTasks:
     def poll(self, owner, task):
         with projects.locked(self.root):
             row = self.get(owner, task)
-            if not row['invocation'] or not row['invocation']['job_id']:
+            if not row['invocation']:
                 return row
+            if not row['invocation']['job_id']:
+                if row['status'] in {'completed', 'cancelled', 'failed'}:
+                    return row
+                job = self._find_job(owner, row['invocation']['invocation_id'], self._kind(row['plan']))
+                if job:
+                    self._validate_job(row, job)
+                    self._map_job(owner, task, row['invocation']['invocation_id'], job)
+                    return self._observe(owner, task, job)
+                with self.ledger._connect() as db:
+                    db.execute('BEGIN IMMEDIATE')
+                    if row['status'] != 'recovery_required':
+                        self._set(db, owner, task, 'recovery_required', {'reason': 'No job found for saved submission intent.'})
+                    db.commit()
+                return self.get(owner, task)
             job = video_repertoire.read_job(self._kind(row['plan']), row['invocation']['job_id'])
             self._validate_job(row, job)
             return self._observe(owner, task, job)

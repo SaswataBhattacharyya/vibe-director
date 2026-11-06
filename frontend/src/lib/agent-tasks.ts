@@ -1,7 +1,8 @@
 import type {MediaAsset} from './media-api';
+import type {EditorTarget} from '../DirectorEditor';
 export type AgentTask = {
   project_id: string; task_id: string; status: string; current_revision: number; plan_hash: string;
-  plan: {tool_id: string; scope: string; assets: Array<{asset_id: string; filename: string; sha256: string}>; settings: {quality?: number; instruction?: string; access_mode?: 'project' | 'full'; workspace_path?: string; model?: string}};
+  plan: {tool_id: string; scope: string; assets: Array<{asset_id: string; filename: string; sha256: string}>; settings: {quality?: number; instruction?: string; access_mode?: 'project' | 'full'; workspace_path?: string; model?: string; target?: EditorTarget}};
   invocation: {invocation_id: string; job_id: string | null; state: string} | null;
   events: Array<{sequence: number; event_type: string; created_at: string}>;
   outputs?: MediaAsset[]; job_status?: string; report?: string;

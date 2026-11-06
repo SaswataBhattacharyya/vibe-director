@@ -1,5 +1,7 @@
 # Combined fixes and guide assessment
 
+> **HISTORICAL REVIEW (prior to the 2026-11-06 agent implementation).** This document describes the old code baseline and should not be used as the current work queue. Start with [current code review](CODE_REVIEW_2026-11-06.md), [active fixes](ACTIVE_FIXES_2026-11-06.md) and [single-chat UI plan](UNIFIED_CHAT_AND_PANES.md). Keep this assessment only for provenance/regression context.
+
 Base: `f48e99a43ff141239504e802dd416ac7c48a0f63`, `vibe-director-current`; clean before this documentation pass. The 12 additions since `d467dbb269312eabe1ee7afe0697de5187857f61` were docs/engineering skills, not runtime fixes. This pass edits guides only.
 
 ## Bird's-eye view

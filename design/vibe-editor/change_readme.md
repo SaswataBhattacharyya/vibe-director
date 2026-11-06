@@ -1,13 +1,20 @@
-# Editor integration guide
+# Vibe Editor — remaining integration, not a renderer rewrite
 
-Read [assessment](../../fixes/SOURCE_ASSESSMENT.md) and [Q06–Q08](../../fixes/QUICK_FIX_TASKS.md). Preserve `vibe_editor.py`, API contracts, trusted `vibe_editor_render.py`, existing skill/references and manual workflows.
+Read [current code review](../../fixes/CODE_REVIEW_2026-11-06.md), [UX migration spec](../../fixes/UNIFIED_CHAT_AND_PANES.md), [active UX02/UX03 tasks](../../fixes/ACTIVE_FIXES_2026-11-06.md). **Q08 MP3-to-Editor handoff is implemented and reported tested.** Do not repeat it.
 
-Current Editor has project/session messages, selected media/ranges, brief and plan clearances, style history, trusted JSON→HyperFrames/FFmpeg rendering and protected export. `run_job` explicitly says “Do not run tools or create files.” That is the render planner; do not remove its restriction to create a tool agent.
+## Confirmed defect
+`frontend/src/VibeEditorPage.tsx:138–153` renders a second Editor chat log/composer and an `EditorWorkspace` nested split in the **right** work area. The new persistent `DirectorConversation` already occupies the middle column; screenshot confirms redundancy.
 
-Q06 exposes shared discovery. Q08 adds specialist orchestration alongside the existing planner: selected owned media → extraction proposal → exact task approval → existing utility job → registered playable output → optional attachment. No silent soundtrack replacement. Keep selections/ranges and render/export approvals. Test both Director and Editor using the same backend gateway.
+## Exact safe migration order
+1. `VibeEditorPage.submit` currently calls `POST /api/editor/projects/{id}/command` with `action:'chat'`, `revision`, `text`. **This is the only current route to initiate an Editor creative brief from its UI.** Do not simply delete it.
+2. Add a shared tool/action adapter `editor.prepare_brief` that resolves real `workspace_id`, separate `editor_session_id`, selected in/out ranges, expected Editor revision and text; validates session ownership and selection; invokes existing `vibe_editor.command`. The center chat becomes the authorizing/request surface.
+3. Keep `editor.command` transitions: brief → clearance 1 → selected media/plan → clearance 2 → trusted HyperFrames/FFmpeg render. Proposal/clearance action cards may live in the right Editor work area while central chat is the only freeform composer. One approval must not silently substitute for another.
+4. Preserve `project.messages` as **read-only legacy session history** (collapsed details), `project.revisions`, `pending`, style rules, saved selections and exact media ranges.
+5. After real central-chat Editor requests succeed, remove old `editor-messages` as primary chat, old `editor-composer`, second model picker/send and nested `<EditorWorkspace name="editor">`. Move attach/browse/style/session operations into existing right tabs. Do **not** remove `EditorWorkspace.tsx` (used elsewhere) or Editor backend services.
+6. Add persistent session context to `DirectorRuntime`; current `surface:'editor'` has no session ID/selected ranges. Server must reject wrong project, stale session/revision and unselected media.
+7. Regression: new edit → brief → clarification/clearance → media plan → final clearance → trusted render; saved sessions, pause/stop/retry and output/export preserved. No automatic render from asking in chat.
 
-Handoffs bind workspace owner, separate Editor session ID, asset IDs/hashes/ranges, target brief/sequence, expected revision and task ID. Server revalidates selection. No filename-only handoff or late result applied to another project. General persistent chat changes arrive with Phase 3, not as two unlinked chat/approval systems.
+## Later
+Evidence-backed QA, retakes, project graph, multi-clip assembly and optional HyperFrames Studio/OpenMontage/Backlot adapters remain separate phases. Model text alone is not audiovisual inspection. The old `vibe_editor.run_job` JSON planner's “Do not run tools” protects the renderer; do not remove it to enable the new agent, which operates through shared typed gateway.
 
-Renderer extensions need demonstrated requirements and focused tests. Current native plan/audio/duration limits must be checked before promising arbitrary multi-track film assembly. QA claims need actual timestamped observations; unavailable analysis stays blocked. Optional HyperFrames Studio/OpenMontage/Backlot adapters need installed version/license/auth and output roundtrip validation, never assumed embedding/replacement.
-
-Update specialist skill wording only after corresponding runtime support exists. A paragraph about tools does not implement them. Existing style learning stays explicit/project-scoped; legacy saved sessions remain usable.
+No editing engine or Media Prep rewrites are authorized by this guide.

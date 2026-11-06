@@ -1,58 +1,40 @@
-# Regression and disposable test-media change README
+# Focused tests and disposable fixtures
 
-Do NOT write any dummy files into real project media folders. Keep existing backend tests; add focused new files only when matching service code lands.
+Read the approved [card](../../../fixes/QUICK_FIX_TASKS.md). Run matching tests once; expand for failures or a traced dependency. Do not run every generation/assembly suite for a metadata/doc change.
 
-## Baseline and blast-radius gates
-Before each phase run (or inspect if dependencies are missing) these existing tests:
-- test_projects.py, test_named_project_storage.py, test_local_layout_migration.py — Save/Load and project isolation.
-- test_audio_utilities_integration.py — real Media Prep extract_mp3 job contract and CPU-only extraction.
-- test_video_continuity.py — actual final-frame extraction and hash-bound caching.
-- test_isolated_video_contract.py, test_isolated_r2v_contract.py, test_isolated_fl2va_contract.py, test_isolated_video_jobs.py — **different** exact request schemas, hash and admission.
-- test_storyboard.py, test_story_style_link.py, test_prompt_director.py, test_production_styles.py, test_production_setup.py — creative revisions and strict legacy run behavior.
-- test_video_final_collection.py, test_t2v_phase_handoff.py, test_assembly_renderer.py — worker final output, audio and stitching.
-- Relevant editor tests should be discovered by repository search; do not invent a test filename.
+## Source-known baseline
 
-A reviewed graphify-out/graph.json contains 145 nodes and 634 edges and does NOT cover every service or caller; supplement with source-wide import/call searches and API contract tracing. After each meaningful implementation step use AGENTS.md instructions to regenerate Graphify only if its dependency environment is installed.
+At `f48e99a`, the prior review ran six audio integration tests: five passed and the safety-trip asset-set test failed because browsing discovered staged `001.wav`. Real CPU MP3 extraction passed. Do not turn that failure green by changing its expected set. Q01 fixes discovery. Typecheck and V2 package validator passed in that review; they do not prove live readiness. This guide edit does not rerun those application checks.
 
-## Add small test modules by implementation slice
-1. NEW test_agent_tools.py: metadata and real availability, exact fields, wrong-project rejection, read vs submit permission, unsupported tool blocked, duplicate invocation/reconciliation.
-2. NEW test_agent_skills.py: global/app/project skill discovery; provider absent, changed hash, collision, path traversal/symlink; Editor and Director parity and context-budget behavior; untrusted skill cannot grant shell.
-3. NEW test_agent_tasks.py: plan does not submit; approval binds plan hash and project; stale revision rejected; pause/resume, failed job, lost response lookup and idempotent recovery; plan updates require new approval.
-4. NEW test_agent_project_graph.py: actual source ID/hash provenance, no invented assets, same asset in multiple shots, versions, project A/B isolation, checkpoint Save/Load without overwriting more recent work.
-5. NEW test_agent_editor_tool_handoff.py: a video in Editor is passed to shared Extract MP3, original not changed, a registered audio asset returned, selected range preserved, Editor second clearance still required for render, no soundtrack auto-replacement.
-6. NEW test_agent_video_prompt.py: R2V exact image/video/audio slots, true FL2VA first-last, no R2V fake first_frame; T2V blank refs; duration/codepoint cap and voice identity vs prerecorded track.
-7. LTX OFF only AFTER new contract: new-version per mode, zero refinement chunk enqueue, valid final Turbo audio/video, old version resumes LTX unchanged, cancellation and hash/drift failures.
+## Test selection
 
-## Disposable synthetic fixture pattern (runnable example)
-Use Python unittest + tempfile; a fixture project and ledger/database must live entirely under the temporary root.
+| Card | Focused tests / new tests only when implementation lands |
+| --- | --- |
+| Q01 | Existing `test_audio_utilities_integration.py`, `test_media_catalogue.py`; add precise project/tool-library staging exclusion cases |
+| Q02 | Audio integration: all operations/API errors, staging failure, retained retry inputs, configured roots and CPU registration |
+| Q03 | New `test_agent_tools.py`, `test_agent_api.py`; selected existing API route smoke regressions |
+| Q04 | New `test_agent_skills.py`; old Director/Editor context parity, references, hashes and safe roots |
+| Q05 | New `test_agent_project_graph.py`; actual source identity, owner isolation and no state writes |
+| Q06 | `npm run typecheck` in frontend; focused browser tests with mocked discovery; direct routes/project switching/no submission |
+| Q07 | New `test_agent_tasks.py`; existing `test_projects.py`, `test_named_project_storage.py`; crash/approval/idempotency/roundtrip |
+| Q08 | New `test_agent_editor_tool_handoff.py` plus Director bridge tests; CPU synthetic media, ownership/retry/attachment and old Editor approvals |
 
-    from pathlib import Path
-    from tempfile import TemporaryDirectory
-    import subprocess
-    import shutil
+Discover Editor tests by source references rather than inventing an existing test filename. For later generation-contract work inspect actual `test_isolated_*_contract.py`, continuity, worker collection and assembly tests when their code changes. Mock GPU/provider paths first; paid/GPU acceptance requires explicit authorization.
 
-    def test_short_synthetic_video():
-        with TemporaryDirectory(prefix="vibe-agent-fixture-") as temp:
-            root = Path(temp)
-            video = root / "synthetic.mp4"
-            if shutil.which("ffmpeg"):
-                subprocess.run(
-                    ["ffmpeg", "-v", "error", "-f", "lavfi",
-                     "-i", "color=c=blue:s=64x64:r=4:d=1",
-                     "-c:v", "libx264", "-y", str(video)],
-                    check=True, timeout=20, capture_output=True)
-                assert video.exists()
-        assert not root.exists()
+## Commands and isolation
 
-Do not use this short silent video to test a pipeline contract that requires an audio stream: build a compatible generated WAV/audio stream in temp if necessary. The example itself is only a disposable fixture exercise.
+For the already inspected audio tests, from repo root:
 
-## Cleanup guarantees
-- Tag every test-owned project, DB and file with unique temp root and run marker. Keep source tests in repo, delete *generated* media after execution.
-- Use try/finally or TemporaryDirectory/pytest tmp_path so failures still clean.
-- Never use rm -rf against live projects, Downloads, shared repertoire or unmarked paths.
-- If a worker remains alive, stop/reconcile only the owned test job; report leftover instead of deleting uncertain external work.
-- Verify root removed and no test-only rows remain in isolated test storage. A simulated/mocked test does NOT prove a live GPU render.
-- No paid/provider or live GPU generation without explicit owner approval.
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend python3 -B -m unittest story_builder.tests.test_audio_utilities_integration
+```
 
-## Code-quality acceptance
-Proposed fix must have a small explicit API, type/schema tests, one place for business logic, a backward-compatibility test, a failure-path test, and a cleanup assertion. Prefer short pure functions and shared adapters over redundant abstractions and giant dispatcher/page modifications.
+Those tests own temporary data roots and mock GPU/container execution; FFmpeg extraction is real CPU work. Before running any other suite inspect fixture roots, environment variables, worker launch and provider mocks. Test env overrides such as `VIBE_DIRECTOR_IMAGE_JOBS_DB` can defeat intended isolation; do not inherit a live override. Use installed runtime dependencies; report missing dependencies, do not install arbitrarily.
+
+Each test owns a unique TemporaryDirectory and isolated DB/project/global-skill fixture roots. Configure ALL module-global job/ledger roots, not merely the helper's root argument. Restore prior globals/environment after tests. Synthetic WAV/PNG/short MP4/text only; build an audio stream when the target contract requires it. External worker tests require ownership-tracked process shutdown before deleting their root.
+
+Cleanup must run and be verified after success AND failure. In unittest register a root-existence verifier before registering cleanup (cleanups run LIFO), or use an outer finally that checks the directory after the TemporaryDirectory context exits. Plain assertions after a failing test body will never execute; do not call that failure-path cleanup proof. Never mask the original failure with cleanup errors; report both.
+
+Keep source tests; remove generated media/test DBs. A removed isolated DB removes its test records; never issue cleanup DELETEs against production. No broad recursive deletion of user paths. If ownership is uncertain, report a leftover rather than delete it. New tests should include one injected failure proving cleanup still runs.
+
+Report exact commands, pass/fail/skip counts, no-run limitations, temporary root removal and any remaining owned processes. Mock, CPU media and owner-started GPU acceptance are different evidence.

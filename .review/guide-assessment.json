@@ -1,0 +1,307 @@
+{
+  "comparison": "guide proposals against source at f48e99a43ff141239504e802dd416ac7c48a0f63; application source unchanged",
+  "mode": "manual with partial Graphify discovery",
+  "traversal": "Two levels on utility/staging/worker, browse/discovery/manifest, Editor/selection/render; project readers separately. Bounded source target assessment, not all repository functions.",
+  "limitations": [
+    "Actual guide-only diff changes no executable nodes; execution risk is N/A for this documentation patch.",
+    "Scores refer only to proposed implementation boundaries.",
+    "Caller census is incomplete: caller_count is null; test_gap null means no coverage sufficiency conclusion, not a claim of missing tests.",
+    "Static references and prior baseline runs do not prove branch coverage or live readiness.",
+    "Graph affected(stage_assets,depth=2) had no unique match; bounded BFS returned 42 candidates."
+  ],
+  "overall_proposed_risk": {
+    "lower": 0.6,
+    "upper": 1,
+    "level": "high"
+  },
+  "findings": [
+    {
+      "node": "audio_utilities.py::stage_assets",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 134
+      },
+      "anchor": "def stage_assets(data_root: Path, workspace_id: str, job_id: str, asset_ids: list[str], operation: str) -> list[dict[str, str]]:",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "isolated_server.py:910 calls stage_assets; run_job reads its relative_path inputs; tests call staging directly.",
+        "test_audio_utilities_integration.py exercises bad-input staging, real CPU extraction and mocked safety behavior."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "audio_utilities.py::run_job",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 161
+      },
+      "anchor": "def run_job(job: dict[str, Any], *, data_root: Path, progress: Callable[[dict[str, Any]], None]) -> list[dict[str, Any]]:",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "video_repertoire_worker dispatches audio-utilities to run_job; media_library.register_generated_audio publishes results.",
+        "Existing audio integration suite covers CPU extraction and mocked GPU safety; prior baseline has one staging-discovery failure."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "media_discovery.py::_discover_locked",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 48
+      },
+      "anchor": "def _discover_locked(root, workspace, *, shared=False, kinds=None):",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "media_library.list_assets -> discover -> _discover_locked -> media_library._save; browse therefore writes.",
+        "Recursive source walk currently excludes intermediates/checkpoints, not managed utility_inputs."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "media_library.py::list_assets",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 385
+      },
+      "anchor": "def list_assets(root: Path, workspace_id: str, *, kind: str | None = None, limit: int = 50,",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "video_continuity.last_frame invokes list_assets; list_assets invokes media_discovery.discover before projecting manifest.",
+        "Other media consumers were searched, but no complete caller or measured coverage census is claimed."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "video_repertoire.py::create_job",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 806
+      },
+      "anchor": "def create_job(kind: str, request: dict[str, Any]) -> dict[str, Any]:",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Utility POST calls create_job -> output_destinations.freeze + atomic job JSON under configured root -> start_job.",
+        "New UUID per call means agent replay needs external durable identity/reconciliation."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "video_repertoire.py::start_job",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 975
+      },
+      "anchor": "def start_job(kind: str, job_id: str) -> dict[str, Any]:",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Utility route calls start_job; it writes queued job state before media queue/dispatcher readiness.",
+        "Utility API catches failure as worker_unavailable, which does not remove the persisted job."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "video_continuity.py::last_frame",
+      "location": {
+        "file": "backend/story_builder/services/video_continuity.py",
+        "line": 13
+      },
+      "anchor": "def last_frame(root, workspace, output, *, create=True):",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "isolated_video_jobs calls last_frame with owned generated output descriptor; helper verifies video bytes/hash.",
+        "Helper calls media list/cache lookup and may ffmpeg/register_upload, so not a metadata-only read."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "projects.py::sql_snapshot",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 102
+      },
+      "anchor": "def sql_snapshot(path, workspace):",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project save calls sql_snapshot for configured production/image databases; load checks known table schemas, columns and conflicts.",
+        "Snapshot follows owner/FK/job references; additive task tables still require roundtrip/owner tests."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "vibe_editor.py::command",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 231
+      },
+      "anchor": "def command(root, project_id, body):",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "vibe_editor_api.handle routes command requests; command calls validate_selection before admitting approved brief/plan/render changes.",
+        "Editor run_job invokes trusted renderer or structured reasoning with no-tools/no-files instruction."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "vibe_editor.py::run_job",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 379
+      },
+      "anchor": "def run_job(root, job_id, request, progress):",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.6,
+      "upper_bound": 1,
+      "factors": {
+        "test_gap": null,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "video_repertoire_worker dispatches vibe-editor jobs; render branch delegates vibe_editor_render.render.",
+        "Other branch loads specialist skill and asks reasoning_provider for JSON; tool orchestration must be separate."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "director_skills.py::director_skill_context",
+      "location": {
+        "file": "backend/story_builder/services/director_skills.py",
+        "line": 10
+      },
+      "anchor": "def director_skill_context(*, video: bool = False) -> str:",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.4,
+      "upper_bound": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "story_authoring, prompt_drafts and fully_automated_clip_plan call this helper; it reads fixed craft paths and hashes content.",
+        "Editor run_job reads its specialist Markdown separately; shared resolver must preserve both prompt inputs."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    },
+    {
+      "node": "projects.py::assert_idle",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 135
+      },
+      "anchor": "def assert_idle(root, workspace):",
+      "revision": "f48e99a43ff141239504e802dd416ac7c48a0f63",
+      "risk": 0.4,
+      "upper_bound": 0.8,
+      "factors": {
+        "test_gap": null,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Project transitions call assert_idle; it examines snapshot status and persisted media job JSON.",
+        "New task state vocabulary cannot substitute for checking an owned worker still active."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED",
+      "change": "future task target; application source unchanged"
+    }
+  ]
+}

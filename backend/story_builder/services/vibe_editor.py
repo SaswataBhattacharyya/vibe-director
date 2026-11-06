@@ -13,6 +13,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from .agent_skills import read_content
 from typing import Any
 
 from . import media_library, video_repertoire
@@ -389,7 +390,7 @@ def run_job(root, job_id, request, progress):
         return result
     from . import reasoning_provider
     progress("reasoning", "Preparing " + operation + " with the selected Director model.", 10)
-    guides = (HUB / "skills" / "vibe-editor-director" / "SKILL.md").read_text()
+    guides = read_content(HUB / "skills", "vibe-editor-director/SKILL.md")
     common = (guides + "\nReturn JSON only. Current explicit request > this style's project override > its confirmed rules. "
         "Other style/user preferences must never be retrieved. Do not run tools or create files. "
         "Explain editing terminology in ordinary language. Never invent file paths or asset IDs.\n"

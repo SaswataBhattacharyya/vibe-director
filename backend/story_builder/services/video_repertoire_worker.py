@@ -1148,7 +1148,7 @@ def main() -> int:
             publish_completed_result(kind, job_id, job, job["result"])
             return 0
         save_job(kind, job_id, stage="waiting", message="Waiting for a workload slot.")
-        with (nullcontext() if kind in {"ace-studio", "music-jukebox"} else gpu_workload_lock()):
+        with (nullcontext() if kind in {"ace-studio", "music-jukebox", "continuity-frame", "agent-computer"} else gpu_workload_lock()):
             current = store.read_job(kind, job_id)
             if current.get("status") in {"cancelled", "cancel_requested"}:
                 return 130
@@ -1187,6 +1187,12 @@ def main() -> int:
                 result = run_timed_tts(job_id, job["request"])
             elif kind in {"ace-music", "control-foley"}:
                 result = _publish_audio_job(job_id, job["request"], kind)
+            elif kind == "agent-computer":
+                from .agent_computer import run
+                result = run(store._CONFIGURED_DATA_ROOT, job_id, job["request"])
+            elif kind == "continuity-frame":
+                from .agent_continuity import run
+                result = run(store._CONFIGURED_DATA_ROOT, job["request"])
             elif kind == "audio-utilities":
                 result = _run_audio_utilities(job_id, job["request"])
             elif kind == "audio-effects":

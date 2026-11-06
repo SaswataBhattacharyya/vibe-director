@@ -17,7 +17,7 @@ test('Debug records steps and observations, excludes typed text, and stops when 
   await expect(page.getByRole('switch',{name:'Debug',exact:true})).toBeChecked();
   await expect(page.getByText('Local log:',{exact:false})).toBeVisible();
   await page.getByRole('link',{name:'Create',exact:true}).first().click();
-  await page.getByLabel('Shot prompt').fill('PRIVATE PROMPT DO NOT LOG');
+  await page.getByLabel('Shot prompt').pressSequentially('PRIVATE PROMPT DO NOT LOG');
   await page.getByLabel('Shot prompt').press('Tab');
   await page.getByRole('link',{name:'Status',exact:true}).click();
   await page.getByLabel('Manual result').selectOption('failed');
@@ -38,11 +38,11 @@ test('Debug records steps and observations, excludes typed text, and stops when 
 });
 
 test('Debug displays a journal write failure and can stop a full recording',async({page})=>{
-  let enabled=true;
+  let enabled=true, attempts=0;
   await page.route('**/api/**',async route=>{
     const path=new URL(route.request().url()).pathname;
     if(path==='/api/debug'){if(route.request().method()==='PUT')enabled=route.request().postDataJSON().enabled;return route.fulfill({json:{enabled,session_id:'test',log_path:'/tmp/debug.jsonl',bytes:0,max_bytes:8388608}});}
-    if(path==='/api/debug/events')return route.fulfill({status:400,json:{error:{message:'Debug log is full'}}});
+    if(path==='/api/debug/events'){attempts++;return route.fulfill({status:400,json:{error:{message:'Debug log is full'}}});}
     return route.fulfill({status:503,json:{}});
   });
   await page.goto('/#/status');
@@ -50,6 +50,13 @@ test('Debug displays a journal write failure and can stop a full recording',asyn
   await page.getByRole('button',{name:'Save observation'}).click();
   await expect(page.getByText(/Debug recording:.*Debug log is full/)).toBeVisible();
   await expect(page.getByText('Observation sent to the local journal.')).toHaveCount(0);
+  const rejected=attempts;
+  await page.evaluate(async()=>{
+    const recorder=await import('/src/lib/debug-recorder.ts');
+    recorder.recordDebug({kind:'interaction',target:'Do not retry a rejected batch'});
+    for(let i=0;i<3;i++)await recorder.flushDebug().catch(()=>{});
+  });
+  expect(attempts).toBe(rejected);
   await page.getByRole('switch',{name:'Debug',exact:true}).click();
   await expect(page.getByRole('switch',{name:'Debug',exact:true})).not.toBeChecked();
 });
@@ -63,7 +70,7 @@ test('Debug enabled in one tab starts recording in tabs that were already open',
       return route.fulfill({json:{enabled,session_id:enabled?'session':null,log_path:enabled?'/tmp/manual-debug.jsonl':null,bytes:0,max_bytes:8388608}});
     }
     if(path==='/api/debug/events') { if(enabled) events.push(...req.postDataJSON().events); return route.fulfill({json:{recorded:enabled?req.postDataJSON().events.length:0,enabled}}); }
-    return route.fulfill({status:200,json:{}});
+    return route.fulfill({status:503,json:{error:{message:'Mock backend unavailable'}}});
   });
   const [workflow,status]=await Promise.all([context.newPage(),context.newPage()]);
   await Promise.all([workflow.goto('/'),status.goto('/#/status')]);

@@ -296,6 +296,10 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         raise ValueError("Image jobs DB path must remain under VIBE_DIRECTOR_DATA_DIR.") from exc
     from story_builder.services import projects as project_folders
     project_folders.configure(root, configured_db, image_jobs_path)
+    from story_builder.services.agent_tasks import AgentTasks
+    agent_tasks = AgentTasks(root, ledger)
+    from story_builder.services.agent_conversation import AgentConversation
+    agent_conversation = AgentConversation(agent_tasks, reasoning_json_provider)
     image_jobs = ProductionImageJobStore(image_jobs_path)
     image_selection = ProductionImageSelection(image_jobs_path)
     fl2va_provider = fl2va_capability_provider or (lambda: fl2va_capability())
@@ -482,6 +486,15 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         path = unquote(environ.get("PATH_INFO", ""))
         video_admission_started = False
         try:
+            if path.startswith('/api/agent/'):
+                from story_builder.services.agent_api import handle
+                from story_builder.services import audio_utilities
+                try:
+                    return handle(root, environ, start_response, _json_response, tasks=agent_tasks,
+                                  conversation=agent_conversation, read_json=_read_json)
+                except (audio_utilities.UtilityUnavailable, audio_utilities.WorkerUnavailable, ReasoningProviderError) as exc:
+                    return _json_response(start_response, '503 Service Unavailable', {'error': {
+                        'code': 'agent_runtime_unavailable', 'message': str(exc)}})
             if path.startswith('/api/projects/'):
                 from story_builder.services.projects import handle
                 return handle(root, story, environ, start_response, _read_json, _json_response)
@@ -894,26 +907,11 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 def public_utility_job(job):
                     return {key: job.get(key) for key in ("job_id", "status", "progress", "stage", "message", "events", "result", "error", "created_at", "updated_at")}
                 if len(parts) == 5 and method == "POST":
-                    payload = _read_json(environ)
-                    if set(payload) != {"operation", "asset_ids", "settings"} or not isinstance(payload.get("settings"), dict):
-                        raise ValueError("Supply operation, shared-library asset_ids and settings.")
-                    operation = payload["operation"]
-                    caps = audio_utilities.capabilities()
-                    selected = next((row for row in caps["operations"] if row["id"] == operation), None)
-                    if selected is None:
-                        raise ValueError("Unknown audio utility operation.")
-                    if selected["status"] != "available":
-                        return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "audio_utility_unavailable", "message": selected.get("reason") or "Audio utility is unavailable."}})
-                    settings = payload["settings"]
-                    audio_utilities.validate_settings(operation, settings)
-                    staging_id = "stage-" + uuid.uuid4().hex
-                    staged = audio_utilities.stage_assets(root, workspace_id, staging_id, payload["asset_ids"], operation)
-                    request = {"workspace_id": workspace_id, "operation": operation,
-                        "settings": settings, "inputs": staged, "staging_id": staging_id}
-                    job = video_repertoire.create_job("audio-utilities", request)
                     try:
-                        job = video_repertoire.start_job("audio-utilities", job["job_id"])
-                    except Exception as exc:
+                        job = audio_utilities.submit(root, workspace_id, _read_json(environ))
+                    except audio_utilities.UtilityUnavailable as exc:
+                        return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "audio_utility_unavailable", "message": str(exc)}})
+                    except audio_utilities.WorkerUnavailable as exc:
                         return _json_response(start_response, "503 Service Unavailable", {"error": {"code": "worker_unavailable", "message": str(exc)}})
                     return _json_response(start_response, "202 Accepted", public_utility_job(job))
                 if len(parts) == 5 and method == "GET":

@@ -168,6 +168,32 @@ class CatalogueTests(unittest.TestCase):
             self.assertEqual([a["asset_id"] for a in first["assets"]], [a["asset_id"] for a in again["assets"]])
             self.assertIn(existing["asset_id"], [a["asset_id"] for a in again["assets"]])
 
+    def test_managed_staging_exclusion_is_precise_in_all_project_locations(self):
+        import json
+        from story_builder.services.storage_paths import project_root, media_root, generated_root
+        from story_builder.services.projects import home
+        for workspace in ("story-aaaaaaaaaaaa", "tool-library"):
+            base = media_root(self.root, workspace) if workspace == "tool-library" else project_root(self.root, workspace)
+            staging = generated_root(self.root, workspace) / "utility_inputs/stage-test"
+            staging.mkdir(parents=True)
+            (staging / "private.png").write_bytes(self.png())
+            legitimate = base / "user files/utility_inputs"
+            legitimate.mkdir(parents=True)
+            original = legitimate / "original.png"
+            original.write_bytes(self.png())
+            with patch("story_builder.services.media_library._probe", return_value={}):
+                rows = browse_catalogue(self.root, workspace, source="current", kinds="image")["assets"]
+            self.assertEqual([r["filename"] for r in rows], ["original.png"])
+            self.assertEqual(original.read_bytes(), self.png())
+        saved = Path(self.temporary.name) / "saved staging project"
+        (saved / "media/generated/utility_inputs/stage-test").mkdir(parents=True)
+        (saved / "media/generated/utility_inputs/stage-test/private.png").write_bytes(self.png())
+        (saved / "published.png").write_bytes(self.png())
+        (home(self.root) / "folders.json").write_text(json.dumps({"story-aaaaaaaaaaaa": str(saved)}))
+        with patch("story_builder.services.media_library._probe", return_value={}):
+            rows = browse_catalogue(self.root, "story-aaaaaaaaaaaa", source="current", kinds="image")["assets"]
+        self.assertEqual({r["filename"] for r in rows}, {"original.png", "published.png"})
+
     def test_saved_external_folder_is_discovered_and_traversal_rejected(self):
         import json
         from story_builder.services.projects import home

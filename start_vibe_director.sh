@@ -16,6 +16,12 @@ export VIBE_DIRECTOR_ENABLE_T2V="${VIBE_DIRECTOR_ENABLE_T2V:-1}"
 export VIBE_DIRECTOR_ENABLE_FL2VA="${VIBE_DIRECTOR_ENABLE_FL2VA:-1}"
 export VIBE_DIRECTOR_ENABLE_R2V="${VIBE_DIRECTOR_ENABLE_R2V:-1}"
 
+# Discover global agent skills unless the caller supplies custom roots.
+if [[ ! -v VIBE_DIRECTOR_AGENT_SKILL_ROOTS ]]; then
+  VIBE_DIRECTOR_AGENT_SKILL_ROOTS='{"codex":"/home/riki/.codex/skills","agents":"/home/riki/.agents/skills"}'
+fi
+export VIBE_DIRECTOR_AGENT_SKILL_ROOTS
+
 api_healthy() {
   curl --silent --show-error --fail --max-time 2 "$API_URL" 2>/dev/null \
     | python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d.get("backend",{}).get("connected") is True else 1)' 2>/dev/null

@@ -1,69 +1,26 @@
-# Backend boundary change README — current application
+# Backend implementation boundaries
 
-**Edit targets:** `isolated_server.py`, `services/production_ledger.py`, `services/projects.py`; NEW small `services/agent_api.py` and related services described in `services/change_readme.md`. **Proposal only; no implementation in this document.**
+Read [master scope](../../fixes/change_readme.md), then the approved [task card](../../fixes/QUICK_FIX_TASKS.md). These are proposals. Current source/owner instructions win. Do not implement every route below in one patch.
 
-## 1. Add ONE agent API dispatch seam
-`isolated_server.py` currently enters `app(environ,start_response)` around line 480 and delegates `/api/editor/` to `vibe_editor_api.handle`. Following the same adapter pattern, add **before generic route matching**:
+## Q03–Q05: narrow discovery seam (Phase 1)
 
-```python
-if path.startswith("/api/agent/"):
-    from story_builder.services.agent_api import handle
-    return handle(root, environ, start_response, _read_json, _json_response)
-```
+Follow `create_app`'s existing `/api/editor/` delegation pattern for `/api/agent/`. Pass configured root/ledger/story dependencies that the services actually need; do not instantiate a second default ledger in the handler. Keep exact route/method/query/body validation and existing JSON errors. The server's `workspace_id` validation/lookup must enforce owner context, including standalone `tool-library`; browser IDs are not authorization. Local-owner profile/session identity is not a new authentication scheme.
 
-Use the existing WSGI envelope and error policy; **do not** make the HTTP dispatcher itself perform agent work, shell commands, or input staging. `agent_api.handle` must restrict methods, match routes exactly, validate `workspace_id` ownership (do not trust supplied IDs), and return the same error envelope as existing APIs.
+Only initial routes:
+- `GET /api/agent/tools?workspace_id=...`
+- `GET /api/agent/skills?workspace_id=...`
+- `GET /api/agent/projects/{workspace_id}/context`
 
-Proposed v1 routes; create only when service contract and tests are ready:
-- `GET /api/agent/tools?workspace_id=...` — metadata/capabilities only.
-- `GET /api/agent/skills?workspace_id=...` — global/app/project metadata only; no secret skill payload.
-- `GET /api/agent/projects/{workspace_id}/context` — scene/asset/task graph projection with provenance.
-- `GET/POST /api/agent/projects/{workspace_id}/tasks` — inspect or propose a `draft` plan; **no execution from plan POST**.
-- `POST /api/agent/projects/{workspace_id}/tasks/{task_id}/approve` — explicit owner approval of the exact immutable plan revision/scope.
-- `POST /api/agent/projects/{workspace_id}/tasks/{task_id}/run` — only after approval, runtime permission and capability recheck.
-- `GET /api/agent/projects/{workspace_id}/tasks/{task_id}` — durable events, errors and progress.
-- `POST /api/agent/projects/{workspace_id}/tasks/{task_id}/control` — pause/stop/resume via task controller, never blind replay.
+No task tables, execution routes or persistent chat in Phase 1. No broad dispatcher rewrite. Q05 must not mutate manifests/job state merely to describe them.
 
-Never mirror the complete existing `/api/video/jobs`, `/api/images/jobs`, `/api/editor/projects` or `/api/audio/*` implementation inside this API. Call the same trusted backend service methods through thin adapters.
+## Q02/Q07/Q08: shared operation and lifecycle (Phase 2)
 
-## 2. Persist resumable task/graph state *with* project Save/Load
-The current `projects.DATABASES` snapshots the production SQLite ledger and image-jobs DB. Prefer adding project-owned agent tables to the **existing configured production ledger** in `ProductionLedger._initialize()` (after inspecting migrations and tests), rather than introducing a third source-of-truth DB that the project checkpoint cannot see.
+Q02 factors existing utility submission without altering manual API contracts. Q07 introduces proposed tasks, immutable plan revisions, approvals, invocation/job mapping and events in the configured production ledger. Q08 connects both chat surfaces. Inspect final SQL/transitions/crash handling before implementing Q07.
 
-Minimal table outlines (final SQL, indexes and foreign keys require a reviewed migration):
+Proposed task routes are added only with their service/tests: propose, inspect, approve, run, and supported control operations under `/api/agent/projects/{workspace_id}/tasks`. Plan POST never executes. Approval binds exact project, revision/hash, assets+hashes, settings and tool. Run rechecks ownership/capability. No generic `/exec`.
 
-```sql
-CREATE TABLE IF NOT EXISTS agent_tasks (
- task_id TEXT PRIMARY KEY, project_id TEXT NOT NULL,
- plan_revision INTEGER NOT NULL, status TEXT NOT NULL,
- plan_json TEXT NOT NULL, plan_sha256 TEXT NOT NULL,
- approved_sha256 TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS idx_agent_tasks_project
- ON agent_tasks(project_id, updated_at);
-CREATE TABLE IF NOT EXISTS agent_steps (
- step_id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES agent_tasks(task_id),
- project_id TEXT NOT NULL, tool_id TEXT NOT NULL,
- status TEXT NOT NULL, input_json TEXT NOT NULL,
- output_json TEXT, job_id TEXT, idempotency_key TEXT
-);
-CREATE TABLE IF NOT EXISTS agent_events (
- event_id TEXT PRIMARY KEY, project_id TEXT NOT NULL,
- task_id TEXT NOT NULL, event_json TEXT NOT NULL, created_at TEXT NOT NULL
-);
-```
+`projects.sql_snapshot()` selects owner rows and related records; import checks exact columns and newer/conflicting records. This is not proof that new tables automatically roundtrip correctly. Test old/new checkpoints, fresh configured root and moved projects. `assert_idle()` must follow actual in-flight jobs; draft tasks do not block Save, paused tasks can still own live work.
 
-Include **unique idempotency per project/tool invocation** and foreign-key relationship ownership. Start with `draft → awaiting_approval → approved → running/blocked/paused → verifying → completed/failed/cancelled`. Only reviewed transitions may admit execution. A step is complete only after its registered output or explicit terminal no-output result has been verified.
+Keep new tables additive, with explicit owner columns, consistent FKs, immutable plan history and unique invocation constraints. Avoid new columns in historical tables unless necessary. Retain records on rollback; stop new execution and reconcile live work first. Older binaries may reject new snapshots.
 
-`projects.sql_snapshot()` filters by `workspace_id` or `project_id` and follows some child FKs; give each new row `project_id` and declared relationships so Save/Load is safe. `projects.assert_idle()` currently scans status/state fields: ensure new agent task statuses reflect **actual in-flight work**; avoid indefinite blocks for a draft or approved-but-not-running task. Confirm old project snapshots still load and new ones preserve tasks/graph/skill bindings.
-
-## 3. Project graph
-Start with a **read-only derived graph** of current story/source/graph/shot/asset/job IDs; do not create a second story authority. Store only missing edges and reviewed project-specific creative decisions in new project-owned records when needed. Every node/edge has provenance, source revision or content hash and owner ID; never invent file paths or asset identifiers.
-
-## 4. Blast-radius acceptance
-Inspect callers of `ProductionLedger`, `projects.sql_snapshot`, `projects.open_project/save`, and `create_app` before patching. Verify:
-- legacy opening/saving; two projects never swap editor sessions, chats, skills or jobs;
-- new project accepted but no screenplay still permits manual Video Create;
-- approved task cannot run after changing its plan hash or project context;
-- reconnect/recovery never submits the same GPU/CPU job twice;
-- all legacy editor/audio/video paths still work; generic status API unaffected.
-
-Avoid broad refactors of the 3,700+ line dispatcher. Its new branch should be a few lines; service logic lives in small modules.
+Trace at least route → service → persistence/worker → result consumer for each changed flow. Test only affected contracts; see [test guide](tests/change_readme.md). Preserve original/frozen jobs, grants, identities and manual workflows.

@@ -8,6 +8,8 @@ export default defineConfig({
   testDir: './tests',
   outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR || '/tmp/vibe-director-playwright-results',
   webServer: process.env.VIBE_DIRECTOR_UI_URL ? undefined : {
+    // Keep pagehide/keepalive requests from escaping mocks into the owner's backend.
+    env: { VIBE_DIRECTOR_API_PROXY: 'http://127.0.0.1:1' },
     command: `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort --configLoader runner`,
     url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI,

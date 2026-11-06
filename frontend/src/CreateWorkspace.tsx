@@ -1,6 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
 import type { Draft } from './App';
-import EditorWorkspace from './EditorWorkspace';
 import ModelSelector, { consumeModelCommand } from './ModelSelector';
 import { R2V_WORKFLOW_ID } from './lib/video-api';
 
@@ -11,9 +10,13 @@ export default function CreateWorkspace({ enabled, draft, disabled, onPrompt, ch
   enabled: boolean; draft: Draft; disabled: boolean; onPrompt: (text: string) => void; children: ReactNode;
 }) {
   if (!enabled) return <>{children}</>;
-  return <EditorWorkspace name="create" rightLabel="creation controls" preview={children}>
-    <CreateChat draft={draft} disabled={disabled} onPrompt={onPrompt}/>
-  </EditorWorkspace>;
+  return <div className="create-tools">
+    {children}
+    <details className="create-prompt-assistant">
+      <summary>Shot prompt assistant</summary>
+      <CreateChat draft={draft} disabled={disabled} onPrompt={onPrompt}/>
+    </details>
+  </div>;
 }
 
 function CreateChat({draft, disabled, onPrompt}: {draft: Draft; disabled: boolean; onPrompt: (text: string)=>void}) {
@@ -53,7 +56,7 @@ function CreateChat({draft, disabled, onPrompt}: {draft: Draft; disabled: boolea
     } catch(e) {setError((e as Error).message);} finally {setBusy(false);}
   };
   return <div className="create-chat">
-    <h2>Director</h2><p>Describe your clip or ask for a prompt change. Review and apply it, then use Generate in the right pane.</p>
+    <h2>Refine this shot</h2><p>Describe a prompt change, review the suggestion and apply it to the creation controls above.</p>
     <div role="log" aria-label="Video creation conversation" aria-live="polite">
       {exchanges.map(item=><article className="card" key={item.requestKey}>
         <b>You</b><p>{item.instruction}</p>

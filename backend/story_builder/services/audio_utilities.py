@@ -1,8 +1,11 @@
 """Vibe adapter for Story Builder's deterministic audio utility operations."""
 from __future__ import annotations
-from story_builder.services.storage_paths import generated_root
+from story_builder.services.storage_paths import generated_root, checked
 
 import os
+import re
+import json
+import uuid
 import shutil
 import subprocess
 import threading
@@ -139,23 +142,84 @@ def stage_assets(data_root: Path, workspace_id: str, job_id: str, asset_ids: lis
     allowed = AUDIO_EXTS | VIDEO_EXTS if operation == "extract_mp3" else AUDIO_EXTS
     root = Path(data_root).resolve()
     workspace_root = (generated_root(root, workspace_id)).resolve()
-    destination = workspace_root / "utility_inputs" / job_id
-    destination.mkdir(parents=True, exist_ok=True)
-    if destination.is_symlink() or not destination.resolve().is_relative_to(workspace_root):
-        raise AudioUtilityError("Audio utility staging path is invalid.")
-    staged = []
-    for index, asset_id in enumerate(dict.fromkeys(asset_ids), 1):
-        source, media_type, filename = media_library.asset_path(root, workspace_id, asset_id)
-        if Path(filename).suffix.lower() not in allowed:
-            raise AudioUtilityError(f"{filename} is not supported for {operation}.")
-        source = Path(source).resolve()
-        if not source.is_file():
-            raise AudioUtilityError("A selected shared-library asset is missing.")
-        target = destination / f"{index:03d}{Path(filename).suffix.lower()}"
-        shutil.copy2(source, target)
-        staged.append({"asset_id": asset_id, "filename": Path(filename).name,
-            "relative_path": target.relative_to(root).as_posix(), "media_type": media_type})
-    return staged
+    destination = checked(workspace_root, "utility_inputs", job_id)
+    destination.mkdir(parents=True, exist_ok=False)
+    try:
+        staged = []
+        for index, asset_id in enumerate(dict.fromkeys(asset_ids), 1):
+            source, media_type, filename = media_library.asset_path(root, workspace_id, asset_id)
+            if Path(filename).suffix.lower() not in allowed:
+                raise AudioUtilityError(f"{filename} is not supported for {operation}.")
+            source = Path(source).resolve()
+            if not source.is_file():
+                raise AudioUtilityError("A selected shared-library asset is missing.")
+            target = destination / f"{index:03d}{Path(filename).suffix.lower()}"
+            shutil.copy2(source, target)
+            staged.append({"asset_id": asset_id, "filename": Path(filename).name,
+                "relative_path": target.relative_to(root).as_posix(), "media_type": media_type})
+        return staged
+    except BaseException:
+        shutil.rmtree(destination, ignore_errors=True)
+        raise
+
+
+class UtilityUnavailable(RuntimeError):
+    pass
+
+
+class WorkerUnavailable(RuntimeError):
+    pass
+
+
+def submit(root: Path, workspace_id: str, payload: dict, *, invocation_id: str | None = None,
+           on_created: Callable[[dict], None] | None = None,
+           expected_hashes: dict[str, str] | None = None) -> dict:
+    """Shared manual/agent seam; a persisted job owns its inputs even if dispatch fails."""
+    from . import video_repertoire
+    root = Path(root).resolve()
+    if root != video_repertoire._CONFIGURED_DATA_ROOT:
+        raise AudioUtilityError("Audio job storage is configured for a different data root.")
+    if set(payload) != {"operation", "asset_ids", "settings"} or not isinstance(payload.get("settings"), dict):
+        raise AudioUtilityError("Supply operation, shared-library asset_ids and settings.")
+    operation = payload["operation"]
+    selected = next((row for row in capabilities()["operations"] if row["id"] == operation), None)
+    if selected is None:
+        raise AudioUtilityError("Unknown audio utility operation.")
+    if selected["status"] != "available":
+        raise UtilityUnavailable(selected.get("reason") or "Audio utility is unavailable.")
+    validate_settings(operation, payload["settings"])
+    if invocation_id is not None and not re.fullmatch(r'call-[0-9a-f]{32}', invocation_id):
+        raise AudioUtilityError('Invalid invocation identity.')
+    staging_id = "stage-" + (invocation_id or uuid.uuid4().hex)
+    staged = stage_assets(root, workspace_id, staging_id, payload["asset_ids"], operation)
+    request = {"workspace_id": workspace_id, "operation": operation,
+        "settings": payload["settings"], "inputs": staged, "staging_id": staging_id}
+    if invocation_id is not None:
+        request["agent_invocation_id"] = invocation_id
+    try:
+        if expected_hashes is not None:
+            from .projects import digest
+            if any(digest(root / item['relative_path']) != expected_hashes.get(item['asset_id']) for item in staged):
+                raise AudioUtilityError('Staged media changed after approval.')
+            for item in staged:
+                item['sha256'] = expected_hashes[item['asset_id']]
+        job = video_repertoire.create_job("audio-utilities", request)
+    except Exception:
+        # Creation can acknowledge failure after publication. Inspect raw records without recovery writes.
+        try:
+            persisted = any(json.loads(path.read_text()).get("request", {}).get("staging_id") == staging_id
+                for path in (root / "services/media/jobs/audio-utilities").glob("*/job.json"))
+        except (OSError, ValueError, AttributeError, TypeError):
+            persisted = True  # Uncertain ownership must retain recoverable inputs.
+        if not persisted:
+            shutil.rmtree(generated_root(root, workspace_id) / "utility_inputs" / staging_id, ignore_errors=True)
+        raise
+    if on_created is not None:
+        on_created(job)  # Save agent/job identity before dispatch; failures retain the durable job.
+    try:
+        return video_repertoire.start_job("audio-utilities", job["job_id"])
+    except Exception as exc:
+        raise WorkerUnavailable(str(exc)) from exc
 
 
 def run_job(job: dict[str, Any], *, data_root: Path, progress: Callable[[dict[str, Any]], None]) -> list[dict[str, Any]]:
@@ -189,6 +253,10 @@ def run_job(job: dict[str, Any], *, data_root: Path, progress: Callable[[dict[st
             source = (root / item["relative_path"]).resolve()
             if not source.is_file() or not source.is_relative_to(folder.resolve()):
                 raise AudioUtilityError("Staged input is missing or outside this job.")
+            if request.get('agent_invocation_id') or item.get('sha256'):
+                from .projects import digest
+                if digest(source) != item.get('sha256'):
+                    raise AudioUtilityError('Staged input no longer matches the approved media.')
             progress({"status": "running", "stage": "processing", "progress": round((index - 1) / len(inputs) * 90), "message": f"Processing {index} of {len(inputs)}."})
             target_dir = output / f"{index:03d}-{source.stem}"
             target_dir.mkdir(parents=True, exist_ok=True)

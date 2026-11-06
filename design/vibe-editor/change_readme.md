@@ -1,35 +1,13 @@
-# Vibe Editor — code-level specialist handoff change README
+# Editor integration guide
 
-Files to inspect: design/vibe-editor/skills/vibe-editor-director/SKILL.md, backend/story_builder/services/vibe_editor.py, vibe_editor_api.py, vibe_editor_render.py, frontend/src/VibeEditorPage.tsx, EditorWorkspace.tsx, lib/editor-api.ts.
+Read [assessment](../../fixes/SOURCE_ASSESSMENT.md) and [Q06–Q08](../../fixes/QUICK_FIX_TASKS.md). Preserve `vibe_editor.py`, API contracts, trusted `vibe_editor_render.py`, existing skill/references and manual workflows.
 
-## What exists, so preserve it
-The current Editor has project/session messages and style rules, media selection with explicit ranges, creative brief and timeline-plan approvals, and a trusted JSON→HyperFrames/FFmpeg renderer. In vibe_editor.run_job(), the existing model instruction literally says "Do not run tools or create files." It is a restricted *render planner*, not a general tool-executing assistant. Never remove its validator or give its LLM output arbitrary executable HTML/Python/shell.
+Current Editor has project/session messages, selected media/ranges, brief and plan clearances, style history, trusted JSON→HyperFrames/FFmpeg rendering and protected export. `run_job` explicitly says “Do not run tools or create files.” That is the render planner; do not remove its restriction to create a tool agent.
 
-## Exact proposed change
-1. Add shared agent task/chat mode (Director and Editor both call same server tool gateway/skill registry/project graph). Editor switches its specialist skill context, not its permission system or project identity.
-2. Keep old vibe_editor.command actions and approved render adapter as existing supported actions. Expose only typed wrappers, e.g. editor.prepare_brief, editor.prepare_plan, editor.render_approved; never bypass selected asset+range validation.
-3. For user request "extract MP3 from this selected video": resolve currently selected real asset ID and project, invoke shared audio.extract_mp3 using the *existing* audio utility service, follow durable job, display playable output and offer to attach it to Editor. Do not treat extractor completion as entire edit completion or silently replace soundtrack.
-4. A Director full-film task hands Editor a plan proposal and approved source media *references*, not a secretly rendered edit. Handoff includes real workspace_id, editor_session_id, exact selected asset_id/start/end, target sequence, task_id, creative style version, expected revision. Recheck ownership/ranges when opening the work surface.
-5. Keep old Editor project sessions/approved revisions. Store the new agent task ID, status and output references in shared project context so project save/load and switching remain consistent. No late result may land in another project's Editor.
-6. Only after verifying actual media-analysis capability should Editor report frame defects, dialogue/lip sync or audio gibberish with evidence/timestamps. If a requested analyzer cannot inspect the content, mark blocked instead of claiming to have listened.
-7. HyperFrames Studio, Backlot and OpenMontage are **optional** agents/tools behind adapters, not replacements for the trusted native renderer. Check their actual installed versions, license/auth, supported interfaces, output registration and sidecar security; no assumption that third-party GUI can be embedded in an iframe.
+Q06 exposes shared discovery. Q08 adds specialist orchestration alongside the existing planner: selected owned media → extraction proposal → exact task approval → existing utility job → registered playable output → optional attachment. No silent soundtrack replacement. Keep selections/ranges and render/export approvals. Test both Director and Editor using the same backend gateway.
 
-## Short change to Editor craft SKILL.md (after agent runtime exists)
-Append:
+Handoffs bind workspace owner, separate Editor session ID, asset IDs/hashes/ranges, target brief/sequence, expected revision and task ID. Server revalidates selection. No filename-only handoff or late result applied to another project. General persistent chat changes arrive with Phase 3, not as two unlinked chat/approval systems.
 
-    ## Tool-using specialist handoffs
-    This skill provides creative editing guidance. For actual cross-tool tasks,
-    the Editor requests typed authorized operations from the same shared Agent
-    gateway used by Vibe Director. The old render-only JSON planning prompt
-    remains non-executable and cannot invoke arbitrary commands or add
-    unselected media. Keep explicit approvals and input/range validation.
+Renderer extensions need demonstrated requirements and focused tests. Current native plan/audio/duration limits must be checked before promising arbitrary multi-track film assembly. QA claims need actual timestamped observations; unavailable analysis stays blocked. Optional HyperFrames Studio/OpenMontage/Backlot adapters need installed version/license/auth and output roundtrip validation, never assumed embedding/replacement.
 
-This text is advice; it does not itself make the Editor capable of executing tools. Reuse backend/story_builder/services/agent_skills.py to load global/app/project skills selectively, rather than introducing separate Editor-only discovery.
-
-## Blast-radius & tests
-- vibe_editor_api.handle routes /api/editor/projects/{id} with command/plan/export and old state shapes: preserve.
-- Existing style learning remains explicit/confirmed, not automatically cross-project.
-- Editor job status and result collection remain truthful, including cancellation/paused export.
-- Wrong-project, stale-revision and unselected-range plans must fail.
-- CPU vertical slice must return real extracted audio asset and preserve original source bytes.
-- Confirm edits/exports use trusted HyperFrames adapter and project output grants. Temporary synthetic test media must be removed afterward.
+Update specialist skill wording only after corresponding runtime support exists. A paragraph about tools does not implement them. Existing style learning stays explicit/project-scoped; legacy saved sessions remain usable.

@@ -1,0 +1,10 @@
+.agent-inspector { margin: 8px 20px; min-width: 0; }
+.agent-inspector > button { cursor: pointer; }
+.agent-inspector-panel { margin-top: 8px; padding: 16px; border: 1px solid var(--border, #777); border-radius: 8px; max-height: 55dvh; overflow: auto; overflow-wrap: anywhere; }
+.agent-inspector-panel h2 { font-size: 1.1rem; }
+.agent-inspector-panel h3 { font-size: 1rem; margin-top: 16px; }
+.agent-inspector-panel ul { padding-left: 20px; }
+.agent-inspector-panel li { margin-block: 8px; }
+.agent-inspector-panel p { margin-block: 4px; }
+.agent-inspector-panel small { display: inline-block; }
+@media (max-width: 600px) { .agent-inspector { margin-inline: 8px; } }

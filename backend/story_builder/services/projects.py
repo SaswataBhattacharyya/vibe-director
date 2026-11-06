@@ -3,7 +3,7 @@
 Only project rows/files are exported. Models, credentials and other projects never
 enter a checkpoint. Opening never replaces newer local work.
 """
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 import fcntl
 import hashlib
@@ -72,7 +72,7 @@ def current(root):
             project_root(root, workspace)
             if not database_path(root, DATABASES[0]).exists():
                 raise ValueError('Project database is unavailable.')
-            with sqlite3.connect(database_path(root, DATABASES[0])) as db:
+            with closing(sqlite3.connect(database_path(root, DATABASES[0]))) as db, db:
                 if not db.execute('SELECT 1 FROM story_workspaces WHERE workspace_id=?', (workspace,)).fetchone():
                     raise ValueError('Project no longer exists.')
         except (ValueError, sqlite3.Error) as exc:
@@ -102,7 +102,7 @@ def browser_state(value):
 def sql_snapshot(path, workspace):
     if not path.exists():
         return {}
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db:
         db.row_factory = sqlite3.Row
         db.execute('BEGIN')
         tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
@@ -159,7 +159,7 @@ def existing_project(root, folder):
     path = database_path(root, DATABASES[0])
     if not path.exists():
         return None
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         rows = db.execute('SELECT workspace_id,title FROM story_workspaces').fetchall()
     for workspace, title in rows:
         try:
@@ -454,7 +454,7 @@ def open_project(root, folder):
     if registered and not Path(registered).exists():
         # A moved folder keeps the newer application state, just like reopening
         # its old location. Only this project's internal destinations move.
-        with sqlite3.connect(database_path(root, DATABASES[0])) as db:
+        with closing(sqlite3.connect(database_path(root, DATABASES[0]))) as db, db:
             local = db.execute('SELECT 1 FROM story_workspaces WHERE workspace_id=?', (workspace,)).fetchone()
         if local:
             latest = read(home(root) / f'{workspace}.json', memory)
@@ -537,7 +537,7 @@ def open_project(root, folder):
     if set(databases) - set(DATABASES):
         raise ValueError('Unsupported project database.')
     created_files = []
-    with sqlite3.connect(database_path(root, DATABASES[0])) as db:
+    with closing(sqlite3.connect(database_path(root, DATABASES[0]))) as db, db:
         for index, name in enumerate(DATABASES[1:], 1):
             if databases.get(name):
                 db.execute(f'ATTACH DATABASE ? AS db{index}', (str(database_path(root, name)),))
@@ -693,14 +693,14 @@ def handle(root, story, environ, start_response, read_json, respond):
                 folder = validate_folder(root, body.get('folder'))
             if (folder / 'vibe-project.json').exists():
                 raise ValueError('This folder already contains a project. Use Open project.')
-            with sqlite3.connect(database_path(root, DATABASES[0])) as db:
+            with closing(sqlite3.connect(database_path(root, DATABASES[0]))) as db, db:
                 db.execute('INSERT INTO story_workspaces(workspace_id,title,authoring_uuid) VALUES(?,?,?)', (workspace, title, str(uuid.uuid4())))
             try:
                 if folder_registry is not None:
                     write(checked(root, 'library') / 'project-folders.json', {**folder_registry, workspace: folder.name})
                 result = save(root, workspace, folder, {})
             except Exception:
-                with sqlite3.connect(database_path(root, DATABASES[0])) as db:
+                with closing(sqlite3.connect(database_path(root, DATABASES[0]))) as db, db:
                     db.execute('DELETE FROM story_workspaces WHERE workspace_id=?', (workspace,))
                 if folder_registry is not None:
                     write(checked(root, 'library') / 'project-folders.json', folder_registry)

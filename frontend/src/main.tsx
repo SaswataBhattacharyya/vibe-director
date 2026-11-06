@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import ProjectController from './ProjectController';
+import DirectorRuntime from './DirectorRuntime';
 import './style.css';
 import './ui-refinement.css';
 import { installDebugRecorder } from './lib/debug-recorder';
@@ -25,4 +26,4 @@ if ('showPicker' in HTMLSelectElement.prototype) {
   }, true);
 }
 
-createRoot(document.getElementById('root')!).render(<React.StrictMode><ProjectController><App /></ProjectController></React.StrictMode>);
+createRoot(document.getElementById('root')!).render(<React.StrictMode><ProjectController><DirectorRuntime><App /></DirectorRuntime></ProjectController></React.StrictMode>);

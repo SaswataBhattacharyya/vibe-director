@@ -1,6 +1,7 @@
 """Read versioned project craft guidance; no inference, discovery or submission."""
 from __future__ import annotations
 
+from .agent_skills import read_content
 import hashlib
 from pathlib import Path
 
@@ -14,9 +15,10 @@ def director_skill_context(*, video: bool = False) -> str:
                   "video-prompting/references/examples.md"]
     sections = []
     for relative in paths:
-        content = (_ROOT / relative).read_text(encoding="utf-8")
-        if len(content) > 24000:
-            raise ValueError(f"Project directing skill exceeds its context budget: {relative}")
+        try:
+            content = read_content(_ROOT, relative)
+        except ValueError as exc:
+            raise ValueError(f"Project directing skill exceeds its context budget: {relative}") from exc
         digest = hashlib.sha256(content.encode()).hexdigest()[:16]
         sections.append(f"PROJECT SKILL {relative} sha256:{digest}\n{content}")
     return "\n\n".join(sections)

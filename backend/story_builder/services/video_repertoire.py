@@ -65,7 +65,7 @@ def youtube_downloads_root() -> Path:
 def analyzer_runs_root() -> Path:
     return REPERTOIRE_ROOT / "runs"
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".m4v", ".avi"}
-JOB_KINDS = {"music-jukebox", "voice-studio", "trellis", "ace-studio", "vibe-editor", "youtube", "analysis", "semantic-index", "image-detailer", "style-frames", "timed-tts", "audio-effects", "audio-scene-split", "audio-scene-stitch", "ace-music", "control-foley", "audio-utilities", "f5-prepare"}
+JOB_KINDS = {"agent-computer", "continuity-frame", "music-jukebox", "voice-studio", "trellis", "ace-studio", "vibe-editor", "youtube", "analysis", "semantic-index", "image-detailer", "style-frames", "timed-tts", "audio-effects", "audio-scene-split", "audio-scene-stitch", "ace-music", "control-foley", "audio-utilities", "f5-prepare"}
 
 # Keep the durable Media Prep queue cheap while it waits: API requests enqueue
 # only an ID, and one dispatcher starts the next subprocess after the current

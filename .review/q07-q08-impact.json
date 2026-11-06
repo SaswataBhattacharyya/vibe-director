@@ -1,0 +1,327 @@
+{
+  "comparison": "Local Q07\u2013Q08 plus shared shell/notes/scene-variation and demonstrated layout/diagnostic fixes; prior Q01\u2013Q06 retained",
+  "mode": "Manual source tracing, bounded Graphify depth-2 candidate discovery",
+  "traversal": "Shared App -> shell -> stable runtime -> typed API -> conversation/task services -> audio submit -> existing job/worker/publication; project checkpoints and Editor audio offer consumers. Graph uses/import edges are discovery candidates, not proven calls. Task -> computer adapter -> explicit permission profile -> guarded Codex process; task -> continuity adapter -> existing last-frame extraction -> registered image. API nonce/host boundary and shared frontend access selector traced directly.",
+  "limitations": [
+    "No measured branch coverage or exhaustive caller census; unknown caller_count adds 0.10 upper bound.",
+    "Focused mocks and CPU generation differ from live provider/GPU acceptance. No provider/GPU jobs submitted.",
+    "Full blueprint DAG, additional filmmaking adapters, browser GUI, independent storyboard and LTX-off remain incomplete. Computer CLI acceptance is mocked; offline filesystem/network enforcement was exercised separately.",
+    "Graph extraction omits unsupported files/zero-node JSON and has false-positive uses edges. Manual source tracing confirms listed relationships."
+  ],
+  "overall_risk": {
+    "lower": 0.6,
+    "upper": 0.7,
+    "level": "high",
+    "meaning": "Persistence and recovery boundary priority, not defect probability."
+  },
+  "findings": [
+    {
+      "node": "backend/story_builder/services/agent_tasks.py:201",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 201
+      },
+      "anchor": "    def run(self, owner, task, payload):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6000000000000001,
+      "risk_upper": 0.7000000000000001,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Cross-store intent before allocation; callback maps durable identity before dispatch; frozen correlation reconciles acknowledgment loss. Tests cover duplicate run, lost mapping, missing job, mutated source/staging/request and cancellation."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/agent_conversation.py:26",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 26
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6000000000000001,
+      "risk_upper": 0.7000000000000001,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Both surfaces share owner-bound persisted request IDs; selected skill hashes, notes and graph feed structured proposals. Provider is mocked in acceptance; no automatic tool execution."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/projects.py:135",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 135
+      },
+      "anchor": "def assert_idle(root, workspace):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6000000000000001,
+      "risk_upper": 0.7000000000000001,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Checkpoint guard includes live/recovery agent invocations. SQL snapshots include additive owned rows; moved-project import verifies plan approvals and notes."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/audio_utilities.py:174",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 174
+      },
+      "anchor": "def submit(root: Path, workspace_id: str, payload: dict, *, invocation_id: str | None = None,",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6000000000000001,
+      "risk_upper": 0.7000000000000001,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Manual utility route and AgentTasks share submission; deterministic agent staging verifies approved hashes before allocating the existing frozen job. Real CPU FFmpeg integration verifies registered MP3 and original hash."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/agent_knowledge.py:13",
+      "location": {
+        "file": "backend/story_builder/services/agent_knowledge.py",
+        "line": 13
+      },
+      "anchor": "def save(root, ledger, owner, payload):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6000000000000001,
+      "risk_upper": 0.7000000000000001,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Revision compare-and-set protects immutable owner-specific notes; selected project notes enter shared conversation context and portable snapshots."
+      ]
+    },
+    {
+      "node": "frontend/src/DirectorRuntime.tsx:34",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 34
+      },
+      "anchor": "export default function DirectorRuntime({children}: {children: ReactNode}) {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6000000000000001,
+      "risk_upper": 0.7000000000000001,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Stable provider above App owns chat/tasks; portal follows shell slots. Owner-keyed remount and AbortController discard late responses. Browser cases cover routes, reload, approval and handoff."
+      ]
+    },
+    {
+      "node": "frontend/src/VibeEditorPage.tsx:17",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 17
+      },
+      "anchor": "export default function VibeEditorPage() {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6000000000000001,
+      "risk_upper": 0.7000000000000001,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Offered verified audio enters the existing pending selection path; Editor does not automatically replace soundtrack or render. Legacy Editor approvals remain."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/agent_permissions.py:19",
+      "location": {
+        "file": "backend/story_builder/services/agent_permissions.py",
+        "line": 19
+      },
+      "anchor": "def execution_args(mode, workspace):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Computer prepare/validate -> explicit CLI profile. test_agent_computer verifies mode strictness and arguments; opt-in offline sandbox probe denies outside read/write, symlink escape and sockets. No real provider execution."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/agent_access.py:28",
+      "location": {
+        "file": "backend/story_builder/services/agent_access.py",
+        "line": 28
+      },
+      "anchor": "def require_grant(environ):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "agent_api computer propose/revise/approve/run/cancel -> same-origin local Host + constant-time session nonce. Cross-origin, hostile Host, cross-site and missing token covered in test_agent_computer."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/agent_computer.py:64",
+      "location": {
+        "file": "backend/story_builder/services/agent_computer.py",
+        "line": 64
+      },
+      "anchor": "def run(root, job_id, request):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks durable mapping -> video worker CPU branch -> guarded process. Mock worker checks exact report, no fake registered assets, replay prevention and cancellation process-group termination."
+      ]
+    },
+    {
+      "node": "backend/story_builder/services/agent_continuity.py:26",
+      "location": {
+        "file": "backend/story_builder/services/agent_continuity.py",
+        "line": 26
+      },
+      "anchor": "def run(root, request):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> durable continuity job -> worker CPU branch -> existing last-frame tool -> registered PNG. Real synthetic CPU FFmpeg tests verify ownership, original digest and cleanup."
+      ]
+    },
+    {
+      "node": "frontend/src/DirectorWorkspace.tsx:5",
+      "location": {
+        "file": "frontend/src/DirectorWorkspace.tsx",
+        "line": 5
+      },
+      "anchor": "export default function DirectorWorkspace({children}: {children: ReactNode}) {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell -> shared pane layout; owner-keyed width and mobile surface retained. Browser tests exercise keyboard resizing, reload and mobile draft retention; both chat routes preserve composer bounds."
+      ]
+    },
+    {
+      "node": "frontend/src/CreateWorkspace.tsx:9",
+      "location": {
+        "file": "frontend/src/CreateWorkspace.tsx",
+        "line": 9
+      },
+      "anchor": "export default function CreateWorkspace({ enabled, draft, disabled, onPrompt, children }: {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing field-edit proposal and Apply checks retained; assistant becomes collapsible below full-width controls to remove nested three-column squeeze. Browser applies suggestion and preserves prompt/duration without generation."
+      ]
+    },
+    {
+      "node": "frontend/src/lib/debug-recorder.ts:38",
+      "location": {
+        "file": "frontend/src/lib/debug-recorder.ts",
+        "line": 38
+      },
+      "anchor": "export function flushDebug():Promise<void> {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 0,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Observed full journal rejected identical batch every second. Permanent 4xx now pauses recording/retries; explicit stop resets state, old files retained. Mocked recording and cross-tab tests."
+      ]
+    }
+  ]
+}

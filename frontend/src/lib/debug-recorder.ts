@@ -6,13 +6,17 @@ let enabled = false;
 let installed = false;
 let queue: Event[] = [];
 let pending: Promise<void>|null = null;
+let blocked: Error|null = null;
 let recordingVersion = 0;
 const signatures = new Map<string,string>();
 const debugStateKey = 'vibe-director-debug-enabled';
 function publishError(message:string) { window.dispatchEvent(new CustomEvent('debug-recorder-error', {detail:message})); }
+class DebugRequestError extends Error {
+  constructor(readonly status:number, message:string) {super(message);}
+}
 async function request(path:string, init?:RequestInit) {
   const response = await nativeFetch(path,init);
-  if (!response.ok) throw new Error(`Debug API ${response.status}: ${await response.text()}`);
+  if (!response.ok) throw new DebugRequestError(response.status, `Debug API ${response.status}: ${await response.text()}`);
   return response.json();
 }
 export async function getDebugStatus():Promise<DebugStatus> {
@@ -21,24 +25,32 @@ export async function getDebugStatus():Promise<DebugStatus> {
 export async function setDebugEnabled(value:boolean):Promise<DebugStatus> {
   if (!value) { try { await flushDebug(); } catch { queue=[]; } }
   const status = await request('/api/debug',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled:value})});
-  enabled = status.enabled; recordingVersion++; signatures.clear();
+  enabled = status.enabled; blocked = null; recordingVersion++; signatures.clear();
   try { localStorage.setItem(debugStateKey, String(status.enabled)); } catch { /* Storage may be unavailable in restricted browser contexts. */ }
   if (enabled) recordDebug({kind:'navigation',action:'recording_started'});
   return status;
 }
 export function recordDebug(event:Event) {
-  if (!enabled) return;
+  if (!enabled || blocked) return;
   if (queue.length >= 100) { publishError('Debug events could not be saved fast enough. Some events were dropped.'); return; }
   queue.push({...event,route:location.hash,client_time:new Date().toISOString()});
 }
 export function flushDebug():Promise<void> {
   if (pending) return pending;
+  if (blocked) return Promise.reject(blocked);
   pending = (async()=>{
     while (queue.length) {
       const batch = queue.splice(0,50);
       const version = recordingVersion;
       try { const result=await request('/api/debug/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({events:batch}),keepalive:true}); if(result.recorded!==batch.length)throw new Error('Debug recording was turned off in another tab. These events were not saved.'); }
-      catch (error) { if(version!==recordingVersion || !enabled)return; queue.unshift(...batch); queue = queue.slice(0,100); publishError(String(error)); throw error; }
+      catch (error) {
+        if(version!==recordingVersion || !enabled)return;
+        queue.unshift(...batch); queue = queue.slice(0,100);
+        // A rejected batch cannot succeed unchanged. Keep it for an explicit stop,
+        // but do not send it every second or collect errors about its own failure.
+        if(error instanceof DebugRequestError && error.status>=400 && error.status<500) blocked=error;
+        publishError(String(error)); throw error;
+      }
     }
   })().finally(()=>{pending=null;});
   return pending;
@@ -79,7 +91,7 @@ export function installDebugRecorder() {
   window.addEventListener('pagehide',()=>void flushDebug().catch(()=>{}));
   window.addEventListener('storage',event=>{
     if (event.key !== debugStateKey) return;
-    enabled = event.newValue === 'true'; recordingVersion++; signatures.clear();
+    enabled = event.newValue === 'true'; blocked = null; recordingVersion++; signatures.clear();
     // A stopped session's unsaved events must never spill into the next recording.
     if (!enabled) queue=[];
     if (enabled) recordDebug({kind:'navigation',action:'recording_started_in_another_tab'});

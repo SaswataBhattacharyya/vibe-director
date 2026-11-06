@@ -47,7 +47,7 @@ from .media_library import _serialized_write
 @_serialized_write
 def _discover_locked(root, workspace, *, shared=False, kinds=None):
     from . import media_library as library
-    from .storage_paths import shared_downloads_root, repertoire_root
+    from .storage_paths import shared_downloads_root, repertoire_root, generated_root, project_root
     locations = ([(library.media_root(root, workspace), {"store": "tool"})]
                  if workspace == "tool-library" else project_locations(root, workspace))
     if shared:
@@ -67,11 +67,16 @@ def _discover_locked(root, workspace, *, shared=False, kinds=None):
     for base, location in locations:
         if not base.is_dir() or any(p.is_symlink() for p in (base, *base.parents)):
             continue
+        # Saved checkpoints mirror the project-relative layout, including staged inputs.
+        staging = generated_root(root, workspace) / "utility_inputs"
+        if location.get("saved"):
+            staging = base / staging.relative_to(project_root(root, workspace))
         for directory, children, files in os.walk(base, followlinks=False):
             # Checkpoint copies and job intermediates are not additional source assets.
             children[:] = sorted(name for name in children if not name.startswith('.')
                 and name not in {'project-data', 'checkpoint-media', 'intermediates'}
-                and not (Path(directory) / name).is_symlink())
+                and not (Path(directory) / name).is_symlink()
+                and Path(directory) / name != staging)
             for name in sorted(files):
                 path = Path(directory) / name
                 kind = library.SUFFIX_KIND.get(path.suffix.lower())

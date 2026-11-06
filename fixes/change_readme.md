@@ -1,59 +1,64 @@
-# Change README — Vibe Director agent implementation map
+# Vibe Director implementation guide
 
-**Source checked:** `vibe-director-current` at `d467dbb269312eabe1ee7afe0697de5187857f61` before adding this guide. This is a **proposed change guide, not an applied application fix**. Read repository `AGENTS.md`, `full_review.md`, `tool_glossary/` and the blueprint at `fixes/vibe-director-codex-agent-blueprint-v2/vibe-director-codex-agent-blueprint/` first. Always inspect current HEAD and uncommitted edits.
+Current local implementation: [Q01–Q06 results](Q01_Q06_RESULTS.md), [Q07–Q08 results, schema, tests and remaining work](Q07_Q08_RESULTS.md). This is not completion of the entire blueprint.
 
-## Objective
-Build a **Codex-class, project-aware filmmaking Director and Editor** using the already-existing engines and tools. Each page works independently; a user may also request plan → approve → execute for a full film. Both agents have *the same* project/global/app skill resolver and typed tool gateway, with specialized creative/Editor contexts. Computer/terminal/Git/browser capability requires a separately installed authorized runtime, not skill text.
+## Start from the current source and authorization
 
-## Codex entry points
-Read [CODEX_CHANGE_README_PROMPT.md](CODEX_CHANGE_README_PROMPT.md) and the [file-by-file change matrix](FILE_CHANGE_MATRIX.md) before implementation. Two **project-local proposal skills**, not globally installed or live app skills, are [blast-radius-review](skills/blast-radius-review/SKILL.md) and [compact-code-craft](skills/compact-code-craft/SKILL.md). They help identify downstream risks and keep patches maintainable. The latest proposed guides are in the code directories listed below.
+1. Read repository `AGENTS.md` and the results above before the historical [source assessment](SOURCE_ASSESSMENT.md).
+2. Locate relevant source, callers, persisted contracts and tests through [the matrix](FILE_CHANGE_MATRIX.md). The guides describe intended behavior; they are not executable fixes.
+3. The owner has authorized a larger batch and continuation through the fixes. Do not re-request per-card approval during that authorized work. Ask for unresolved contradictions or genuinely required manual guidance. Paid/provider or GPU execution and new sensitive runtime permissions require their own authorization.
+4. Keep changes reviewable, run focused isolated checks and verify cleanup. Preserve earlier local work. A future request for only one card still limits that future task to that card.
 
-## Placement-specific guides
-- `backend/story_builder/change_readme.md`: add one safe API routing seam, task storage/checkpoint and no duplicate dispatcher logic.
-- `backend/story_builder/services/change_readme.md`: implement shared tool registry, agent plans, graph/skill service and media operations; model-safe exact APIs, LTX follow-up.
-- `backend/story_builder/tests/change_readme.md`: CPU/mock tests, synthetic media fixtures, fail-safe cleanup, blast-radius regressions.
-- `frontend/src/change_readme.md`: reuse left sidebar, add project-persistent center chat and real right work area; adapt Editor, Storyboard, styles and prompts.
-- `frontend/src/lib/change_readme.md`: typed agent client, routing/selection context, no duplicate HTTP business logic.
-- `design/vibe-editor/change_readme.md`: keep HyperFrames trusted renderer, make Editor a tool-using specialist, ensure handoff parity.
-- `skills/change_readme.md`: install/link 13 blueprint skills without replacing original 3 installed craft paths; shared global/bundled/project discovery.
+For architecture decisions, read relevant documents, the 13 skills and tool glossary in [the V2 package](vibe-director-codex-agent-blueprint-v2/vibe-director-codex-agent-blueprint/README.md). A bounded repair follows its card's reading list rather than loading the whole package on every run. Historical reviews are maps, not live runtime proof.
 
-## Small ordered slices (DEPENDENCIES, not a mandatory user wizard)
-0. **Baseline only**: audit current modules, frozen contracts, local changes, tests and feasibility. No application change.
-1. **Read-only services**: typed tool catalogue, skill metadata lookup, project context/graph projection and frontend compact inspector.
-2. **One real cross-tool operation**: Editor/Director → Media Prep existing `extract_mp3` → durable job → registered playable asset; same backend path as manual API. Do not change Media Prep UI.
-3. **Plan/approval/job runtime**: immutable approved task steps, own durable status, pause/recovery/idempotent calls; project save/load parity.
-4. **Creative craft and UI**: optional production type + visual style + directing style; screenplay, comic-book storyboard, reference-aware 15-sec video prompts.
-5. **Full film & QA**: new tool-managed mixed-media task graph (not the existing T2V-only full-run), observation-backed defect reports, retake loop, Editor/timeline handoff, verified export.
-6. **Later only**: computer/coding sidecar (scoped filesystem/terminal/Git/browser/desktop), OpenMontage/Backlot/HyperFrames Studio adapters, genuine LTX-off pipeline with migrated versioned contracts.
+## Shared architecture and preservation
 
-**Approval:** complete and demonstrate one slice, show diff and tests, then ask before moving to the next. Plan approval is not the same as every downstream destructive/GPU/provider permission.
+Director and specialist Editor share project context, skill resolution, typed tools and a durable agent runtime. They differ in creative context, not permission authority. Existing engines remain authoritative:
 
-## Verified existing seams
-- `isolated_server.py` routes `/api/editor/*` to `vibe_editor_api.handle`; audio utilities are handled in the main dispatcher.
-- `audio_utilities.capabilities()`, `stage_assets()`, `video_repertoire.create_job('audio-utilities', request)` and `start_job()` already power Extract MP3.
-- `video_continuity.last_frame()` and `POST /api/video/jobs/{id}/continuity-frame` exist; use their registered `asset_id/sha256`.
-- `vibe_editor_render.py` is trusted JSON→HyperFrames/FFmpeg; the editor LLM currently plans only and must not be turned into an unvalidated shell.
-- `production_setup.py` currently calls `fully_automated` an image-free route; keep historical jobs, add new agent planning separately.
-- T2V/R2V/FL2VA have **different exact request fields**, and only FL2VA uses actual first/last frame inputs; R2V continuity images are references, not guaranteed first-frame conditioning.
-- `projects.py` save/load snapshots a known ledger and project-owned content; new agent state needs explicit Save/Load tests.
-- Existing `skills/vibe-director`, `skills/video-prompting`, `design/vibe-editor/skills/vibe-editor-director` are live paths; the 13 blueprint files under `fixes/` are not automatically live.
-- **Preserve** existing navigation, Media Prep, media hashes, immutable requests, output grants, acceptance, recovery and GPU watchdog.
+```text
+Director chat / Editor specialist chat / independent manual pages
+                    |
+     project context + shared skills + typed tool adapters
+                    |
+       exact plan approval + durable invocation tracking
+                    |
+ story/image/audio/video/Editor services -> existing workers
+                    |
+ verified registered assets -> inspection/retake -> Editor/export
+```
 
-## Blast radius review: source evidence, not invented skill
-No installed dedicated “blast radius” or “Ponytail” skill was available in this assistant session. The checked `graphify-out/graph.json` contains **145 nodes and 634 edges**; it is partial and did not index every proposed seam. Use it as a clue only. For EACH change, run repository-wide callsite search, follow imports / HTTP producers / consumers, and inspect output/DB/test contracts. Refresh the local Graphify index per repo `AGENTS.md` **if its required environment exists**; never claim full dependency coverage from its node count.
+Manual pages keep their existing services and independent entry points. Preserve sidebar, Media Prep, originals, IDs/hashes, saved sessions/revisions, frozen requests, destination grants, retries/recovery and GPU guards (90°C/2100 MHz; never change clocks). No screenplay, storyboard or agent-plan gate for independent creation.
 
-| Seam | Direct consumers / blast-radius tests |
-|---|---|
-| `StudioShell.tsx` | App routing, Storyboard and Editor routes, per-page forms, browser memory and responsive layout |
-| `isolated_server.py` | every API route, authorization, error responses; test existing `/api/editor`, `/api/audio`, `/api/video` |
-| `projects.py` + ledger | project import/export, stale-state protection, global style tables, agent task states |
-| `director_skills.py` | screenplay/video prompt callers, Editor's independent skill loader, skill hash budgets |
-| `vibe_editor.py` | chat approvals, selected media/ranges, style memory, jobs, export |
-| `isolated_*_contract.py` / LTX | frontend serializers, workflow graph digests, collection, resume, old jobs, frame/audio validation |
-| `storyboard.py` | screenplay revision, image jobs, manual handoff, storyboard export, editor handoff |
+## Canonical implementation phases
 
-## Compact code rule
-Add *one service per responsibility*, keep schemas at boundaries, reuse existing validators/adapters, prefer pure planners and small typed functions. Avoid appending hundreds of lines to `App.tsx`, `isolated_server.py`, `VibeEditorPage.tsx`. Do not implement a generic arbitrary tool executor by exposing shell strings through HTTP.
+Earlier blueprint/matrix numbering conflicts. Use this table for these change guides; the blueprint remains the product specification. Engineering order is not a user wizard.
 
-## Tests and cleanup
-Use `tempfile.TemporaryDirectory` / `pytest tmp_path` for dummy PNG/WAV/MP4/text, distinct test DB/project, `try/finally`. Delete only test-owned fixtures and associated test-owned records, including failures; verify cleanup. Do NOT wipe user projects, production media or accepted outputs. No unattended GPU/paid-provider tests. Capture actual test evidence before calling a phase complete.
+| Phase | Outcome | Task boundary |
+| --- | --- | --- |
+| Preflight repair | Staged audio stays out of browsing | Q01; implemented |
+| 1 | Shared discovery, derived project context, compact inspector | Q03 → Q04 → Q05 → Q06; no chat execution or DB migration |
+| 2 | Both chats perform one approved, durable MP3 operation | Q01 first; Q02 → Q07 → Q08; durability before agent submission |
+| 3 | Persistent Codex shell, general task loop, knowledge/bindings | Shell/chat/notes implemented; general task loop remains |
+| 4 | Optional jackets, screenplay proposals, comic storyboard | Existing revisions; independent board drafts need schema design |
+| 5 | Model-aware generation and continuity | Exact contracts; LTX-off is a separately approved versioned pipeline |
+| 6 | Evidence-backed QA, retakes, mixed-media film assembly/export | Existing Editor/assembly; inspect renderer/audio limits first |
+| 7 | Computer/coding/browser runtime and optional external specialists | Installed capability, scoped permissions, license/auth validation |
+
+Q01–Q08 are implemented bounded cards. Phase 3 has a shared shell, persistent conversation and notes foundation; its general task loop and the remaining phases are still outstanding. Inspect actual sources before extending the runtime; do not replace existing working services with the proposal snippets.
+
+## Engineering skills
+
+- **blast-radius:** trace callers, persistence and consumers. Graph evidence is partial; see assessment.
+- **ponytail:** smallest complete fix, current services/dependencies, no speculative plugin framework.
+- **code-simplification:** equivalent refactors only, separate from behavior changes. Preserve return types, async errors, side effects, validation and ordering; examples are not automatic rewrite rules.
+- **writing-for-agents:** one canonical task definition; directory guides route to it.
+
+These global skills exist in this owner's Codex environment. Other environments must discover their actual availability. Local `fixes/skills/` engineering proposals are guidance, not automatically active skills. No automatic skill install, delegation or model assignment. A global Codex skill is distinct from the app's current fixed-path readers.
+
+## Tests and rollback
+
+Follow the [test guide](../backend/story_builder/tests/change_readme.md). No paid/provider or GPU generation without explicit authorization; owner-started acceptance remains required for new generation workflows. Documentation edits need no service startup, graph regeneration or whole-app test sweep.
+
+Revert only the task's edits; never reset existing work or delete media/history. DB changes need backups and compatibility tests. Disable new execution first on rollback; do not drop records or abandon active jobs.
+
+Current continuation: approved CPU last-frame PNG and scoped Codex computer tasks are implemented alongside MP3. Both surfaces offer Application tools, Project only and Full access; each computer task freezes scope and requires exact approval. Offline sandbox and mocked worker tests differ from unperformed live model acceptance. Browser/desktop automation and general film orchestration remain incomplete. See `Q07_Q08_RESULTS.md` for evidence and changed files.

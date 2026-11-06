@@ -1,0 +1,649 @@
+{
+  "comparison": "Q01\u2013Q06 application changes in working tree vs HEAD f48e99a; earlier guide-only edits retained separately",
+  "mode": "manual source tracing with Graphify full local AST refresh",
+  "traversal": "Bounded two dependency levels on manual audio/job publication, discovery/catalogue, craft-context consumers and shared shell/agent APIs; not an exhaustive repository call graph. Tests are evidence, not measured branch coverage.",
+  "limitations": [
+    "Caller census incomplete; caller_count is null, adding 0.10 to upper bounds.",
+    "test_gap=0 means focused/static test-reference evidence exists, not complete runtime or branch coverage.",
+    "GPU/provider execution, production media acceptance and full application regression suite were not run.",
+    "Global discovery requires explicit provider-root environment configuration; no global installation/settings edited.",
+    "SQLite mode=ro can update volatile WAL shared-memory read-lock bookkeeping; persistent records/manifests/jobs were byte-checked unchanged.",
+    "Graph import-only neighbors ace_studio.py, projects.py, storyboard.py and vibe_editor_api.py were inspected as module candidates; their imported contracts remain unchanged. Two inferred test callbacks from stage_assets are not confirmed behavioral callers."
+  ],
+  "overall_risk": {
+    "lower": 0.6,
+    "upper": 0.7,
+    "level": "high",
+    "meaning": "Heuristic boundary-impact priority, not a defect probability."
+  },
+  "findings": [
+    {
+      "node": "isolated_server.py::app",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 484
+      },
+      "anchor": "    def app(environ, start_response):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Routes manual audio through submit and agent reads through handle; WSGI integration tests cover both. Worker dispatch/public projections retain their existing contract."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "audio_utilities.py::stage_assets",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 137
+      },
+      "anchor": "def stage_assets(data_root: Path, workspace_id: str, job_id: str, asset_ids: list[str], operation: str) -> list[dict[str, str]]:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "submit -> stage_assets -> media_library.asset_path/copy2; run_job consumes frozen paths. Integration tests exercise partial copy, prior directories, invalid IDs and successful/failed jobs."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "audio_utilities.py::submit",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 174
+      },
+      "anchor": "def submit(root: Path, workspace_id: str, payload: dict, *, invocation_id: str | None = None,",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Manual POST is the production caller. create_job -> frozen destination/job JSON -> start_job dispatcher. Tests cover all three operations, blocked capability, storage mismatch and ambiguous creation acknowledgment."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "media_discovery.py::_discover_locked",
+      "location": {
+        "file": "backend/story_builder/services/media_discovery.py",
+        "line": 48
+      },
+      "anchor": "def _discover_locked(root, workspace, *, shared=False, kinds=None):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "discover -> serialized walk -> manifest publication; list_assets/catalogue are downstream consumers. Catalogue tests cover canonical, saved and standalone exclusions."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_api.py::handle",
+      "location": {
+        "file": "backend/story_builder/services/agent_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root, environ, start_response, respond, *, tasks=None, conversation=None, read_json=None):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "WSGI /api/agent dispatch -> active-owner validation -> metadata/context services. Strict route/method/query and cross-owner tests run."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_graph.py::resolve_workspace",
+      "location": {
+        "file": "backend/story_builder/services/agent_graph.py",
+        "line": 42
+      },
+      "anchor": "def resolve_workspace(root: Path, workspace: str) -> dict:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "handle -> active registry + read-only configured ledger; tools/skills/context all depend on the resolved owner. API tests cover other project and missing workspace."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_graph.py::read_json",
+      "location": {
+        "file": "backend/story_builder/services/agent_graph.py",
+        "line": 14
+      },
+      "anchor": "def read_json(root, path, default=None):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "resolve_workspace/context -> bounded canonical registry/manifest/job reads. No discovery registration, recovery calls or Editor state writers. Byte snapshots cover persistent files."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_graph.py::database",
+      "location": {
+        "file": "backend/story_builder/services/agent_graph.py",
+        "line": 30
+      },
+      "anchor": "def database(root):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "resolve_workspace/context -> SQLite mode=ro queries; configured projects.database_path is authoritative. Snapshot tests exclude volatile WAL shared-memory lock bookkeeping only."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_graph.py::context",
+      "location": {
+        "file": "backend/story_builder/services/agent_graph.py",
+        "line": 58
+      },
+      "anchor": "def context(root: Path, owner: dict) -> dict:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "handle -> owned source projections -> typed frontend discovery. Tests retain actual revision numbers/hash/IDs and exclude foreign assets and raw paths."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_skills.py::read_content",
+      "location": {
+        "file": "backend/story_builder/services/agent_skills.py",
+        "line": 48
+      },
+      "anchor": "def read_content(root: Path, relative: str, *, limit: int = 24000) -> str:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Legacy Director, Editor planner and skill metadata readers share safe bounded UTF-8 loading. Literal legacy prompt/hash/order and budget parity tests run."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_skills.py::_metadata",
+      "location": {
+        "file": "backend/story_builder/services/agent_skills.py",
+        "line": 65
+      },
+      "anchor": "def _metadata(scope, provider, root, skill_id):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "discover -> read_content; unavailable/symlink/oversize files never become executable or expose their paths. Scope/provider identities preserve same-ID collisions."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_skills.py::discover",
+      "location": {
+        "file": "backend/story_builder/services/agent_skills.py",
+        "line": 85
+      },
+      "anchor": "def discover(root: Path, workspace: str) -> dict:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "handle -> configured global roots, three existing app packages and active project skills directory. Disposable-root tests cover updates, removal, collisions, missing roots and listing budget."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "audio_utilities.py::run_job",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 225
+      },
+      "anchor": "def run_job(job: dict[str, Any], *, data_root: Path, progress: Callable[[dict[str, Any]], None]) -> list[dict[str, Any]]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Worker consumes existing request/staging paths -> guarded operations -> registered outputs. CPU MP3 integration passes; GPU paths are mocked, including safety stop."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "video_repertoire.py::create_job",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 806
+      },
+      "anchor": "def create_job(kind: str, request: dict[str, Any]) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "submit -> create_job -> output_destinations.freeze + atomic job JSON. Integration checks preserved all operation settings and inputs; job remains recoverable on dispatch/acknowledgment failure."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "AgentInspector.tsx::AgentInspector",
+      "location": {
+        "file": "frontend/src/AgentInspector.tsx",
+        "line": 6
+      },
+      "anchor": "export default function AgentInspector() {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StudioShell -> useProject + discoverAgent; effect AbortController and owner checks discard stale results. Browser tests cover both surfaces, mobile keyboard use, unsaved prompt and project switch."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent-api.ts::discoverAgent",
+      "location": {
+        "file": "frontend/src/lib/agent-api.ts",
+        "line": 18
+      },
+      "anchor": "export async function discoverAgent(workspace: string, signal: AbortSignal): Promise<AgentDiscovery> {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Inspector -> three GET-only endpoints; JSON errors and returned owner consistency are checked. No task execution endpoint/client added."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "agent_tools.py::tools",
+      "location": {
+        "file": "backend/story_builder/services/agent_tools.py",
+        "line": 5
+      },
+      "anchor": "def tools() -> dict:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "handle -> passive shutil.which only; actual audio.submit and video_continuity.last_frame signatures/settings were traced. Command/worker launch traps pass."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "director_skills.py::director_skill_context",
+      "location": {
+        "file": "backend/story_builder/services/director_skills.py",
+        "line": 11
+      },
+      "anchor": "def director_skill_context(*, video: bool = False) -> str:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StoryAuthoring.draft_screenplay, PromptDrafts.prepare and generate_clip_plan consume this text. Parity includes ordering, SHA labels and original per-file context budget."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "vibe_editor.py::run_job",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 380
+      },
+      "anchor": "def run_job(root, job_id, request, progress):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing vibe-editor worker -> unchanged reasoning request/render branch; only craft reader changes. Editor text parity, clearance, CPU effects and attachment regressions pass; provider execution not exercised."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "video_repertoire.py::start_job",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 975
+      },
+      "anchor": "def start_job(kind: str, job_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "submit -> start_job -> durable queued state + media dispatcher. Tests mock dispatch and confirm 503 worker_unavailable retains job-owned staging."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "media_library.py::list_assets",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 385
+      },
+      "anchor": "def list_assets(root: Path, workspace_id: str, *, kind: str | None = None, limit: int = 50,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "list_assets -> discover -> _discover_locked; asset listing remains a mutating discovery operation. Agent context deliberately reads registered manifest projections instead."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "media_library.py::browse_catalogue",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1302
+      },
+      "anchor": "def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = \"image,video,audio\",",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Catalogue -> authorized project discovery and list_assets; catalogue regression suite passes with legitimate nested media and saved folders retained."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "story_authoring.py::draft_screenplay",
+      "location": {
+        "file": "backend/story_builder/services/story_authoring.py",
+        "line": 1612
+      },
+      "anchor": "    def draft_screenplay(self, *, workspace_id: str, source_revision_id: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Consumes director_skill_context() text; reader parity tested. No screenplay generation/provider calls made."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "prompt_drafts.py::prepare",
+      "location": {
+        "file": "backend/story_builder/services/prompt_drafts.py",
+        "line": 105
+      },
+      "anchor": "    def prepare(self, workspace_id, revision_id, shot_key, workflow_id, *, setup_snapshot=None,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Consumes director_skill_context(video=True) then existing reasoning provider. Exact context parity tested; generation/provider branch not executed."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "fully_automated_clip_plan.py::generate_clip_plan",
+      "location": {
+        "file": "backend/story_builder/services/fully_automated_clip_plan.py",
+        "line": 33
+      },
+      "anchor": "def generate_clip_plan(*, workspace_id: str, screenplay_revision_id: str,",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Consumes shared video skill context before existing reasoning JSON call. Text contract parity tested; automated provider run remains untested."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "StudioShell.tsx::StudioShell",
+      "location": {
+        "file": "frontend/src/StudioShell.tsx",
+        "line": 54
+      },
+      "anchor": "export default function StudioShell({ route, children, context='Direct creation' }: { route:StudioRoute;children:ReactNode;context?:string }) {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing App route branches render the shell; only one collapsed inspector element/import added. Sidebar, kept-mounted video forms and Editor panel components preserved."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    },
+    {
+      "node": "video_repertoire_worker.py::main",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire_worker.py",
+        "line": 1135
+      },
+      "anchor": "def main() -> int:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Worker entry dispatches vibe-editor requests into vibe_editor.run_job and audio-utilities into audio_utilities.run_job. Integration tests call audio runner directly and mock dispatch; real worker/provider launch deliberately not exercised."
+      ],
+      "verification": "SOURCE_ANCHOR_VERIFIED"
+    }
+  ],
+  "graph": {
+    "nodes": 5001,
+    "edges": 15025,
+    "source_files": 418,
+    "procedure": "conda run -n react graphify extract . --code-only --no-cluster --force",
+    "limitations": "88 code-classified sources yielded zero nodes (mostly JSON); 44 unsupported-extension sources excluded. AST cannot prove dynamic dispatch or test coverage."
+  }
+}

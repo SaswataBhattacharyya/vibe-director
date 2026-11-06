@@ -1,36 +1,36 @@
-# Vibe Director — active implementation entry point
+# Vibe Director — CURRENT Codex entry after latest push
 
-**Current review baseline:** `vibe-director-current` at `2d4878db60d6c8b5ffbcb3254dddc66d5db402ac` (2026-11-06). Inspect `git status` and current HEAD before continuing; these are source-linked guides, not application fixes.
+**Current inspected source:** vibe-director-current at 603b1fcb0a3eedbcb32154f3599e419ffef05a15 (2026-11-06). Before implementing, inspect local git HEAD/status and reconcile any newer source; this document is a fix guide, not a working code patch.
 
-## What Codex must read now
-1. [Current code review](CODE_REVIEW_2026-11-06.md) — verified source findings, issues and limitations.
-2. [Active fixes, in dependency order](ACTIVE_FIXES_2026-11-06.md) — **current to-do list**, superseding completed Q01–Q08 cards.
-3. [One Director chat and three collapsible panes](UNIFIED_CHAT_AND_PANES.md) — exact UI state, Editor migration, older chat inventory, tests.
-4. [File ownership matrix](FILE_CHANGE_MATRIX.md) and applicable directory `change_readme.md` — narrow change boundaries.
-5. `AGENTS.md`, `full_review.md`, and tool glossary; older [V2 blueprint](vibe-director-codex-agent-blueprint-v2/vibe-director-codex-agent-blueprint/README.md) for product vision and the 13 filmmaking skills.
+## Read first — source-linked ACTIVE guides
+1. [Fresh source review & observed UI issues](REFRESH_REVIEW_2026-11-06_603b1fcb.md).
+2. [Current open-task list](ACTIVE_FIXES_2026-11-06.md).
+3. [Unified media browser, indexing and multi-project memberships](UNIFIED_MEDIA_AND_PROJECT_ASSETS.md).
+4. [Compact filmmaking UI, image and Current Take redesign](COMPACT_CREATIVE_WORKSPACE_UX.md).
+5. [Page-by-page chat removal and layout instructions](PAGE_BY_PAGE_CHAT_AND_LAYOUT.md).
+6. [Source-change matrix](FILE_CHANGE_MATRIX.md), appropriate frontend/backend/test directory change_readme.md, repository AGENTS.md.
+7. [Single Director/three-pane original design](UNIFIED_CHAT_AND_PANES.md) as background; [R01–UX03 results](R01_UX03_RESULTS.md) for completed work. The older six foundational and 13 package skills remain creative guidance, not evidence that all runtime adapters are implemented.
 
-## Confirmed implemented foundation (do not rebuild)
-Q01–Q08 are implemented bounded features with prior reported tests; see [Q01–Q06 results](Q01_Q06_RESULTS.md) and [Q07–Q08 results](Q07_Q08_RESULTS.md). Latest source contains real DirectorRuntime/DirectorConversation, shared tool/skill/context services, durable project tasks, notes, MP3 extraction, continuity PNG, scoped computer tasks, and existing Vibe Editor/HyperFrames render. **This is not yet an agent that can produce a complete film.** Prior test counts are historical claims and were not rerun during this documentation review.
+## Done — DON'T REDO
 
-## New correction: one chat, not one chat per page
-The shared persistent Director chat is the single interactive conversational surface. The left sidebar remains as designed; the center chat and right real work page must be independently collapsible. All three panes can collapse/restore without unmounting unsaved work. `VibeEditorPage` currently renders a second Editor composer and nested `EditorWorkspace`, as confirmed in source and screenshot. Other embedded chats exist in screenplay, prompts, Video Create, image generation, TRELLIS/3D and parts of Media Prep. **Bridge their actual tools, proposals and approval behavior into the shared Director first, then remove duplicate chat UI.** Do not delete session history, revision checks or working manual controls.
+Q01–Q08 foundations and R01/R02 crash/input repairs, UX01 three-pane collapse, UX02 Editor brief bridge, UX03 Editor chat removal now have source implementations. The previous result files report mock/CPU/browser test evidence; this documentation review has not rerun tests or exercised a paid provider/real Codex sidecar. Check actual source before assuming each claim is fully accepted. The agent is NOT yet end-to-end film capable.
 
-## Immediate code review priorities
-- **R01:** abrupt-exit submission mapping missing; `agent_tasks.poll` can leave an unmapped task stuck.
-- **R02:** `agent_computer.run` blocking stdin write precedes supervision deadline.
-- **UX01:** all three panes separately collapsible, restorable, keyboard and mobile safe.
-- **UX02:** central chat can actually initiate existing Editor brief/plan workflow in the active Editor session, with exact owner/selection/revision.
-- **UX03:** remove duplicate Editor chat and nested split **after UX02 works**; preserve preview/media/timeline/style/export and two clearances.
-- **UX04:** remove other old chats one page at a time after their action/recovery features are available through the one Director.
-- **AG01/AG02:** expand typed tool/action graph and durable filmmaking DAG; optional creative jackets, model-specific prompts, QA and editing follow.
+## Owner's new whole-app design correction
 
-## Source authority / approvals / safeguards
-Existing code and its expected revision/ownership/contracts are authoritative over historical proposals. A skill does not grant tool execution. Review the current authorization before touching application code; this specific request authorizes code review/documentation updates. Scope permissions and exact approvals remain required for computer, paid-provider, GPU and destructive operations. No automatic Git reset/pull, broad refactor or renderer replacement.
+- **One persistent center Director chat** for Story, Screenplay, Storyboard, prompts, images, Video Create, TRELLIS, Media Prep and Editor. Other old chatboxes are redundant, not just Editor's. Migrate each chat's *actual* proposal/diff/Apply and history to typed shared tools BEFORE deleting its composer.
+- **One clean right-hand working canvas** instead of nested EditorWorkspace-style internal two-column areas inside the already split outer app. Prioritize creation/review; reduce visual noise with compact icons, tooltips, drawers and expandable technical details. Preserve accessibility, responsive layouts, all keyboard actions and real error/recovery.
+- **One unified media discovery/selection surface** using EXISTING MediaSourcePicker and mature R2V/library capabilities. Support image/audio/video, current/all projects, authorized folders, YouTube downloads, generated, analyzed, voice-only, chronology, indexed search, grid/list/carousel; do not fake unsupported filters. **Selecting for chat, binding to model references, Editor ranges and linking to project are distinct explicit actions**.
+- **Multiple project memberships** for same verified asset without implicit file copies, while maintaining old project-scoped pa-* IDs, SHA, lineage and deletion rules. Existing shared-record mechanism is partial; design/data migration and tests before changing persistence.
+- **Output folder compact by default**, show effective project-preferred path with optional Change/Relink and unchanged frozen outputs/grants.
+- **Current Take = progress + prominent video player + thumbnails + Accept/Retake/Next.** Other saved request and workflow details remain accessible in details, not preempting video. Keep full-run safety and recovery visible.
+- Keep **existing left navigation** unchanged and all three outer panes independently collapsible. Keep Media Prep's working processing controls and don't lock users into a stage sequence.
 
-**Preserve:** existing left sidebar, Media Prep operations/UX, all manual entry pages, true asset IDs/hashes, saved edits/history, project Save/Load, durable jobs/recovery, published output, destination grants, and GPU safety (90°C/2100 MHz policy). No screenplay, storyboard or style gate for standalone tools.
+## Engineering policy
 
-## Code quality and tests
-Use blast-radius, ponytail and code-simplification methods: small readable modules, reuse existing services, avoid giant App.tsx/isolated_server.py rewrites or speculative frameworks. Test success/failure/ownership/stale revisions/recovery. Generate dummy TXT/PNG/WAV/MP4 only inside isolated test-owned directories; automatically clean after both success and failure and verify deletion. Never remove real user media or pretend mocked tests prove audiovisual quality. No new GPU/paid-provider jobs without explicit authorization.
+Use blast-radius + ponytail + code-simplification: patch the smallest verified source seam; simplify semantics and duplicate presentation, not compact code into unreadable lines. Do not replace existing engines, trusted HyperFrames renderer or video validators. Avoid adding more code to App.tsx (~1235 lines), ImageAssetsPage.tsx (~804) or isolated_server.py beyond tested thin seams; extract only cohesive view/adapters after tracing callers. Keep future AG01/AG02/CR01/VID01 roadmap but avoid premature huge migrations.
 
-## Historical documentation policy
-Q01–Q08 implementation cards are complete as bounded slices; keep their results as evidence, not future tasks. Older `SOURCE_ASSESSMENT.md` is a historical pre-implementation snapshot. The 13 blueprint skill files and architecture remain useful vision/specification, but may describe not-yet-integrated features; the active task list wins for current code implementation.
+Current task is a source review and documentation update, **not** permission to execute GPU/paid/model jobs, delete user data, or start arbitrary host computer tasks. Codex should first report a source-level mini-plan for the next implementation slice and request/observe specific authorization.
+
+Testing: each route in isolated fixture workspace plus tool-library, image/audio/video/TXT synthetic assets only under disposable directories; verify cleanup after success/failure; frontend/browser/build and backend contract tests, real provider/render acceptance only after owner approval. Current review made doc edits only.
+
+**History:** Old Q01_Q06_RESULTS.md, Q07_Q08_RESULTS.md and SOURCE_ASSESSMENT.md are provenance; R01_UX03_RESULTS.md documents the latest implemented patch. No completed feature cards should be replayed.

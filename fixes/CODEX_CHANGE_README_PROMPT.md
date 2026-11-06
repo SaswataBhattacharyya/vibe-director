@@ -1,32 +1,31 @@
-# Codex prompt — continue from latest source, not from old cards
+# Paste into Codex — Vibe Director cross-app UX and media cleanup
 
-You are working in my Vibe Director repository. Use the currently checked-out branch and preserve uncommitted changes. **DO NOT rebuild Q01–Q08** or treat the new chat shell as complete filmmaking automation.
+Read the CURRENT repository code and do not redo implemented R01/R02/UX01/UX02/UX03. On current reviewed commit 603b1fcb the Editor-specific duplicate chat is already removed, the three outer panes can collapse, and the Editor brief adapter exists. This new request is **a whole-app cohesion project**, not a second Editor fix.
 
-First read:
-1. `AGENTS.md`
-2. `fixes/CODE_REVIEW_2026-11-06.md`
-3. `fixes/ACTIVE_FIXES_2026-11-06.md`
-4. `fixes/UNIFIED_CHAT_AND_PANES.md`
-5. `fixes/FILE_CHANGE_MATRIX.md` and applicable directory `change_readme.md`
-6. Current `fixes/R01_UX03_RESULTS.md`; historical `fixes/Q01_Q06_RESULTS.md`, `fixes/Q07_Q08_RESULTS.md`, blueprint skills and glossary only where needed.
+Before planning/editing, read:
+1. AGENTS.md and current git branch/HEAD/status; keep all uncommitted changes.
+2. fixes/REFRESH_REVIEW_2026-11-06_603b1fcb.md
+3. fixes/ACTIVE_FIXES_2026-11-06.md
+4. fixes/UNIFIED_MEDIA_AND_PROJECT_ASSETS.md
+5. fixes/COMPACT_CREATIVE_WORKSPACE_UX.md
+6. fixes/PAGE_BY_PAGE_CHAT_AND_LAYOUT.md
+7. fixes/FILE_CHANGE_MATRIX.md and appropriate frontend/src, frontend/src/lib, backend/story_builder/services, tests change_readme.md
+8. fixes/R01_UX03_RESULTS.md for what is done; 13 skills and glossary when the current task needs them.
 
-## Updated product/UI requirements
-The existing **left sidebar stays intact**. The shared **middle Director chat must be the only active conversational composer**, and the **right pane is the actual editable tool page** (Vibe Editor/Screenplay/Storyboard/Video/Media Prep/Images, etc.). **All three panes independently collapse/restore** without losing page state. The new Director follows the project across pages and can plan, prepare reviewed actions, run approved tools, inspect outputs and delegate editing.
+## The desired end result
+The persistent middle Director is the only live AI chat. Every other older screenplay/prompt/image/T2I/Create/3D/Media Prep AI chat must be carefully migrated and retired, keeping its real propose/review/apply/draft/recovery behavior. The right work area is one elegant main task surface, not a stack of nested side panels; all three outer panes independently collapse and restore. Leave sidebar and Media Prep processing intact.
 
-The screenshot shows a duplicate **old Vibe Editor chat** within its own EditorWorkspace. Remove that **only after** connecting the shared Director to actual Editor session/brief/plan operations, otherwise editing becomes unusable. Keep Editor Preview, Asset selection, Timeline, Style, Export, selected ranges, old session history, two approval clearances and trusted HyperFrames renderer. The same rule applies to older page chats listed in UNIFIED_CHAT_AND_PANES.md: preserve proposals/diff/Apply/idempotency while removing redundant composers. Media Prep's existing processing functionality and navigation must not be disturbed.
+Build on existing MediaSourcePicker/catalogue and R2V per-kind reference binding: a common all-image/audio/video picker with real filters for project(s), authorized folder, YouTube, generated, voice-only, analyzed/semantic only when indexed, sorting and preview modes. The *same browser* can choose "Attach to Director" OR "Use as model reference" OR "Add to Editor" but those are separate typed actions; no unreviewed model reference from a chat attachment. Do not make a second asset registry unless the existing storage/membership graph demonstrably requires a small additive schema.
 
-## Current correctness risks
-R01: an abrupt stop between task submitting and job mapping can leave the task stuck.
-R02: computer task stdin.write blocks before timeout supervision.
-R01/R02 and UX01–UX03 now have local implementations and focused regression evidence in `fixes/R01_UX03_RESULTS.md`. Inspect that record and the current diff; do not repeat completed repairs. Later cards remain open. Follow the current owner instruction for authorization.
+Current Take should prioritize live generation progress, large actual playable video, selected clip gallery and Accept/Retake/Next; put long frozen prompt/job/workflow details in an accessible overflow/Details panel. Image Assets/Scene Backgrounds should prioritize target, editable prompt, selected refs, Generate, candidate gallery; move verbose Output/Workflow metadata behind compact controls. Output location defaults should recommend project folder when safely available but must not silently change prior choice/frozen jobs.
 
-## Plan/implementation procedure
-1. Show current branch/HEAD/status. Inspect real code and relevant tests before edits. Do not reset/switch/pull without owner approval.
-2. State which active task(s) are being implemented, existing vs missing functions, exact patch boundary, upstream/downstream blast radius, rollback and tests.
-3. Present the concrete patch plan for review unless an explicit current owner instruction already authorizes that implementation scope. **Do not treat documentation updates as permission to run paid/GPU or grant unrestricted computer access.**
-4. When authorized, implement focused small readable changes, not giant rewrites or duplicate engines. Follow code-simplification/ponytail/blast-radius workflows.
-5. Run focused backend/Playwright/build checks, mock CPU tests first, verify disposal of any synthetic PNG/TXT/MP4/WAV and test-owned DB/projects even on failure; never remove user media.
-6. Report real results and what remains. Respect the dependency UX02 BEFORE UX03, and leave no duplicate main chat by the end of UX03.
-7. Continue future creative/film features only as explicitly scoped. Actual outputs—not text plans—determine whether film tasks are completed.
+## IMPLEMENTATION PROCEDURE — plan first, one slice at a time
+1. Reconcile actual latest HEAD and implementations; identify duplicate chats, nested EditorWorkspace wrappers, media browser copies and output path ownership from current source. Separate completed from open work.
+2. Produce a concise exact file-level plan with dependencies, blast radius, typed API shapes and edge cases; don't attempt all pages in one patch. Priority first small safe slice: image Director action parity, then MED01 picker adapter and UX05 image panel; UX06 Current Take can be an independent slice; UX07 output badge; UX04 remaining routes then MED02/MED03.
+3. Verify all major API and role semantics from source before coding. For media, distinguish actual registered source, project membership, chat attachment, model reference slot and Editor range. Existing R2V has distinct image/video/audio caps and separate paired sound; FL2VA true first/last. Don't reduce to unsafe generic references.
+4. Show the mini-plan and obtain explicit current authorization to implement the selected slice. Don't assume this docs review grants permission to run paid/GPU/provider work or unrestricted host tools.
+5. Then implement small readable modules using code-simplification, ponytail and blast-radius. Preserve user project state, assets/hashes, saved Editor revisions and jobs, retries, workflow versions, media outputs and Media Prep behavior.
+6. Test relevant existing and new Playwright/unittest/build in test-only temp workspaces with dummy PNG/WAV/MP4/TXT; assert no leftovers even on failures. No real GPU/paid generation unless separately approved. Visually verify compact layout at 1440, 1280, tablet, mobile with expanded Director/sidebar and no clipped controls.
+7. Report actual changes/tests/cleanup/rollback and next small slice; never claim a complete film or analyzed media from only mocked success.
 
-**Start by reconciling this review with your local uncommitted work and producing an updated file-level implementation plan.**
+START with a source-specific implementation plan for the first slice, not a giant new framework.

@@ -1,5 +1,7 @@
 # R01/R02 and UX01–UX03 — local implementation results
 
+> **GIT STATUS UPDATE.** This result was authored while the 603b1fcb batch was local/uncommitted, but that batch was subsequently pushed to vibe-director-current. Its tests remain **reported by Codex at the time**, not rerun in the current documentation review. For future work consult [active fixes](ACTIVE_FIXES_2026-11-06.md).
+
 Base: `39680fa382698890542f0751613f33c36fe15241`, branch `vibe-director-current`. Changes are local and uncommitted. This is a bounded implementation result, not completion of the filmmaking blueprint.
 
 ## Completed behavior

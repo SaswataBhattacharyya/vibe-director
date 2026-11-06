@@ -1,5 +1,7 @@
 # One Director conversation + three independently collapsible panes
 
+> **STATUS UPDATE — 2026-11-06 at source commit 603b1fcb.** The original three-pane and Vibe Editor-only migration outlined below (UX01–UX03) have been implemented as bounded fixes. This file is retained for behavior requirements and regression parity, **not** a queue to reimplement them. For the owner's expanded every-page request use [fresh review](REFRESH_REVIEW_2026-11-06_603b1fcb.md), [all-page chat/layout migration](PAGE_BY_PAGE_CHAT_AND_LAYOUT.md), [media browser/asset graph](UNIFIED_MEDIA_AND_PROJECT_ASSETS.md), [compact UI](COMPACT_CREATIVE_WORKSPACE_UX.md) and [active tasks](ACTIVE_FIXES_2026-11-06.md). Only UX04 onward remains open.
+
 **Status:** required follow-up to `2d4878db...`; not yet applied. Read [code review](CODE_REVIEW_2026-11-06.md), [active tasks](ACTIVE_FIXES_2026-11-06.md) and `AGENTS.md`. Preserve existing left navigation, Media Prep features and all project history.
 
 ## Non-negotiable interaction contract

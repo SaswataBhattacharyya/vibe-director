@@ -1,60 +1,50 @@
-# Active fixes — latest source continuation (2026-11-06)
+# Vibe Director — CURRENT active fixes after 603b1fcb push (2026-11-06)
 
-**Read first:** [code review](CODE_REVIEW_2026-11-06.md), [unified chat/three-pane design](UNIFIED_CHAT_AND_PANES.md), `AGENTS.md`, the active Git HEAD, and relevant directory `change_readme.md`. This supersedes Q01–Q08 as a **to-do list**; earlier [Q01–Q06](Q01_Q06_RESULTS.md) and [Q07–Q08](Q07_Q08_RESULTS.md) are implementation history and regression baselines, not tasks to repeat.
+**Use this as the only active task queue.** Baseline HEAD inspected: 603b1fcb0a3eedbcb32154f3599e419ffef05a15. Confirm checkout/dirty changes before implementation. The previous tasks R01, R02, UX01, UX02, UX03 are **implemented as bounded fixes**, with prior Codex test evidence in [R01_UX03_RESULTS.md](R01_UX03_RESULTS.md). Do not redo them. Q01–Q08 similarly completed as foundation. The agent cannot yet autonomously produce an end-to-end film.
 
-**Authorization:** The owner resumed implementation after pulling these guides. Local fixes and isolated mock/CPU/browser checks are authorized. GPU/paid generation, live Codex sidecar execution, publishing and deletion of project data are not authorized by this batch.
+**Read first:** [latest source review](REFRESH_REVIEW_2026-11-06_603b1fcb.md), [one media browser & memberships](UNIFIED_MEDIA_AND_PROJECT_ASSETS.md), [compact filmmaking UX](COMPACT_CREATIVE_WORKSPACE_UX.md), [route-by-route plan](PAGE_BY_PAGE_CHAT_AND_LAYOUT.md), and the existing [single-chat principle](UNIFIED_CHAT_AND_PANES.md).
 
-**Current implementation:** R01/R02 and UX01–UX03 have been implemented locally; see [changes, checks, limitations and rollback](R01_UX03_RESULTS.md). The descriptions below retain the original reviewed problems as context; use current source and the result record before editing. UX04/AG01/AG02/CR01/VID01 remain open.
+## Prioritized open work
 
-## Priority and task dependencies
+| Card | Priority | Dependencies | Verified status at reviewed HEAD | Acceptance |
+| --- | --- | --- | --- | --- |
+| UX04 | P0 | existing DirectorRuntime and typed agent tool services | **OPEN**: old chats remain outside Editor | Each page's AI message composer removed only after shared Director can perform/review the old specific action; read-only history preserved |
+| MED01 | P0 | current MediaSourcePicker, R2V, Editor, image/voice validators | **OPEN**: multiple browsers, search controls and reference handlers | One reusable media selector, distinct destinations chat/model/tool/Editor, selected chips and exact workflow role/slot validations |
+| UX05 | P0 | UX04 image adapter, MED01 basic picker | **OPEN**: ImageAssetsPage nested inner split | Image workflow is one main canvas; primary Generate/candidate actions first; Output/Workflow/Media in compact drawer; no new chat |
+| UX06 | P0 | current TakeWorkspace/VideoWorkspace handlers | **OPEN**: Current Take nested two-column layout | One major player + real status + Accept/Retake/Next; metadata in details; retains jobs, history, automation and playback |
+| UX07 | P1 | OutputDestination existing mode/grant API | **OPEN**: verbose output card | Project-aware short destination badge, optional Change drawer, unchanged frozen output destinations, relink warnings visible |
+| UX08 | P1 | UX05/06/07 primitives | **OPEN**: disparate clutter across pages | Consistent compact toolbars and progressive disclosure, accessible responsive pages without functional loss |
+| MED02 | P1 | MED01 UI contract; media_library, content index and semantic search | **PARTLY PRESENT; NEW FILTERS OPEN** | Truthful voice/analyzed/YouTube/other project/folder/date/name/semantic indexed filters, bounded incremental indexing, correct paging/permissions |
+| MED03 | P2 high persistence risk | confirmed source/storage grant review, MED01/02 | **PARTLY PRESENT; MANY-PROJECT MEMBERSHIPS OPEN** | One physical source, many project memberships, no implicit copies, protected delete, stable pa-* IDs/hashes and saved jobs |
+| AG01 | P1 engine | current Editor bridge, validated services | **OPEN except Editor brief** | Add typed shared action adapters for screenplay/prompt/image/video/QA; no generic unsafe execution |
+| AG02 | P2 engine | AG01 | **OPEN** | Durable multi-step film plan/task graph, inspect media, retakes, edit handoff and validated output |
+| CR01 | P2 creative | AG01 and versioned style/story services | **OPEN** | Optional film type/visual style/directing jacket and comic panels, no mandatory manual flow |
+| VID01 | P2 video | frozen route contracts, ledger, workers | **OPEN** | Actual hash-bound reference manifests, model-specific limits, separately versioned LTX OFF |
 
-| Card | Priority | Depends on | Current local status | Goal |
-|---|---|---|---|---|
-| R01 | P1 reliability | Q07 | **Implemented; regression checked** | Recover unmapped submitted job after abrupt exit |
-| R02 | P1 reliability | computer adapter | **Implemented; regression checked** | Supervise blocking computer stdin delivery |
-| UX01 | P0 UI | shared DirectorRuntime | **Implemented; browser checked** | All three panes independently collapsible |
-| UX02 | P0 function | Q07/Q08, Editor service | **Implemented; mock/CPU checked** | Central chat can initiate existing Editor brief/plan workflow |
-| UX03 | P0 UI | UX02 | **Implemented; browser checked** | Remove old Vibe Editor chat without losing approvals/tools |
-| UX04 | P1 UX | UX02/UX03 pattern | **Open** | Consolidate older screenplay/prompt/video/image/3D chats |
-| AG01 | P1 agent | existing tool/task services | **Open** | Extend action registry + verified surface-specific context |
-| AG02 | P2 film | AG01, generation/Editor services | **Open** | Multi-step film DAG, evidence-backed QA, retakes/finishing |
-| CR01 | P2 creative | AG01 | **Open** | Optional type/visual/directing jackets; independent storyboard |
-| VID01 | P2 video | versioned validator/worker review | **Open** | Reference manifest and separately-versioned LTX OFF |
+**Suggested short engineering slices:** (1) inspect old image chat → adapt via central Director, (2) MED01 shared picker with only existing catalogue backend first, (3) UX05 image layout cleanup, (4) UX06 take canvas and (5) UX07 compact output. UX04 screenplay/prompt/video/3D and global UX08 follow one route at a time. MED02/MED03 require their own reviewed backend plan and migration tests; do not assume cosmetic UI reuse solves indexing or identity.
 
-**Implementation scheduling note:** Fix crash/timeout regressions before relying on uncontrolled long-running agent work; UI-only UX01 can be independently staged if approved. UX03 must **never** precede UX02. Migration UX04 is incremental by tool; no mass deletion.
+## UX04 — Remove ALL redundant assistant chats
 
-## R01 — Recover submission intent after process death
-**Anchors:** `agent_tasks.py::poll, _find_job, _validate_job, _map_job, run`; `DirectorConversation.tsx::TaskCard`. At the reviewed base, `poll` returned an unbound `submitting` row if `invocation.job_id` is empty, and UI lacks a reconcile action for that state. Under the project lock, find the job by frozen `agent_invocation_id`/owner/tool, validate its exact request and bind when found; **GET must not create a new job**. If no job exists, expose precise recoverable status/action, not silent resubmission. Preserve no-replay computer journal safeguards. Tests: three crash windows, duplicate/mismatch, original reused exactly once, UI reload, disposable state cleanup.
+Old standalone AI composers remain in ScreenplayDirector.tsx, PromptDirector.tsx, CreateWorkspace.tsx/CreateChat, ImageAssetsPage.tsx/ImageAssetsDirectorChat, TextToImagePage.tsx/t2i-chat, TrellisPage.tsx/StudioChat and MediaPrepPage.tsx/audio StudioChat. StoryboardPage's instruction/proposal form is primarily a manual planning control: only retire it after typed parity. StoryPage needs route-level audit to separate story editing from assistant discussion.
 
-## R02 — Bound computer stdin delivery
-**Anchors:** `agent_computer.py::run`. At the reviewed base it wrote input to a pipe before establishing its deadline. Implement nonblocking/bounded delivery or a supervised stdin writer with a real bounded lifecycle, while still watching process termination and journal bytes. A child that never reads stdin must be terminated and reaped with no orphan thread; slow reader and BrokenPipe are controlled failures; no automatic retry of uncertain work. CPU-only fixture with short injected timeout; report journal/proc cleanup, no external Codex call.
+For each: identify actual endpoint/persistence/revision checks → share typed page context/action → show review/Apply in right work canvas → preserve existing conversation and pending proposals read-only → **then** remove legacy textarea/Send/log, not manual text prompts. The Vibe Editor composer was already removed; preserve it as success pattern. See [per-route inventory](PAGE_BY_PAGE_CHAT_AND_LAYOUT.md).
 
-## UX01 — Independently collapsible LEFT / CENTER / RIGHT
-**Anchors:** `StudioShell.navClosed`, `DirectorWorkspace`, `DirectorConversation.open`, `DirectorRuntime` portal and `director-runtime.css`. Keep sidebar design. Lift center/right open states to a shared project-scoped controller; add always-visible restore controls and proper grid/resizer states, responsive rules. Do not unmount children or chat, throw away form drafts or hide focusable elements incorrectly. Test every pane combination, refresh, keyboard, mobile, route and project switches. Use [exact design](UNIFIED_CHAT_AND_PANES.md#change-a--one-state-authority-for-the-centerright-pane).
+## MED01/MED02 — Reuse media browser rather than adding one more
 
-## UX02 — Editor bridge BEFORE removing the old composer
-**Anchors:** `VibeEditorPage.submit/command/ensureProject`, `vibe_editor.command`, `agent_conversation.RESPONSE_SCHEMA`, `agent_tools`, `agent_tasks`. At the reviewed base shared Director chat could not start an Editor brief; the old Editor composer was the sole path. Provide typed project+Editor-session+selection/revision context and `editor.prepare_brief` action that calls the existing trusted command (after validation), not the renderer. Proposed edit plan and creative brief remain editable/reviewable. The second Editor clearance remains explicitly required. Accept: user makes new edit from central chat with real selected assets, brief and plan arrive in correct saved session, no hidden render. Test wrong owner, wrong edit session, stale revision, selected range, refresh, retry.
+MediaSourcePicker.tsx is **already** a strong source browser (all/current projects, YouTube, extracted, generated, source folder, keyword, chronological sort, cards/list/carousel). App.tsx R2V already has rich reference-specific image/audio/video UI, voice, semantic and style ranking. MediaLibraryPage has index/voice fields; LocalImageFolderBrowser and EditorAssetBrowser independently browse/import. Combine their **browsing/display architecture**, keep specialized R2V model binding and independent Chat vs model reference selection; do not degrade existing semantics. Add truthful missing filters and persisted asset membership in separate phases. See [media plan](UNIFIED_MEDIA_AND_PROJECT_ASSETS.md).
 
-## UX03 — Remove duplicate Editor chat + nested two-pane
-**Anchors:** `VibeEditorPage.tsx:138–153`, `EditorWorkspace.tsx`, `vibe-editor.css`. AFTER UX02 tests pass, remove `editor-composer`, message-send controls, second model selector, old chat transcripts as primary UI and Editor's nested two-column `<EditorWorkspace>`. Keep session picker, output preview, asset selection, exact in/out ranges, timeline JSON/UI, style history, brief+plan clearances, job status, pause/cancel/retry, export, legacy **read-only session history**. Preserve all Editor backend tables/sessions and unchanged renderer. Do not delete `EditorWorkspace.tsx`: TRELLIS and Media Prep use it. A screenshot must show just the shared Director conversation and right Editor tabs.
+## UX05/UX06/UX07 — User's screenshot fixes
 
-## UX04 — Remove other redundant chats incrementally
-**Anchors:** `ScreenplayDirector`, `PromptDirector`, `CreateWorkspace.CreateChat`, `ImageAssetsDirectorChat`, `TextToImagePage.t2i-chat`, `TrellisPage.StudioChat`, `MediaPrepPage.StudioChat`. For each, first add a typed shared-chat action with actual selected page context and surviving Review/Apply controls, idempotency/recovery, then remove the extra composer and chat log. Keep the image/video prompt fields and storyboard proposal controls because these are work-surface **tools**, not chat duplicates. Preserve Media Prep itself entirely; consider its legacy chat UI only after parity without processing changes. `StudioChat.tsx` exports the unrelated `studioRequest` helper; do not remove the module until its other call sites migrate safely. Cover one route at a time with tests.
+- **Images:** flatten ImageAssetsPage internal EditorWorkspace split (right surface is already narrow); main image prompt/generation/candidates first, old chat migrated, compact Output/Workflow details/reference picker.
+- **Current Take:** remove TakeWorkspace's nested EditorWorkspace for this route after transferring working portals/state to one view. Real progress/player/thumbnails/Accept/Retake/Next dominant. Frozen prompt/recovery/history/worker details remain accessible under details; automated-run controls visible.
+- **Output:** reuse OutputDestination existing preference/grants/freeze; display the project path compactly and make Change optional. Project folder recommended only if it can be resolved and safely selected, without silently moving frozen jobs.
 
-## AG01 — Real shared action/context bridge
-**Anchors:** `agent_conversation`, `agent_tools`, `agent_api`, `agent_skills`, `agent_tasks`, `frontend/src/lib/agent-context.ts` and `DirectorRuntime`. Current explicit intents include discussion, whole-asset MP3, last-frame and the bounded Editor brief bridge. Expand through typed allowlisted adapters, with scene/shot/prompt/editor session IDs, selected ranges, frozen hashes and expected revisions; show unsupported capabilities honestly. Do not open a generic unvalidated command endpoint. Preserve skill source/permission separation, global/project skill resolver, project knowledge, trusted render/worker boundary. Start with Editor action (UX02), then screenplay/prompt proposals, image drafting, video generation job submission, analysis and export. Test each tool from both Director and Editor contexts.
+## AG01/AG02/CR01/VID01 — long-term agent filmmaking
 
-## AG02 — Verified multi-step filmmaking
-Add a durable *dependency* graph for plan→approval→create/inspect/retake/edit/export without imposing a *manual page* wizard. Task steps have stable identity, output refs, errors, budgets and idempotency; a model-generated sequence is not proof that tools ran. Preserve source clip history. Quality inspection requires actual frame/audio evidence and timestamped defects; unsupported analysis must say blocked. Editor handoff carries real registered clips/ranges; complete only after validating finished media. No paid/GPU in ordinary regression tests.
+Full agent action graph and state-aware non-linear film orchestration remain future scope, as do true media-backed defect detection and output verification. Preserve skills/global/project layers, project knowledge lineage and manual access. No prompt claims without real registered output, no GPU/paid runs without separate owner approval.
 
-## CR01 — Creative profiles and storyboard, separate from chat migration
-Optional production type + visual style + directing style; versioned creative jackets only, never prerequisites for manual create. Storyboard comic panels with image/action/dialogue/duration; panel != render job and multiple panels may share one clip. Preserve current source/shot revision ownership, FFLF automation pause, Media Prep and fast manual routes.
+## Source, test, preservation rules
 
-## VID01 — Video reference prep / LTX OFF
-Build exact reference manifest with image/video/audio slot mapping and actual hash-bound asset IDs. R2V image reference is not guaranteed first-frame conditioning; only FL2VA binds true first/last inputs. Preserve distinct prompt caps and durations from each actual validator. LTX ON/OFF needs a separate frozen workflow/versioned request, output validity and no-refinement worker tests; do not add fake boolean to existing v2.
+Use existing AGENTS.md, caller trace, Git status/HEAD and currently applicable directory change_readme.md. Preserve project snapshots, media originals/hashes, local source paths/grants, Editor sessions/ranges, prompt CAS, frozen jobs, audio voices, takes/retakes, GPU guards and all Media Prep processing. Keep external automation/third-party integrations behind real capability detection.
 
-## Code simplicity / test hygiene
-Use code-simplification + ponytail + blast-radius practices: smallest **readable** complete patch, no unnecessary new framework, behavior-changing code separated from pure refactors, no giant `App.tsx` or `isolated_server.py` additions. Use isolated dummy PNG/TXT/WAV/MP4 and DB/project IDs, clean after success/failure, verify no leftovers. Never delete real project media. Run focused Playwright + unittest + build and describe actual results, not a promise.
-
-## Cleanup of previous guides
-Q01–Q08 are **done as bounded implementations** per source and historical test reports; completed feature cards should not be used as future work. Keep result/evidence files for regression and audit. Directory `change_readme.md` files should point at these *active* tasks only where code is actually unfinished. Do not delete a reference file merely because one small feature shipped if it still contains instructions for unresolved integrations.
+Small typed view/adapters, no giant rewrite of App.tsx or media_library.py. One route per slice; run existing and new Playwright/unittest/build tests. Synthetic PNG/WAV/MP4/TXT only under isolated test-owned temp roots and cleanup assertions on success/failure. No destructive deletion of project data. **This guide documents planned app work; do not treat it as automatic permission to run external code, provider/GPU jobs, remove user media, or publish.**

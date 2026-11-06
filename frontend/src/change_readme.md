@@ -1,25 +1,42 @@
-# Frontend — unfinished work only (2026-11-06)
+# Frontend source — current remaining changes after 603b1fcb (2026-11-06)
 
-Read [the current code review](../../fixes/CODE_REVIEW_2026-11-06.md), [active tasks](../../fixes/ACTIVE_FIXES_2026-11-06.md), and [exact one-chat/three-pane spec](../../fixes/UNIFIED_CHAT_AND_PANES.md). Old Q06 discovery/inspector/client work **is implemented**; do not rebuild it.
+R01/R02, UX01 three outer collapsible panes, UX02 shared Editor creative brief and UX03 removal of the Editor's duplicate composer are **implemented as bounded slices** (reported checks in fixes/R01_UX03_RESULTS.md). Do not rebuild them.
 
-## UX01: three independent collapse controls
-Files: `StudioShell.tsx` (existing `navClosed` and sidebar), `DirectorWorkspace.tsx` (chat width/mobile switch), `DirectorRuntime.tsx` (single stable portal), `DirectorConversation.tsx` (currently private `open`), `director-runtime.css`.
-- Preserve sidebar markup and design. Introduce controlled project-scoped `chatOpen` and `workOpen`; keep nav's existing toggle. Add always-visible restore controls and explicit two-pane/one-pane/none grid behavior.
-- Keep children and `DirectorSlot` mounted while collapsed, maintain focus/accessibility and resizer only when both visible; mobile should expose tabs.
-- Add tests for all eight left/center/right combinations, project switch, unsaved Editor/timeline and Video prompts, keyboard/resize, responsive layout.
+**Read:** fixes/REFRESH_REVIEW_2026-11-06_603b1fcb.md, fixes/ACTIVE_FIXES_2026-11-06.md, fixes/UNIFIED_MEDIA_AND_PROJECT_ASSETS.md, fixes/COMPACT_CREATIVE_WORKSPACE_UX.md and fixes/PAGE_BY_PAGE_CHAT_AND_LAYOUT.md.
 
-## UX02 → UX03: Vibe Editor is most urgent
-`VibeEditorPage.tsx` still mounts `editor-messages` and `editor-composer` inside `<EditorWorkspace name="editor">`, so it duplicates central `DirectorConversation`.
-- First build typed shared-chat Editor action context (actual `edit-* session`, selected ranges, revision) and send a creative brief via **existing** `vibe_editor.command(action='chat')`; preserve Editor's two clearances, revision checks and render adapter.
-- Then remove the old Editor composer and nested Editor-only split. Keep session picker, asset search/attach, exact ranges, Editor brief/plan controls, job status/pause/retry, timeline, style and export in the **right** pane. Move old message history into collapsed **read-only Previous sessions**.
-- Do not delete `EditorWorkspace.tsx`: TRELLIS and Media Prep still use it. Do not delete `studioRequest` from `StudioChat.tsx`: other app pages import it.
+## UX04: one Director chat on *every* page
 
-## UX04: other duplicate chats
-The following have separate inputs/logs: `ScreenplayDirector.tsx` (used by ScreenplayPage), `PromptDirector.tsx` (PromptPreparationPage), `CreateWorkspace.tsx` shot chat, `TextToImagePage.tsx` prompt chat, `ImageAssetsPage.tsx` ImageAssetsDirectorChat, `TrellisPage.tsx` StudioChat, `MediaPrepPage.tsx` audio StudioChat. `StoryboardPage.tsx` has a proposal/production instruction form, not a conversation transcript. Migrate one at a time: typed context → server proposal/recovery/apply → read-only existing history → remove old message composer/log. Keep **manual text prompt fields and real tool controls**. Do not refactor Media Prep processing; retain full functionality while removing redundant chat only after parity.
+Remove these legacy AI composers **after** their typed existing tool action and review/Apply parity works:
+- ScreenplayDirector.tsx (called in ScreenplayPage): whole screenplay instructions, proposal diff and CAS Apply.
+- PromptDirector.tsx (called in PromptPreparationPage): selected shot/target, prompt edits, learning rules, CAS.
+- CreateWorkspace.tsx (CreateChat): Video Create prompt field-edit and saved requestKey recovery.
+- ImageAssetsPage.tsx (ImageAssetsDirectorChat): exact image prompt/source refs and Apply.
+- TextToImagePage.tsx (t2i-chat): image suggestion, saved prompt snapshot, Use suggested prompt.
+- TrellisPage.tsx (StudioChat component): assisted tool settings Apply.
+- MediaPrepPage.tsx (audio StudioChat): optional chat guidance only; preserve every actual Media Prep processing tool.
+- StoryboardPage.tsx Production instruction/shot proposal: review classification; not every textarea is an AI chat.
+No second model selector/Send/history transcript per route after parity. Preserve old messages read-only and page input fields (image prompt, screenplay text, shot/video prompt, SRT editor, search, output folder).
 
-## Other outstanding frontend behavior
-- `DirectorRuntime.tsx` currently derives editor surface from `location.hash` only; include actual Editor session/selection/revision through safe typed context.
-- `DirectorConversation.tsx` should show clear true task progress and status/recovery, not imply planning equals a completed edit/film.
-- Future optional production type/visual style/directing style; story/shot revisions; comic panels; reference manifests and LTX-off must follow backend contracts, not fake UI toggles.
+## MED01: shared browse/pick interface, not a second catalogue
 
-**Code quality:** small view components/hooks and one typed context; no giant App.tsx rewrite, duplicate fetch/client logic or CSS that merely hides a non-migrated feature. Re-run relevant Playwright/build checks, clean synthetic fixture assets, preserve user project history.
+Actual reusable foundation MediaSourcePicker.tsx already has current/all projects, folders and source types. LocalImageFolderBrowser.tsx has real client folder consent + deletion; EditorAssetBrowser.tsx has import/select/deletion; MediaLibraryPage has voice-only and indexing UI; App.tsx R2V has rich modality role/slot matching. Make a reusable media search/display + typed destination adapter. On selection, perform one of Attach to Director, bind exact model image/audio/video reference, choose Editor range, or add project membership. These are different operations and must not silently coincide. Preserve slot limits, R2V source matching, source SHA and selected asset ownership.
+
+Do not globally replace LocalImageFolderBrowser/EditorAssetBrowser before their download/import/deletion features can be reached in appropriate controls. Generic picker is safe browse/select; destructive delete remains in library management.
+
+## UX05: Image Assets/Scene Backgrounds
+
+ImageAssetsPage.tsx (~804 lines): current imageSidePanel includes OutputDestination, Workflow details, LocalImageFolderBrowser, and old chat, then the page wraps another EditorWorkspace(name=image-assets) split inside the outer app. Restructure as a single right pane main canvas: target→model→editable prompt→refs→Generate→candidate review. Output, workflow details, advanced image controls and source folder selection are compact buttons/drawers. Keep voice assignment, scene variation, image candidates, frozen job requests and producer validation. Don't modify generic EditorWorkspace globally.
+
+## UX06: Current Take
+
+TakeWorkspace.tsx currently uses EditorWorkspace(name=take), ReviewDock portal and DockedVideo. App.tsx VideoWorkspace take branch has rich selected job/take/full-run state and Accept/Retake/Next handlers plus saved request/technical panels. Use one responsive right-side review canvas: genuine progress/status, playable selected video and thumbnail strip, decisions. Keep T2VBatchPanel, full-run Pause/Stop/Retry, AssemblyPreviewPanel, frozen prompts and raw job details accessible through details or More. Avoid double video mount, unmount of active VideoWorkspace, or changing retention/retry semantics.
+
+## UX07/UX08: compact destinations and consistent visual hierarchy
+
+OutputDestination.tsx always renders long editable path and duplicate actions. Collapse by default to short project folder badge with current backend effective mode and optional Change/Relink; preserve choice/freeze/grants. Details accessible, error/unavailable visible. Apply small reusable toolbar/StatusChip/Disclosure patterns only after 2+ real uses. Keep existing left sidebar, Director and work pane collapse, project toolbar and Media Prep functionality.
+
+## Code quality, tests
+
+App.tsx ~1235 lines, ImageAssetsPage.tsx ~804 lines. Extract display-only child components/hooks and explicit typed contracts; avoid moving request ownership without tests. EditorWorkspace.tsx is still consumed by TRELLIS and Media Prep; StudioChat.tsx exports widely imported studioRequest. Do NOT delete either module during one page's layout/chat cleanup.
+
+Verify source consumers; isolated test output and source files only under disposable directories. Run Playwright at wide/1280/tablet/mobile and focused backend tests. No GPU/provider execution without permission. Never strip relevant plan approvals, user media or frozen refs.

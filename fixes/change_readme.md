@@ -1,64 +1,36 @@
-# Vibe Director implementation guide
+# Vibe Director — active implementation entry point
 
-Current local implementation: [Q01–Q06 results](Q01_Q06_RESULTS.md), [Q07–Q08 results, schema, tests and remaining work](Q07_Q08_RESULTS.md). This is not completion of the entire blueprint.
+**Current review baseline:** `vibe-director-current` at `2d4878db60d6c8b5ffbcb3254dddc66d5db402ac` (2026-11-06). Inspect `git status` and current HEAD before continuing; these are source-linked guides, not application fixes.
 
-## Start from the current source and authorization
+## What Codex must read now
+1. [Current code review](CODE_REVIEW_2026-11-06.md) — verified source findings, issues and limitations.
+2. [Active fixes, in dependency order](ACTIVE_FIXES_2026-11-06.md) — **current to-do list**, superseding completed Q01–Q08 cards.
+3. [One Director chat and three collapsible panes](UNIFIED_CHAT_AND_PANES.md) — exact UI state, Editor migration, older chat inventory, tests.
+4. [File ownership matrix](FILE_CHANGE_MATRIX.md) and applicable directory `change_readme.md` — narrow change boundaries.
+5. `AGENTS.md`, `full_review.md`, and tool glossary; older [V2 blueprint](vibe-director-codex-agent-blueprint-v2/vibe-director-codex-agent-blueprint/README.md) for product vision and the 13 filmmaking skills.
 
-1. Read repository `AGENTS.md` and the results above before the historical [source assessment](SOURCE_ASSESSMENT.md).
-2. Locate relevant source, callers, persisted contracts and tests through [the matrix](FILE_CHANGE_MATRIX.md). The guides describe intended behavior; they are not executable fixes.
-3. The owner has authorized a larger batch and continuation through the fixes. Do not re-request per-card approval during that authorized work. Ask for unresolved contradictions or genuinely required manual guidance. Paid/provider or GPU execution and new sensitive runtime permissions require their own authorization.
-4. Keep changes reviewable, run focused isolated checks and verify cleanup. Preserve earlier local work. A future request for only one card still limits that future task to that card.
+## Confirmed implemented foundation (do not rebuild)
+Q01–Q08 are implemented bounded features with prior reported tests; see [Q01–Q06 results](Q01_Q06_RESULTS.md) and [Q07–Q08 results](Q07_Q08_RESULTS.md). Latest source contains real DirectorRuntime/DirectorConversation, shared tool/skill/context services, durable project tasks, notes, MP3 extraction, continuity PNG, scoped computer tasks, and existing Vibe Editor/HyperFrames render. **This is not yet an agent that can produce a complete film.** Prior test counts are historical claims and were not rerun during this documentation review.
 
-For architecture decisions, read relevant documents, the 13 skills and tool glossary in [the V2 package](vibe-director-codex-agent-blueprint-v2/vibe-director-codex-agent-blueprint/README.md). A bounded repair follows its card's reading list rather than loading the whole package on every run. Historical reviews are maps, not live runtime proof.
+## New correction: one chat, not one chat per page
+The shared persistent Director chat is the single interactive conversational surface. The left sidebar remains as designed; the center chat and right real work page must be independently collapsible. All three panes can collapse/restore without unmounting unsaved work. `VibeEditorPage` currently renders a second Editor composer and nested `EditorWorkspace`, as confirmed in source and screenshot. Other embedded chats exist in screenplay, prompts, Video Create, image generation, TRELLIS/3D and parts of Media Prep. **Bridge their actual tools, proposals and approval behavior into the shared Director first, then remove duplicate chat UI.** Do not delete session history, revision checks or working manual controls.
 
-## Shared architecture and preservation
+## Immediate code review priorities
+- **R01:** abrupt-exit submission mapping missing; `agent_tasks.poll` can leave an unmapped task stuck.
+- **R02:** `agent_computer.run` blocking stdin write precedes supervision deadline.
+- **UX01:** all three panes separately collapsible, restorable, keyboard and mobile safe.
+- **UX02:** central chat can actually initiate existing Editor brief/plan workflow in the active Editor session, with exact owner/selection/revision.
+- **UX03:** remove duplicate Editor chat and nested split **after UX02 works**; preserve preview/media/timeline/style/export and two clearances.
+- **UX04:** remove other old chats one page at a time after their action/recovery features are available through the one Director.
+- **AG01/AG02:** expand typed tool/action graph and durable filmmaking DAG; optional creative jackets, model-specific prompts, QA and editing follow.
 
-Director and specialist Editor share project context, skill resolution, typed tools and a durable agent runtime. They differ in creative context, not permission authority. Existing engines remain authoritative:
+## Source authority / approvals / safeguards
+Existing code and its expected revision/ownership/contracts are authoritative over historical proposals. A skill does not grant tool execution. Review the current authorization before touching application code; this specific request authorizes code review/documentation updates. Scope permissions and exact approvals remain required for computer, paid-provider, GPU and destructive operations. No automatic Git reset/pull, broad refactor or renderer replacement.
 
-```text
-Director chat / Editor specialist chat / independent manual pages
-                    |
-     project context + shared skills + typed tool adapters
-                    |
-       exact plan approval + durable invocation tracking
-                    |
- story/image/audio/video/Editor services -> existing workers
-                    |
- verified registered assets -> inspection/retake -> Editor/export
-```
+**Preserve:** existing left sidebar, Media Prep operations/UX, all manual entry pages, true asset IDs/hashes, saved edits/history, project Save/Load, durable jobs/recovery, published output, destination grants, and GPU safety (90°C/2100 MHz policy). No screenplay, storyboard or style gate for standalone tools.
 
-Manual pages keep their existing services and independent entry points. Preserve sidebar, Media Prep, originals, IDs/hashes, saved sessions/revisions, frozen requests, destination grants, retries/recovery and GPU guards (90°C/2100 MHz; never change clocks). No screenplay, storyboard or agent-plan gate for independent creation.
+## Code quality and tests
+Use blast-radius, ponytail and code-simplification methods: small readable modules, reuse existing services, avoid giant App.tsx/isolated_server.py rewrites or speculative frameworks. Test success/failure/ownership/stale revisions/recovery. Generate dummy TXT/PNG/WAV/MP4 only inside isolated test-owned directories; automatically clean after both success and failure and verify deletion. Never remove real user media or pretend mocked tests prove audiovisual quality. No new GPU/paid-provider jobs without explicit authorization.
 
-## Canonical implementation phases
-
-Earlier blueprint/matrix numbering conflicts. Use this table for these change guides; the blueprint remains the product specification. Engineering order is not a user wizard.
-
-| Phase | Outcome | Task boundary |
-| --- | --- | --- |
-| Preflight repair | Staged audio stays out of browsing | Q01; implemented |
-| 1 | Shared discovery, derived project context, compact inspector | Q03 → Q04 → Q05 → Q06; no chat execution or DB migration |
-| 2 | Both chats perform one approved, durable MP3 operation | Q01 first; Q02 → Q07 → Q08; durability before agent submission |
-| 3 | Persistent Codex shell, general task loop, knowledge/bindings | Shell/chat/notes implemented; general task loop remains |
-| 4 | Optional jackets, screenplay proposals, comic storyboard | Existing revisions; independent board drafts need schema design |
-| 5 | Model-aware generation and continuity | Exact contracts; LTX-off is a separately approved versioned pipeline |
-| 6 | Evidence-backed QA, retakes, mixed-media film assembly/export | Existing Editor/assembly; inspect renderer/audio limits first |
-| 7 | Computer/coding/browser runtime and optional external specialists | Installed capability, scoped permissions, license/auth validation |
-
-Q01–Q08 are implemented bounded cards. Phase 3 has a shared shell, persistent conversation and notes foundation; its general task loop and the remaining phases are still outstanding. Inspect actual sources before extending the runtime; do not replace existing working services with the proposal snippets.
-
-## Engineering skills
-
-- **blast-radius:** trace callers, persistence and consumers. Graph evidence is partial; see assessment.
-- **ponytail:** smallest complete fix, current services/dependencies, no speculative plugin framework.
-- **code-simplification:** equivalent refactors only, separate from behavior changes. Preserve return types, async errors, side effects, validation and ordering; examples are not automatic rewrite rules.
-- **writing-for-agents:** one canonical task definition; directory guides route to it.
-
-These global skills exist in this owner's Codex environment. Other environments must discover their actual availability. Local `fixes/skills/` engineering proposals are guidance, not automatically active skills. No automatic skill install, delegation or model assignment. A global Codex skill is distinct from the app's current fixed-path readers.
-
-## Tests and rollback
-
-Follow the [test guide](../backend/story_builder/tests/change_readme.md). No paid/provider or GPU generation without explicit authorization; owner-started acceptance remains required for new generation workflows. Documentation edits need no service startup, graph regeneration or whole-app test sweep.
-
-Revert only the task's edits; never reset existing work or delete media/history. DB changes need backups and compatibility tests. Disable new execution first on rollback; do not drop records or abandon active jobs.
-
-Current continuation: approved CPU last-frame PNG and scoped Codex computer tasks are implemented alongside MP3. Both surfaces offer Application tools, Project only and Full access; each computer task freezes scope and requires exact approval. Offline sandbox and mocked worker tests differ from unperformed live model acceptance. Browser/desktop automation and general film orchestration remain incomplete. See `Q07_Q08_RESULTS.md` for evidence and changed files.
+## Historical documentation policy
+Q01–Q08 implementation cards are complete as bounded slices; keep their results as evidence, not future tasks. Older `SOURCE_ASSESSMENT.md` is a historical pre-implementation snapshot. The 13 blueprint skill files and architecture remain useful vision/specification, but may describe not-yet-integrated features; the active task list wins for current code implementation.

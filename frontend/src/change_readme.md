@@ -1,23 +1,25 @@
-# Frontend guide: keep independent tools, add shared context
+# Frontend — unfinished work only (2026-11-06)
 
-Use [master phases](../../fixes/change_readme.md) and [task cards](../../fixes/QUICK_FIX_TASKS.md). Do not build all proposed components at once.
+Read [the current code review](../../fixes/CODE_REVIEW_2026-11-06.md), [active tasks](../../fixes/ACTIVE_FIXES_2026-11-06.md), and [exact one-chat/three-pane spec](../../fixes/UNIFIED_CHAT_AND_PANES.md). Old Q06 discovery/inspector/client work **is implemented**; do not rebuild it.
 
-## Phase 1 / Q06
+## UX01: three independent collapse controls
+Files: `StudioShell.tsx` (existing `navClosed` and sidebar), `DirectorWorkspace.tsx` (chat width/mobile switch), `DirectorRuntime.tsx` (single stable portal), `DirectorConversation.tsx` (currently private `open`), `director-runtime.css`.
+- Preserve sidebar markup and design. Introduce controlled project-scoped `chatOpen` and `workOpen`; keep nav's existing toggle. Add always-visible restore controls and explicit two-pane/one-pane/none grid behavior.
+- Keep children and `DirectorSlot` mounted while collapsed, maintain focus/accessibility and resizer only when both visible; mobile should expose tabs.
+- Add tests for all eight left/center/right combinations, project switch, unsaved Editor/timeline and Video prompts, keyboard/resize, responsive layout.
 
-Read App route returns and kept-mounted video workspace, StudioShell, ProjectController's owner/remount behavior, EditorWorkspace and Editor API range types. Implement one compact shared discovery inspector plus typed client/context and scoped CSS. Director and Editor see the same tool/skill/project facts. Preserve sidebar, Media Prep and all direct/manual routes. No chat execution/persistent task UI yet.
+## UX02 → UX03: Vibe Editor is most urgent
+`VibeEditorPage.tsx` still mounts `editor-messages` and `editor-composer` inside `<EditorWorkspace name="editor">`, so it duplicates central `DirectorConversation`.
+- First build typed shared-chat Editor action context (actual `edit-* session`, selected ranges, revision) and send a creative brief via **existing** `vibe_editor.command(action='chat')`; preserve Editor's two clearances, revision checks and render adapter.
+- Then remove the old Editor composer and nested Editor-only split. Keep session picker, asset search/attach, exact ranges, Editor brief/plan controls, job status/pause/retry, timeline, style and export in the **right** pane. Move old message history into collapsed **read-only Previous sessions**.
+- Do not delete `EditorWorkspace.tsx`: TRELLIS and Media Prep still use it. Do not delete `studioRequest` from `StudioChat.tsx`: other app pages import it.
 
-Abort/discard stale project responses; workspace owner comes from managed project context, not a URL or cached filename. Keep current unsaved forms, focus, navigation and Editor Preview/Media/Timeline/Style/Export. Verify both surfaces, mobile/keyboard use, project switch, and no POST on opening discovery. Avoid adding business logic to App.
+## UX04: other duplicate chats
+The following have separate inputs/logs: `ScreenplayDirector.tsx` (used by ScreenplayPage), `PromptDirector.tsx` (PromptPreparationPage), `CreateWorkspace.tsx` shot chat, `TextToImagePage.tsx` prompt chat, `ImageAssetsPage.tsx` ImageAssetsDirectorChat, `TrellisPage.tsx` StudioChat, `MediaPrepPage.tsx` audio StudioChat. `StoryboardPage.tsx` has a proposal/production instruction form, not a conversation transcript. Migrate one at a time: typed context → server proposal/recovery/apply → read-only existing history → remove old message composer/log. Keep **manual text prompt fields and real tool controls**. Do not refactor Media Prep processing; retain full functionality while removing redundant chat only after parity.
 
-## Phase 2 / Q08
+## Other outstanding frontend behavior
+- `DirectorRuntime.tsx` currently derives editor surface from `location.hash` only; include actual Editor session/selection/revision through safe typed context.
+- `DirectorConversation.tsx` should show clear true task progress and status/recovery, not imply planning equals a completed edit/film.
+- Future optional production type/visual style/directing style; story/shot revisions; comic panels; reference manifests and LTX-off must follow backend contracts, not fake UI toggles.
 
-Use the durable shared task lifecycle for one MP3 intent. Inspect the actual Director chat entrypoint before wiring. Both surfaces use one gateway/resolver, actual owned asset IDs and exact approval. Whole-asset extraction is not selected-range trimming. Display real registered/playable output and offer attachment; never substitute soundtrack automatically. Keep Editor's existing brief/plan/render approvals. No fake progress or second unlinked chat store.
-
-## Later shell and creative work
-
-Persistent center chat/right work surface is Phase 3 and needs a stable mounting design across App branches. A component placed inside StudioShell is not automatically persistent. Server stores conversations/plans/events; localStorage is only a draft cache. Project switching changes all owned context atomically. Both panes should be collapsible/resizable with responsive tabs. Right work area contains real tools, not a screenshot.
-
-Retain sidebar; story stage rail remains optional shortcuts. Creative phases use optional independent production type/visual style/directing jacket choices and preserve published versions. Screenplay proposals apply with existing expected revision/CAS. Comic storyboard reuses current scene/shot records; panels are not render jobs. Its current browser autoFrames loop is not a durable agent runner; preserve manual/recovery and FFLF pause. Standalone board drafts need a schema plan, not a cosmetic gate removal.
-
-Prompt reference presentation uses real IDs/hashes and model-specific image/audio/video slots, exact route duration and codepoint constraints. R2V does not gain a first_frame field. LTX toggle appears only with accepted backend versioned support.
-
-Small components/hooks only when responsibilities justify them. Do not split a working component just to satisfy a file-count target or refactor unrelated compact code during a feature fix.
+**Code quality:** small view components/hooks and one typed context; no giant App.tsx rewrite, duplicate fetch/client logic or CSS that merely hides a non-migrated feature. Re-run relevant Playwright/build checks, clean synthetic fixture assets, preserve user project history.

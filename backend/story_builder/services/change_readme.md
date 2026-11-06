@@ -1,35 +1,18 @@
-# Service guide: reuse engines, connect narrow seams
+# Backend services — only unfinished work
 
-Implementation scope is defined once in [task cards](../../../fixes/QUICK_FIX_TASKS.md); [assessment](../../../fixes/SOURCE_ASSESSMENT.md) records source traps. Do not copy historical snippets as ready implementations.
+Read [current static review](../../../fixes/CODE_REVIEW_2026-11-06.md) and [active tasks](../../../fixes/ACTIVE_FIXES_2026-11-06.md). Q01–Q08 and CPU MP3/continuity/computer task foundations are implemented; old speculative sketches are obsolete. Preserve current owner-scoped gateway, graph projection, skill resolver, and ledger.
 
-| Approved card | Service boundary | Preserve |
-| --- | --- | --- |
-| Q01 | Precise staging exclusion in discovery | Existing staged paths/retry inputs, originals, legitimate generated media |
-| Q02 | Shared audio utility submission | All operations, settings/defaults, errors, destination freezing, configured roots |
-| Q03 | Tool metadata and strict API | Actual capability shape, separate execution permission, no worker launch |
-| Q04 | Shared bounded skill resolver | Existing context/labels/references, explicit roots, owner/hash/provenance |
-| Q05 | Derived non-mutating context | Existing IDs/revisions, no second story source or hidden discovery writes |
-| Q07 | Durable one-operation lifecycle | Immutable approvals, crash reconciliation, job identity, checkpoint parity |
-| Q08 | Both chat bridges | Existing provider structured JSON, host validation, registered results and Editor approvals |
+## Immediate R01 and R02
+- **R01 `agent_tasks.py::poll`:** if an invocation is `submitting` with no `job_id`, GET presently returns the row and does not reconcile. Under existing project lock, find job by frozen invocation ID and correct kind, validate complete frozen settings/inputs/owner/tool and map if found; GET must not enqueue a new job. If none, return explicit recoverable state and deliberate action. Reconcile after abrupt process death; do not replay uncertain computer effects.
+- **R02 `agent_computer.py::run`:** blocking `process.stdin.write` occurs before `deadline = time.monotonic() + 1800`. Supervise stdin nonblocking/bounded along with child, timeout, log quota and process group shutdown; prove no leaked child/thread after non-reading stdin. Do not weaken per-plan Full/Project grants or run paid/provider acceptance automatically.
 
-## Submission failure distinctions
+## UX02: typed Editor action through the existing service
+- `agent_conversation.RESPONSE_SCHEMA` supports only `discuss/extract_mp3/continuity_last_frame`. Add a *versioned* typed `editor.prepare_brief` proposal/action on current Editor session with real selected ranges, expected revision and owner. Validate server-side using Editor's existing project and session lookup, not user-provided names/paths.
+- Use existing `vibe_editor.command` for brief/plan. No direct model execution of HyperFrames or unselected media. Preserve Editor's two clearances as distinct approvals. A typed agent task is not automatically clearance 1 or 2.
+- `agent_api` and `agent_tools` should register one scoped action at a time and fail closed when not available. No generic text-based executor or duplicate persistence. `agent_messages` is new conversation authority; historical Editor `project.messages` remain valid read-only legacy history.
+- General screenplay/prompt/image/video/QA adapters and multi-step DAG are later AG01/AG02; maintain exact T2V/R2V/FL2VA contracts, review-mode and GPU guards.
 
-Partial staging with no durable job may be cleaned by its creating call. Once a durable job exists, preserve its inputs on dispatch failure. `start_job` can leave a queued job: returning 503 does not authorize deletion or a duplicate submission. `create_job` uses globally configured roots and new IDs; a root argument or unique agent DB key alone does not solve cross-store crash windows. Q07 requires a correlation/reconciliation design.
+## Blast radius
+`agent_task_schema` + `projects.sql_snapshot/save/open`, `audio_utilities`, `video_repertoire` and Editor projects all matter when altering execution. Check existing `test_agent_tasks`, `test_agent_computer`, `test_agent_editor_tool_handoff`, `test_agent_api`, `test_projects`, `test_audio_utilities_integration`, and relevant Editor tests; extend targeted coverage. Preserve ownership, idempotency, frozen media, recovery and no repeat shell side effects.
 
-## Tool/skill boundaries
-
-Use exact nested schemas at the API boundary, including defaults and finite numeric/type checks. A flat key-set check is not sufficient. Audio availability is selected from `capabilities()['operations']`. Separate support/readiness/permissions; discovery cannot execute commands. Avoid backend self-HTTP and a generic shell/URL tool dispatcher.
-
-One resolver serves both agents. Skills are instructions, not grants. Load metadata first, selected content/references within configured roots and budgets. Keep existing three craft paths and hashes/output compatibility before changing readers. No automatic activation of all 13 blueprint skills.
-
-`video_continuity.last_frame(root, workspace, output, create=True)` consumes generated output metadata with `shared_asset_id`/`sha256`; it is not a generic uploaded-video extractor. `create=False` can still trigger discovery through media listing. Treat frame creation as a write tool, not Phase 1 metadata.
-
-## Later phases: design first
-
-- Creative records: reuse versioned production styles, source/graph/screenplay CAS and storyboard associations. Panels, shots and generated clips are distinct identities. Standalone storyboard drafts need a separately reviewed ownership/schema design.
-- Video preparation: T2V, R2V and FL2VA have different exact fields. R2V continuity is a spatial reference; FL2VA owns true first/last frames. Preserve separate image/audio/video slot numbering, hash-bound references and voice-identity vs dialogue distinction. Derive durations/limits from current route validators; R2V requires strictly fewer than 7000 Unicode code points.
-- LTX-off: new version/profile/digest plus original collection validation and direct final publication, not an extra field in frozen v2. Preserve old pipeline/recovery; test zero refinement enqueue, audio/video validity and all workflow families.
-- QA/retake: actual observations with timestamps, preserve take history, verified media handoff. Missing analyzer means blocked, not invented findings.
-- Computer/external: separate authorized runtime, allowlisted roots/actions, audit, real capability/license/auth checks. Not supplied by a coding skill.
-
-No broad simplification of ledger/dispatcher/renderer while adding a gateway. Readability work gets one named function, behavior tests and a separate diff.
+Keep modules small; do not append agent business logic to `isolated_server.py` or weaken `vibe_editor_render.py` trust boundary.

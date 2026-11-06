@@ -1,40 +1,19 @@
-# Focused tests and disposable fixtures
+# Remaining test work — after Q01–Q08
 
-Read the approved [card](../../../fixes/QUICK_FIX_TASKS.md). Run matching tests once; expand for failures or a traced dependency. Do not run every generation/assembly suite for a metadata/doc change.
+Current [review](../../../fixes/CODE_REVIEW_2026-11-06.md) and [active tasks](../../../fixes/ACTIVE_FIXES_2026-11-06.md) supersede completed foundation cards. Previous reported 75/76 backend and 18 browser tests were **not rerun** in this doc update.
 
-## Source-known baseline
+## R01 recovery
+Extend `test_agent_tasks.py` to simulate abrupt process death in three windows: after storing `submitting` before job, after job creation before `_map_job`, after mapping. GET polling discovers and verifies existing job with no new dispatch; no-job state signals deliberate recovery; wrong job/mismatched hash/duplicate raises conflict. Verify same invocation identity and no duplicate effects; human-visible task state should allow reconciliation.
 
-At `f48e99a`, the prior review ran six audio integration tests: five passed and the safety-trip asset-set test failed because browsing discovered staged `001.wav`. Real CPU MP3 extraction passed. Do not turn that failure green by changing its expected set. Q01 fixes discovery. Typecheck and V2 package validator passed in that review; they do not prove live readiness. This guide edit does not rerun those application checks.
+## R02 bounded input
+Extend `test_agent_computer.py`: CPU child never reads stdin, slow read, early exit/BrokenPipe, cancellation during delivery; short test timeout. Assert process group and writer fully reaped, no unbounded allocation, private journal remains within budget; no live Codex/provider required.
 
-## Test selection
+## UX01/UX02/UX03
+Add `frontend/tests/three-pane-collapse.spec.mjs` and `single-director-chat.spec.mjs` (or extend `director-runtime.spec.mjs` and `create-panes.spec.mjs`). Check every left/center/right visibility combination, restore when all closed, pointer/keyboard resize, browser refresh, mobile tabs, independent project switching, unsaved Editor/timeline/media and Video Create input preservation. Assert **only one active conversational composer** on Editor while retaining tool prompt fields.
+Add Editor integration with mocked reasoning: central chat, correct edit-session/range context, brief/clarification/clearance1, media-plan/clearance2 and trusted render *submission only after explicit approval*. Old Editor session messages/read-only history unchanged, wrong session/owner/old revision rejected, no hidden render from opening page. Verify old MP3 asset offer still works.
 
-| Card | Focused tests / new tests only when implementation lands |
-| --- | --- |
-| Q01 | Existing `test_audio_utilities_integration.py`, `test_media_catalogue.py`; add precise project/tool-library staging exclusion cases |
-| Q02 | Audio integration: all operations/API errors, staging failure, retained retry inputs, configured roots and CPU registration |
-| Q03 | New `test_agent_tools.py`, `test_agent_api.py`; selected existing API route smoke regressions |
-| Q04 | New `test_agent_skills.py`; old Director/Editor context parity, references, hashes and safe roots |
-| Q05 | New `test_agent_project_graph.py`; actual source identity, owner isolation and no state writes |
-| Q06 | `npm run typecheck` in frontend; focused browser tests with mocked discovery; direct routes/project switching/no submission |
-| Q07 | New `test_agent_tasks.py`; existing `test_projects.py`, `test_named_project_storage.py`; crash/approval/idempotency/roundtrip |
-| Q08 | New `test_agent_editor_tool_handoff.py` plus Director bridge tests; CPU synthetic media, ownership/retry/attachment and old Editor approvals |
+## UX04 other chat retirements
+For Screenplay/Prompt/Video/Image/3D and Media Prep, compare existing proposal/recovery/apply outputs before/after migration. Do not treat a useful manual prompt textarea as a chat to remove. `MediaPrepPage` tools and EditorWorkspace shared layout must remain functional. `StudioChat.studioRequest` callers must pass after any extraction.
 
-Discover Editor tests by source references rather than inventing an existing test filename. For later generation-contract work inspect actual `test_isolated_*_contract.py`, continuity, worker collection and assembly tests when their code changes. Mock GPU/provider paths first; paid/GPU acceptance requires explicit authorization.
-
-## Commands and isolation
-
-For the already inspected audio tests, from repo root:
-
-```bash
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=backend python3 -B -m unittest story_builder.tests.test_audio_utilities_integration
-```
-
-Those tests own temporary data roots and mock GPU/container execution; FFmpeg extraction is real CPU work. Before running any other suite inspect fixture roots, environment variables, worker launch and provider mocks. Test env overrides such as `VIBE_DIRECTOR_IMAGE_JOBS_DB` can defeat intended isolation; do not inherit a live override. Use installed runtime dependencies; report missing dependencies, do not install arbitrarily.
-
-Each test owns a unique TemporaryDirectory and isolated DB/project/global-skill fixture roots. Configure ALL module-global job/ledger roots, not merely the helper's root argument. Restore prior globals/environment after tests. Synthetic WAV/PNG/short MP4/text only; build an audio stream when the target contract requires it. External worker tests require ownership-tracked process shutdown before deleting their root.
-
-Cleanup must run and be verified after success AND failure. In unittest register a root-existence verifier before registering cleanup (cleanups run LIFO), or use an outer finally that checks the directory after the TemporaryDirectory context exits. Plain assertions after a failing test body will never execute; do not call that failure-path cleanup proof. Never mask the original failure with cleanup errors; report both.
-
-Keep source tests; remove generated media/test DBs. A removed isolated DB removes its test records; never issue cleanup DELETEs against production. No broad recursive deletion of user paths. If ownership is uncertain, report a leftover rather than delete it. New tests should include one injected failure proving cleanup still runs.
-
-Report exact commands, pass/fail/skip counts, no-run limitations, temporary root removal and any remaining owned processes. Mock, CPU media and owner-started GPU acceptance are different evidence.
+## Disposable fixtures and static acceptance
+Use `tempfile.TemporaryDirectory`, Playwright fixture folders, test-owned project/database for TXT/PNG/WAV/MP4, and cleanup in `finally`. Assert fixtures removed even when tests fail. Never delete actual user assets or production history. Mock/CPU tests first; paid providers and GPU require separate consent. Report commands, counts, failures and cleanup honestly. No massive unrelated lint/simplification to disguise behavior changes.

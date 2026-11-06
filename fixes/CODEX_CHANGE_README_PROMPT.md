@@ -1,21 +1,32 @@
-# Entry prompt for continuing implementation
+# Codex prompt — continue from latest source, not from old cards
 
-Read `AGENTS.md`, `fixes/change_readme.md`, `fixes/SOURCE_ASSESSMENT.md`, then the requested card in `fixes/QUICK_FIX_TASKS.md` and its directory guide. These instructions are usable by any implementation agent, including Luna; they do not assign agents or authorize delegation.
+You are working in my Vibe Director repository. Use the currently checked-out branch and preserve uncommitted changes. **DO NOT rebuild Q01–Q08** or treat the new chat shell as complete filmmaking automation.
 
-Read `fixes/Q07_Q08_RESULTS.md` for current implementation and remaining scope. The owner has authorized continuing the larger fixes batch; do not impose a one-card stop from the old example below. Respect narrower later requests. Editing a guide by itself does not authorize unrelated external actions.
+First read:
+1. `AGENTS.md`
+2. `fixes/CODE_REVIEW_2026-11-06.md`
+3. `fixes/ACTIVE_FIXES_2026-11-06.md`
+4. `fixes/UNIFIED_CHAT_AND_PANES.md`
+5. `fixes/FILE_CHANGE_MATRIX.md` and applicable directory `change_readme.md`
+6. Historical `fixes/Q01_Q06_RESULTS.md`, `fixes/Q07_Q08_RESULTS.md`, blueprint skills and glossary only where needed.
 
-Before editing:
-- Show branch/HEAD/status. Preserve local work; no automatic reset, switch or pull.
-- Confirm named symbols and behavior in current source. Locate moved anchors; revise scope if behavior changed.
-- Briefly state behavior, affected files and tests. An inspection list is not permission to rewrite all listed files.
-- Trace direct callers and downstream consumers; expand for persisted contracts/recovery. Graphify is partial.
+## Updated product/UI requirements
+The existing **left sidebar stays intact**. The shared **middle Director chat must be the only active conversational composer**, and the **right pane is the actual editable tool page** (Vibe Editor/Screenplay/Storyboard/Video/Media Prep/Images, etc.). **All three panes independently collapse/restore** without losing page state. The new Director follows the project across pages and can plan, prepare reviewed actions, run approved tools, inspect outputs and delegate editing.
 
-Implement only authorized work. Reuse engines and exact contracts. Unknown capability stays unknown/blocked. Skills do not confer execution permission. Plan approval binds revision/hash/project/inputs; run rechecks scope and capability. No backend self-HTTP, generic shell endpoint or model-authored executable renderer.
+The screenshot shows a duplicate **old Vibe Editor chat** within its own EditorWorkspace. Remove that **only after** connecting the shared Director to actual Editor session/brief/plan operations, otherwise editing becomes unusable. Keep Editor Preview, Asset selection, Timeline, Style, Export, selected ranges, old session history, two approval clearances and trusted HyperFrames renderer. The same rule applies to older page chats listed in UNIFIED_CHAT_AND_PANES.md: preserve proposals/diff/Apply/idempotency while removing redundant composers. Media Prep's existing processing functionality and navigation must not be disturbed.
 
-Run focused isolated tests, verify cleanup even on failure, preserve manual tools/sidebar/Media Prep/identities/revisions/recovery/output grants/GPU guards. No paid/provider or GPU run without explicit authorization. Do not weaken assertions to hide baseline failures.
+## Current correctness risks
+R01: an abrupt stop between task submitting and job mapping can leave the task stuck.
+R02: computer task stdin.write blocks before timeout supervision.
+They are still open. Any code modifications must be authorized for the current phase; this request asked for review and guidance.
 
-Report changed files, behavior, actual commands/results, cleanup, remaining risks and next card. Stop before unapproved work. No commit, publishing or external communication unless requested.
+## Plan/implementation procedure
+1. Show current branch/HEAD/status. Inspect real code and relevant tests before edits. Do not reset/switch/pull without owner approval.
+2. State which active task(s) are being implemented, existing vs missing functions, exact patch boundary, upstream/downstream blast radius, rollback and tests.
+3. Present the concrete patch plan for review unless an explicit current owner instruction already authorizes that implementation scope. **Do not treat documentation updates as permission to run paid/GPU or grant unrestricted computer access.**
+4. When authorized, implement focused small readable changes, not giant rewrites or duplicate engines. Follow code-simplification/ponytail/blast-radius workflows.
+5. Run focused backend/Playwright/build checks, mock CPU tests first, verify disposal of any synthetic PNG/TXT/MP4/WAV and test-owned DB/projects even on failure; never remove user media.
+6. Report real results and what remains. Respect the dependency UX02 BEFORE UX03, and leave no duplicate main chat by the end of UX03.
+7. Continue future creative/film features only as explicitly scoped. Actual outputs—not text plans—determine whether film tasks are completed.
 
-For a deliberately narrow future task, the owner can request one card only. For the currently authorized batch, continue from the remaining roadmap in the results. Do not reimplement Q01–Q08 or mistake the MP3 vertical slice for complete filmmaking automation. Generation acceptance requires the owner's Generate click or explicit run authorization.
-
-Current continuation: approved CPU last-frame PNG and scoped Codex computer tasks are implemented alongside MP3. Both surfaces offer Application tools, Project only and Full access; each computer task freezes scope and requires exact approval. Offline sandbox and mocked worker tests differ from unperformed live model acceptance. Browser/desktop automation and general film orchestration remain incomplete. See `Q07_Q08_RESULTS.md` for evidence and changed files.
+**Start by reconciling this review with your local uncommitted work and producing an updated file-level implementation plan.**

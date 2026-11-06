@@ -1,5 +1,7 @@
 # Production UI — preserve working areas, modernize the flow
 
+> **CURRENT IMPLEMENTATION OVERRIDE (2026-11-06):** Q01–Q08, shared skill/tool discovery, project chat, MP3 and last-frame tools are already implemented as bounded foundation work. Start with `fixes/CODE_REVIEW_2026-11-06.md`, `fixes/ACTIVE_FIXES_2026-11-06.md`, `fixes/UNIFIED_CHAT_AND_PANES.md`, and `fixes/CODEX_CHANGE_README_PROMPT.md` at the repository root. Do **not** rebuild the old first vertical slice. New requirement: only ONE persistent Director chat composer, including inside Vibe Editor; all THREE panes independently collapse and restore. Before deleting embedded page chats, migrate their actual tool/proposal/approval/recovery actions. Existing Media Prep operations and left navigation remain intact. The remainder of this blueprint is the long-term product vision; the new active guides take precedence for current implementation.
+
 ## Preserve exactly what the owner approved
 Existing left sidebar categories/navigation and Media Prep pages/behavior are good. Preserve styling, palette, Media Prep audio tools and server APIs; avoid gratuitous refactoring. User can open any route directly. Home/project bar remains.
 

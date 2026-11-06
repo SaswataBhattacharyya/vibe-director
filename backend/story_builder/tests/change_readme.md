@@ -1,19 +1,18 @@
-# Remaining test work — after Q01–Q08
+# Test guide — current UX04/MED/compact-layout plans
 
-Current [review](../../../fixes/CODE_REVIEW_2026-11-06.md) and [active tasks](../../../fixes/ACTIVE_FIXES_2026-11-06.md) supersede completed foundation cards. Previous reported 75/76 backend and 18 browser tests were **not rerun** in this doc update.
+Existing R01/R02/UX01/UX02/UX03 tests ran in previous Codex batch and its reported results are in fixes/R01_UX03_RESULTS.md. This document update does not rerun them. No reason to redo the feature patches.
 
-## R01 recovery
-Extend `test_agent_tasks.py` to simulate abrupt process death in three windows: after storing `submitting` before job, after job creation before `_map_job`, after mapping. GET polling discovers and verifies existing job with no new dispatch; no-job state signals deliberate recovery; wrong job/mismatched hash/duplicate raises conflict. Verify same invocation identity and no duplicate effects; human-visible task state should allow reconciliation.
+## UX04: one shared agent composer per route
+Use current frontend/tests/director-runtime.spec.mjs, create-panes.spec.mjs, and dedicated new route tests. For each Screenplay, Prompt, Video Create, Image Assets, Text-to-Image, TRELLIS, Media Prep route, verify exactly one LIVE AI conversation composer (shared Director) while keeping genuine task fields, model settings and search inputs. Mock valid agent proposal, render correct before/after and Apply, check source revision CAS, old archived chat history readable, unknown/unavailable action visibly blocked. Switch project/session during pending request, no late write to wrong target.
 
-## R02 bounded input
-Extend `test_agent_computer.py`: CPU child never reads stdin, slow read, early exit/BrokenPipe, cancellation during delivery; short test timeout. Assert process group and writer fully reaped, no unbounded allocation, private journal remains within budget; no live Codex/provider required.
+## MED01 picker parity
+Tests with mixed image/video/audio and two project owners. All/current/other projects, folder, downloaded, extracted, generated, voice-only, analyzed indexed, newest/oldest/name sort, keyword/semantic availability, cards/list/carousel, keyboard and selection persistence. Assert a chat attachment does NOT fill R2V model slots or Editor range; explicit model ref validates exact workflow/role/limit. Safe folder choice requires user consent; unknown file is not registered until import. Generic picker must not offer permanent delete.
 
-## UX01/UX02/UX03
-Add `frontend/tests/three-pane-collapse.spec.mjs` and `single-director-chat.spec.mjs` (or extend `director-runtime.spec.mjs` and `create-panes.spec.mjs`). Check every left/center/right visibility combination, restore when all closed, pointer/keyboard resize, browser refresh, mobile tabs, independent project switching, unsaved Editor/timeline/media and Video Create input preservation. Assert **only one active conversational composer** on Editor while retaining tool prompt fields.
-Add Editor integration with mocked reasoning: central chat, correct edit-session/range context, brief/clarification/clearance1, media-plan/clearance2 and trusted render *submission only after explicit approval*. Old Editor session messages/read-only history unchanged, wrong session/owner/old revision rejected, no hidden render from opening page. Verify old MP3 asset offer still works.
+## MED02/MED03 backend
+Extend existing test_media_catalogue.py, test_media_selection_scope.py (if present), test_media_search... and project Save/Load tests. Browse filters before pagination (25th item, no duplicate), stale analysis badge false, missing files, source folder scanner budget and authorized roots. Cross-project reference reuse does not copy bytes unless selected, preserves SHA, returns proper project IDs and membership names, missing source/relink, edits to one project's tags do not leak to other, archived/delete one membership does not remove original, frozen job still resolves, moved checkpoint handles missing external source. Preserve old API tests.
 
-## UX04 other chat retirements
-For Screenplay/Prompt/Video/Image/3D and Media Prep, compare existing proposal/recovery/apply outputs before/after migration. Do not treat a useful manual prompt textarea as a chat to remove. `MediaPrepPage` tools and EditorWorkspace shared layout must remain functional. `StudioChat.studioRequest` callers must pass after any extraction.
+## UX05/06/07/08 visual and state
+At 1440×900, 1280×720, 900×768 and 390×844 with outer panes expanded, measure horizontal overflow, clipped action buttons/footer, focus/keyboard and modal layering. Image Assets canvas not nested, no old ImageAssetsDirectorChat, main Generate and candidates visible; output path compact but Change opens all existing options. Current Take player once, real mocked status and accepted/retake/next, batch/full-run pause/retry, thumbnails, saved playback position, no media job duplicate or re-admission when toggling details. Re-open advanced settings, errors and relink states. Media Prep processing regression remains required.
 
-## Disposable fixtures and static acceptance
-Use `tempfile.TemporaryDirectory`, Playwright fixture folders, test-owned project/database for TXT/PNG/WAV/MP4, and cleanup in `finally`. Assert fixtures removed even when tests fail. Never delete actual user assets or production history. Mock/CPU tests first; paid providers and GPU require separate consent. Report commands, counts, failures and cleanup honestly. No massive unrelated lint/simplification to disguise behavior changes.
+## Cleanup and permission
+Use tempfile.TemporaryDirectory and fixture-owned project folders for dummy PNG/WAV/MP4/TXT. Cleanup after success AND injected failure, verify absence and no user project path touched. Playwright mocked proxy must not point at live local backend. No paid provider/GPU without separate owner authorization. Report actual commands, results and limitations; screenshot inspection/mock tests cannot prove actual video/audio quality.

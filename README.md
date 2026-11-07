@@ -12,12 +12,14 @@ Use **New / Open project** in the top bar to choose an existing folder, then cre
 
 The application keeps its operational working copy in `local_data/`; the chosen folder holds `vibe-project.json`, versioned `project-data/` checkpoints and outputs. Reopening preserves newer local edits. Models, secrets and runtime installations remain application-wide. On another runtime, external output overrides require Choose/Locate again. Save retains full checkpoints and media copies, so repeated saves increase disk use. See the [project storage review](audit/PROJECT_STORAGE_REVIEW.md) for validation and recovery limits.
 
+- [Current Codex fix entry](fixes/change_readme.md): **only active task/implementation guide**; dated finished notes were pruned.
+- [Active fixes](fixes/ACTIVE_FIXES.md), [integration architecture](fixes/INTEGRATION_ARCHITECTURE.md) and [acceptance checks](fixes/ACCEPTANCE_TESTS.md): HyperFrames visual-editor, shared Director capability router and optional OpenMontage production-board roadmap.
 - [Functionality audit and code review](audit/FUNCTIONALITY_AUDIT.md): component source map, preserved contracts, findings and bounded validation.
-- [Latest Editor and ACE-Step changes](plans/editor_media_output_ace_plan.md): current requested behavior.
-- [General design foundation](design/VIBE_DIRECTOR_FOUNDATION.md): visual guidance; current user requests govern redesign.
+- [Older Editor and ACE-Step requirements](plans/editor_media_output_ace_plan.md): historical feature context; current user decisions govern.
+- [General design foundation](design/VIBE_DIRECTOR_FOUNDATION.md): visual guidance.
 - [Project directing skill](skills/vibe-director/SKILL.md) and [video-prompting skill](skills/video-prompting/SKILL.md): runtime craft guidance.
 
-Read the relevant section for a task rather than loading all documentation. Retain third-party notices in `third_party_licenses/` and bundled skill/runtime license files.
+Read only the guide relevant to the current task. Retain third-party notices in `third_party_licenses/` and bundled skill/runtime license files. The nested blueprint under `fixes/` is also a **runtime skill source**, not an active task queue.
 
 ## Focused checks
 

@@ -42,7 +42,7 @@ async function fixtures(page) {
   return writes;
 }
 
-test('header picker saves provider and synchronizes with the Story picker',async({page})=>{
+test('header picker saves provider and synchronizes with the shared Director on Story',async({page})=>{
   const writes=await fixtures(page);
   await page.goto('/#/home');
   await page.getByRole('button',{name:'Model: codex / gpt-test ▾'}).first().click();
@@ -52,14 +52,14 @@ test('header picker saves provider and synchronizes with the Story picker',async
   await picker.getByRole('button',{name:'Use model',exact:true}).click();
   await expect(page.getByRole('button',{name:'Model: ollama / qwen-test ▾'}).first()).toBeVisible();
   await page.goto('/#/story');
-  await expect(page.locator('#story-chat')).toBeVisible();
-  await expect(page.getByRole('button',{name:'Model: ollama / qwen-test ▾'})).toHaveCount(3);
+  await expect(page.locator('#project-director-message')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Model: ollama / qwen-test ▾'})).toHaveCount(2);
   expect(writes).toEqual(['/api/director/settings']);
 });
 
 test('slash model in all three composers keeps drafts and does not send chat',async({page})=>{
   const writes=await fixtures(page);
-  for(const [path,id] of [['/#/story','story-chat'],['/#/editor','project-director-message'],['/#/media-prep?tool=music','ace-chat']]) {
+  for(const [path,id] of [['/#/story','project-director-message'],['/#/editor','project-director-message'],['/#/media-prep?tool=music','project-director-message']]) {
     await page.goto(path);
     const composer=page.locator(`#${id}`);
     await expect(composer).toBeVisible();
@@ -80,10 +80,9 @@ test('slash model in all three composers keeps drafts and does not send chat',as
 test('slash status in all four composers reads usage without sending chat',async({page})=>{
   const writes=await fixtures(page);
   await page.addInitScript(()=>localStorage.setItem('vibe-video-draft-v1',JSON.stringify({workspaceId:'story-model',clipId:'clip-status',workflowId:'minimax_h3_t2v_local_v1',prompt:'A boat at dawn.',duration:6,resolution:0.98,aspectRatio:'16:9'})));
-  for(const [path,id] of [['/#/story','story-chat'],['/#/editor','project-director-message'],['/#/media-prep?tool=music','ace-chat'],['/#/video','create-chat-message']]){
+  for(const [path,id] of [['/#/story','project-director-message'],['/#/editor','project-director-message'],['/#/media-prep?tool=music','project-director-message'],['/#/video','project-director-message']]){
     await page.goto(path);
     const composer=page.locator(`#${id}`);
-    if(id==='create-chat-message')await page.locator('.create-prompt-assistant summary').click();
     await expect(composer).toBeVisible();
     await composer.fill('Keep my draft /status');
     await expect(composer).toHaveValue('Keep my draft ');

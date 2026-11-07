@@ -3,6 +3,7 @@ import {ArrowUp, MessageSquare, PanelLeftClose, RefreshCw, SlidersHorizontal} fr
 import {useProject} from './ProjectController';
 import ModelSelector, {consumeModelCommand} from './ModelSelector';
 import ProjectKnowledge from './ProjectKnowledge';
+import MediaSourcePicker from './MediaSourcePicker';
 import type {AgentDiscovery} from './lib/agent-api';
 import type {AgentMessage, AgentTask} from './lib/agent-tasks';
 
@@ -43,7 +44,7 @@ function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> & {task
   </article>;
 }
 export default function DirectorConversation(props: Props) {
-  const {title} = useProject();
+  const {title,workspace_id:owner} = useProject();
   const [contextOpen, setContextOpen] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
   const toggle = (items: string[], id: string) => items.includes(id) ? items.filter(item => item !== id) : [...items, id];
@@ -54,12 +55,12 @@ export default function DirectorConversation(props: Props) {
     </header>
     <div className="director-body">
       <div className="director-transcript" role="log" aria-label="Director conversation history" aria-live="polite">
-        {!props.messages.length && <div className="director-welcome"><span className="director-kicker">YOUR FILM WORKSPACE</span><h2>What are we making?</h2><p>Plan a scene, develop a shot, or work with your project’s media.</p><p className="director-hint">Chat can discuss your film and propose MP3 or last-frame extraction, or prepare a brief for the open Editor session. Other production tools remain available in the work surface.</p></div>}
+        {!props.messages.length && <div className="director-welcome"><span className="director-kicker">YOUR FILM WORKSPACE</span><h2>What are we making?</h2><p>Plan a scene, develop a shot, or work with your project’s media.</p><p className="director-hint">Discuss your film, prepare changes for the open creative tool, or propose media tasks. Review suggestions and approvals in the workspace; generation stays explicit.</p></div>}
         {props.messages.map(message => <article className="director-message" key={message.request_id}>
           <div className="director-user-message">{message.text}</div>
           {message.reply && <p>{message.reply}</p>}
           {message.status === 'thinking' && <p className="director-hint">Response pending. Refresh to check the saved conversation; an interrupted request will not be sent again automatically.</p>}
-          {message.status === 'interrupted' && <p role="status">This response was interrupted. Your message is saved. Send a new message to continue.</p>}
+          {message.status === 'interrupted' && <p role="status">This response was interrupted. Your message is saved. {message.story_target ? 'Refresh to recover the saved Story proposal before requesting another edit.' : 'Send a new message to continue.'}</p>}
         </article>)}
         {props.tasks.map(task => <TaskCard key={task.task_id} task={task} busy={props.busy} control={props.control}/>)}
       </div>
@@ -75,6 +76,8 @@ export default function DirectorConversation(props: Props) {
         </label>
         </div>
         {contextOpen && <div className="director-context"><p>Tools are shared across projects. Media, selected skills and conversation belong to the open project.</p>
+          <MediaSourcePicker compact workspaceId={owner} kinds={['audio','video']} disabled={props.busy} destination={{kind:'chat_attachment',capacity:100-props.selected.length,onSelect:assets=>props.setSelected(items=>Array.from(new Set([...items,...assets.map(asset=>asset.asset_id)])))}}/>
+          {!!props.selected.length&&<button disabled={props.busy} onClick={()=>props.setSelected([])}>Clear chat attachments ({props.selected.length})</button>}
           {!props.discovery ? <p role="status">Load project context using Refresh after resolving any connection error.</p> : <>
             <fieldset><legend>Audio / video inputs · whole assets</legend>{props.discovery.context.nodes.filter(node => node.kind === 'asset' && /\.(wav|mp3|flac|ogg|aac|m4a|mp4|mov|mkv|webm|avi)$/i.test(node.label)).map(node => <label key={node.id}><input type="checkbox" checked={props.selected.includes(node.source_id)} onChange={() => props.setSelected(items => toggle(items, node.source_id))}/>{node.label}</label>)}</fieldset>
             <fieldset><legend>Skills for this message · up to six</legend>{props.discovery.skills.filter(skill => skill.available).map(skill => <label key={skill.ref}><input type="checkbox" disabled={props.skills.length >= 6 && !props.skills.includes(skill.ref)} checked={props.skills.includes(skill.ref)} onChange={() => props.setSkills(items => toggle(items, skill.ref))}/><span>{skill.id}<small>{skill.scope} · {skill.provider}</small></span></label>)}</fieldset>

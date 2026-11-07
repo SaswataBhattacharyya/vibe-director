@@ -4,7 +4,7 @@ import OutputDestination from './OutputDestination';
 import SelectionToggle from './SelectionToggle';
 import MediaSourcePicker from './MediaSourcePicker';
 import CreateWorkspace from './CreateWorkspace';
-import TakeWorkspace, {DockedVideo, TakeReviewSection} from './TakeWorkspace';
+import TakeWorkspace, {DockedVideo} from './TakeWorkspace';
 import T2VBatchPanel from './T2VBatchPanel';
 import RunClipLiveView from './RunClipLiveView';
 import { T2V_QUALITIES, ALL_VIDEO_QUALITIES, VIDEO_ASPECT_RATIOS, VideoAspectRatio, VideoResolution, qualityDimensions } from './lib/video-quality';
@@ -1053,10 +1053,18 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
         {(!batchMode || isFl2va || isR2v) && <>
         {isFl2va && <div className="card settings-card fl2va-frame-card"><div className="card-header"><div><h3>Frame images</h3><p>Choose a saved frame or add a PNG, JPEG, or WebP for either slot. Each upload keeps its assigned role in this workspace.</p></div><a className="text-button" href="#/media-prep?tool=search">Open Media Prep</a></div>
           {assetsLoading ? <p role="status">Loading workspace images…</p> : <>{assetsError&&<p role="alert">{imageLoadError?'Could not load frame images.':'Some library items could not load:'} {assetsError} <button onClick={()=>setLibraryRefresh(value=>value+1)}>Retry library load</button></p>}
-            <div className="setting-grid">{([{role:'first_frame',label:'First frame',asset:firstFrame},{role:'last_frame',label:'Last frame',asset:lastFrame}] as const).map(({role,label,asset})=><div className="field fl2va-frame-slot" key={role}>
+            <div className="setting-grid">{([{role:'first_frame',label:'First frame',asset:firstFrame},{role:'last_frame',label:'Last frame',asset:lastFrame}] as const).map(({role,label,asset})=><div className="field fl2va-frame-slot" key={role} role="group" aria-label={`${label} source`}>
               <label htmlFor={role === 'first_frame' ? 'first-frame' : 'last-frame'}>{label}</label>
               <div className="select-wrap"><select id={role === 'first_frame' ? 'first-frame' : 'last-frame'} value={role === 'first_frame' ? draft.firstFrameAssetId || '' : draft.lastFrameAssetId || ''} disabled={formLocked} onChange={event => { setDraft(p=>({...p,[role === 'first_frame' ? 'firstFrameAssetId' : 'lastFrameAssetId']:event.target.value || undefined})); setPreview(null); }}><option value="">Choose {role === 'first_frame' ? 'first' : 'last'} frame…</option>{frameCandidates(role).map(candidate=><option value={candidate.asset_id} key={candidate.asset_id}>{frameOption(candidate, role)}</option>)}</select><ChevronDown size={15}/></div>
               {asset && <button type="button" className="quiet-button" disabled={formLocked} onClick={()=>{setDraft(p=>({...p,[role==='first_frame'?'firstFrameAssetId':'lastFrameAssetId']:undefined}));setPreview(null);}}>Clear {label.toLowerCase()}</button>}{asset && <div className="fl2va-frame-preview"><img src={asset.content_url} alt={`${label}: ${asset.filename}`}/><span>{asset.filename} · {label}</span></div>}
+              <MediaSourcePicker key={`${draft.workspaceId}:${draft.clipId}:${role}`} workspaceId={draft.workspaceId} kinds={['image']} role={role} compact
+                disabled={formLocked||assetsLoading||!!imageLoadError||!!uploadingFrameRole}
+                onAdded={items=>{setMediaAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items]);setLibraryRefresh(value=>value+1);}}
+                destination={{kind:'model_reference',slot:label.toLowerCase(),capacity:1,onSelect:items=>{
+                  const selected=items[0];
+                  if(!selected||selected.workspace_id!==draft.workspaceId||selected.kind!=='image'||!selected.roles.includes(role))throw new Error('Choose a registered image for this frame slot.');
+                  setDraft(current=>({...current,[role==='first_frame'?'firstFrameAssetId':'lastFrameAssetId']:selected.asset_id}));setPreview(null);
+                }}}/>
               <div className="fl2va-frame-upload" tabIndex={0} aria-label={`Drop or paste ${label.toLowerCase()} image`} onDragOver={event=>event.preventDefault()} onDrop={event=>dropFrameFile(event,role)} onPaste={event=>pasteFrameFile(event,role)}>
                 <span>Drop or paste an image here</span>
                 <label className="quiet-button r2v-upload-button">{uploadingFrameRole === role ? 'Adding…' : `Upload ${label.toLowerCase()}`}<input type="file" accept="image/png,image/jpeg,image/webp" aria-label={`Choose ${label.toLowerCase()} image`} disabled={formLocked} onChange={event=>{void uploadFrameFile(event.target.files?.[0],role);event.target.value='';}}/></label>
@@ -1065,7 +1073,6 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
             {errors.frames && <small className="error-text" role="alert">{errors.frames}</small>}{(!frameCandidates('first_frame').length || !frameCandidates('last_frame').length) && <p className="error-text">Choose each frame from this workspace or upload it directly into its matching slot.</p>}
           </>}
         </div>}
-        {isFl2va && <MediaSourcePicker workspaceId={draft.workspaceId} kinds={['image']} disabled={formLocked} onAdded={items=>{setMediaAssets(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items]);setLibraryRefresh(value=>value+1);}}/>}
         {isR2v && <div className="card settings-card r2v-reference-card"><div className="card-header"><div><h3>Reference assets</h3><p>Select library media and say how each should guide this clip. Files stay in the workspace library.</p></div><a className="text-button" href="#/media-prep?tool=search">Open Media Prep</a></div>
           <ReferenceReview key={`${draft.workspaceId}:${draft.clipId}`} draft={draft} assets={r2vAssets} locked={formLocked} onChange={change=>{setDraft(change);setPreview(null);}}/>
           {assetsLoading ? <p role="status">Loading workspace references…</p> : <>{assetsError&&<div role="alert"><p>Some project references could not load: {assetsError}</p><button type="button" className="quiet-button" onClick={()=>setLibraryRefresh(value=>value+1)}>Retry library load</button></div>}
@@ -1164,7 +1171,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
             {active.job.error && <p role="alert">{typeof active.job.error === 'string' ? active.job.error : active.job.error.message || 'The render stopped without a completed video. Check Status before retrying.'}</p>}
             {!isTerminalStatus(active.job.status) && <div className="progress-track" aria-label="Generation progress"><span className={typeof active.job.progress?.fraction === 'number' ? '' : 'indeterminate'} style={typeof active.job.progress?.fraction === 'number' ? { width: `${Math.max(0,Math.min(100,active.job.progress.fraction*100))}%` } : undefined}/></div>}
           </div>}
-        {view === 'take' && <TakeReviewSection><section className="take-gallery card" aria-label="Generated video clips">
+        {view === 'take' && <section className="take-gallery card" aria-label="Generated video clips">
           <h3>Generated clips</h3>
           {takeClips.length ? <>
             <div className="take-clip-carousel" role="list" aria-label="Generated video clips carousel">
@@ -1181,11 +1188,11 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
           </> : <p>No generated clips are ready to play yet.</p>}
         {isReviewableOutput && <div className="review-actions">{needsReview && <button className="accept-button" onClick={markAccepted} disabled={busy}><Check size={16}/> Accept take</button>}<button className="retake-button" onClick={() => { setRetakeKeep(true); setRetakeDialog(true); }} disabled={busy}><RefreshCw size={15}/> Retake</button><button className="retake-button" onClick={() => void advanceToNext()} disabled={busy}>{busy ? 'Loading…' : draft.sourceLineage ? 'Next clip' : 'Next video'} <ArrowRight size={15}/></button><span>{needsReview ? 'Accept records this clip for later assembly. Next clip accepts it and loads the next saved screenplay prompt.' : 'Retake keeps this prompt; Next clears clip references and loads the next prompt.'}</span></div>}
         {active?.job.status === 'accepted' && <div className="accepted-status"><Check size={15}/> Accepted and saved</div>}
-        </section></TakeReviewSection>}
+        </section>}
         {view === 'take' && selectedTakeClip && <details className="card"><summary>Selected take prompt · Take {selectedTakeClip.job.attempt || '—'}</summary><p style={{whiteSpace:'pre-wrap'}}>{selectedTakeClip.snapshot.prompt}</p></details>}
         {view === 'take' && history.length > 0 && <details className="history-list card"><summary>Previous take details · {history.length}</summary>{history.map(item => <article className="history-item" key={item.job.job_id}><b>Take {item.job.attempt || '—'} · {item.snapshot.duration_seconds}s</b><p>{item.snapshot.prompt}</p></article>)}</details>}
-        {view === 'take' && draft.sourceLineage && <TakeReviewSection><AssemblyPreviewPanel/></TakeReviewSection>}
-        {active && activeRequest && <div className="snapshot card"><div className="snapshot-head"><div><span className="eyebrow">SAVED REQUEST</span><b>Submitted prompt</b></div><span className="snapshot-lock">Frozen</span></div><p>{activeRequest.prompt}</p><div className="snapshot-tags"><span>{activeRequest.duration_seconds}s</span><span>{qualityDimensions(activeRequest.resolution_preset, activeRequest.aspect_ratio)}</span><span>{activeRequest.aspect_ratio}</span><span>Seed 1</span></div>{active.job.source_lineage?.knowledge_ref && <small>Prompt guidance · {active.job.source_lineage.knowledge_ref.knowledge_id} · v{active.job.source_lineage.knowledge_ref.guidance_version}</small>}{active.retakeOf && <small>Retake of {active.retakeOf} · {active.keepOriginal ? 'original candidate kept' : 'deletion requested for this candidate only'}</small>}</div>}
+        {view === 'take' && draft.sourceLineage && <AssemblyPreviewPanel/>}
+        {active && activeRequest && <details className="snapshot card" open={view!=='take'}><summary className="snapshot-head"><div><span className="eyebrow">SAVED REQUEST</span><b>Submitted prompt</b></div><span className="snapshot-lock">Frozen</span></summary><p>{activeRequest.prompt}</p><div className="snapshot-tags"><span>{activeRequest.duration_seconds}s</span><span>{qualityDimensions(activeRequest.resolution_preset, activeRequest.aspect_ratio)}</span><span>{activeRequest.aspect_ratio}</span><span>Seed 1</span></div>{active.job.source_lineage?.knowledge_ref && <small>Prompt guidance · {active.job.source_lineage.knowledge_ref.knowledge_id} · v{active.job.source_lineage.knowledge_ref.guidance_version}</small>}{active.retakeOf && <small>Retake of {active.retakeOf} · {active.keepOriginal ? 'original candidate kept' : 'deletion requested for this candidate only'}</small>}</details>}
 
         <div className="workflow-note"><Gauge size={16}/><div><b>Local workflow readiness</b><p>{!capability ? 'Readiness is not checked. Generation stays disabled until workflow, GPU safety and worker dispatch checks pass.' : capabilityBlocker(capability)}</p>{capability && <details><summary>Technical status</summary><p>{`${capabilityDetails(capability).join(' ')} Current: ${capability.runtime_guard?.operating_point ? `${capability.runtime_guard.operating_point.temperature_c}°C / ${capability.runtime_guard.operating_point.graphics_clock_mhz} MHz` : 'telemetry unavailable'}. Limits: ${capability.runtime_guard?.temperature_cutoff_c ?? '—'}°C / ${capability.runtime_guard?.graphics_clock_ceiling_mhz ?? '—'} MHz.`}</p></details>}<button className="text-button" onClick={refreshCapability} disabled={capState==='loading'}>Check status</button></div></div>
       </aside></div>

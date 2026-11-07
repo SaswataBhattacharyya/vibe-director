@@ -11,15 +11,15 @@
   padding: 32px clamp(20px, 3.2vw, 48px) 48px;
 }
 .studio-shell .content-wrap { font-size: 14px; }
-.studio-shell .page-heading { gap: 20px; margin-bottom: 28px; align-items: center; }
-.studio-shell .page-heading h1 { font-size: clamp(26px, 2.4vw, 34px); line-height: 1.2; }
+.studio-shell .page-heading { gap: 16px; margin-bottom: 20px; align-items: center; }
+.studio-shell .page-heading h1 { font-size: clamp(24px, 2.2vw, 30px); line-height: 1.2; }
 .studio-shell .page-heading p,
 .studio-shell .section-title p,
 .studio-shell .card-header p { font-size: 14px; line-height: 1.6; max-width: 65ch; }
 .studio-shell h2 { line-height: 1.3; }
 .studio-shell h3 { line-height: 1.4; }
 .studio-shell p { overflow-wrap: anywhere; }
-.studio-shell .eyebrow { font-size: 11px; line-height: 1.5; letter-spacing: .1em; margin-bottom: 12px; }
+.studio-shell .eyebrow { font-size: 11px; line-height: 1.5; letter-spacing: .1em; margin-bottom: 8px; }
 .studio-shell .studio-nav-link { min-height: 40px; font-size: 13px; line-height: 1.35; padding-block: 8px; }
 .studio-shell .studio-topbar { justify-content: flex-start; flex-wrap: wrap; }
 .studio-shell .studio-top-actions { margin-left: auto; min-width: 0; flex-wrap: wrap; gap: 10px; }
@@ -158,7 +158,7 @@
 .studio-shell .summariser-page > label,
 .studio-shell .summariser-page > .card > label { display: grid; gap: 8px; margin-block: 16px; }
 .studio-shell .summariser-page > label { max-width: 360px; }
-.studio-shell .summariser-page > .card > label input { width: 100%; }
+.studio-shell .summariser-page > .card > label input:not([type=checkbox]):not([type=radio]) { width: 100%; }
 .studio-shell .summariser-page > .card > .generate-button { margin-top: 18px; }
 .studio-shell .studio-subtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 18px; }
 .studio-shell .media-drop-zone { position: relative; }
@@ -199,7 +199,7 @@
 .studio-shell .studio-page-content .content-wrap,
 .studio-shell .studio-page-content .vibe-editor-page {
   width:100%; max-width:none; margin-inline:0;
-  padding:32px clamp(20px,3vw,48px) 48px;
+  padding:24px clamp(20px,2.4vw,32px) 40px;
 }
 .studio-shell .studio-page-content .content-wrap .content-wrap,
 .studio-shell .studio-page-content .content-wrap .vibe-editor-page,
@@ -269,9 +269,29 @@
 
 /* Shared output controls stay readable within narrow, resizable studio panels. */
 .output-destination { padding: 1rem; margin-block: 1rem; min-width: 0; }
-.output-destination > summary { cursor: pointer; margin-bottom: .8rem; }
+.output-destination-summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.output-destination-summary > button { flex: none; }
 .output-destination .studio-action-row { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; }
 .output-destination-mode { display: grid; gap: .4rem; min-width: min(100%, 14rem); }
 .output-destination-path { overflow-wrap: anywhere; font-size: .85rem; }
 .output-destination > details { margin-top: .8rem; }
 .output-destination > details label { display: grid; gap: .4rem; margin-block: .6rem; }
+
+/* Workflow navigation is optional; page tools and independent creation remain visible. */
+.director-workspace .story-columns {grid-template-columns:minmax(0,1fr)}
+.director-workspace .story-tools {order:2;display:flex}
+.studio-shell .studio-workflow {border-bottom:1px solid var(--studio-line);font-size:12px;min-width:0}
+.studio-shell .studio-workflow>summary {cursor:pointer;padding:8px 20px;color:var(--studio-muted)}
+.studio-shell .studio-workflow .stage-rail {border:0;padding:4px 12px 12px}
+.studio-shell .studio-topbar {min-height:56px;padding:8px 20px;gap:12px}
+.studio-shell .studio-crumb {display:none}
+.studio-shell .studio-topbar strong {font-weight:600}
+@media(max-width:680px) {
+ .studio-shell .studio-topbar {padding:8px 12px;gap:8px}
+ .studio-shell .studio-top-actions {width:auto;margin-left:auto;gap:4px}
+ .studio-shell .studio-top-actions .local-pill {display:none}
+ .studio-shell .studio-top-actions .model-selector>button {max-width:156px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+ .studio-shell .director-pane-toolbar {padding:6px 12px;gap:4px}
+ .studio-shell .director-pane-toolbar button {padding:6px 8px}
+ .studio-shell .director-surface-switch {padding:4px 12px}
+}

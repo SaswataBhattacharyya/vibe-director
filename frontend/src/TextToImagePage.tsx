@@ -2,10 +2,11 @@ import {useProjectState} from './lib/project-state';
 import OutputDestination from './OutputDestination';
 import {managedProjectId} from './lib/media-workspace';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, FolderOpen, Image as ImageIcon, LoaderCircle, MessageSquare, RefreshCw, Send, Sparkles, X } from 'lucide-react';
-import ModelSelector, { consumeModelCommand } from './ModelSelector';
+import { Check, FolderOpen, Image as ImageIcon, LoaderCircle, RefreshCw, Sparkles, X } from 'lucide-react';
+import DirectorImageReview from './DirectorImage';
 import ZImageLoraControls,{ZImageLora} from './ZImageLoraControls';
 import LocalImageFolderBrowser from './LocalImageFolderBrowser';
+import MediaSourcePicker from './MediaSourcePicker';
 import { createImageBatch, deleteTemporaryImageAsset, getImageBatch, getImageWorker, getImageWorkflows, ImageBatch, ImagePromptDraft, ImageWorkflow, prepareImagePrompt, stageTemporaryImageReference, validateImageRequest } from './lib/image-api';
 import { getRuntimeGuard } from './lib/status-api';
 import { listMediaAssets, MediaAsset } from './lib/media-api';
@@ -20,7 +21,8 @@ const ACTIVE_KEY = 'vibe-text-to-image-active-v1';
 const WORKSPACE_KEY = 'vibe-text-to-image-temporary-workspace-v1';
 const REFERENCES_KEY = 'vibe-text-to-image-temporary-references-v1';
 type Active = { workspaceId: string; batchId: string; outputToken: string; staged?: Array<{assetId:string;token:string}> };
-type Ref = { asset: MediaAsset; token: string };
+type Ref = { asset: MediaAsset; token?: string };
+const temporaryReferences = (refs:Ref[]) => refs.flatMap(({asset,token})=>token?[{assetId:asset.asset_id,token}]:[]);
 type DirectoryHandle = FileSystemDirectoryHandle & { values(): AsyncIterable<FileSystemHandle> };
 const randomToken = () => crypto.randomUUID().replaceAll('-', '');
 function temporaryWorkspaceId() {
@@ -43,6 +45,7 @@ const digest = async (bytes: ArrayBuffer) => Array.from(new Uint8Array(await cry
 export default function TextToImagePage() {
   const restoreSettings=useRef(localStorage.getItem(`vibe-project-settings:${managedProjectId()||'tool-library'}:TextToImagePage:width`)!==null);
   const [workspaceId, setWorkspaceId] = useState(temporaryWorkspaceId);
+  const referenceKey = `${REFERENCES_KEY}:${workspaceId}`;
   const [workflows, setWorkflows] = useState<ImageWorkflow[]>([]);
   const [workflowId, setWorkflowId] = useProjectState<string>('TextToImagePage:workflowId',MODELS[0].id);
   const [active, setActive] = useState<Active | null>(() => { try { return JSON.parse(localStorage.getItem(ACTIVE_KEY) || 'null'); } catch { return null; } });
@@ -53,8 +56,7 @@ export default function TextToImagePage() {
   const [lora,setLora]=useState<ZImageLora|null>(null);
   const [prompt, setPrompt] = useProjectState('TextToImagePage:prompt','');
   const [promptDraft, setPromptDraft] = useState<ImagePromptDraft | null>(null);
-  const [chat, setChat] = useProjectState('TextToImagePage:chat','');
-  const [suggestion, setSuggestion] = useState<ImagePromptDraft | null>(null);
+  const [previousChatDraft] = useProjectState('TextToImagePage:chat','');
   const [width, setWidth] = useProjectState('TextToImagePage:width',1280);
   const [height, setHeight] = useProjectState('TextToImagePage:height',720);
   const [steps, setSteps] = useProjectState('TextToImagePage:steps',8);
@@ -68,7 +70,6 @@ export default function TextToImagePage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [modelOpen, setModelOpen] = useState(false);
 
   const selectedWorkflow = workflows.find(item => item.workflow_id === workflowId);
   const editing = workflowId === 'qwen_image_edit_2511';
@@ -89,8 +90,8 @@ export default function TextToImagePage() {
   useEffect(() => {
     let alive = true;
     void listMediaAssets(workspaceId, 'image').then(result => {
-      let staged: Array<{assetId:string;token:string}> = [];
-      try { staged = JSON.parse(localStorage.getItem(REFERENCES_KEY) || '[]'); } catch { /* No staged references to restore. */ }
+      let staged: Array<{assetId:string;token?:string}> = [];
+      try { staged = JSON.parse(localStorage.getItem(referenceKey) || localStorage.getItem(REFERENCES_KEY) || '[]'); } catch { /* No staged references to restore. */ }
       if (alive) setReferences(staged.flatMap(ref => {
         const asset = result.assets.find(item => item.asset_id === ref.assetId);
         return asset ? [{ asset, token: ref.token }] : [];
@@ -157,12 +158,12 @@ export default function TextToImagePage() {
           staged.push({ asset, token });
         }
       } catch (reason) {
-        await Promise.allSettled(staged.map(ref => deleteTemporaryImageAsset(workspaceId, ref.asset.asset_id, ref.token)));
+        await Promise.allSettled(temporaryReferences(staged).map(ref => deleteTemporaryImageAsset(workspaceId, ref.assetId, ref.token)));
         throw reason;
       }
       setReferences(old => {
         const next = [...old, ...staged].slice(0, 3);
-        localStorage.setItem(REFERENCES_KEY, JSON.stringify(next.map(ref => ({ assetId: ref.asset.asset_id, token: ref.token }))));
+        localStorage.setItem(referenceKey, JSON.stringify(next.map(ref => ({ assetId: ref.asset.asset_id, token: ref.token }))));
         return next;
       });
       setMessage(`${staged.length} image reference${staged.length === 1 ? '' : 's'} ready for Qwen Image Edit.`);
@@ -171,8 +172,8 @@ export default function TextToImagePage() {
   };
   const removeReference = async (index: number) => {
     const ref = references[index]; setReferences(old => old.filter((_, i) => i !== index));
-    localStorage.setItem(REFERENCES_KEY, JSON.stringify(references.filter((_, i) => i !== index).map(item => ({ assetId: item.asset.asset_id, token: item.token }))));
-    await deleteTemporaryImageAsset(workspaceId, ref.asset.asset_id, ref.token).catch(reason => setError(`Temporary reference cleanup failed: ${(reason as Error).message}`));
+    localStorage.setItem(referenceKey, JSON.stringify(references.filter((_, i) => i !== index).map(item => ({ assetId: item.asset.asset_id, token: item.token }))));
+    if(ref.token) await deleteTemporaryImageAsset(workspaceId, ref.asset.asset_id, ref.token).catch(reason => setError(`Temporary reference cleanup failed: ${(reason as Error).message}`));
   };
   const prepare = async () => {
     if (!workflowId || (editing && !references.length)) return;
@@ -180,20 +181,9 @@ export default function TextToImagePage() {
     try {
       const source_references = editing ? references.map(item => ({ asset_id: item.asset.asset_id, sha256: item.asset.sha256 })) : [];
       const result = await prepareImagePrompt({ workspace_id: workspaceId, workflow_id: workflowId, asset_role: 'image_candidate', prompt: prompt.trim(), ...(source_references.length ? { source_references } : {}) });
-      setPrompt(result.prompt); setPromptDraft(result); setSuggestion(null);
+      setPrompt(result.prompt); setPromptDraft(result);
       setMessage(`Prompt prepared from ${result.sources.length} workflow guidance source${result.sources.length === 1 ? '' : 's'}. Review and edit it before generating.`);
     } catch (reason) { setError(`Could not prepare prompt: ${(reason as Error).message}`); }
-    finally { setBusy(false); }
-  };
-  const askDirector = async () => {
-    if (!chat.trim() || busy) return;
-    setBusy(true); setError(''); setMessage('');
-    try {
-      const attachmentNote = chatAttachments.length ? `Attached local images: ${chatAttachments.map(file => file.name).join(', ')}.` : '';
-      const seedPrompt = [prompt.trim(), `User request: ${chat.trim()}`, attachmentNote].filter(Boolean).join('\n\n');
-      setSuggestion(await prepareImagePrompt({ workspace_id: workspaceId, workflow_id: workflowId, asset_role: 'image_candidate', prompt: seedPrompt }));
-      setChat(''); setMessage('Director suggestion is ready. Choose “Use suggested prompt” to apply it. Chat attachments are listed by filename; they are not sent to the image model.');
-    } catch (reason) { setError(`Could not prepare a suggestion: ${(reason as Error).message}`); }
     finally { setBusy(false); }
   };
   const generate = async () => {
@@ -209,7 +199,7 @@ export default function TextToImagePage() {
         ...(promptDraft?.workflow_id === workflowId ? { prompt_knowledge_ref: promptDraft.knowledge_ref } : {}), ...(source_references.length ? { source_references } : {}) };
       await validateImageRequest(request);
       const result = await createImageBatch(request);
-      const next: Active = { workspaceId, batchId: result.batch_id, outputToken, staged: references.map(item => ({ assetId: item.asset.asset_id, token: item.token })) };
+      const next: Active = { workspaceId, batchId: result.batch_id, outputToken, staged: temporaryReferences(references) };
       localStorage.setItem(ACTIVE_KEY, JSON.stringify(next)); setBatch({ batch_id: result.batch_id, jobs: result.jobs, generation_policy: {} }); setSelectedAsset(null); setActive(next);
       setMessage('Image request queued. This page will reconnect to the job after reload.');
     } catch (reason) { setError(`Generation was not started: ${(reason as Error).message}`); setMessage(''); }
@@ -240,8 +230,8 @@ export default function TextToImagePage() {
       setPreviewUrl(URL.createObjectURL(written));
       await deleteTemporaryImageAsset(workspaceId, readyAsset.asset_id, active.outputToken);
       setSelectedAsset(null); setBatch(null); setActive(null); localStorage.removeItem(ACTIVE_KEY);
-      await Promise.allSettled((active.staged || references.map(ref => ({ assetId: ref.asset.asset_id, token: ref.token }))).map(ref => deleteTemporaryImageAsset(workspaceId, ref.assetId, ref.token)));
-      setReferences([]); localStorage.removeItem(REFERENCES_KEY); localStorage.removeItem(WORKSPACE_KEY); setWorkspaceId(temporaryWorkspaceId()); setMessage(`Saved and verified ${outputName} in ${outputHandle.name}. Temporary Vibe Director image copies were removed.`);
+      await Promise.allSettled((active.staged || temporaryReferences(references)).map(ref => deleteTemporaryImageAsset(workspaceId, ref.assetId, ref.token)));
+      setReferences([]); localStorage.removeItem(referenceKey); localStorage.removeItem(WORKSPACE_KEY); setWorkspaceId(temporaryWorkspaceId()); setMessage(`Saved and verified ${outputName} in ${outputHandle.name}. Temporary Vibe Director image copies were removed.`);
     } catch (reason) { setError(`Could not save and verify image: ${(reason as Error).message}`); }
     finally { setBusy(false); }
   };
@@ -253,18 +243,37 @@ export default function TextToImagePage() {
 
     <div className="t2i-layout">
       <section className="card t2i-controls" aria-label="Image creation controls">
-        <label>Image model<select aria-label="Image model" value={workflowId} onChange={event => { setWorkflowId(event.target.value); setPromptDraft(null); setSuggestion(null); }}>
+        <label>Image model<select aria-label="Image model" value={workflowId} onChange={event => { setWorkflowId(event.target.value); setPromptDraft(null); }}>
           {MODELS.map(model => { const item = workflows.find(row => row.workflow_id === model.id); return <option key={model.id} value={model.id} disabled={!item?.available}>{model.label}{item?.available ? '' : ' · unavailable'}</option>; })}
         </select></label>
         {selectedWorkflow && <p className="t2i-model-state">{selectedWorkflow.available ? `${selectedWorkflow.label} · workflow ${selectedWorkflow.version} ready` : selectedWorkflow.disabled_reason || 'This workflow is not ready.'}</p>}
         {editing && <div className="t2i-reference-tray" aria-label="Selected workflow references">{references.length ? references.map((ref,index)=><span key={ref.asset.asset_id}><img src={ref.asset.content_url} alt=""/>{ref.asset.filename}<button type="button" aria-label={`Remove reference ${ref.asset.filename}`} onClick={()=>void removeReference(index)}><X size={13}/></button></span>) : <small>Select images below and choose “Use as reference”. Up to 3 images.</small>}</div>}
+        {editing&&<MediaSourcePicker workspaceId={workspaceId} kinds={['image']} compact role="project_image" disabled={busy||loading||!!active||references.length>=3}
+          destination={{kind:'model_reference',slot:'image references',capacity:Math.max(0,3-references.length),onSelect:items=>{
+            if(items.some(asset=>asset.workspace_id!==workspaceId||asset.kind!=='image'))throw new Error('Choose registered image references for this project.');
+            const next:Ref[]=[...references,...items.filter(asset=>!references.some(ref=>ref.asset.asset_id===asset.asset_id)).map(asset=>({asset}))];
+            if(next.length>3)throw new Error('Qwen Image Edit accepts up to three references.');
+            setReferences(next);setPromptDraft(null);
+            localStorage.setItem(referenceKey,JSON.stringify(next.map(ref=>({assetId:ref.asset.asset_id,token:ref.token}))));
+          }}}/>}
         <ZImageLoraControls enabled={workflowId==='z_image_turbo'} onChange={setLora} onTrigger={word=>setPrompt(old=>`${word} ${old}`)}/><label>Prompt<textarea aria-label="Image prompt" rows={7} maxLength={6999} value={prompt} onChange={event => { setPrompt(event.target.value); setPromptDraft(null); }} placeholder="Describe the image you want to create…"/></label>
         <div className="t2i-settings"><label>Width<input type="number" min="256" max="2048" step="8" value={width} onChange={event => setWidth(Number(event.target.value))}/></label><label>Height<input type="number" min="256" max="2048" step="8" value={height} onChange={event => setHeight(Number(event.target.value))}/></label><label>Steps<input type="number" min={workflowId === 'qwen_image_2512' ? 20 : 4} max={workflowId === 'qwen_image_2512' ? 80 : 16} value={steps} onChange={event => setSteps(Number(event.target.value))}/></label><label>CFG<input type="number" min="0.1" max={workflowId === 'z_image_turbo' ? 2 : 8} step="0.1" value={cfg} onChange={event => setCfg(Number(event.target.value))}/></label><label>Seed<input type="number" min="0" max="4294967295" value={seed} onChange={event => setSeed(Number(event.target.value))}/></label></div>
         <div className="t2i-actions"><button type="button" className="quiet-button" onClick={() => void prepare()} disabled={busy||(editing&&!references.length)}><Sparkles size={15}/> Prepare prompt</button><button type="button" className="generate-button" onClick={() => void generate()} disabled={busy||loading||!selectedWorkflow?.available||!prompt.trim()||(editing&&!references.length)||!!active||!destinationReady}>{busy?<LoaderCircle size={15} className="spin"/>:<ImageIcon size={15}/>} {active?'Generating…':'Generate image'}</button></div>
       </section>
-      <aside className="card t2i-chat" aria-label="Prompt chat"><h2><MessageSquare size={17}/> Prompt chat</h2><p>Ask the Director to shape the prompt. Suggestions never replace your prompt unless you apply them. Chat attachments show a preview and filename; image bytes enter the generation request only when you press <b>Use as reference</b> for a compatible model.</p><ModelSelector open={modelOpen} onClose={()=>setModelOpen(false)} disabled={busy} returnFocusId="t2i-chat-input"/> {suggestion && <div className="t2i-suggestion"><b>Suggested prompt</b><p>{suggestion.prompt}</p><button type="button" className="quiet-button" onClick={() => { setPrompt(suggestion.prompt); setPromptDraft(suggestion); setSuggestion(null); }}>Use suggested prompt</button></div>}<div className="t2i-chat-attachments" onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();const files=Array.from(event.dataTransfer.files).filter(file=>file.type.startsWith('image/'));setChatAttachments(old=>[...old,...files.filter(file=>!old.some(item=>item.name===file.name&&item.size===file.size))]);}}>{chatAttachments.map((file,index)=><span key={`${file.name}:${file.size}:${index}`}><img src={chatPreviewUrls[index]} alt=""/>{file.name}<button type="button" aria-label={`Remove ${file.name}`} onClick={()=>setChatAttachments(old=>old.filter((_,i)=>i!==index))}><X size={13}/></button></span>)}</div><label htmlFor="t2i-chat-input">Talk to the image Director</label><textarea id="t2i-chat-input" rows={5} value={chat} onChange={event=>setChat(consumeModelCommand(event.target.value,()=>setModelOpen(true),'t2i-chat-input'))} onKeyDown={event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();void askDirector();}}} placeholder="Type /model or /status. Describe how to shape the image prompt."/><button type="button" className="quiet-button" onClick={()=>void askDirector()} disabled={busy||!chat.trim()}><Send size={14}/> Send</button>{promptDraft&&<small>Prompt guidance reference: {promptDraft.knowledge_ref.knowledge_id} · v{promptDraft.knowledge_ref.guidance_version}</small>}</aside>
       <section className="card t2i-result" aria-label="Generated image preview"><h2>Image preview</h2>{active&&<div className="t2i-progress"><LoaderCircle size={17} className="spin"/><span>{currentJob?.status?`Image job ${currentJob.status.replaceAll('_',' ')}`:'Connecting to image job…'}</span>{currentJob?.error?.message&&<p role="alert">{currentJob.error.message}</p>}</div>}{readyAsset?<><figure><img src={readyAsset.content_url} alt={readyAsset.description||readyAsset.filename}/><figcaption>{readyAsset.filename} · {readyAsset.media?.width||'—'} × {readyAsset.media?.height||'—'} · {active?.outputToken?'temporary until saved':'saved in output folder'}</figcaption></figure>{active?.outputToken?<><label>Filename<input value={outputName} onChange={event=>setOutputName(event.target.value)} placeholder="image.png"/></label><button type="button" className="generate-button" disabled={busy||!outputHandle||!active||!outputName.trim()} onClick={()=>void saveOnlyToChosenFolder()}><Check size={15}/> Save to chosen folder</button></>:<a className="quiet-button" href={readyAsset.content_url} download={readyAsset.filename}>Download image</a>}</>:previewUrl?<figure><img src={previewUrl} alt="Saved generated image"/><figcaption>{outputName} · Saved to {outputHandle?.name || 'chosen folder'}</figcaption></figure>:<div className="t2i-empty"><ImageIcon size={40}/><p>Choose a model, write a prompt, select an output folder, and generate.</p></div>}</section>
     </div>
-    <details className="card t2i-folder-details"><summary>Reference image folder</summary><LocalImageFolderBrowser maxReferences={3} referencesEnabled={editing&&references.length<3} onUseAsReference={files=>void stageReferences(files)} onAttachToChat={files=>setChatAttachments(old=>[...old,...files.filter(file=>!old.some(item=>item.name===file.name&&item.size===file.size))])}/></details>
+    <DirectorImageReview disabled={busy||loading||!!active||(editing&&!references.length)} request={{workspace_id:workspaceId,workflow_id:workflowId,asset_role:'image_candidate',
+      prompt:[prompt.trim(),chatAttachments.length?`Attached local image filenames (metadata only): ${chatAttachments.map(file=>file.name).join(', ')}.`:''].filter(Boolean).join('\n\n'),
+      ...(editing&&references.length?{source_references:references.map(item=>({asset_id:item.asset.asset_id,sha256:item.asset.sha256}))}:{})}}
+      onApply={draft=>{setPrompt(draft.prompt);setPromptDraft(draft);}}/>
+    {promptDraft&&<details><summary>Prompt guidance</summary><small>{promptDraft.knowledge_ref.knowledge_id} · v{promptDraft.knowledge_ref.guidance_version}</small></details>}
+    {!!previousChatDraft&&<details><summary>Previous image chat draft</summary><p>{previousChatDraft}</p></details>}
+    <details className="card t2i-folder-details"><summary>Reference image folder</summary>
+      <p>Local attachments provide filenames to the Director. Choose Use as reference to send image bytes to a compatible generation workflow.</p>
+      <div className="t2i-chat-attachments" onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();const files=Array.from(event.dataTransfer.files).filter(file=>file.type.startsWith('image/'));setChatAttachments(old=>[...old,...files.filter(file=>!old.some(item=>item.name===file.name&&item.size===file.size))]);}}>
+        {chatAttachments.map((file,index)=><span key={`${file.name}:${file.size}:${index}`}><img src={chatPreviewUrls[index]} alt=""/>{file.name}<button type="button" aria-label={`Remove ${file.name}`} onClick={()=>setChatAttachments(old=>old.filter((_,i)=>i!==index))}><X size={13}/></button></span>)}
+      </div>
+      <LocalImageFolderBrowser maxReferences={3} referencesEnabled={editing&&references.length<3} onUseAsReference={files=>void stageReferences(files)} onAttachToChat={files=>setChatAttachments(old=>[...old,...files.filter(file=>!old.some(item=>item.name===file.name&&item.size===file.size))])}/>
+    </details>
   </main>;
 }

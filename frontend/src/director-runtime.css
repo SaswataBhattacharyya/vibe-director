@@ -52,8 +52,11 @@
 .director-sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .director-workspace[data-chat-open=false],.director-workspace[data-work-open=false] {grid-template-columns:minmax(0,1fr)}
 .director-workspace>[hidden] {display:none!important}
-.director-pane-toolbar {display:flex;gap:8px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--studio-line)}
-.studio-shell .director-pane-toolbar button {min-height:36px;padding:8px 12px;font-size:12px;background:transparent}
+.director-pane-toolbar {display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 20px;border-bottom:1px solid var(--studio-line)}
+.studio-shell .director-pane-toolbar button {display:flex;align-items:center;gap:8px;min-height:36px;padding:8px 12px;font-size:12px;background:transparent}
+.director-pane-toolbar .agent-inspector {display:contents}
+.director-pane-toolbar .agent-inspector>button {margin-left:auto}
+.director-pane-toolbar .agent-inspector-panel {flex:1 0 100%;order:1;margin:0;min-width:0}
 .director-empty-panes {padding:24px;color:var(--studio-muted)}
 .director-workspace .studio-page-content {min-width:0}
 .create-tools {display:grid;gap:24px;min-width:0}

@@ -2,9 +2,8 @@ import {defaultMediaWorkspaceId} from './lib/media-workspace';
 import OutputDestination from './OutputDestination';
 import MediaSourcePicker from './MediaSourcePicker';
 import AceGeneratedAudio from './AceGeneratedAudio';
-import ModelSelector, { consumeModelCommand } from './ModelSelector';
-import {useEffect, useRef, useState} from 'react';
-import EditorWorkspace from './EditorWorkspace';
+import {DirectorMusic, type MusicTarget} from './DirectorMusic';
+import {useContext, useEffect, useRef, useState} from 'react';
 import {MediaAsset, listMediaAssets, uploadMediaAsset} from './lib/media-api';
 import CompactPopover from './CompactPopover';
 import './editor-assets.css';
@@ -25,7 +24,7 @@ async function api<T>(path:string,body?:unknown):Promise<T> {
 }
 export default function AceStudioPage() {
   const [destinationReady,setDestinationReady]=useState(false);
-  const [modelOpen, setModelOpen] = useState(false);
+  const director = useContext(DirectorMusic);
   const [state,setState]=useState<State|null>(null),[projectId,setProjectId]=useState(()=>{try{return localStorage.getItem(`vibe-ace-project:${defaultMediaWorkspaceId()}`)||'';}catch{return '';}});
   const workspace=defaultMediaWorkspaceId();
   const [name,setName]=useState('Untitled music');
@@ -68,7 +67,18 @@ export default function AceStudioPage() {
     try{localStorage.setItem(`vibe-ace-draft-${saved.id}`,JSON.stringify({revision:saved.revision,config,intent,draft}));}catch{/* Current draft remains in memory. */}
     return saved;
   };
-  const send=()=>attempt(async()=>{const saved=await save();const reply=await api<Project>(`projects/${saved.id}/command`,{action:'chat',revision:saved.revision,text:draft});setTab(reply.intent==='finetune'?'dataset':'settings');setDraft('');});
+  const musicBridge=useRef({locked,loadedKey,project,save});musicBridge.current={locked,loadedKey,project,save};
+  useEffect(()=>{
+    if(!director)return;
+    const bridge={refresh,prepareTarget:async():Promise<MusicTarget>=>{
+      const current=musicBridge.current;
+      if(current.locked||!current.project||current.loadedKey!==`${current.project.id}:${current.project.revision}`)throw new Error('Wait for the music session to finish loading or working.');
+      const saved=await current.save();
+      await refresh();
+      return {version:1,workspace_id:saved.workspace_id,project_id:saved.id,revision:saved.revision};
+    }};
+    director.current=bridge;return()=>{if(director.current===bridge)director.current=null;};
+  },[director,workspace]);
   const attach=async(files:File[])=>{
     if(!project||!config)throw new Error('Open a music project first.');
     if(files.length!==1||(!files[0].type.startsWith('audio/')&&!/\.(wav|mp3|flac|ogg|m4a)$/i.test(files[0].name)))throw new Error('Choose one audio recording.');
@@ -118,7 +128,7 @@ export default function AceStudioPage() {
       {intent==='generate'?<>
         <label>Generation method<select disabled={locked} value={config.task} onChange={e=>setConfig({...config,task:e.target.value,...(e.target.value==='remix'?{edit_min:.2,edit_max:.4}:e.target.value==='lyrics'?{edit_min:.6,edit_max:1}:{})})}><option value="text">Text to music</option><option value="reference">Reference-guided music</option><option value="remix">Remix / change track</option><option value="lyrics">Replace lyrics</option></select></label>
         <p>Reference mode retains elements of a recording. Remix and lyric edits need its original description and lyrics. Exact melody or sound preservation is not guaranteed.</p>
-        <MediaSourcePicker compact workspaceId={project.workspace_id} kinds={['audio']} disabled={locked} onAdded={items=>setReferences(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])}/>
+        <MediaSourcePicker compact workspaceId={project.workspace_id} kinds={['audio']} disabled={locked} onAdded={items=>setReferences(rows=>[...rows.filter(row=>!items.some(item=>item.asset_id===row.asset_id)),...items])} destination={{kind:'model_reference',slot:'ACE audio reference',capacity:1,onSelect:items=>{const asset=items[0];if(asset)setConfig(c=>c?{...c,reference_id:asset.asset_id,task:c.task==='text'?'reference':c.task}:c);}}}/>
         <div className="ace-drop" tabIndex={0} aria-label="Reference audio drop area" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(!locked)void attempt(()=>attach(Array.from(e.dataTransfer.files)));}} onPaste={e=>{const files=Array.from(e.clipboardData.files);if(files.length){e.preventDefault();if(!locked)void attempt(()=>attach(files));}}}>
           <label>Reference audio<input type="file" accept="audio/*" disabled={locked} onChange={e=>{const files=Array.from(e.target.files||[]);if(files.length)void attempt(()=>attach(files));e.target.value='';}}/></label><small>Choose, drop or paste one audio file, up to 240 seconds. Chat receives metadata, not the sound itself.</small>
           <label>Library audio<select disabled={locked} value={config.reference_id} onChange={e=>setConfig({...config,reference_id:e.target.value,...(e.target.value&&config.task==='text'?{task:'reference'}:{})})}><option value="">No reference</option>{references.map(a=><option key={a.asset_id} value={a.asset_id}>{a.filename}</option>)}</select></label>
@@ -162,15 +172,16 @@ export default function AceStudioPage() {
     <header className="editor-header"><div><h1>ACE-Step Music</h1><small>Describe → review → confirm → listen</small></div><button disabled={busy} onClick={()=>void attempt(refresh)}>Refresh</button></header>
     {error&&<p role="alert" className="notice notice-warn">{error}</p>}{notice&&<p role="status" className="notice">{notice}</p>}
     <div className="editor-projects session-toolbar"><button disabled={locked} onClick={()=>{setProjectId('');setName('Untitled music');setIntent('generate');setTab('settings');localStorage.removeItem('vibe-ace-draft-');setConfig(state?{...extras,...state.defaults}:null);setDraft('');}}>New session</button><label>Session name<input maxLength={100} disabled={locked||Boolean(projectId)} value={projectId?project?.name||'':name} onChange={e=>setName(e.target.value)}/></label><CompactPopover label="Open session" disabled={locked}><label>Saved music session<select aria-label="Music project" disabled={locked} value={projectId} onChange={e=>setProjectId(e.target.value)}><option value="">New session</option>{state?.projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label></CompactPopover></div>
-    <EditorWorkspace name="ace-music" preview={preview}>
+    <section className="ace-music-canvas">{preview}
       {project?<>
         <div className="editor-project-status"><strong>{project.name}</strong><small>Draft kept in this browser · Save settings to store on server</small></div>
-        <div className="editor-messages" aria-label="Music conversation">{!project.messages.length&&<p>Describe the music you want, ask for lyrics, or say you want to train a music style.</p>}{project.messages.map(m=><article key={m.id} className={`editor-message ${m.role}`}><small>{m.role==='user'?'You':'Director'}</small><p>{m.content}</p></article>)}<div ref={bottom}/></div>
+        <details open={Boolean(project.messages.length)}><summary>Music session responses</summary><div className="editor-messages" aria-label="Music conversation">{!project.messages.length&&<p>Describe the music you want, ask for lyrics, or say you want to train a music style.</p>}{project.messages.map(m=><article key={m.id} className={`editor-message ${m.role}`}><small>{m.role==='user'?'You':'Director'}</small><p>{m.content}</p></article>)}<div ref={bottom}/></div></details>
         {(project.summary||config?.tags||intent==='finetune')&&<section className="editor-clearance"><h2>Review before {intent==='finetune'?'training':'generation'}</h2><p>{project.summary||'Review the settings in the right pane.'}</p><ul>{project.questions.map(q=><li key={q}>{q}</li>)}</ul><p>{intent==='finetune'?`${config?.max_steps} training steps · ${project.dataset?.count||0} songs`:`${config?.mode} · ${config?.duration} seconds · ${config?.steps} steps`}</p>{!(intent==='finetune'?state?.runtime.training_ready:state?.runtime.ready)&&<p>Runtime setup is incomplete. Open Connection for the missing items; chat and dataset preparation remain available.</p>}</section>}
         {!locked&&project.confirmed_revision===project.revision&&<button onClick={()=>void attempt(()=>api(`projects/${project.id}/command`,{action:'new_take',revision:project.revision}))}>Prepare another take</button>}
         {active(project.job)&&<section className="editor-job" role="status"><p>{project.job?.stage} · {project.job?.message}</p>{project.job?.step_progress?<><progress max={project.job.step_progress.total} value={project.job.step_progress.done}/><small>{project.job.step_progress.done} / {project.job.step_progress.total} steps in the current stage</small></>:<progress aria-label="ACE-Step is working"/>}<button disabled={busy} onClick={()=>void attempt(()=>api(`projects/${project.id}/command`,{action:'stop'}))}>Stop job</button></section>}
-        <form className="editor-composer" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(!locked)void attempt(()=>attach(Array.from(e.dataTransfer.files)));}} onSubmit={e=>{e.preventDefault();void send();}}><ModelSelector open={modelOpen} onClose={()=>setModelOpen(false)} disabled={locked} returnFocusId="ace-chat"/><label htmlFor="ace-chat">Talk to the music Director</label><textarea id="ace-chat" onPaste={e=>{const files=Array.from(e.clipboardData.files);if(files.length){e.preventDefault();if(!locked)void attempt(()=>attach(files));}}} rows={4} disabled={locked} value={draft} onChange={e=>setDraft(consumeModelCommand(e.target.value,()=>setModelOpen(true),"ace-chat"))} placeholder="Type /model to choose a model. Make a warm acoustic song… or help me fine-tune on my recordings" onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(draft.trim()&&!locked)void send();}}}/><label>Attach audio to chat<input type="file" accept="audio/*" disabled={locked} onChange={e=>{const files=Array.from(e.target.files||[]);if(files.length)void attempt(()=>attach(files));e.target.value='';}}/></label>{reference&&<div className="editor-attachment-chip"><span>Attached: {reference.filename}</span><button className="editor-attachment-remove" aria-label="Remove attachment" type="button" disabled={locked} onClick={()=>setConfig(c=>c?{...c,reference_id:''}:c)}>×</button></div>}<MediaSourcePicker compact workspaceId={project.workspace_id} kinds={['audio']} disabled={locked} onAdded={items=>{const asset=items[0];if(asset){setReferences(rows=>[asset,...rows.filter(row=>row.asset_id!==asset.asset_id)]);setConfig(c=>c?{...c,reference_id:asset.asset_id,task:c.task==='text'?'reference':c.task}:c);}}}/><div><small>Chat edits settings. Run / Start fine-tuning starts the job.</small><button disabled={locked||!draft.trim()}>Send</button></div></form>
+        {draft&&<details><summary>Earlier unsent music draft</summary><p>{draft}</p></details>}
+
       </>:<p>Create or open a music project to begin.</p>}
-    </EditorWorkspace>
+    </section>
   </div>;
 }

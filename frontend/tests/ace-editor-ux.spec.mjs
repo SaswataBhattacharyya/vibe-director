@@ -6,12 +6,15 @@ const defaults={mode:'instrumental',tags:'warm',lyrics:'',duration:30,seed:42,st
 test('ACE fresh Create, restored fine-tune and new session keep panels and settings consistent',async({page},info)=>{
  const training={id:'training',name:'Saved training',workspace_id:'tool-library',revision:2,settings:{...defaults,rank:32},intent:'finetune',summary:'',questions:[],messages:[],dataset:{count:1,songs:['song']},assets:[],adapters:[],job_id:null};
  const writes=[];
+ const references=['rain.wav','wind.wav'].map((filename,index)=>({asset_id:`source-${index}`,workspace_id:'other',kind:'audio',filename,content_url:'/mock/audio',roles:[]}));
+ const reused=[];
  await page.route('**/api/**',route=>{
   if(new URL(route.request().url()).pathname.startsWith('/api/projects/'))return route.fulfill({json:route.request().url().endsWith('/current')?{workspace_id:'tool-library',title:'Standalone tools',browser_state:{}}:{saved:true}});
   const path=new URL(route.request().url()).pathname;
   if(route.request().method()==='POST')writes.push(path);
   if(path==='/api/director/settings')return route.fulfill({json:{settings:{provider:'codex',model:'test'},models:[]}});
-  if(path.endsWith('/assets/catalogue'))return route.fulfill({json:{assets:[],total:0,workspaces:[]}});
+  if(path.endsWith('/assets/catalogue'))return route.fulfill({json:{assets:references,total:2,workspaces:[]}});
+  if(path.endsWith('/assets/reuse')){reused.push(route.request().postDataJSON());return route.fulfill({json:{...references[0],workspace_id:'tool-library',asset_id:'local-reference'}});}
   if(path==='/api/story/workspaces')return route.fulfill({json:{items:[]}});
   if(path==='/api/ace/state')return route.fulfill({json:{projects:[training],defaults,adapters:[],runtime:{ready:false,training_ready:false,checks:{}}}});
   if(path==='/api/studio-tools/output-destination')return route.fulfill({json:{mode:'default',path:'/default/music'}});
@@ -23,13 +26,23 @@ test('ACE fresh Create, restored fine-tune and new session keep panels and setti
  await expect(nav.getByRole('button',{name:'Create',exact:true})).toHaveAttribute('aria-pressed','true');
  await expect(page.getByRole('heading',{name:'Create music',exact:true})).toBeVisible();
  await expect(page.getByRole('combobox',{name:'Task',exact:true})).toHaveValue('generate');
- await page.locator('.editor-composer').getByRole('button',{name:'Browse media sources',exact:true}).click();
+ await page.locator('.ace-studio-page').getByRole('button',{name:'Browse media sources',exact:true}).click();
  await expect(page.getByRole('dialog',{name:'Browse media sources',exact:true})).toHaveCSS('position','fixed');
+ const picker=page.getByRole('dialog',{name:'Browse media sources',exact:true});
+ await picker.getByRole('checkbox',{name:'rain.wav',exact:true}).check();
+ await picker.getByRole('checkbox',{name:'wind.wav',exact:true}).check();
+ await picker.getByRole('button',{name:'Use as ACE audio reference (2)',exact:true}).click();
+ await expect(picker.getByText('Choose at most 1 more file for this destination.',{exact:true})).toBeVisible();
+ expect(reused).toEqual([]);
+ await picker.getByRole('checkbox',{name:'wind.wav',exact:true}).uncheck();
+ await picker.getByRole('button',{name:'Use as ACE audio reference (1)',exact:true}).click();
+ await expect(page.getByRole('combobox',{name:'Library audio',exact:true})).toHaveValue('local-reference');
+ expect(reused).toHaveLength(1);
  await page.keyboard.press('Escape');
  await expect(page.getByRole('dialog',{name:'Browse media sources',exact:true})).toHaveCount(0);
- const before=await page.locator('.editor-composer').evaluate(el=>el.getBoundingClientRect().top+window.scrollY);
+ const before=await page.locator('.session-toolbar').evaluate(el=>el.getBoundingClientRect().top+window.scrollY);
  await page.getByRole('button',{name:'Open session',exact:true}).click();
- const after=await page.locator('.editor-composer').evaluate(el=>el.getBoundingClientRect().top+window.scrollY);
+ const after=await page.locator('.session-toolbar').evaluate(el=>el.getBoundingClientRect().top+window.scrollY);
  expect(Math.abs(after-before)).toBeLessThan(8);
  await expect(page.getByRole('dialog',{name:'Open session',exact:true})).toHaveCSS('position','fixed');
  await page.getByLabel('Music project').selectOption('training');

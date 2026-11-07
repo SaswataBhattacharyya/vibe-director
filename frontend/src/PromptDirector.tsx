@@ -1,28 +1,30 @@
-import {useEffect,useRef,useState} from 'react';
-import {Check,Download,LoaderCircle,MessageSquare,Send,Sparkles,Trash2} from 'lucide-react';
-import {discussPrompts,exportPromptSkill,getPromptGuidance,savePromptGuidance,PromptChange,PromptGuidance,PromptTurn} from './lib/prompt-director-api';
+import {useContext,useEffect,useRef,useState} from 'react';
+import {Check,Download,LoaderCircle,MessageSquare,Trash2} from 'lucide-react';
+import {exportPromptSkill,getPromptGuidance,savePromptGuidance,PromptChange,PromptGuidance,PromptTurn} from './lib/prompt-director-api';
 import './storyboard.css';
+import {DirectorPrompts, type PromptTarget} from './DirectorScreenplay';
+import {useProjectState} from './lib/project-state';
 
 export default function PromptDirector({workspace,revision,shotPrompts,shotWorkflows,disabled,onApplyShots,onBusy}:{
   workspace:string;revision:string;shotPrompts:Record<string,string>;shotWorkflows:Record<string,string>;disabled:boolean;
   onApplyShots:(changes:PromptChange[])=>void;onBusy:(busy:boolean)=>void;
 }){
   const [state,setState]=useState<PromptGuidance|null>(null),[assets,setAssets]=useState<Record<string,string>>({});
-  const [input,setInput]=useState(''),[focus,setFocus]=useState('all'),[error,setError]=useState(''),[notice,setNotice]=useState('');
+  const [focus,setFocus]=useState('all'),[error,setError]=useState(''),[notice,setNotice]=useState('');
   const [busy,setBusy]=useState('Loading prompts and conversation…');
   const [selected,setSelected]=useState<Record<string,number[]>>({});
-  const pending=useRef<{signature:string;key:string}|null>(null);
-  const log=useRef<HTMLDivElement>(null);
+  const bridge=useContext(DirectorPrompts);
+  const [dismissed,setDismissed]=useProjectState<string[]>('PromptDirector:dismissed',[]);
   const locked=disabled||!!busy||!state;
   const assetsDirty=!!state&&JSON.stringify(assets)!==JSON.stringify(state.assets);
   useEffect(()=>{
     let live=true;
+    setState(null);setAssets({});setSelected({});setBusy('Loading prompts and conversation…');setError('');
     void getPromptGuidance(workspace,revision).then(value=>{if(live){setState(value);setAssets(value.assets);}})
       .catch(e=>{if(live)setError(e.message);}).finally(()=>{if(live)setBusy('');});
     return()=>{live=false;};
   },[workspace,revision]);
   useEffect(()=>{onBusy(!!busy);return()=>onBusy(false);},[busy,onBusy]);
-  useEffect(()=>{if(log.current)log.current.scrollTop=log.current.scrollHeight;},[state?.items.length,busy]);
   const prompts=()=>{
     const result:Record<string,string>={};
     for(const [key,value] of Object.entries(shotPrompts))if(focus==='all'||focus==='video'||focus===`shot:${key}`)result[`shot:${key}`]=value;
@@ -30,23 +32,32 @@ export default function PromptDirector({workspace,revision,shotPrompts,shotWorkf
       result[`image:${id}`]=assets[id]??seed(target);
     return result;
   };
-  const send=async(mode:PromptTurn['mode'])=>{
-    if(locked||mode!=='propose'&&!input.trim())return;
-    const instruction=input.trim()||(mode==='propose'?'Prepare only the prompt changes agreed in this conversation.':'');
-    const context=prompts();
-    if(!Object.keys(context).length){setError('Choose a focus with available prompts.');return;}
-    const workflows=Object.fromEntries(Object.entries(shotWorkflows).filter(([key])=>`shot:${key}` in context).map(([key,value])=>[`shot:${key}`,value]));
-    const signature=JSON.stringify([mode,instruction,context,workflows]);
-    const key=pending.current?.signature===signature?pending.current.key:crypto.randomUUID();
-    pending.current={signature,key};
-    setBusy(mode==='learn'?'Director is drafting reusable rules…':mode==='propose'?'Director is preparing changes…':'Director is thinking…');setError('');setNotice('');
-    try{
-      const item=await discussPrompts(workspace,revision,mode,instruction,context,workflows,key);
-      setState(old=>old?{...old,items:[...old.items.filter(row=>row.key!==key),item]}:old);
-      setSelected(old=>({...old,[key]:(item.proposal?.changes||item.proposal?.lessons||[]).map((_,i)=>i)}));
-      pending.current=null;setInput('');
-    }catch(e){setError((e as Error).message);}finally{setBusy('');}
-  };
+  const latest=useRef({workspace,revision,locked,prompts,shotWorkflows});
+  latest.current={workspace,revision,locked,prompts,shotWorkflows};
+  useEffect(()=>{
+    if(!bridge)return;
+    let active=true;
+    const adapter={
+      prepareTarget:():PromptTarget=>{
+        const scope=latest.current;
+        if(scope.locked)throw new Error('Wait for Prompt Preparation to load and save or finish active edits first.');
+        const context=scope.prompts();
+        if(!Object.keys(context).length)throw new Error('Choose a focus with available prompts.');
+        const workflows=Object.fromEntries(Object.entries(scope.shotWorkflows).filter(([key])=>`shot:${key}` in context).map(([key,value])=>[`shot:${key}`,value]));
+        return {version:1,workspace_id:scope.workspace,screenplay_revision_id:scope.revision,prompts:context,workflows};
+      },
+      refresh:async()=>{
+        const scope=latest.current;
+        const value=await getPromptGuidance(scope.workspace,scope.revision);
+        if(active&&latest.current.workspace===scope.workspace&&latest.current.revision===scope.revision){
+          setState(value);
+          setSelected(old=>Object.fromEntries(value.items.map(item=>[item.key,old[item.key]??(item.proposal?.changes||item.proposal?.lessons||[]).map((_,index)=>index)])));
+        }
+      }
+    };
+    bridge.current=adapter;
+    return()=>{active=false;if(bridge.current===adapter)bridge.current=null;};
+  },[bridge]);
   const persist=async(nextAssets=assets,lessons=state!.lessons,keepLocalAssets=false)=>{
     const saved=await savePromptGuidance(workspace,revision,state!.revision,lessons,nextAssets);
     setState(saved);if(!keepLocalAssets)setAssets(saved.assets);
@@ -88,36 +99,31 @@ export default function PromptDirector({workspace,revision,shotPrompts,shotWorkf
   return <>
     <section className="card board-stack prompt-director" aria-label="Prompt Director">
       <div className="board-heading"><div><h2><MessageSquare size={18}/> Direct the prompts</h2>
-        <p>Discuss first, then prepare and review changes. To teach a reusable rule, describe it in your message and choose Draft learning rules.</p></div></div>
+        <p>Discuss prompts in the shared Director. Ask it to prepare agreed changes or draft reusable learning rules, then review them here.</p></div></div>
       {error&&<p role="alert" className="error-banner">{error}</p>}{notice&&<p role="status" className="prompt-notice">{notice}</p>}
       <label className="board-field">Conversation focus<select value={focus} disabled={locked} onChange={e=>setFocus(e.target.value)}>
-        <option value="all">All prompts</option><option value="video">Video shot prompts</option><option value="character">Character prompts</option><option value="world">World / background prompts</option>
+        <option value="all">All prompts</option><option value="video">Video shot prompts</option><option value="character">Character prompts</option><option value="world">Scene background prompts</option>
         {Object.keys(shotPrompts).map(key=><option key={key} value={`shot:${key}`}>Shot {key}</option>)}
         {Object.entries(state?.targets||{}).map(([id,t])=><option key={id} value={`image:${id}`}>{t.name}</option>)}
       </select></label>
-      <div className="screenplay-chat-log" role="log" aria-label="Prompt conversation" aria-live="polite" ref={log}>
-        {!state?.items.length&&!busy&&<p className="muted">Ask why a prompt is written that way, suggest a direction, or explain a rule you want remembered.</p>}
-        {state?.items.map(item=><article className="screenplay-chat-turn" key={item.key}>
-          <div className="screenplay-chat-message screenplay-chat-user"><strong>You</strong><p>{item.instruction}</p></div>
-          <div className="screenplay-chat-message screenplay-chat-director"><strong>Director</strong><p>{item.reply||'This request has no confirmed result. Reload to check its status before retrying.'}</p>
-            {item.proposal&&item.revision_id!==revision?<small>Proposal from an earlier screenplay revision.</small>:item.proposal&&<details open className="screenplay-chat-review"><summary>{item.mode==='learn'?'Review learning rules':'Review prompt changes'}</summary>
-              <div className="board-changes">{(item.proposal.changes||item.proposal.lessons||[]).map((value,index)=><label key={index}>
-                <input type="checkbox" disabled={locked} checked={(selected[item.key]||[]).includes(index)} onChange={e=>setSelected(old=>({...old,[item.key]:e.target.checked?[...(old[item.key]||[]),index]:(old[item.key]||[]).filter(i=>i!==index)}))}/>
-                <span>{'key' in value?<><b>{label(value.key)}</b><small>Before: {value.before}</small><span>After: {value.value}</span></>:<><b>{value.scope}</b><span>{value.rule}</span></>}</span>
-              </label>)}</div>
-              <button className="quiet-button" disabled={locked||!selected[item.key]?.length} onClick={()=>void apply(item)}><Check size={15}/>{item.mode==='learn'?'Save selected rules':'Apply selected prompt changes'}</button>
-            </details>}
+      {state?.items.filter(item=>item.proposal&&!dismissed.includes(item.key)).map(item=><article className="screenplay-chat-review" key={item.key}>
+        <p>{item.reply}</p>
+        {item.revision_id!==revision?<small>Proposal from an earlier screenplay revision.</small>:<>
+          <h3>{item.mode==='learn'?'Review learning rules':'Review prompt changes'}</h3>
+          <div className="board-changes">{(item.proposal!.changes||item.proposal!.lessons||[]).map((value,index)=><label key={index}>
+            <input type="checkbox" disabled={locked} checked={(selected[item.key]||[]).includes(index)} onChange={e=>setSelected(old=>({...old,[item.key]:e.target.checked?[...(old[item.key]||[]),index]:(old[item.key]||[]).filter(i=>i!==index)}))}/>
+            <span>{'key' in value?<><b>{label(value.key)}</b><small>Before: {value.before}</small><span>After: {value.value}</span></>:<><b>{value.scope}</b><span>{value.rule}</span></>}</span>
+          </label>)}</div>
+          <div className="board-actions">
+            <button className="quiet-button" disabled={locked||!selected[item.key]?.length} onClick={()=>void apply(item)}><Check size={15}/>{item.mode==='learn'?'Save selected rules':'Apply selected prompt changes'}</button>
+            <button className="quiet-button" disabled={locked} onClick={()=>setDismissed(old=>[...old,item.key])}>Discard suggestion</button>
           </div>
-        </article>)}
-        {busy&&<div className="screenplay-thinking" role="status"><LoaderCircle className="spin" size={16}/>{busy}</div>}
-      </div>
-      <form className="board-stack" onSubmit={e=>{e.preventDefault();void send('chat');}}>
-        <label className="board-field">Prompt instruction<textarea rows={3} maxLength={4000} value={input} disabled={locked} onChange={e=>setInput(e.target.value)} placeholder="Discuss a change, or explain what the Director should learn…" onKeyDown={e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();void send('chat');}}}/></label>
-        <div className="board-actions"><button type="submit" className="generate-button" disabled={locked||!input.trim()}><Send size={15}/> Send message</button>
-          <button type="button" className="quiet-button" disabled={locked||(!input.trim()&&!state?.items.length)} onClick={()=>void send('propose')}><Sparkles size={15}/> Prepare agreed changes</button>
-          <button type="button" className="quiet-button" disabled={locked||!input.trim()} onClick={()=>void send('learn')}>Draft learning rules</button>
-        </div>
-      </form>
+        </>}
+      </article>)}
+      {state?.items.some(item=>item.status!=='complete')&&<p role="status">A saved prompt request has no confirmed result. Reload its conversation before starting another request.</p>}
+      {busy&&<p role="status"><LoaderCircle className="spin" size={16}/>{busy}</p>}
+      {!!state?.items.length&&<details><summary>Previous prompt conversation</summary>{state.items.map(item=><article key={item.key}><p><strong>You</strong> {item.instruction}</p><p><strong>Director</strong> {item.reply||item.status}</p></article>)}</details>}
+      <button className="quiet-button" disabled={locked} onClick={()=>void bridge?.current?.refresh().catch(e=>setError(e.message))}>Reload prompt conversation</button>
       <details className="prompt-rules"><summary>Saved prompting rules ({state?.lessons.length||0}) · this project</summary>
         <p className="muted">Approved rules guide future video and image prompt preparation with any configured Director model. Existing saved or frozen production requests stay as reviewed.</p>
         {state?.lessons.map((lesson,index)=><div className="prompt-rule" key={index}><p><b>{lesson.scope}</b> · {lesson.rule}</p><button className="quiet-button" disabled={locked} aria-label={`Remove prompting rule ${index+1}`} onClick={()=>void removeLesson(index)}><Trash2 size={14}/></button></div>)}
@@ -125,13 +131,13 @@ export default function PromptDirector({workspace,revision,shotPrompts,shotWorkf
       </details>
     </section>
     <section className="card board-stack" aria-label="Character and world prompts"><div><h2>Character &amp; background prompts</h2><p>Reusable image briefs linked to the accepted screenplay’s characters and locations. Image preparation adapts these briefs to the chosen workflow and attached references before generation.</p></div>
-      {state&&(['character','world'] as const).map(scope=><details className="prompt-assets-group" key={scope}><summary>{scope==='character'?'Characters':'Worlds / backgrounds'} ({Object.values(state.targets).filter(t=>t.scope===scope).length})</summary>
+      {state&&(['character','world'] as const).map(scope=><details className="prompt-assets-group" key={scope}><summary>{scope==='character'?'Characters':'Scene backgrounds'} ({Object.values(state.targets).filter(t=>t.scope===scope).length})</summary>
         {!Object.values(state.targets).some(t=>t.scope===scope)&&<p className="muted">No canonical {scope==='character'?'characters':'locations'} in this screenplay’s source graph. Nothing has been invented.</p>}
         {Object.entries(state.targets).filter(([,t])=>t.scope===scope).map(([id,t])=><label className="board-field" key={id}>{t.name}<textarea rows={4} maxLength={6999} disabled={locked} value={assets[id]??seed(t)} onChange={e=>setAssets(old=>({...old,[id]:e.target.value}))}/></label>)}
       </details>)}
       <div className="board-actions"><button className="quiet-button" disabled={locked||!assetsDirty} onClick={()=>void saveAssets()}>Save character &amp; background briefs</button>
         <a className="quiet-button" href={`#/assets?step=character_images&workspace_id=${encodeURIComponent(workspace)}`}>Characters &amp; Voices</a>
-        <a className="quiet-button" href={`#/assets?step=world_images&workspace_id=${encodeURIComponent(workspace)}`}>World building</a></div>
+        <a className="quiet-button" href={`#/assets?step=world_images&workspace_id=${encodeURIComponent(workspace)}`}>Scene Backgrounds</a></div>
       {assetsDirty&&<small role="status">Unsaved image briefs. Save before leaving this page.</small>}
     </section>
   </>;

@@ -1,9 +1,10 @@
 import {test,expect} from '@playwright/test';
+import {mockProject} from './fixtures/project.mjs';
 const w='story-aaaaaaaaaaaa',r='screenplay-prompts';
 const workflow='minimax_h3_t2v_local_v1';
 const script={workspace_id:w,screenplay_revision_id:r,source_revision_id:'source-1',accepted:true,stale:false,screenplay:{title:'The key',scenes:[{scene_number:1,slugline:'INT. ROOM - DAY',summary:'Mira finds a key.',shots:[{shot_number:1,action:'Mira holds a key.',dialogue:'MIRA: Here it is.',direction:{camera:'Static',lighting:'Day',mood:'Quiet',sfx:'',music:''}}]}]}};
 async function fixture(page,mode='assisted_manual'){
- const requests=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const requests=[],errors=[],messages=[];page.on('pageerror',e=>errors.push(e.message));
  let guidance={revision:0,lessons:[],assets:{},targets:{mira:{scope:'character',name:'Mira',detail:'An established character.'},room:{scope:'world',name:'Room',detail:'A small room.'}},items:[]};
  let drafts={'1.1':{workflow_id:workflow,prompt:'Mira holds a key.'}};
  await page.route('**/api/**',async route=>{
@@ -17,6 +18,17 @@ async function fixture(page,mode='assisted_manual'){
   else if(path.endsWith('/assisted-video-clip-plan'))json={clips:[],references:{},setup_matches_current:true};
   else if(path.endsWith('/assets'))json={assets:[],total:0};
   else if(path.endsWith('/prompt-drafts')){if(body)drafts=body.drafts;json={drafts,setup_hash:'hash',setup_matches_current:true};}
+  else if(path===`/api/agent/projects/${w}/tasks`)json={tasks:[]};
+  else if(path===`/api/agent/projects/${w}/conversation`){
+   if(body){
+    expect(body.surface).toBe('prompt');expect(body.target.workspace_id).toBe(w);expect(body.target.screenplay_revision_id).toBe(r);
+    const mode=body.text.startsWith('Prepare')?'propose':body.text.startsWith('Remember')?'learn':'chat';
+    await new Promise(resolve=>setTimeout(resolve,300));
+    const item={key:body.request_id,revision_id:r,instruction:body.text,mode,status:'complete',reply:mode==='chat'?'I understand. Keep camera direction concise.':'Review the proposal.',proposal:mode==='learn'?{lessons:[{scope:'video',rule:'Use one concrete camera move per shot.'}]}:mode==='propose'?{changes:[{key:'shot:1.1',before:body.target.prompts['shot:1.1'],value:'Mira holds a key. One slow push-in.'}]}:null};
+    guidance.items.push(item);messages.push({request_id:body.request_id,text:body.text,reply:item.reply,status:'answered',task_id:null});
+   }
+   json={messages};
+  }
   else if(path.endsWith('/prompt-director/'+r)){
    if(body)guidance={...guidance,revision:guidance.revision+1,lessons:body.lessons,assets:body.assets};json=guidance;
   }else if(path.includes('/prompt-director/'+r+'/')){
@@ -27,18 +39,20 @@ async function fixture(page,mode='assisted_manual'){
   else return route.fulfill({status:404,json:{error:{message:'Unused fixture '+path}}});
   return route.fulfill({json});
  });
+ await mockProject(page,w);
  return {requests,errors,getGuidance:()=>guidance,getDrafts:()=>drafts};
 }
 test('prompt chat discusses, animates, remembers history and applies only reviewed edits',async({page})=>{
  const fx=await fixture(page);await page.goto('/#/prompts');
- const input=page.getByRole('textbox',{name:'Prompt instruction',exact:true});await expect(input).toBeVisible();
- await input.fill('Can we simplify the camera?');await page.getByRole('button',{name:'Send message',exact:true}).click();
- await expect(page.getByText('Director is thinking…',{exact:true})).toBeVisible();
- expect(await page.locator('.screenplay-thinking .spin').evaluate(el=>getComputedStyle(el).animationName)).not.toBe('none');
- await expect(page.getByText('I understand. Keep camera direction concise.')).toBeVisible();
+ const input=page.getByRole('textbox',{name:'Message the project Director',exact:true});await expect(input).toBeVisible();
+ await input.fill('Can we simplify the camera?');await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+ await expect(page.getByText('Working on your request…',{exact:true})).toBeVisible();
+ await expect(page.locator('.director-composer textarea')).toHaveCount(1);
+ await expect(page.getByRole('textbox',{name:'Prompt instruction',exact:true})).toHaveCount(0);
+ await expect(page.locator('.director-transcript').getByText('I understand. Keep camera direction concise.')).toBeVisible();
  expect(fx.requests.filter(q=>q.method==='PUT')).toHaveLength(0);
  await page.reload();await expect(page.getByText('Can we simplify the camera?',{exact:true})).toBeVisible();
- await page.getByRole('button',{name:'Prepare agreed changes',exact:true}).click();
+ await input.fill('Prepare agreed changes.');await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
  await expect(page.getByRole('button',{name:'Apply selected prompt changes',exact:true})).toBeVisible();
  const shot=page.getByRole('textbox',{name:'Prompt for scene 1 shot 1',exact:true});await expect(shot).toHaveValue('Mira holds a key.');
  await page.getByRole('button',{name:'Apply selected prompt changes',exact:true}).click();await expect(shot).toHaveValue('Mira holds a key. One slow push-in.');
@@ -48,19 +62,19 @@ test('prompt chat discusses, animates, remembers history and applies only review
 });
 test('image briefs and explicitly approved learning rules persist and export, with responsive layout',async({page})=>{
  const fx=await fixture(page);await page.setViewportSize({width:1440,height:1000});await page.goto('/#/prompts');
- await expect(page.getByRole('textbox',{name:'Prompt instruction',exact:true})).toBeEnabled();
+ await expect(page.getByRole('textbox',{name:'Message the project Director',exact:true})).toBeEnabled();
  await page.getByText('Characters (1)',{exact:true}).click();await page.getByRole('textbox',{name:'Mira',exact:true}).fill('Mira, established appearance, plain white background.');
  await page.getByRole('button',{name:'Save character & background briefs',exact:true}).click();await expect.poll(()=>fx.getGuidance().assets.mira).toContain('plain white');
  await page.getByRole('textbox',{name:'Mira',exact:true}).fill('Unsaved character adjustment.');
- await page.getByRole('textbox',{name:'Prompt instruction',exact:true}).fill('Remember: use one concrete camera move per shot.');
- await page.getByRole('button',{name:'Draft learning rules',exact:true}).click();await expect(page.getByText('Use one concrete camera move per shot.',{exact:true})).toBeVisible();
+ await page.getByRole('textbox',{name:'Message the project Director',exact:true}).fill('Remember: use one concrete camera move per shot.');
+ await page.getByRole('button',{name:'Send to project Director',exact:true}).click();await expect(page.getByText('Use one concrete camera move per shot.',{exact:true})).toBeVisible();
  expect(fx.getGuidance().lessons).toHaveLength(0);
  await page.getByRole('button',{name:'Save selected rules',exact:true}).click();await expect.poll(()=>fx.getGuidance().lessons.length).toBe(1);
  expect(fx.getGuidance().assets.mira).toBe('Mira, established appearance, plain white background.');
  await expect(page.getByRole('textbox',{name:'Mira',exact:true})).toHaveValue('Unsaved character adjustment.');
  await page.getByText('Saved prompting rules (1) · this project',{exact:true}).click();
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Export SKILL.md',exact:true}).click();expect((await download).suggestedFilename()).toBe('SKILL.md');
- await page.getByText('Worlds / backgrounds (1)',{exact:true}).click();await expect(page.getByRole('textbox',{name:'Room',exact:true})).toHaveValue(/Empty environment/);
+ await page.getByText('Scene backgrounds (1)',{exact:true}).click();await expect(page.getByRole('textbox',{name:'Room',exact:true})).toHaveValue(/Empty environment/);
  await page.getByRole('heading',{name:'Direct the prompts',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/vibe-prompt-director-desktop.png'});
  await page.getByRole('button',{name:'Hide navigation',exact:true}).click();
  await page.setViewportSize({width:390,height:844});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -114,8 +128,10 @@ test('image drafts are cached per approved project guidance version',async({page
   else if(path==='/api/images/jobs'){jobs++;return route.fulfill({status:500,json:{}});}
   else if(path.endsWith('/assets'))json={assets:[],total:0};
   else if(path==='/api/director/settings')json={settings:{provider:'codex',model:'test',lessons:[]},models:[]};
+  else return route.fulfill({status:404,json:{error:{message:'Unused fixture '+path}}});
   return route.fulfill({json});
  });
+ await mockProject(page,w,'vibe-image-assets-draft-v1');
  await page.goto(`/#/characters?step=character_images&workspace_id=${w}`);
  const prompt=page.getByRole('textbox',{name:'Image prompt',exact:true});
  await expect(prompt).toHaveValue('Mira with approved guidance 1.');

@@ -1,5 +1,7 @@
 import {useRef, type CSSProperties, type ReactNode} from 'react';
 import {DirectorSlot, useDirectorPanes} from './DirectorRuntime';
+import {PanelLeft, PanelRight} from 'lucide-react';
+import AgentInspector from './AgentInspector';
 import {useProjectState} from './lib/project-state';
 
 export default function DirectorWorkspace({children}: {children: ReactNode}) {
@@ -15,8 +17,9 @@ export default function DirectorWorkspace({children}: {children: ReactNode}) {
   };
   return <>
     <div className="director-pane-toolbar" role="group" aria-label="Workspace panes">
-      <button aria-expanded={panes.chat} onClick={() => togglePane('chat')}>{panes.chat ? 'Hide' : 'Show'} Director conversation</button>
-      <button aria-expanded={panes.work} onClick={() => togglePane('work')}>{panes.work ? 'Hide' : 'Show'} workspace</button>
+      <button aria-label={`${panes.chat ? 'Hide' : 'Show'} Director conversation`} title="Toggle Director conversation" aria-expanded={panes.chat} onClick={() => togglePane('chat')}><PanelLeft size={16}/><span>Director</span></button>
+      <button aria-label={`${panes.work ? 'Hide' : 'Show'} workspace`} title="Toggle workspace" aria-expanded={panes.work} onClick={() => togglePane('work')}><PanelRight size={16}/><span>Workspace</span></button>
+      <AgentInspector/>
     </div>
     <div className="director-surface-switch" aria-label="Workspace view">
       <button aria-pressed={surface === 'chat' && panes.chat} onClick={() => {openPane('chat'); setSurface('chat');}}>Director chat</button>

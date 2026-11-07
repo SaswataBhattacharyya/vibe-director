@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import {mockProject} from './fixtures/project.mjs';
 
 test('style-stale screenplay redraft gets a new request key and clears the stale state', async ({ page }) => {
   const oldRequestKey = 'interrupted-before-style-change';
@@ -28,6 +29,7 @@ test('style-stale screenplay redraft gets a new request key and clears the stale
     return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: `Unexpected ${req.method()} ${path}` } } });
   });
 
+  await mockProject(page,'story-style');
   await page.goto('/#/screenplay');
   await expect(page.getByRole('status').filter({ hasText: 'pinned production type or directing style changed' })).toBeVisible();
   expect(postedKey).toBeUndefined();

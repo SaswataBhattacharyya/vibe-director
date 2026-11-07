@@ -63,7 +63,7 @@ export default function T2VBatchPanel({workspaceId, editor=false, disabled=false
   if(!editor&&!batches.length&&!error&&!statusError) return null;
   return <section className="card settings-card" aria-label="Text to video batch">
     <h3>Text to video batch</h3>
-    <p>Generate and validate all H3 Turbo originals one at a time, then confirm model unloading. Refine all videos with LTX one at a time, then unload. Models stay loaded within each phase. Only one generation runs at a time. No references are attached.</p>
+    {editor&&<p>Generate and validate all H3 Turbo originals one at a time, then confirm model unloading. Refine all videos with LTX one at a time, then unload. Models stay loaded within each phase. Only one generation runs at a time. No references are attached.</p>}
     {editor&&<>
       <label className="field" style={{display:'grid',gap:8,marginBlock:12}}>Batch file (.md, .txt or .json)<input type="file" accept=".md,.txt,.json,text/plain,text/markdown,application/json" disabled={busy||active||!!pending} onChange={async event=>{const file=event.target.files?.[0];event.target.value='';if(!file)return;if(file.size>1_000_000){setError('Choose a file smaller than 1 MB.');return;}try{changeSource(await file.text());}catch(e){setError(`Could not read file: ${(e as Error).message}`);}}}/></label>
       <label className="field" style={{display:'grid',gap:8,marginBlock:12}}>Batch prompts<textarea style={{width:'100%',boxSizing:'border-box'}} rows={12} value={source} disabled={busy||active||!!pending} onChange={e=>changeSource(e.target.value)} placeholder={'#prompt 1: time=15sec, AR=9:16, Q1=0.6 Q2=0.98\n"Your prompt"'}/></label>

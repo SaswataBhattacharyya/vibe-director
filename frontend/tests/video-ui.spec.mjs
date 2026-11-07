@@ -502,6 +502,7 @@ test('FFL2VA uses ordered workspace images, validated preview and durable job re
       return route.fulfill({ json: { ...capability(true), workflow_id: isFl2va ? 'minimax_h3_fl2va_first_last_v1' : 'minimax_h3_t2v_local_v1' } });
     }
     if (url.pathname === '/api/images/selections') return route.fulfill({json:{selection:null}});
+    if (url.pathname === '/api/media/video-workspace/assets' && url.searchParams.get('kind') !== 'image') return route.fulfill({json:{total:0,assets:[]}});
     if (url.pathname === '/api/media/video-workspace/assets') return route.fulfill({ json: { total: 2, assets: [
       { asset_id: 'frame-first', workspace_id: 'video-workspace', kind: 'image', roles: ['first_frame'], filename: 'opening.png', media_type: 'image/png', sha256: 'a'.repeat(64), size_bytes: 10, content_url: '/media/opening.png' },
       { asset_id: 'frame-last', workspace_id: 'video-workspace', kind: 'image', roles: ['last_frame'], filename: 'closing.png', media_type: 'image/png', sha256: 'b'.repeat(64), size_bytes: 10, content_url: '/media/closing.png' },
@@ -1235,4 +1236,44 @@ for(const existing of [false,true]) test(`pending attempt returns to editing wit
   expect(releases).toBe(1);expect(renders).toBe(0);
   const draft=await page.evaluate(()=>JSON.parse(localStorage.getItem('vibe-video-draft-v1')));
   expect(draft.pendingKey).toBeFalsy();
+});
+
+test('shared media selection binds first and last frame roles separately without creating a job',async({page})=>{
+  const workspace='video-workspace',assets=[],reused=[],jobs=[];
+  const source={asset_id:'source-image',workspace_id:'tool-library',kind:'image',roles:['project_image'],filename:'shared.png',content_url:'/shared.png',sha256:'a'.repeat(64),media:{},created_at:'2026-11-06'};
+  await page.addInitScript(workspace=>localStorage.setItem('vibe-video-draft-v1',JSON.stringify({workspaceId:workspace,clipId:'clip-bound-frames',workflowId:'minimax_h3_fl2va_first_last_v1',prompt:'A continuous shot.',duration:6,resolution:0.98})),workspace);
+  await page.route('**/api/**',route=>{
+    const req=route.request(),url=new URL(req.url());
+    if(url.pathname==='/api/video/capabilities')return route.fulfill({json:{...capability(false),workflow_id:'minimax_h3_fl2va_first_last_v1'}});
+    if(url.pathname==='/api/studio-tools/output-destination')return route.fulfill({json:{mode:'default',path:'/fixture',available:true}});
+    if(url.pathname==='/api/story/workspaces')return route.fulfill({json:{items:[{workspace_id:workspace,title:'Frame fixture'}],total:1,offset:0,limit:50}});
+    if(url.pathname.endsWith('/assets/catalogue')){
+      expect(url.searchParams.get('kinds')).toBe('image');
+      return route.fulfill({json:{assets:[source],total:1,offset:0,limit:24,workspaces:[workspace],workspace_names:{[workspace]:'Frame fixture'},folders:[]}});
+    }
+    if(url.pathname.endsWith('/assets/reuse')){
+      const body=req.postDataJSON();reused.push(body);
+      const asset={...source,asset_id:'frame-'+body.role,workspace_id:workspace,roles:[body.role]};assets.push(asset);
+      return route.fulfill({json:asset});
+    }
+    if(url.pathname.endsWith('/assets'))return route.fulfill({json:{assets:url.searchParams.get('kind')==='image'?assets:[],total:assets.length}});
+    if(url.pathname==='/api/video/jobs'&&req.method()==='POST')jobs.push(req.postDataJSON());
+    return route.fulfill({status:404,json:{error:{message:'Unused frame fixture endpoint'}}});
+  });
+  await mockProject(page,workspace);await page.goto('/#/video');
+  for(const [label,role] of [['First frame','first_frame'],['Last frame','last_frame']]){
+    const slot=page.getByRole('group',{name:label+' source',exact:true});
+    await slot.getByRole('button',{name:'Browse media sources',exact:true}).click();
+    const picker=page.getByRole('dialog',{name:'Browse media sources',exact:true});
+    await picker.getByRole('checkbox',{name:'shared.png',exact:true}).check();
+    await picker.getByRole('button',{name:`Use as ${label.toLowerCase()} (1)`,exact:true}).click();
+    await expect(page.getByLabel(label,{exact:true})).toHaveValue('frame-'+role);
+    await expect(page.getByAltText(label+': shared.png')).toBeVisible();
+    await expect(picker).toHaveCount(0);
+  }
+  expect(reused).toEqual(['first_frame','last_frame'].map(role=>({source_workspace_id:'tool-library',asset_id:'source-image',mode:'reference',role})));
+  await page.reload();
+  await expect(page.getByLabel('First frame',{exact:true})).toHaveValue('frame-first_frame');
+  await expect(page.getByLabel('Last frame',{exact:true})).toHaveValue('frame-last_frame');
+  expect(jobs).toEqual([]);
 });

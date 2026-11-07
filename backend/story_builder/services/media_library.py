@@ -1301,7 +1301,9 @@ def reconcile_download_catalogue(root: Path) -> dict[str, Any]:
 
 def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = "image,video,audio",
                      source: str = "all", owner: str = "", query: str = "",
-                     offset: int = 0, limit: int = 24, order: str = "newest", folder: str = "") -> dict[str, Any]:
+                     offset: int = 0, limit: int = 24, order: str = "newest", folder: str = "",
+                     audio_category: str = "", content_index: str = "", role: str = "",
+                     created_after: str = "", created_before: str = "") -> dict[str, Any]:
     """Discover supported files in source folders, retaining registered identities and roles."""
     if workspace_id:
         media_root(root, workspace_id)
@@ -1310,8 +1312,11 @@ def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = "image,video
         raise ProductionAssetError("Choose supported media kinds.")
     if source not in {"all", "projects", "current", "downloaded", "extracted", "repertoire", "imported", "generated", "style", "ace_generated"}:
         raise ProductionAssetError("Unknown media source.")
-    if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100 or order not in {"newest", "oldest"} or len(query) > 500:
+    if type(offset) is not int or offset < 0 or type(limit) is not int or not 1 <= limit <= 100 or order not in {"newest", "oldest", "name_asc", "name_desc"} or len(query) > 500:
         raise ProductionAssetError("Invalid catalogue paging, ordering or search.")
+    from .catalogue_filters import CatalogueFilters, content_indexed
+    filters = CatalogueFilters(audio_category=audio_category, content_index=content_index,
+        role=role, created_after=created_after, created_before=created_before)
     if folder and (folder.startswith("/") or ".." in folder.split("/") or len(folder) > 1000):
         raise ProductionAssetError("Invalid source folder.")
     if owner and source in {"all", "projects", "current"}:
@@ -1365,6 +1370,8 @@ def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = "image,video
                 continue
             if record.get("archived_at") or record.get("kind") not in allowed or not available(root, record):
                 continue
+            if not filters.matches(record):
+                continue
             category = catalogue_source(record)
             if source == "style" and "style_reference" not in record.get("roles", []):
                 continue
@@ -1388,8 +1395,11 @@ def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = "image,video
             row = _public(record, project.name)
             row["source_folder"] = asset_folder
             row["catalogue_source"] = category
+            row["content_indexed"] = content_indexed(record)
             rows.append(row)
-    rows.sort(key=lambda row: (row.get("created_at", ""), row["workspace_id"], row["asset_id"]), reverse=order == "newest")
+    sort_field = "filename" if order.startswith("name_") else "created_at"
+    rows.sort(key=lambda row: (str(row.get(sort_field, "")).casefold(), row["workspace_id"], row["asset_id"]),
+              reverse=order in {"newest", "name_desc"})
     return {"assets": rows[offset:offset + limit], "total": len(rows), "offset": offset,
             "limit": limit, "workspaces": owners, "workspace_names": catalogue_workspace_names(root), "folders": sorted(folders)}
 
@@ -1414,7 +1424,20 @@ def reuse_catalogue_asset(root: Path, workspace_id: str, *, source_workspace_id:
     location = record.get("storage_location")
     if not location and record.get("source") == "youtube_download":
         location = {"store": "youtube", "path": record["relative_path"]}
-    if mode == "reference" and location:
+    if mode == "reference" and not location:
+        from .media_discovery import project_locations
+        from .storage_paths import shared_file
+        locations = ([(media_root(root, source_workspace_id), {"store": "tool"})]
+                     if source_workspace_id == "tool-library" else project_locations(root, source_workspace_id))
+        for base, store in locations:
+            if path.is_relative_to(base):
+                candidate = {**store, "path": path.relative_to(base).as_posix()}
+                if shared_file(root, candidate) == path:
+                    location = candidate
+                    break
+        if not location:
+            raise ProductionAssetError("This source cannot be linked. Choose an explicit separate copy.")
+    if mode == "reference":
         digest = hashlib.sha256()
         with path.open("rb") as stream:
             for chunk in iter(lambda: stream.read(1024 * 1024), b""):

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import {mockProject} from './fixtures/project.mjs';
 
 const pageOf = items => ({ items, limit: 50, offset: 0, total: items.length });
 
@@ -54,6 +55,7 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
       return route.fulfill({ status: 201, json: { decision_id: `decision-${graph.decision_head}`, sequence: graph.decision_head, replayed: false } });
     }
     if (path === '/api/story/workspaces/story-graph/screenplay' && req.method() === 'GET') return screenplay && new URL(req.url()).searchParams.get('revision_id') === screenplay.source_revision_id ? route.fulfill({ json: screenplay }) : route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'No screenplay' } } });
+    if (path === '/api/story/workspaces/story-graph/assisted-stage-skips') return route.fulfill({json:{workspace_id:'story-graph',screenplay_revision_id:screenplay?.screenplay_revision_id,skipped:[]}});
     if (path === '/api/story/workspaces/story-graph/production-setup' && req.method() === 'GET') return route.fulfill({ json: { workspace_id: 'story-graph', screenplay_revision_id: screenplay?.screenplay_revision_id || '', setup: null, updated_at: null } });
     if (path === '/api/story/workspaces/story-graph/screenplay/revisions' && req.method() === 'GET') return route.fulfill({ json: pageOf(screenplayHistory.map(item => ({ ...item, stale: item.source_revision_id !== revision.revision_id, accepted: item.accepted === true && item.source_revision_id === revision.revision_id && screenplayHistory.find(candidate => candidate.source_revision_id === item.source_revision_id)?.screenplay_revision_id === item.screenplay_revision_id }))) });
     if (path.startsWith('/api/story/workspaces/story-graph/screenplay/revisions/') && req.method() === 'GET') return route.fulfill({ json: screenplayHistory.find(item => item.screenplay_revision_id === path.split('/').at(-1)) });
@@ -79,6 +81,7 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
     if (path === '/api/story/workspaces/story-graph/field-edit-proposals' && req.method() === 'POST') { const body=req.postDataJSON(); expect(body.surface).toBe('screenplay'); expect(body.expected_text).toBe('holds'); return route.fulfill({status:201,json:{proposal_id:'field-proposal-1',surface:'screenplay',revision_id:'screenplay-1',field_key:'1.1.action',field_sha256:'hash',start_codepoint:5,end_codepoint:10,expected_text:'holds',replacement:'keeps',status:'pending'}}); }
     return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: `Unexpected ${req.method()} ${path}` } } });
   });
+  await mockProject(page, 'story-graph');
   await page.goto('/#/story');
   await page.locator('details.story-graph > summary').click();
   await page.getByRole('button', { name: 'Generate graph' }).click();
@@ -155,7 +158,7 @@ test('builds, reviews and reloads a revision-linked source graph without live pr
   await page.getByLabel('Review status').first().selectOption('user_authored');
   forceDecisionConflict = true;
   await page.getByRole('button', { name: 'Undo review' }).click();
-  await expect(page.getByRole('alert')).toContainText('Identity review changed');
+  await expect(page.getByRole('alert').filter({hasText:'Identity review changed'})).toBeVisible();
   await expect(page.getByLabel('Record').nth(1)).toHaveValue('Unsaved event draft');
   await expect(page.getByLabel('Record').first()).toHaveValue('Mira, the keeper');
   await expect(page.getByLabel('Notes').first()).toHaveValue('Reviewed by the writer.');

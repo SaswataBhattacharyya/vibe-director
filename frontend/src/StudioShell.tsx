@@ -4,7 +4,6 @@ import { Activity, BookOpen, Clapperboard as BrandIcon, Film, FolderOpen, Home, 
 import Clapper from './Clapper';
 import DirectorSettings from './DirectorSettings';
 import ModelSelector from './ModelSelector';
-import AgentInspector from './AgentInspector';
 import DirectorWorkspace from './DirectorWorkspace';
 
 export type StudioRoute = 'home'|'styles'|'story'|'screenplay'|'shot-frames'|'storyboard'|'setup'|'prompts'|'video'|'take'|'assets'|'characters'|'worlds'|'frames'|'image-to-3d-pixal3d'|'image-to-3d'|'text-to-image'|'media-prep'|'media'|'editor'|'status';
@@ -71,9 +70,8 @@ export default function StudioShell({ route, children, context='Direct creation'
     </aside>
     <main className={`studio-main ${route==='take'?'video-view-take':route==='video'?'video-view-create':''}`}>
       <header className="studio-topbar"><button className="studio-nav-toggle" type="button" aria-expanded={!navClosed} onClick={toggleNav}>{navClosed?'Show':'Hide'} navigation</button><button className="studio-menu-button" aria-expanded={mobileOpen} aria-label={mobileOpen?'Close navigation menu':'Open navigation menu'} onClick={()=>setMobileOpen(open=>!open)}>{mobileOpen?'Close':'Menu'}</button><div><div className="studio-crumb">Project <span>/</span> {titles[route]}</div><strong>{route==='video'||route==='take'?context:titles[route]}</strong></div><div className="studio-top-actions"><ModelSelector/><span className="local-pill"><span className="status-dot"/> Local mode</span></div></header>
-      {['styles','story','screenplay','setup','prompts','video','take'].includes(route) && <nav className="stage-rail" aria-label="Story to video stages">{stages.map((stage,index)=><a key={stage} href={`#/${stage}`} aria-current={stage===activeStage?'step':undefined}><span>{index+1}</span>{titles[stage]}</a>)}</nav>}
+      {['styles','story','screenplay','setup','prompts','video','take'].includes(route) && <details className="studio-workflow"><summary>Story workflow</summary><nav className="stage-rail" aria-label="Story to video stages">{stages.map((stage,index)=><a key={stage} href={`#/${stage}`} aria-current={stage===activeStage?'step':undefined}><span>{index+1}</span>{titles[stage]}</a>)}</nav></details>}
       {(route==='video'||route==='take') && <nav className="video-tabs" aria-label="Video views"><a href="#/video" aria-current={route==='video'?'page':undefined}><Film size={15}/> Create</a><a href="#/take" aria-current={route==='take'?'page':undefined}><Activity size={15}/> Current Take</a></nav>}
-      <AgentInspector/>
       <DirectorWorkspace>{children}</DirectorWorkspace>
     </main>
     <footer className="studio-taskbar" aria-label="Project navigation"><span className="taskbar-location"><small>OPEN</small><strong>{titles[route]}</strong>{(route==='video'||route==='take')&&<span>{context}</span>}</span><nav aria-label="Quick navigation"><a href="#/story" aria-current={route==='story'?'page':undefined}><BookOpen size={15}/>Story</a><a href="#/video" aria-current={route==='video'?'page':undefined}><Film size={15}/>Video Create</a></nav></footer>

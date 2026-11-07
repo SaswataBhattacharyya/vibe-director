@@ -1,6 +1,7 @@
 export type MediaAsset = {
   origin?: 'imported'|'generated';
   catalogue_source?: string;
+  content_indexed?: boolean;
   asset_id: string; workspace_id: string; kind: 'image'|'video'|'audio'; roles: string[];
   filename: string; media_type: string; sha256: string; size_bytes: number;
   content_url: string; provenance_notes?: string; created_at: string;
@@ -378,7 +379,8 @@ export function deleteExtractedMediaAsset(workspaceId:string, assetId:string) {
 }
 
 export type CataloguePage = {assets:(MediaAsset & {source_folder?:string})[];total:number;offset:number;limit:number;workspaces:string[];workspace_names?:Record<string,string>;folders?:string[]};
-export function browseMediaCatalogue(workspaceId:string, options:{kinds:string;source:string;owner:string;query:string;offset:number;order:string;folder?:string}) {
+export type CatalogueFilters = {audio_category?:string;content_index?:string;role?:string;created_after?:string;created_before?:string};
+export function browseMediaCatalogue(workspaceId:string, options:CatalogueFilters & {kinds:string;source:string;owner:string;query:string;offset:number;order:string;folder?:string}) {
   const query=new URLSearchParams({...options,offset:String(options.offset),limit:'24'});
   return request<CataloguePage>(`/api/media/${encodeURIComponent(workspaceId||'global')}/assets/catalogue?${query}`);
 }

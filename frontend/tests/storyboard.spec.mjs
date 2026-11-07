@@ -5,7 +5,7 @@ const script={workspace_id:w,screenplay_revision_id:r,source_revision_id:'source
 const prep=()=>({presentation:'image',duration:2,route:'image',control:'manual',image_asset_id:'asset-image',media_asset_id:'',reference_ids:[],background_asset_id:'',first_frame_id:'',last_frame_id:'',prompt:'Mira holds the key.',video_prompt:'Mira holds the key.',batch_id:'',request_key:'',image_request:'',batch_target:'image',notes:''});
 async function fixture(page,missing=false){
  let board={workspace_id:w,screenplay_revision_id:r,revision:1,body:{mode:'assisted_manual',deliverable:'storyboard',stages:Object.fromEntries(['worlds','shot_frames','storyboard','first_last'].map(k=>[k,{enabled:k==='shot_frames'||k==='storyboard',control:'manual'}])),scenes:{'1':{description:'Mira finds the key and opens the door.',dialogue:'MIRA: Here it is.'}},shots:Object.fromEntries([1,2,3,4].map(i=>['1.'+i,{...prep(),...(missing?{image_asset_id:'',control:'auto'}:{})}]))}};
- const requests=[];const errors=[];const conversation=[];page.on('pageerror',e=>errors.push(e.message));
+ const requests=[];const errors=[];const conversation=[],messages=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/**',async route=>{const req=route.request(),path=new URL(req.url()).pathname;requests.push({path,method:req.method(),body:req.method()==='GET'?null:req.postDataJSON()});
   let json={};
   if(path==='/api/projects/current')json={workspace_id:w,title:'The key',folder:'/projects/key',browser_state:{}};
@@ -15,8 +15,17 @@ async function fixture(page,missing=false){
   else if(path.endsWith('/screenplay')||path.endsWith('/screenplay/revisions/'+r))json=script;
   else if(path.endsWith('/screenplay/revisions'))json={items:[{...script,stale:false}],total:1};
   else if(path.endsWith('/screenplay-director/'+r+'/conversation'))json={items:conversation};
-  else if(path.endsWith('/screenplay-director/'+r+'/chat')){await new Promise(resolve=>setTimeout(resolve,350));json={key:req.postDataJSON().idempotency_key,revision_id:r,instruction:req.postDataJSON().instruction,status:'complete',reply:'I understand. Keep narration for context and let Mira speak her lines.',proposal:null};conversation.push(json);}
-  else if(path.endsWith('/screenplay-director/'+r+'/propose'))json={explanation:'Short still images.',changes:[{scene_number:1,shot_number:1,field:'planned_duration_seconds',value:2,before:6}]};
+  else if(path===`/api/agent/projects/${w}/tasks`)json={tasks:[]};
+  else if(path===`/api/agent/projects/${w}/conversation`){
+    if(req.method()==='POST'){
+      const body=req.postDataJSON();expect(body.surface).toBe('screenplay');expect(body.target).toEqual({version:1,workspace_id:w,screenplay_revision_id:r});
+      await new Promise(resolve=>setTimeout(resolve,350));
+      const proposing=body.text.startsWith('Prepare');
+      const item={key:body.request_id,revision_id:r,instruction:body.text,status:'complete',reply:proposing?null:'I understand. Keep narration for context and let Mira speak her lines.',proposal:proposing?{explanation:'Short still images.',changes:[{scene_number:1,shot_number:1,field:'planned_duration_seconds',value:2,before:6}]}:null};
+      conversation.push(item);messages.push({request_id:body.request_id,text:body.text,reply:item.reply||item.proposal.explanation,status:'answered',task_id:null});
+    }
+    json={messages};
+  }
   else if(path.endsWith('/storyboard/'+r)){if(req.method()==='PUT'){board={...board,revision:board.revision+1,body:req.postDataJSON().body};}json=board;}
   else if(path.endsWith('/storyboard/'+r+'/editor'))json={id:'edit-storyboard'};
   else if(path.endsWith('/assets')&&new URL(req.url()).searchParams.get('kind')==='video')json={total:0,assets:[]};
@@ -63,10 +72,17 @@ test('unfinished local edits recover across navigation without silently saving',
  await expect(page.getByText('Unsaved storyboard edits',{exact:true})).toBeVisible();expect(fx.getBoard().revision).toBe(1);
 });
 test('whole screenplay Director reveals reviewable changes and never applies on propose',async({page})=>{
- const fx=await fixture(page);await page.goto('/#/screenplay');await expect(page.getByRole('textbox',{name:'Screenplay instruction',exact:true})).toBeVisible();
- await page.getByRole('textbox',{name:'Screenplay instruction',exact:true}).fill('Make still images two seconds long');await page.getByRole('button',{name:'Prepare agreed changes',exact:true}).click();
- await expect(page.getByRole('button',{name:'Apply selected changes',exact:true})).toBeVisible();
- expect(fx.requests.filter(q=>q.path.endsWith('/apply'))).toEqual([]);expect(fx.errors).toEqual([]);
+ const fx=await fixture(page);await page.goto('/#/screenplay');
+ await expect(page.getByRole('textbox',{name:'Screenplay instruction',exact:true})).toHaveCount(0);
+ await page.getByLabel('Message the project Director',{exact:true}).fill('Prepare still images two seconds long');
+ await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Apply selected changes',exact:true})).toBeEnabled();
+ expect(fx.requests.filter(q=>q.path.endsWith('/apply'))).toEqual([]);
+ await page.getByRole('button',{name:'Discard suggestion',exact:true}).click();
+ await page.reload();await expect(page.getByRole('button',{name:'Apply selected changes',exact:true})).toHaveCount(0);
+ await page.getByText('Previous screenplay conversation',{exact:true}).click();
+ await expect(page.getByText('Short still images.',{exact:true})).toBeVisible();
+ expect(fx.errors).toEqual([]);
 });
 
 test('automatic frames save each request before submission and resume without rerendering completed shots',async({page})=>{
@@ -87,20 +103,23 @@ test('Editor handoff selects the returned editing session',async({page})=>{
  expect(fx.requests.filter(q=>q.path.endsWith('/editor')&&q.method==='POST')).toHaveLength(1);
 });
 
-test('screenplay chat discusses over multiple turns, shows thinking and waits for an explicit change request',async({page})=>{
+test('shared screenplay chat discusses over multiple turns and reloads saved review',async({page})=>{
  const fx=await fixture(page);await page.goto('/#/screenplay');
- const input=page.getByRole('textbox',{name:'Screenplay instruction',exact:true});
- await input.fill('Can Mira speak instead of the narrator?');await page.getByRole('button',{name:'Send message',exact:true}).click();
- await expect(page.getByRole('status').filter({hasText:'Director is thinking…'})).toBeVisible();
- await expect(page.locator('.screenplay-thinking .spin')).toHaveCSS('animation-name','styles-spin');
- await expect(page.getByRole('log',{name:'Screenplay conversation'})).toContainText('let Mira speak her lines.');
- expect(fx.requests.filter(q=>q.path.endsWith('/propose')||q.path.endsWith('/apply'))).toEqual([]);
- await input.fill('Keep some narration too.');await page.getByRole('button',{name:'Send message',exact:true}).click();
- await expect(page.getByRole('button',{name:'Send message',exact:true})).toBeDisabled();
- await expect(page.locator('.screenplay-chat-turn')).toHaveCount(2);
- await page.reload();await expect(page.locator('.screenplay-chat-turn')).toHaveCount(2);
- await page.getByRole('button',{name:'Prepare agreed changes',exact:true}).click();
+ const input=page.getByLabel('Message the project Director',{exact:true});
+ const send=page.getByRole('button',{name:'Send to project Director',exact:true});
+ await input.fill('Can Mira speak instead of the narrator?');await send.click();
+ await expect(send).toBeDisabled();
+ await expect(page.locator('.director-transcript')).toContainText('let Mira speak her lines.');
+ expect(fx.requests.filter(q=>q.path.endsWith('/apply'))).toEqual([]);
+ await input.fill('Keep some narration too.');await send.click();
+ await expect(page.locator('.director-message')).toHaveCount(2);
+ await page.reload();await expect(page.locator('.director-message')).toHaveCount(2);
+ await input.fill('Prepare agreed changes');await send.click();
  await expect(page.getByRole('button',{name:'Apply selected changes',exact:true})).toBeEnabled();
+ await page.reload();
+ const review=page.getByRole('region',{name:'Screenplay change review'});
+ await review.getByRole('checkbox').first().check();
+ await expect(review.getByRole('button',{name:'Apply selected changes',exact:true})).toBeEnabled();
  expect(fx.requests.filter(q=>q.path.endsWith('/apply'))).toEqual([]);
  await page.screenshot({path:'/tmp/vibe-screenplay-conversation.png',fullPage:false});
  await page.setViewportSize({width:390,height:844});

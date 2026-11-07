@@ -1,7 +1,10 @@
+import {mockProject} from './fixtures/project.mjs';
 import assert from 'node:assert/strict';
 import { test, expect } from '@playwright/test';
 const defaults={mode:'instrumental',tags:'',lyrics:'',duration:30,seed:1,steps:60,cfg:15,scheduler:'euler',adapter_id:'',max_steps:1000,learning_rate:0.0001,save_every:100,rank:16,task:'text',reference_id:'',reference_strength:.5,source_tags:'',source_lyrics:'',edit_min:.6,edit_max:1,style_name:'',style_description:''};
 async function mockAce(page,projects=[]) {
+  if(projects.length)await mockProject(page,projects[0].workspace_id);
+  await page.route('**/api/studio-tools/output-destination',route=>route.fulfill({json:{mode:'workspace',path:'/test-owned/outputs/music',available:true}}));
   const state={projects,defaults,presets:{Jazz:'jazz, piano'},adapters:[],saved_presets:[],runtime:{ready:true,training_ready:true,reason:'Ready',dataset_format:'song.mp3\\nsong_prompt.txt\\nsong_lyrics.txt\\nUTF-8: [verse], [chorus], or [instrumental]',checks:{source:true},training_encoders_cached:true}};
   await page.route('**/api/media/*/assets**',route=>route.fulfill({json:{assets:[],total:0}}));
   await page.route('**/api/ace/state',route=>route.fulfill({json:state}));
@@ -9,6 +12,7 @@ async function mockAce(page,projects=[]) {
 }
 test('ACE chat drafts; only confirmation submits music',async({page})=>{
   const state=await mockAce(page);
+  await mockProject(page,'ws-music');
   await page.route('**/api/story/workspaces**',route=>route.fulfill({json:{items:[{workspace_id:'ws-music',title:'Music test'}]}}));
   await page.route('**/api/ace/projects',route=>{
     const p={id:'music-test',name:'My song',workspace_id:'ws-music',revision:1,settings:{...defaults},intent:'generate',summary:'',questions:[],messages:[],dataset:null,assets:[],adapters:[],job_id:null};
@@ -25,11 +29,23 @@ test('ACE chat drafts; only confirmation submits music',async({page})=>{
     else if(body.action==='confirm'){p.confirmed_revision=p.revision;p.job_id='confirmed-job';p.job={job_id:p.job_id,status:'completed',stage:'completed',message:'Music saved.'};}
     return route.fulfill({json:p});
   });
+  let messages=[];
+  await page.route('**/api/agent/projects/ws-music/tasks',route=>route.fulfill({json:{tasks:[]}}));
+  await page.route('**/api/agent/projects/ws-music/conversation',route=>{
+    if(route.request().method()==='POST'){
+      const body=route.request().postDataJSON(),p=state.projects[0];
+      expect(body.surface).toBe('music');expect(body.target).toEqual({version:1,workspace_id:'ws-music',project_id:p.id,revision:p.revision});
+      actions.push('chat');p.messages.push({id:'reply',role:'assistant',content:'A soft instrumental piano piece.'});p.settings.tags='soft piano';p.summary='Soft piano, instrumental, 30 seconds';p.revision++;
+      messages.push({request_id:body.request_id,text:body.text,reply:'Review the session response.',status:'answered',task_id:null});
+    }
+    return route.fulfill({json:{messages}});
+  });
   await page.goto('/#/media-prep?tool=music');
   await page.getByRole('heading',{name:'ACE-Step Music'}).waitFor();
-  await page.getByRole('button',{name:'Create music project',exact:true}).click();
-  await page.getByLabel('Talk to the music Director').fill('Make a soft piano instrumental');
-  await page.getByRole('button',{name:'Send',exact:true}).click();
+  await expect(page.locator('#ace-chat')).toHaveCount(0);
+  await expect(page.locator('.director-composer textarea')).toHaveCount(1);
+  await page.getByLabel('Message the project Director',{exact:true}).fill('Make a soft piano instrumental');
+  await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
   await page.getByText('A soft instrumental piano piece.',{exact:true}).waitFor();
   assert.deepEqual(actions,['chat']);
   await page.getByRole('button',{name:'Run ACE-Step'}).click();
@@ -39,7 +55,7 @@ test('ACE chat drafts; only confirmation submits music',async({page})=>{
   await page.getByRole('heading',{name:'Fine-tune a music style'}).waitFor();
   assert.match(await page.locator('.ace-format').innerText(),/song_prompt.txt/);
   await page.reload();
-  await page.getByLabel('Talk to the music Director').waitFor();
+  await page.getByLabel('Message the project Director',{exact:true}).waitFor();
   assert.deepEqual(actions,['chat','confirm']);
 });
 
@@ -113,7 +129,7 @@ test('ACE direct reference, lyrics, presets and dataset uploads share the saved 
   const p={id:'music-direct',name:'Direct music',workspace_id:'ws-direct',revision:0,settings:{...defaults},intent:'generate',summary:'',questions:[],messages:[],dataset:null,assets:[],adapters:[],job_id:null};
   const state=await mockAce(page,[p]);
   state.adapters.push({id:'trained-style',name:'My trained style',tags:'trained, acoustic'});
-  await page.addInitScript(()=>localStorage.setItem('vibe-ace-project','music-direct'));
+  await page.addInitScript(()=>localStorage.setItem('vibe-ace-project:ws-direct','music-direct'));
   await page.route('**/api/story/workspaces**',r=>r.fulfill({json:{items:[]}}));
   let uploads=0;
   await page.route('**/api/media/ws-direct/assets**',route=>{
@@ -139,7 +155,7 @@ test('ACE direct reference, lyrics, presets and dataset uploads share the saved 
   await page.getByRole('combobox',{name:'Style',exact:true}).selectOption('base:Jazz');
   assert.equal(await page.getByRole('textbox',{name:'Music prompt',exact:true}).inputValue(),'jazz, piano');
   assert.equal(await page.getByRole('textbox',{name:'Lyrics',exact:true}).inputValue(),'[verse]\nNew words here');
-  await page.getByLabel('Attach audio to chat').setInputFiles({name:'reference.wav',mimeType:'audio/wav',buffer:Buffer.from('mock audio')});
+  await page.getByLabel('Reference audio',{exact:true}).setInputFiles({name:'reference.wav',mimeType:'audio/wav',buffer:Buffer.from('mock audio')});
   await page.getByText('Attached reference.wav. Uploading does not start a job.',{exact:true}).waitFor();
   assert.equal(p.settings.reference_id,'audio-1');assert.equal(p.settings.task,'reference');
   assert.equal(p.settings.mode,'song');assert(!actions.includes('confirm'));assert(!actions.includes('chat'));
@@ -162,7 +178,7 @@ test('ACE lists earlier tracks, confirms shared deletion and restores without ge
   const tracks=[1,2].map(n=>({asset_id:`pa-ace${n}`,workspace_id:'ws-audio',kind:'audio',roles:['project_audio'],filename:`take-${n}.wav`,created_at:'2026-10-27T00:00:00Z',content_url:`/fixture-${n}`}));
   const project={id:'music-library',name:'Shared song project',workspace_id:'ws-audio',revision:1,settings:{...defaults,reference_id:'pa-ace1'},intent:'generate',summary:'',questions:[],messages:[],dataset:null,assets:[...tracks],adapters:[],job_id:null};
   await mockAce(page,[project]);
-  await page.addInitScript(()=>localStorage.setItem('vibe-ace-project','music-library'));
+  await page.addInitScript(()=>localStorage.setItem('vibe-ace-project:ws-audio','music-library'));
   await page.route('**/api/story/workspaces**',route=>route.fulfill({json:{items:[{workspace_id:'ws-audio',title:'Audio'}]}}));
   const archived=new Set(),writes=[];
   await page.route('**/api/media/ws-audio/assets/**',route=>{

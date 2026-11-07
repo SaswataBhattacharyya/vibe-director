@@ -119,19 +119,13 @@ class PromptDirector:
                           'proposal': json.loads(value) if value and mode != 'chat' else None})
         return items
 
-    def discuss(self, workspace, revision, mode, payload, provider):
+    def context(self, workspace, revision, prompts, workflows):
         envelope, targets = self.targets(workspace, revision)
-        if (mode not in FIELDS or not isinstance(payload, dict)
-                or set(payload) - {'instruction', 'idempotency_key', 'prompts', 'workflows'}
-                or not {'instruction', 'idempotency_key', 'prompts'} <= set(payload)):
-            raise ValueError('Supply instruction, idempotency_key and current prompts.')
-        prompts = payload['prompts']
         allowed = {'image:' + key for key in targets}
         allowed |= {f"shot:{scene['scene_number']}.{shot['shot_number']}" for scene in envelope['screenplay']['scenes'] for shot in scene['shots']}
         if (not isinstance(prompts, dict) or not prompts or set(prompts) - allowed or any(
                 type(value) is not str or len(value) >= 7000 for value in prompts.values())):
             raise ValueError('Supply current shot/character/location prompts, each below 7,000 characters.')
-        workflows = payload.get('workflows', {})
         from .isolated_video_contract import T2V_WORKFLOW_ID
         from .isolated_fl2va_contract import WORKFLOW_ID as FFLF
         from .isolated_r2v_contract import WORKFLOW_ID as R2V
@@ -141,6 +135,15 @@ class PromptDirector:
         snapshot = json.dumps({'prompts': prompts, 'workflows': workflows}, ensure_ascii=False, sort_keys=True)
         if len(snapshot) > 200000:
             raise ValueError('Choose a smaller conversation focus; these prompts exceed the discussion budget.')
+        return targets, snapshot
+
+    def discuss(self, workspace, revision, mode, payload, provider):
+        if (mode not in FIELDS or not isinstance(payload, dict)
+                or set(payload) - {'instruction', 'idempotency_key', 'prompts', 'workflows'}
+                or not {'instruction', 'idempotency_key', 'prompts'} <= set(payload)):
+            raise ValueError('Supply instruction, idempotency_key and current prompts.')
+        prompts, workflows = payload['prompts'], payload.get('workflows', {})
+        targets, snapshot = self.context(workspace, revision, prompts, workflows)
         request = {'surface': 'prompt', 'revision_id': revision, 'field_key': FIELDS[mode],
                    'field_text': snapshot, 'start_codepoint': 0, 'end_codepoint': len(snapshot),
                    'expected_text': snapshot, 'instruction': payload['instruction'], 'idempotency_key': payload['idempotency_key']}

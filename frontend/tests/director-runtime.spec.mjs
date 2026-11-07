@@ -1,5 +1,116 @@
 import {test, expect} from '@playwright/test';
+
+test('image prompt changes use one Director with Apply, stale protection and archived history', async ({page}) => {
+  const writes = await fixture(page);
+  await page.addInitScript(owner => localStorage.setItem(`vibe-image-director:${owner}:world_master`, JSON.stringify([
+    {id: 'old-image', instruction: 'Previous image discussion', suggestion: {prompt: 'Historical room prompt'}}
+  ])), owner);
+  let saved = [];
+  await page.route('**/api/agent/projects/*/conversation', async route => {
+    if (route.request().method() === 'POST') {
+      const body = route.request().postDataJSON();
+      expect(body.surface).toBe('image');
+      expect(body.target.request.workspace_id).toBe(owner);
+      saved.push({request_id: body.request_id, text: body.text, reply: 'Review the image prompt.', status: 'answered', task_id: null,
+        proposal: {surface: 'image', target: body.target, draft: {workflow_id: body.target.request.workflow_id, asset_role: 'world_master',
+          prompt: 'A ruined room covered in slime.', knowledge_ref: {knowledge_id: 'image-guidance', guidance_version: 1, workflow_sha256: 'a'.repeat(64)}, sources: []}}});
+    }
+    return route.fulfill({json: {workspace_id: owner, messages: saved}});
+  });
+  await page.goto('/#/worlds');
+  const prompt = page.getByRole('textbox', {name: 'Image prompt', exact: true});
+  await prompt.fill('A ruined room.');
+  await expect(page.locator('#image-director-message')).toHaveCount(0);
+  await expect(page.getByLabel('Message the project Director', {exact: true})).toHaveCount(1);
+  await page.getByText('Previous image conversation', {exact: true}).click();
+  await expect(page.getByText('Historical room prompt', {exact: true})).toBeVisible();
+  await page.getByLabel('Message the project Director', {exact: true}).fill('Cover the room in slime.');
+  await page.getByRole('button', {name: 'Send to project Director', exact: true}).click();
+  const apply = page.getByRole('button', {name: 'Apply prompt', exact: true});
+  await expect(apply).toBeEnabled();
+  await expect(prompt).toHaveValue('A ruined room.');
+  await prompt.fill('A different room.');
+  await expect(apply).toBeDisabled();
+  await prompt.fill('A ruined room.');
+  await page.reload();
+  await expect(apply).toBeEnabled();
+  await apply.click();
+  await expect(prompt).toHaveValue('A ruined room covered in slime.');
+  await expect(apply).toHaveCount(0);
+  await page.reload();
+  await expect(apply).toHaveCount(0);
+  expect(writes.filter(path => path === '/api/images/jobs')).toEqual([]);
+});
+test('standalone Text to Image uses the shared Director, keeps references typed and leaves generation manual',async({page},info)=>{
+  const writes=await fixture(page);let messages=[];
+  await page.route('**/api/images/workflows*',route=>route.fulfill({json:{workflows:[{workflow_id:'z_image_turbo',label:'Z Image',available:true,version:'1',defaults:{width:1280,height:720,steps:8,cfg:1}}]}}));
+  await page.route('**/api/agent/projects/*/conversation',async route=>{
+    if(route.request().method()==='POST'){
+      const body=route.request().postDataJSON();expect(body.surface).toBe('image');expect(body.target.request).toEqual({workspace_id:owner,workflow_id:'z_image_turbo',asset_role:'image_candidate',prompt:'A ruined room.'});
+      messages.push({request_id:body.request_id,text:body.text,reply:'Review this prompt.',status:'answered',task_id:null,proposal:{surface:'image',target:body.target,draft:{workflow_id:'z_image_turbo',asset_role:'image_candidate',prompt:'A ruined room covered in slime.',knowledge_ref:{knowledge_id:'image-guidance',guidance_version:1,workflow_sha256:'a'.repeat(64)},sources:[]}}});
+    }
+    return route.fulfill({json:{workspace_id:owner,messages}});
+  });
+  await page.setViewportSize({width:1280,height:720});await page.goto('/#/text-to-image');
+  const prompt=page.getByLabel('Image prompt',{exact:true});await prompt.fill('A ruined room.');
+  await expect(page.locator('.director-composer textarea')).toHaveCount(1);await expect(page.locator('#t2i-chat-input')).toHaveCount(0);
+  await page.getByLabel('Message the project Director',{exact:true}).fill('Cover the room in slime.');await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+  const apply=page.getByRole('button',{name:'Apply prompt',exact:true});await expect(apply).toBeEnabled();await expect(prompt).toHaveValue('A ruined room.');
+  await prompt.fill('Another room.');await expect(apply).toBeDisabled();await prompt.fill('A ruined room.');await apply.click();
+  await expect(prompt).toHaveValue('A ruined room covered in slime.');await page.reload();await expect(apply).toHaveCount(0);
+  for(const width of [1280,390]){await page.setViewportSize({width,height:width===390?844:720});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:info.outputPath(`text-to-image-${width}.png`)});}
+  expect(writes.filter(path=>path.includes('/jobs'))).toEqual([]);
+});
 const owner = 'story-aaaaaaaaaaaa';
+test('shared image references survive reload and removal never deletes library media',async({page})=>{
+  const writes=await fixture(page);
+  const source={workspace_id:'other',asset_id:'pa-foreign',kind:'image',filename:'saved-reference.png',roles:['project_image'],sha256:'d'.repeat(64),content_url:'/fixture/reference.png',created_at:'2026-11-06'};
+  const owned={...source,workspace_id:owner,asset_id:'pa-owned-reference'};
+  const reuse=[];
+  await page.route('**/api/images/workflows*',route=>route.fulfill({json:{workflows:[{workflow_id:'qwen_image_edit_2511',label:'Qwen Image Edit',version:'1',available:true,defaults:{width:720,height:720,steps:8,cfg:1}}]}}));
+  await page.route('**/assets/catalogue?*',route=>route.fulfill({json:{assets:[source],total:1,offset:0,limit:24,workspaces:[owner,'other'],workspace_names:{[owner]:'Film',other:'Other film'}}}));
+  await page.route('**/assets/reuse',route=>{reuse.push(route.request().postDataJSON());return route.fulfill({json:owned});});
+  await page.route(`**/api/media/${owner}/assets?*`,route=>route.fulfill({json:{assets:[owned],total:1}}));
+  await page.goto('/#/text-to-image');
+  await page.getByLabel('Image model',{exact:true}).selectOption('qwen_image_edit_2511');
+  await page.getByRole('button',{name:'Browse media sources',exact:true}).click();
+  const picker=page.locator('.media-source-picker');
+  await picker.getByRole('checkbox',{name:source.filename,exact:true}).check();
+  await picker.getByRole('button',{name:'Use as image references (1)',exact:true}).click();
+  await expect(page.getByLabel('Selected workflow references')).toContainText(source.filename);
+  expect(reuse).toEqual([{source_workspace_id:'other',asset_id:source.asset_id,role:'project_image',mode:'reference'}]);
+  await page.reload();
+  await expect(page.getByLabel('Selected workflow references')).toContainText(source.filename);
+  await page.getByRole('button',{name:`Remove reference ${source.filename}`,exact:true}).click();
+  await expect(page.getByLabel('Selected workflow references')).not.toContainText(source.filename);
+  expect(writes.filter(path=>path.includes('/jobs')||path.includes('/temporary'))).toEqual([]);
+});
+
+test('shared catalogue sends audio, index, date and name filters without running analysis',async({page},info)=>{
+  const writes=await fixture(page),queries=[];
+  await page.route('**/assets/catalogue?*',route=>{
+    queries.push(Object.fromEntries(new URL(route.request().url()).searchParams));
+    return route.fulfill({json:{assets:[],total:0,offset:0,limit:24,workspaces:[owner],workspace_names:{[owner]:'Film'}}});
+  });
+  await page.goto('/#/media-prep?tool=utilities');
+  const picker=page.locator('.media-source-picker');await picker.locator('summary').first().click();
+  await picker.getByText('Filters',{exact:true}).click();
+  await picker.getByRole('combobox',{name:'Audio category',exact:true}).selectOption('voice');
+  await picker.getByRole('combobox',{name:'Content index',exact:true}).selectOption('indexed');
+  await picker.getByLabel('Added from',{exact:true}).fill('2026-11-01');
+  await picker.getByLabel('Added through',{exact:true}).fill('2026-11-06');
+  await picker.getByLabel('Change sort order',{exact:true}).selectOption('name_asc');
+  await expect.poll(()=>queries.at(-1)).toMatchObject({audio_category:'voice',content_index:'indexed',created_after:'2026-11-01',created_before:'2026-11-06',order:'name_asc',offset:'0'});
+  for(const width of [1280,390]){
+    await page.setViewportSize({width,height:900});
+    await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:info.outputPath(`media-filters-${width}.png`)});
+  }
+  await expect(picker.locator('.media-source-copy')).toHaveCSS('display','flex');
+  await picker.getByRole('button',{name:'Clear filters',exact:true}).click();
+  await expect.poll(()=>queries.at(-1)?.content_index||'').toBe('');
+  expect(writes.filter(path=>path.includes('/jobs')||path.includes('/analysis'))).toEqual([]);
+});
 const taskId = 'task-' + 'a'.repeat(32);
 async function fixture(page, continuity = false) {
   const writes = [];
@@ -57,6 +168,12 @@ test('conversation draft survives routes, hide/show and reload without generatio
   const writes = await fixture(page);
   await page.goto('/#/video');
   await page.getByLabel('Message the project Director', {exact: true}).fill('A scene in a ruined slime-covered room');
+  const workflow = page.locator('.studio-workflow');
+  await expect(workflow).not.toHaveAttribute('open', '');
+  await workflow.locator('summary').click();
+  await expect(page.getByRole('navigation', {name: 'Story to video stages'})).toBeVisible();
+  await workflow.locator('summary').click();
+  await expect(page.getByRole('navigation', {name: 'Story to video stages'})).toBeHidden();
   await page.getByRole('button', {name: 'Hide Director conversation', exact: true}).click();
   await page.getByRole('button', {name: 'Show Director conversation', exact: true}).click();
   await expect(page.getByLabel('Message the project Director', {exact: true})).toHaveValue('A scene in a ruined slime-covered room');
@@ -350,4 +467,170 @@ test('pane preferences and conversation drafts remain isolated across project A 
   await expect(page.getByLabel('Project controls')).toContainText('Project A');
   await expect(page.locator('#project-director-message')).toHaveValue('Only project A');
   await expect(page.getByRole('button', {name: 'Show workspace', exact: true})).toBeVisible();
+});
+
+test('global media attachment is explicit, project-owned and separate from generation', async ({page}) => {
+  const writes = await fixture(page);
+  const source={workspace_id:'other-project',asset_id:'pa-remote',kind:'audio',filename:'Rain.wav',roles:[],sha256:'a'.repeat(64),content_url:'/fixture.wav'};
+  const reused=[];
+  await page.route('**/assets/catalogue?**',r=>r.fulfill({json:{assets:[source],total:1,workspace_names:{[owner]:'Test film'},workspaces:[],folders:[]}}));
+  await page.route('**/assets/reuse',r=>{reused.push(r.request().postDataJSON());return r.fulfill({json:{...source,workspace_id:owner,asset_id:'pa-local'}});});
+  let sent;
+  await page.route('**/conversation',r=>{if(r.request().method()==='POST')sent=r.request().postDataJSON();return r.fulfill({json:{messages:[]}});});
+  await page.goto('/#/video');
+  await page.getByRole('button',{name:'Context & skills',exact:true}).click();
+  await page.getByRole('region',{name:'Project Director conversation'}).getByText('Browse media sources',{exact:true}).click();
+  const picker=page.locator('.media-source-picker');
+  await picker.getByRole('checkbox',{name:'Rain.wav',exact:true}).check();
+  expect(reused).toEqual([]);
+  await picker.getByRole('button',{name:'Attach to Director (1)',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Clear chat attachments (1)',exact:true})).toBeVisible();
+  expect(reused).toEqual([{source_workspace_id:'other-project',asset_id:'pa-remote',mode:'reference'}]);
+  await page.getByRole('region',{name:'Project Director conversation'}).getByText('Browse media sources',{exact:true}).click();
+  await page.getByLabel('Message the project Director',{exact:true}).fill('Discuss this recording.');
+  await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+  await expect.poll(()=>sent?.asset_ids).toEqual(['pa-local']);
+  expect(writes.filter(path=>path.includes('/jobs')||path.includes('/tasks'))).toEqual([]);
+});
+
+test('attachment capacity and reuse failures preserve the existing chat selection', async ({page}) => {
+  await fixture(page);
+  const existing=Array.from({length:99},(_,i)=>`existing-${i}`);
+  await page.addInitScript(({owner,existing})=>localStorage.setItem(`vibe-project-settings:${owner}:DirectorRuntime:assets`,JSON.stringify(existing)),{owner,existing});
+  const assets=['Rain.wav','Wind.wav'].map((filename,i)=>({workspace_id:'other',asset_id:`pa-${i}`,kind:'audio',filename,roles:[],sha256:'a'.repeat(64),content_url:'/fixture.wav'}));
+  let calls=0;
+  await page.route('**/assets/catalogue?**',r=>r.fulfill({json:{assets,total:2,workspace_names:{[owner]:'Test film'},workspaces:[],folders:[]}}));
+  await page.route('**/assets/reuse',r=>{calls++;return r.fulfill({status:503,json:{error:{message:'Fixture unavailable'}}});});
+  await page.goto('/#/video');
+  await page.getByRole('button',{name:'Context & skills · 99 selected',exact:true}).click();
+  await page.getByRole('region',{name:'Project Director conversation'}).getByText('Browse media sources',{exact:true}).click();
+  const picker=page.locator('.media-source-picker');
+  await picker.getByRole('checkbox',{name:'Rain.wav',exact:true}).check();
+  await picker.getByRole('checkbox',{name:'Wind.wav',exact:true}).check();
+  await picker.getByRole('button',{name:'Attach to Director (2)',exact:true}).click();
+  await expect(picker.getByText('Choose at most 1 more file for this destination.',{exact:true})).toBeVisible();
+  expect(calls).toBe(0);
+  await picker.getByRole('checkbox',{name:'Wind.wav',exact:true}).uncheck();
+  await picker.getByRole('button',{name:'Attach to Director (1)',exact:true}).click();
+  await expect(picker.getByText(/destination selection unchanged/)).toBeVisible();
+  await expect(picker.getByRole('checkbox',{name:'Rain.wav',exact:true})).toBeChecked();
+  expect(await page.evaluate(owner=>JSON.parse(localStorage.getItem(`vibe-project-settings:${owner}:DirectorRuntime:assets`)),owner)).toEqual(existing);
+  expect(calls).toBe(1);
+});
+
+for(const viewport of [{width:1440,height:900},{width:1280,height:720},{width:900,height:768},{width:390,height:844}]) {
+  test(`image and take surfaces fit ${viewport.width}×${viewport.height} and retain drafts`, async ({page},info)=>{
+    const writes=await fixture(page);
+    await page.setViewportSize(viewport);
+    await page.goto('/#/worlds');
+    const prompt=page.getByRole('textbox',{name:'Image prompt',exact:true});
+    await prompt.fill('Keep the broken room and slime.');
+    await expect(page.locator('.image-assets-page .editor-workspace')).toHaveCount(0);
+    await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    const form=await page.locator('.image-form').boundingBox();
+    const canvas=await page.locator('.image-assets-page').boundingBox();
+    expect(form.width/canvas.width).toBeGreaterThan(0.7);
+    await page.getByRole('button',{name:'Hide Director conversation',exact:true}).click();
+    await expect(prompt).toHaveValue('Keep the broken room and slime.');
+    await page.getByRole('button',{name:'Show Director conversation',exact:true}).click();
+    await expect(prompt).toHaveValue('Keep the broken room and slime.');
+    await page.screenshot({path:info.outputPath(`image-${viewport.width}.png`),animations:'disabled'});
+    await page.goto('/#/take');
+    await expect(page.getByRole('heading',{name:'Current take',exact:true,level:1})).toBeVisible();
+    await expect(page.locator('.take-review-workspace .editor-workspace')).toHaveCount(0);
+    await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.screenshot({path:info.outputPath(`take-${viewport.width}.png`),animations:'disabled'});
+    expect(writes.filter(path=>path.includes('/jobs'))).toEqual([]);
+  });
+}
+
+for(const backend of ['trellis','pixal']) test(`${backend} studio suggestions share the Director, preserve history and require fresh Apply`,async({page})=>{
+ const writes=await fixture(page);let messages=[];
+ await page.addInitScript(owner=>localStorage.setItem(`vibe-studio-chat-trellis:${owner}`,JSON.stringify([{text:'Earlier studio question',reply:'Preserved studio reply',settings:{seed:5}}])),owner);
+ await page.route('**/api/trellis/state?**',route=>route.fulfill({json:{input:'/mock/input',output:'/mock/output',jobs:[]}}));
+ await page.route('**/conversation',route=>{
+   if(route.request().method()==='POST'){const body=route.request().postDataJSON();expect(body.surface).toBe('studio');expect(body.target.context.settings.backend).toBe(backend);
+     messages.push({request_id:body.request_id,text:body.text,reply:'Seed suggestion.',status:'answered',task_id:null,proposal:{surface:'studio',target:body.target,settings:{seed:12}}});}
+   return route.fulfill({json:{workspace_id:owner,messages}});
+ });
+ await page.goto(backend==='pixal'?'/#/image-to-3d-pixal3d':'/#/image-to-3d');
+ await expect(page.locator('#chat-trellis')).toHaveCount(0);await expect(page.locator('.director-composer textarea')).toHaveCount(1);
+ await page.getByText('Previous studio conversation',{exact:true}).click();await expect(page.getByText('Preserved studio reply',{exact:true})).toBeVisible();
+ await page.getByLabel('Message the project Director',{exact:true}).fill('Set seed to 12.');await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+ const apply=page.getByRole('button',{name:'Apply suggested settings',exact:true});await expect(apply).toBeEnabled();
+ await page.getByText('Parameters',{exact:true}).click();const seed=page.getByLabel('seed',{exact:true});const initial=await seed.inputValue();
+ await seed.fill('2');await expect(apply).toBeDisabled();await seed.fill(initial);await expect(apply).toBeDisabled();
+ await page.getByLabel('Message the project Director',{exact:true}).fill('Set seed to 12.');await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+ await expect(apply.last()).toBeEnabled();await apply.last().click();await expect(seed).toHaveValue('12');
+ await page.reload();await expect(apply).toHaveCount(1);await expect(apply).toBeDisabled();expect(writes.filter(path=>path.includes('/jobs'))).toEqual([]);
+});
+
+test('shared media picker previews Editor ranges without attaching or resetting an unfinished range',async({page})=>{
+  const writes=await fixture(page),updates=[];
+  const asset={workspace_id:owner,asset_id:'pa-clip',kind:'video',filename:'clip.mp4',content_url:'/mock/clip.mp4',roles:[],media:{duration_seconds:20}};
+  let edit={id:'edit-shared',workspace_id:owner,name:'Shared edit',revision:1,selection:[{asset_id:asset.asset_id,start:2,end:8}],messages:[],revisions:[],overrides:{},view:{tab:'media'}};
+  await page.route('**/api/editor/projects/edit-shared',route=>{
+    if(route.request().method()==='PUT'){const body=route.request().postDataJSON();updates.push(body);edit={...edit,...body};}
+    return route.fulfill({json:edit});
+  });
+  await page.route('**/assets/catalogue?*',route=>route.fulfill({json:{assets:[asset],total:1,workspace_names:{[owner]:'Test film'},workspaces:[owner]}}));
+  let reuses=0;
+  await page.route('**/assets/reuse',route=>{reuses++;return route.fulfill({json:asset});});
+  await page.goto('/#/editor');
+  await page.getByRole('button',{name:'Asset selection',exact:true}).click();
+  const picker=page.locator('.media-source-picker');
+  await page.getByLabel('Editor work surface',{exact:true}).getByRole('button',{name:'Browse media sources',exact:true}).click();
+  await picker.getByRole('checkbox',{name:'clip.mp4',exact:true}).check();
+  await picker.getByRole('button',{name:'Preview in Editor (1)',exact:true}).click();
+  await expect(page.getByLabel('In (seconds)',{exact:true})).toHaveValue('2');
+  await expect(page.getByLabel('Out / image hold end (seconds)',{exact:true})).toHaveValue('8');
+  expect(updates.filter(body=>body.selection)).toEqual([]);
+  await page.getByRole('button',{name:'Close Browse media sources',exact:true}).click();
+  await page.getByLabel('In (seconds)',{exact:true}).fill('3.25');
+  await page.getByLabel('Out / image hold end (seconds)',{exact:true}).fill('7.75');
+  await page.getByLabel('Editor work surface',{exact:true}).getByRole('button',{name:'Browse media sources',exact:true}).click();
+  await picker.getByRole('checkbox',{name:'clip.mp4',exact:true}).check();
+  await picker.getByRole('button',{name:'Preview in Editor (1)',exact:true}).click();
+  await expect(page.getByLabel('In (seconds)',{exact:true})).toHaveValue('3.25');
+  await expect(page.getByLabel('Out / image hold end (seconds)',{exact:true})).toHaveValue('7.75');
+  expect(reuses).toBe(2);expect(updates.filter(body=>body.selection)).toEqual([]);
+  await page.getByLabel('Editor work surface',{exact:true}).getByRole('button',{name:'Browse media sources',exact:true}).click();
+  await page.getByRole('button',{name:'Add to edit selection',exact:true}).click();
+  await expect.poll(()=>edit.selection).toEqual([{asset_id:'pa-clip',start:2,end:8},{asset_id:'pa-clip',start:3.25,end:7.75}]);
+  expect(writes.filter(path=>path.includes('/jobs')||path.endsWith('/command'))).toEqual([]);
+});
+
+test('shared Editor preview rejects multiple files before registration',async({page})=>{
+  await fixture(page);let reuses=0;
+  const assets=['one','two'].map(id=>({workspace_id:owner,asset_id:id,kind:'video',filename:id+'.mp4',roles:[],content_url:'/mock/'+id}));
+  await page.route('**/assets/catalogue?*',route=>route.fulfill({json:{assets,total:2,workspace_names:{[owner]:'Test film'},workspaces:[owner]}}));
+  await page.route('**/assets/reuse',route=>{reuses++;return route.fulfill({json:assets[0]});});
+  await page.goto('/#/editor');await page.getByRole('button',{name:'Asset selection',exact:true}).click();
+  await page.getByLabel('Editor work surface',{exact:true}).getByRole('button',{name:'Browse media sources',exact:true}).click();
+  const picker=page.locator('.media-source-picker');
+  await picker.getByRole('checkbox',{name:'one.mp4',exact:true}).check();await picker.getByRole('checkbox',{name:'two.mp4',exact:true}).check();
+  await picker.getByRole('button',{name:'Preview in Editor (2)',exact:true}).click();
+  await expect(picker.getByRole('status')).toHaveText('Choose at most 1 more file for this destination.');expect(reuses).toBe(0);
+});
+
+test('shared media picker selects audio utility inputs without starting a job',async({page})=>{
+  const writes=await fixture(page);let requests=0;
+  const asset={workspace_id:owner,asset_id:'pa-source',kind:'video',filename:'source.mp4',roles:[],content_url:'/mock/source.mp4'};
+  await page.route('**/api/story/workspaces',route=>route.fulfill({json:{items:[{workspace_id:owner,title:'Test film'}]}}));
+  await page.route('**/api/audio/utilities/capabilities',route=>route.fulfill({json:{operations:[{id:'extract_mp3',status:'available'}]}}));
+  await page.route('**/utilities/jobs',route=>{if(route.request().method()==='POST')requests++;return route.fulfill({json:[]});});
+  await page.route('**/assets/catalogue?*',route=>{expect(new URL(route.request().url()).searchParams.get('kinds')).toBe('audio,video');return route.fulfill({json:{assets:[asset],total:1,workspace_names:{[owner]:'Test film'},workspaces:[owner]}});});
+  await page.route('**/assets/reuse',route=>route.fulfill({json:asset}));
+  await page.route('**/assets?kind=*',route=>route.fulfill({json:{assets:[],total:0}}));
+  await page.goto('/#/media-prep?tool=utilities');
+  const utility=page.getByRole('region',{name:'Audio Utilities'});
+  await utility.getByText('Browse media sources',{exact:true}).click();
+  const picker=utility.locator('.media-source-picker');
+  await picker.getByRole('checkbox',{name:'source.mp4',exact:true}).check();await picker.getByRole('button',{name:'Use as MP3 extraction (1)',exact:true}).click();
+  await expect(utility.getByText('1 selected',{exact:true})).toBeVisible();
+  await expect(utility.getByRole('button',{name:'Run utility',exact:true})).toBeEnabled();
+  expect(requests).toBe(0);expect(writes.filter(path=>path.includes('/jobs'))).toEqual([]);
+  await utility.getByLabel('Audio utility operation').selectOption('noise_cleanup');
+  await expect(utility.getByText('0 selected',{exact:true})).toBeVisible();
+  await expect(utility.getByRole('button',{name:'Run utility',exact:true})).toBeDisabled();
 });

@@ -18,28 +18,28 @@ for(const tool of ['editor','ace'])test(`${tool}: visible composer, stale sessio
     if(p===`/api/${tool}/projects/fresh/command`){const body=route.request().postDataJSON();if(body.action==='chat'){text=body.text;project={...project,revision:project.revision+1,messages:[{id:'message-1',role:'user',text:body.text,content:body.text}]};}return route.fulfill({json:project});}
     if(p===`/api/${tool}/projects/fresh`)return route.fulfill({json:project});
     if(p.endsWith('/tasks'))return route.fulfill({json:{tasks:[]}});
-    if(p.endsWith('/conversation')){if(method==='POST')text=route.request().postDataJSON().text;return route.fulfill({json:{messages:text?[{request_id:'m',text,reply:'Ready',status:'answered'}]:[]}});}
+    if(p.endsWith('/conversation')){if(method==='POST'){const body=route.request().postDataJSON();text=body.text;if(tool==='ace'){expect(body.surface).toBe('music');expect(body.target.project_id).toBe('fresh');project={...project,revision:project.revision+1,messages:[{id:'message-1',role:'user',content:text}]};}}return route.fulfill({json:{messages:text?[{request_id:'m',text,reply:'Ready',status:'answered'}]:[]}});}
     if(p.startsWith('/api/media/'))return route.fulfill({json:{assets:[],total:0}});
     return route.fulfill({status:404,json:{error:{message:'Unexpected mock route '+p}}});
   });
   await mockProject(page); await page.goto(tool==='editor'?'/#/editor':'/#/media-prep?tool=music');
-  const composer=page.locator(tool==='editor'?'#project-director-message':'#ace-chat');
+  const composer=page.locator('#project-director-message');
   await expect(composer).toBeVisible();
   await expect.poll(()=>page.evaluate(tool=>localStorage.getItem(tool==='editor'?'vibe-editor-project:tool-library':'vibe-ace-project:tool-library'),tool)).toBe('');
   expect(creates).toBe(0);
   if(tool==='editor')await expect(page.getByRole('link',{name:'← Media Prep'})).toBeVisible();
   else await expect(page.getByRole('button',{name:'Run ACE-Step',exact:true})).toBeVisible();
   await composer.fill('Keep my first message');
-  await page.getByRole('button',{name:tool==='editor'?'Send to project Director':'Send',exact:true}).click();
+  await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
   await expect(page.getByText('Temporary save failure',{exact:true})).toBeVisible();
   await expect(composer).toHaveValue('Keep my first message');
-  await page.getByRole('button',{name:tool==='editor'?'Send to project Director':'Send',exact:true}).click();
+  await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
   await expect.poll(()=>text).toBe('Keep my first message');
   expect(creates).toBe(2);
   await expect(composer).toHaveValue('');
   await expect(page.getByRole('button',{name:/Create (music )?project/,exact:true})).toHaveCount(0);
   await page.reload();
   await expect(composer).toBeVisible();
-  await expect(page.getByLabel(tool==='editor'?'Director conversation history':'Music conversation',{exact:true}).getByText('Keep my first message',{exact:true})).toBeVisible();
+  await expect(page.getByLabel('Director conversation history',{exact:true}).getByText('Keep my first message',{exact:true})).toBeVisible();
   expect(creates).toBe(2);
 });

@@ -88,14 +88,14 @@ test('one folder restores isolated image settings and chat A → B → A, includ
  await expect(page.getByLabel('Image prompt',{exact:true})).toBeVisible();
  await open(page,'/projects/A','Project A');await expect(page.getByLabel('Project controls')).toContainText('Project A');
  await page.getByLabel('Image prompt',{exact:true}).fill('A distinct project prompt');
- await page.getByLabel('Talk to the image Director',{exact:true}).fill('Remember A camera style');
+ await page.getByLabel('Message the project Director',{exact:true}).fill('Remember A camera style');
  await page.getByLabel('Width',{exact:true}).fill('1024');
  await open(page,'/projects/B','Project B');await expect(page.getByLabel('Project controls')).toContainText('Project B');
  await expect(page.getByLabel('Image prompt',{exact:true})).toHaveValue('');
- await expect(page.getByLabel('Talk to the image Director',{exact:true})).toHaveValue('');
+ await expect(page.getByLabel('Message the project Director',{exact:true})).toHaveValue('');
  await page.getByLabel('Image prompt',{exact:true}).fill('Only B');
  await open(page,'/projects/A');await expect(page.getByLabel('Image prompt',{exact:true})).toHaveValue('A distinct project prompt');
- await expect(page.getByLabel('Talk to the image Director',{exact:true})).toHaveValue('Remember A camera style');
+ await expect(page.getByLabel('Message the project Director',{exact:true})).toHaveValue('Remember A camera style');
  await expect(page.getByLabel('Width',{exact:true})).toHaveValue('1024');
  await page.getByRole('button',{name:'Save project',exact:true}).click();
  await expect.poll(()=>state.saves.length).toBeGreaterThan(2);
@@ -157,7 +157,8 @@ test('opening a project restores its saved Editor session without browser select
  await expect(page.getByLabel('Project controls')).toContainText('Project A');
  await page.evaluate(()=>{location.hash='#/editor';});
  await expect(page.getByLabel('Session name')).toHaveValue('Project A edit');
- await expect(page.getByLabel('Editing conversation')).toContainText('Saved project A editing instructions');
+ await page.getByText('Previous Editor session history',{exact:true}).click();
+ await expect(page.locator('.editor-session-history')).toContainText('Saved project A editing instructions');
  await page.getByRole('button',{name:'Open session',exact:true}).click();
  await expect(page.getByLabel('Editing project')).toHaveValue('edit-a');
  await expect(page.getByLabel('Editing project').locator('option')).toHaveCount(2);

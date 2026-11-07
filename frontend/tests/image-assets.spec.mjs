@@ -1,4 +1,11 @@
+import {mockProject} from './fixtures/project.mjs';
 import { test, expect } from '@playwright/test';
+
+test.beforeEach(async ({page}) => {
+  page.on('pageerror',error=>{throw error;});
+  await page.route('**/api/images/prompts/prepare', async r=>r.fulfill({json:{workflow_id:'z_image_turbo',prompt:r.request().postDataJSON().prompt||'A rainy station platform',knowledge_ref:{knowledge_id:'fixture',guidance_version:1,workflow_sha256:'a'.repeat(64)},sources:[]}}));
+  await page.route('**/api/story/workspaces/*/assisted-stage-skips**', r => r.fulfill({json:{skipped:[]}}));
+});
 
 test('image generation stays available with low reported memory when runtime checks pass', async ({ page }) => {
   let jobs = 0;
@@ -20,7 +27,7 @@ test('image generation stays available with low reported memory when runtime che
     prompt: 'A lighthouse in fog.', knowledge_ref: { knowledge_id: 'k', guidance_version: 1, workflow_sha256: 'a' }, sources: [] } }));
   await page.route('**/api/images/jobs', async route => { jobs += 1; return route.fulfill({ status: 202, json: { batch_id: 'unexpected', jobs: [] } }); });
 
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await expect(page.getByText(/GPU ready · 5\.1 GiB reported free \(informational\)/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Generate four' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Prepare prompt' })).toBeEnabled();
@@ -34,16 +41,16 @@ test('image production routes select the correct page and constrain the image ro
   await page.route('**/api/images/worker', route => route.fulfill({ json: { available: false } }));
   await page.route('**/api/story/workspaces?**', route => route.fulfill({ json: { items: [], total: 0 } }));
   await page.route('**/api/media/**/assets?kind=image', route => route.fulfill({ json: { assets: [], total: 0 } }));
-  await page.goto('/#/characters');
+  await imageProject(page); await page.goto('/#/characters');
   await expect(page.getByRole('heading', { name: 'Characters & voices', exact: true })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveValue(/^media-/);
+  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveCount(0);
   await expect(page.getByRole('textbox', { name: 'Image prompt' })).toBeVisible();
-  await page.goto('/#/worlds');
-  await expect(page.getByRole('heading', { name: 'Worlds', exact: true })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveValue(/^media-/);
-  await expect(page.getByRole('option', { name: 'Standalone media workspace', exact: true })).toHaveCount(1);
+  await imageProject(page); await page.goto('/#/worlds');
+  await expect(page.getByRole('heading', { name: 'Scene Backgrounds', exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveCount(0);
+  await expect(page.getByText('Current project · change with New project or Load project above')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Asset role' })).toHaveCount(0);
-  await page.goto('/#/frames');
+  await imageProject(page); await page.goto('/#/frames');
   await expect(page.getByRole('heading', { name: 'First & last frames' })).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Frame role' })).toBeVisible();
   await expect(page.getByRole('option', { name: 'Character image' })).toHaveCount(0);
@@ -68,8 +75,8 @@ test('standalone image prompts support reviewed selection micro-edits', async ({
     } });
   });
 
-  await page.goto('/#/assets');
-  await page.getByRole('combobox', { name: 'Image generation workspace' }).selectOption('workspace-image');
+  await imageProject(page); await page.goto('/#/assets');
+  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveCount(0);
   const prompt = page.getByRole('textbox', { name: 'Image prompt' });
   await prompt.fill('A foggy house at dawn.');
   await prompt.evaluate(element => {
@@ -115,26 +122,26 @@ test('image screen previews a four-candidate request and queues it through guard
   await page.route('**/api/images/jobs', async route => {
     submitted = route.request().postDataJSON();
     return route.fulfill({ status: 202, json: { batch_id: 'batch-1', reused: false,
-      jobs: [1, 2, 3, 4].map(candidate_index => ({ job_id: `job-${candidate_index}`, candidate_index, status: 'queued' })) } });
+      jobs: [1, 2, 3, 4].map(candidate_index => ({ job_id: `job-${candidate_index}`, asset_role: 'character_master', candidate_index, status: 'queued' })) } });
   });
   await page.route('**/api/images/batches/batch-1?**', route => {
     polls += 1;
     return route.fulfill({ json: { batch_id: 'batch-1', jobs: [1, 2, 3, 4].map(candidate_index => ({
-      job_id: `job-${candidate_index}`, candidate_index, status: candidate_index < runningCandidate ? 'completed' : candidate_index === runningCandidate ? 'running' : 'queued', output_asset_id: null,
+      job_id: `job-${candidate_index}`, asset_role: 'character_master', candidate_index, status: candidate_index < runningCandidate ? 'completed' : candidate_index === runningCandidate ? 'running' : 'queued', output_asset_id: null,
     })), generation_policy: {} } });
   });
   await page.route('**/api/media/workspace-image/assets?kind=image', route => route.fulfill({ json: { assets: [], total: 0 } }));
 
-  await page.goto('/#/assets');
-  await expect(page.getByRole('heading', { name: 'Characters, worlds & frames' })).toBeVisible();
-  await expect(page.getByLabel('Image generation workspace')).toHaveValue('workspace-image');
-  await expect(page.getByRole('option', { name: 'Lighthouse story', exact: true })).toHaveCount(1);
+  await imageProject(page); await page.goto('/#/assets');
+  await expect(page.getByRole('heading', { name: 'Characters, scene backgrounds & frames' })).toBeVisible();
+  await expect(page.getByText('Current project · change with New project or Load project above')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveCount(0);
   await expect(page.getByText('workspace-image', { exact: true })).toHaveCount(0);
   await page.locator('.image-assets-page .image-prompt-label textarea').fill('A lighthouse in fog.');
   await page.getByRole('button', { name: 'Check generation request' }).click();
   await expect(page.getByText('4 candidates · no generation submitted')).toBeVisible();
   await page.getByRole('button', { name: 'Generate four' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   await expect(page.getByText('Candidate 4')).toBeVisible();
   expect(submitted).toMatchObject({ workspace_id: 'workspace-image', asset_role: 'character_master', prompt: 'A lighthouse in fog.', control_mode: 'assisted_manual' });
   expect(polls).toBeGreaterThan(0);
@@ -181,14 +188,14 @@ test('image prompt preparation is explicit, editable and carries workflow proven
     batch_id: 'prepared-image', jobs: [], generation_policy: {},
   } }));
 
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await page.locator('.image-assets-page .image-prompt-label textarea').fill('Mira, natural light.');
   await page.getByRole('button', { name: 'Prepare prompt' }).click();
   await expect(page.locator('.image-assets-page .image-prompt-label textarea')).toHaveValue('A source-grounded portrait of Mira.');
   await expect(page.getByText('Prompt sources · guidance v3')).toBeVisible();
   await page.locator('.image-assets-page .image-prompt-label textarea').fill('A source-grounded portrait of Mira, softer light.');
   await page.getByRole('button', { name: 'Generate four' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   expect(preparedRequest).toMatchObject({ workflow_id: 'z_image_turbo', asset_role: 'character_master', prompt: 'Mira, natural light.' });
   expect(submittedRequest).toMatchObject({ prompt: 'A source-grounded portrait of Mira, softer light.',
     prompt_knowledge_ref: { knowledge_id: 'knowledge-1', guidance_version: 3, workflow_sha256: 'a'.repeat(64) } });
@@ -216,21 +223,21 @@ test('image screen retries the exact saved request after an uncertain response',
     calls += 1;
     if (calls === 1) return route.fulfill({ status: 503, json: { error: { message: 'response uncertain' } } });
     return route.fulfill({ status: 200, json: { batch_id: 'batch-recovered', reused: true,
-      jobs: [1, 2, 3, 4].map(candidate_index => ({ job_id: `job-${candidate_index}`, candidate_index, status: 'queued' })) } });
+      jobs: [1, 2, 3, 4].map(candidate_index => ({ job_id: `job-${candidate_index}`, asset_role: 'character_master', candidate_index, status: 'queued' })) } });
   });
   await page.route('**/api/images/batches/batch-recovered?**', route => route.fulfill({ json: {
     batch_id: 'batch-recovered', jobs: [1, 2, 3, 4].map(candidate_index => ({
-      job_id: `job-${candidate_index}`, candidate_index, status: 'queued', output_asset_id: null,
+      job_id: `job-${candidate_index}`, asset_role: 'character_master', candidate_index, status: 'queued', output_asset_id: null,
     })), generation_policy: {},
   } }));
   await page.route('**/api/media/workspace-image/assets?kind=image', route => route.fulfill({ json: { assets: [], total: 0 } }));
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await page.getByRole('button', { name: 'Generate four' }).click();
   await expect(page.getByText('Retry sends its saved prompt and settings unchanged.')).toBeVisible();
   await expect(page.locator('.image-assets-page .image-prompt-label textarea')).toBeDisabled();
   await expect(page.locator('.image-assets-page .image-prompt-label textarea')).toHaveValue('Original prompt');
   await page.getByRole('button', { name: 'Resume saved request' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   expect(submissions).toHaveLength(2);
   expect(submissions[1]).toEqual(submissions[0]);
   expect(submissions[1].prompt).toBe('Original prompt');
@@ -264,10 +271,10 @@ test('Qwen Edit resumes its frozen request when the live reference list is unava
   await page.route('**/api/images/batches/batch-recovered?**', route => route.fulfill({ json: {
     batch_id: 'batch-recovered', jobs: [], generation_policy: {},
   } }));
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await expect(page.getByRole('button', { name: 'Resume saved request' })).toBeEnabled();
   await page.getByRole('button', { name: 'Resume saved request' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect.poll(()=>submitted).toEqual(frozen);
   expect(submitted).toEqual(frozen);
 });
 
@@ -281,7 +288,7 @@ test('completed candidate can be selected for the active image role', async ({ p
   await page.route('**/api/video/runtime', route => route.fulfill({ json: { safe_to_submit: false } }));
   await page.route('**/api/images/worker', route => route.fulfill({ json: { available: false } }));
   await page.route('**/api/images/batches/batch-done?**', route => route.fulfill({ json: {
-    batch_id: 'batch-done', generation_policy: {}, jobs: [{ job_id: 'job-done', candidate_index: 1, status: 'completed', output_asset_id: 'pa-0123456789abcdef' }],
+    batch_id: 'batch-done', generation_policy: {}, jobs: [{ job_id: 'job-done', asset_role: 'character_master', candidate_index: 1, status: 'completed', output_asset_id: 'pa-0123456789abcdef' }],
   } }));
   await page.route('**/api/media/workspace-image/assets?kind=image', route => route.fulfill({ json: { total: 1, assets: [{
     asset_id: 'pa-0123456789abcdef', workspace_id: 'workspace-image', kind: 'image', roles: ['image_candidate'],
@@ -295,7 +302,7 @@ test('completed candidate can be selected for the active image role', async ({ p
       sha256: 'abc', size_bytes: 123, content_url: '/portrait.png',
     } } });
   });
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await page.getByRole('button', { name: 'Use as Character image' }).click();
   await expect(page.getByText('Selected as Character image')).toBeVisible();
   expect(selected).toEqual({ workspace_id: 'workspace-image', asset_role: 'character_master' });
@@ -310,12 +317,12 @@ test('generated image candidates open a keyboard-dismissible full-size preview',
   await page.route('**/api/video/runtime', route => route.fulfill({ json: { safe_to_submit: false } }));
   await page.route('**/api/images/worker', route => route.fulfill({ json: { available: false } }));
   await page.route('**/api/images/batches/batch-done?**', route => route.fulfill({ json: {
-    batch_id: 'batch-done', generation_policy: {}, jobs: [1,2].map(n=>({job_id:`job-${n}`,candidate_index:n,status:'completed',output_asset_id:`pa-${n}`})),
+    batch_id: 'batch-done', generation_policy: {}, jobs: [1,2].map(n=>({job_id:`job-${n}`,asset_role:'character_master',candidate_index:n,status:'completed',output_asset_id:`pa-${n}`})),
   } }));
   await page.route('**/api/media/workspace-image/assets?kind=image', route => route.fulfill({ json: { total: 2, assets: [
     ...[1,2].map(n=>({asset_id:`pa-${n}`,workspace_id:'workspace-image',kind:'image',roles:['image_candidate'],filename:n===1?'portrait.png':'portrait-2.png',media_type:'image/png',sha256:'abc',size_bytes:123,content_url:n===1?'/portrait.png':'/portrait-2.png'}))
   ] } }));
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   const openPreview = page.getByRole('button', { name: 'View full-size Character image candidate 1' });
   await openPreview.click();
   const dialog = page.getByRole('dialog', { name: 'portrait.png' });
@@ -363,7 +370,7 @@ test('Qwen Edit attaches workspace image IDs and hashes to the saved request', a
   await page.route('**/api/images/batches/batch-edit?**', route => route.fulfill({ json: {
     batch_id: 'batch-edit', jobs: [], generation_policy: {},
   } }));
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await expect(page.getByText('rainy-street.png')).toBeVisible();
   const referenceCards = page.locator('.image-reference-grid label');
   await expect(referenceCards).toHaveCount(2);
@@ -373,7 +380,7 @@ test('Qwen Edit attaches workspace image IDs and hashes to the saved request', a
   await page.getByLabel('rainy-street.png').check();
   await page.getByRole('button', { name: 'Check generation request' }).click();
   await page.getByRole('button', { name: 'Generate four' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   expect(submitted.source_references).toEqual([{ asset_id: reference.asset_id, sha256: reference.sha256 }]);
   expect(submitted).not.toHaveProperty('source_images');
 });
@@ -410,14 +417,14 @@ for (const viewCount of [2, 3, 8]) test(`Worlds submits one selected base image 
   await page.route('**/api/images/batches/batch-world-views?**', route => route.fulfill({ json: {
     batch_id: 'batch-world-views', jobs: Array.from({length:viewCount},(_,i)=>({job_id:`view-${i}`,candidate_index:i+1,status:'running',asset_role:'world_view',settings:{multi_angle_batch:true,world_views:labels.map(label=>({label}))}})), generation_policy: {},
   } }));
-  await page.goto('/#/worlds');
+  await imageProject(page); await page.goto('/#/worlds');
   await expect(page.getByRole('combobox', { name: 'Image workflow' })).toContainText('world views');
-  await expect(page.getByText('station-base.png')).toBeVisible();
-  await page.getByLabel('station-base.png').check();
+  await expect(page.getByLabel('station-base.png', {exact:true})).toBeVisible();
+  await page.getByRole('checkbox',{name:'station-base.png',exact:true}).check();
   await page.getByRole('button', { name: 'Check generation request' }).click();
   await expect(page.getByText(`${viewCount} candidates · no generation submitted`)).toBeVisible();
   await page.getByRole('button', { name: `Generate ${viewCount} views` }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   await expect(page.getByText(/One multi-angle workflow is running/)).toBeVisible();
   await expect(page.getByRole('img',{name:'Generating image',exact:true})).toHaveCount(viewCount);
   expect(submitted).toMatchObject({ asset_role: 'world_view', world_view_count: viewCount,
@@ -459,12 +466,12 @@ test('character image generation binds to a character in the accepted screenplay
     prompt: 'Mira, a detective, alone against a plain white background.',
     knowledge_ref: { knowledge_id: 'z-image', guidance_version: 2 }, sources: [],
   } }));
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await page.getByRole('combobox', { name: 'Character target' }).selectOption('character-mira');
   await expect(page.locator('.image-assets-page .image-prompt-label textarea')).toHaveValue('Mira, a detective, alone against a plain white background.');
   await page.locator('.image-assets-page .image-prompt-label textarea').fill('Portrait of Mira');
   await page.getByRole('button', { name: 'Generate four' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   expect(submitted).toMatchObject({
     workspace_id: 'story-1', asset_role: 'character_master', screenplay_revision_id: 'screenplay-1',
     target_record_id: 'character-mira',
@@ -472,11 +479,13 @@ test('character image generation binds to a character in the accepted screenplay
 });
 
 test('story-linked image prompt supports selection-based Codex micro-edit', async ({ page }) => {
+  await page.route('**/api/story/workspaces/story-1/production-setup?**',r=>r.fulfill({json:{setup:{mode:'assisted_manual',automate_steps:{character_images:false}}}}));
+  await page.route('**/api/images/prompts/prepare',r=>r.fulfill({json:{workflow_id:'z_image_turbo',prompt:'Character reference portrait: Mira. A detective',knowledge_ref:{knowledge_id:'fixture',guidance_version:1,workflow_sha256:'a'.repeat(64)},sources:[]}}));
   let proposalRequest;
   await page.addInitScript(() => localStorage.setItem('vibe-image-draft-v1', JSON.stringify({
     workspaceId: 'story-1', role: 'character_master', workflowId: 'z_image_turbo', prompt: '', seed: 42,
   })));
-  await page.route('**/api/images/workflows**', route => route.fulfill({ json: { workflows: [] } }));
+  await page.route('**/api/images/workflows**', route => route.fulfill({ json: { workflows: [{workflow_id:'z_image_turbo',label:'Z-Image Turbo',available:false,defaults:{}}] } }));
   await page.route('**/api/video/runtime', route => route.fulfill({ json: { safe_to_submit: false } }));
   await page.route('**/api/images/worker', route => route.fulfill({ json: { available: false } }));
   await page.route('**/api/story/workspaces?**', route => route.fulfill({ json: { items: [{ workspace_id: 'story-1', title: 'Pilot story' }], total: 1 } }));
@@ -504,7 +513,7 @@ test('story-linked image prompt supports selection-based Codex micro-edit', asyn
       explanation: 'Adjusted the selected character description.' } });
   });
 
-  await page.goto('/#/characters?step=character_images');
+  await imageProject(page); await page.goto('/#/characters?step=character_images');
   await page.getByRole('combobox', { name: 'Character target' }).selectOption('character-mira');
   const prompt = page.getByRole('textbox', { name: 'Image prompt' });
   await expect(prompt).toHaveValue('Character reference portrait: Mira. A detective');
@@ -543,13 +552,13 @@ test('saved character selection survives reload and is omitted for non-character
     prompt: 'Mira, a detective, alone against a plain white background.',
     knowledge_ref: { knowledge_id: 'z-image', guidance_version: 2 }, sources: [],
   } }));
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   await expect(page.getByText(/GPU ready · 22\.0 GiB reported free \(informational\)/)).toBeVisible();
   await expect(page.getByText('Image worker ready', { exact: true })).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Character target' })).toHaveValue('character-mira');
   await page.getByLabel('Asset role').selectOption('world_master');
   await page.getByRole('button', { name: 'Generate four' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   expect(submitted).toMatchObject({ workspace_id: 'story-1', asset_role: 'world_master' });
   expect(submitted).not.toHaveProperty('screenplay_revision_id');
   expect(submitted).not.toHaveProperty('target_record_id');
@@ -573,13 +582,13 @@ test('world master offers only canonical locations and preserves standalone gene
   await page.route('**/api/images/jobs', async route => { submitted = route.request().postDataJSON(); return route.fulfill({ status: 202, json: { batch_id: 'batch-older-graph', jobs: [], reused: false } }); });
   await page.route('**/api/images/batches/batch-older-graph?**', route => route.fulfill({ json: { batch_id: 'batch-older-graph', jobs: [], generation_policy: {} } }));
   await page.route('**/api/media/story-1/assets?kind=image', route => route.fulfill({ json: { assets: [], total: 0 } }));
-  await page.goto('/#/assets');
+  await imageProject(page); await page.goto('/#/assets');
   const target = page.getByRole('combobox', { name: 'Location target' });
   await expect(target).toBeVisible();
   await expect(target.locator('option')).toHaveCount(1);
   await expect(page.getByText(/no canonical location target is available/i)).toBeVisible();
   await page.getByRole('button', { name: 'Generate four' }).click();
-  await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+  await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
   expect(submitted).toMatchObject({ workspace_id: 'story-1', asset_role: 'world_master' });
   expect(submitted).not.toHaveProperty('screenplay_revision_id');
   expect(submitted).not.toHaveProperty('target_record_id');
@@ -619,9 +628,9 @@ test('story character-image stage starts the checked automation and shows its pr
   let submitted = false;
   await page.route('**/api/images/jobs', route => { submitted = true; return route.fulfill({ status: 202, json: { batch_id: 'must-not-queue', jobs: [] } }); });
 
-  await page.goto('/#/assets?step=character_images&workspace_id=story-1');
+  await imageProject(page); await page.goto('/#/assets?step=character_images&workspace_id=story-1');
   await expect(page.getByRole('heading', { name: 'Character image step' })).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'automated from the saved setup' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'automated from the saved setup' }).first()).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Automated targets' })).toBeVisible();
   await expect(page.getByText('Mira · candidate 1')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Generate four' })).toBeDisabled();
@@ -674,8 +683,8 @@ test('Assisted manual world-image step previews only against an accepted canonic
   });
   await page.route('**/api/images/jobs', route => { submitted = true; return route.fulfill({ status: 202, json: { batch_id: 'unexpected', jobs: [] } }); });
 
-  await page.goto('/#/assets?step=world_images&workspace_id=story-1');
-  await expect(page.getByRole('heading', { name: 'World image step' })).toBeVisible();
+  await imageProject(page); await page.goto('/#/assets?step=world_images&workspace_id=story-1');
+  await expect(page.getByRole('heading', { name: 'Scene background step' })).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'world image generation is unchecked' })).toBeVisible();
   const target = page.getByRole('combobox', { name: 'Location target' });
   await expect(target.locator('option')).toHaveCount(2);
@@ -704,9 +713,9 @@ test('Assisted manual world-image step starts checked automation instead of manu
         error: { code: 'director_review_failed', message: 'Reviewer temporarily unavailable.' } } },
   ] } }));
 
-  await page.goto('/#/assets?step=world_images&workspace_id=story-1');
-  await expect(page.getByRole('heading', { name: 'World image step' })).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'World image generation is automated' })).toBeVisible();
+  await imageProject(page); await page.goto('/#/assets?step=world_images&workspace_id=story-1');
+  await expect(page.getByRole('heading', { name: 'Scene background step' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'World image generation is automated' }).first()).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Automated targets' })).toBeVisible();
   await expect(page.getByText('Old station · candidate 1')).toBeVisible();
   await expect(page.getByText('completed · Director blocked')).toBeVisible();
@@ -739,7 +748,7 @@ async function mockFrameImageStage(page, { automated = false, prompt = 'A rainy 
   await page.route('**/api/story/workspaces/story-1/screenplay/revisions/screenplay-1', route => route.fulfill({ json: {
     screenplay_revision_id: 'screenplay-1', accepted: true, source_revision_id: 'source-1', graph_snapshot_id: 'graph-1',
     screenplay: { scenes: [{ scene_number: 1, slugline: 'INT. STATION - NIGHT', summary: 'Mira arrives.', shots: [
-      { shot_number: 1, action: 'Mira enters the platform.' }, { shot_number: 2, action: 'A train emerges from the fog.' },
+      { direction:{}, shot_number: 1, action: 'Mira enters the platform.' }, { direction:{}, shot_number: 2, action: 'A train emerges from the fog.' },
     ] }] },
   } }));
   await page.route('**/api/story/workspaces/story-1/production-setup?screenplay_revision_id=screenplay-1', route => route.fulfill({ json: {
@@ -763,7 +772,7 @@ async function mockFrameImageStage(page, { automated = false, prompt = 'A rainy 
     await page.route('**/api/story/workspaces/story-2/screenplay/revisions/screenplay-2', route => route.fulfill({ json: {
       screenplay_revision_id: 'screenplay-2', accepted: true, source_revision_id: 'source-2', graph_snapshot_id: 'graph-2',
       screenplay: { scenes: [{ scene_number: 1, slugline: 'EXT. HARBOR - DAY', summary: 'A boat arrives.', shots: [
-        { shot_number: 1, action: 'A boat enters the harbor.' }, { shot_number: 2, action: 'The crew steps ashore.' },
+        { direction:{}, shot_number: 1, action: 'A boat enters the harbor.' }, { direction:{}, shot_number: 2, action: 'The crew steps ashore.' },
       ] }] },
     } }));
     await page.route('**/api/story/workspaces/story-2/production-setup?screenplay_revision_id=screenplay-2', route => route.fulfill({ json: {
@@ -794,7 +803,7 @@ test('fresh screenplay frame step can prepare an empty prompt without submitting
   let generationSubmitted = false;
   await mockFrameImageStage(page, { prompt: '' });
   await page.route('**/api/images/prompts/prepare', async route => {
-    prepareRequest = route.request().postDataJSON();
+    prepareRequest ??= route.request().postDataJSON();
     return route.fulfill({ json: { workflow_id: 'z_image_turbo', asset_role: 'first_frame',
       prompt: 'A rainy station platform, Mira entering from frame left.',
       knowledge_ref: { knowledge_id: 'image-guide', guidance_version: 1, workflow_sha256: 'a'.repeat(64) },
@@ -802,9 +811,8 @@ test('fresh screenplay frame step can prepare an empty prompt without submitting
   });
   await page.route('**/api/images/jobs', route => { generationSubmitted = true; return route.fulfill({ status: 202, json: {} }); });
 
-  await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
+  await imageProject(page); await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
   await expect(page.getByRole('button', { name: 'Prepare prompt' })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Generate four' })).toBeDisabled();
   await page.getByRole('button', { name: 'Prepare prompt' }).click();
   await expect(page.getByRole('textbox', { name: 'Image prompt' })).toHaveValue('A rainy station platform, Mira entering from frame left.');
   expect(prepareRequest).toMatchObject({ workspace_id: 'story-1', workflow_id: 'z_image_turbo', asset_role: 'first_frame', prompt: '', screenplay_revision_id: 'screenplay-1', scene_number: 1, shot_number: 1 });
@@ -822,7 +830,7 @@ test('Assisted manual frame step binds role to accepted shot and skip creates no
   });
   await page.route('**/api/images/jobs', route => { submitted = true; return route.fulfill({ status: 202, json: { batch_id: 'unexpected', jobs: [] } }); });
 
-  await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
+  await imageProject(page); await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
   await expect(page.getByRole('heading', { name: 'Clip frame step' })).toBeVisible();
   const clip = page.getByRole('combobox', { name: 'Planned clip' });
   await expect(clip.locator('option')).toHaveCount(3);
@@ -860,15 +868,14 @@ test('late frame skip responses cannot overwrite a newer workspace context or it
     return route.fulfill({ json: { workspace_id: workspace, screenplay_revision_id: `screenplay-${workspace.slice(-1)}`, skipped } });
   });
 
-  await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
+  await imageProject(page); await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
   await expect(page.getByRole('heading', { name: 'Clip frame step' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Skip this clip’s frames' })).toBeEnabled();
   await page.getByRole('button', { name: 'Skip this clip’s frames' }).click();
   await expect.poll(() => pending.has('story-1')).toBe(true);
 
-  const workspace = page.getByRole('combobox', { name: 'Image generation workspace' });
-  await workspace.selectOption('story-2');
-  await expect(page).toHaveURL(/workspace_id=story-2/);
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('vibe-project-select',{detail:'story-2'})));
+  await expect.poll(()=>page.evaluate(()=>localStorage.getItem('vibe-project-installed'))).toBe('story-2');
   await expect(page.getByRole('button', { name: 'Undo skip for this clip' })).toBeEnabled();
   await page.getByRole('button', { name: 'Undo skip for this clip' }).click();
   await expect.poll(() => pending.has('story-2')).toBe(true);
@@ -896,9 +903,9 @@ test('checked frame automation calls the stage admission endpoint and never subm
       asset_role: 'last_frame', status: 'queued', output_asset_id: null, settings: { lineage: { target_name: 'Station · shot 1.1 · ending frame' } } }],
   } }));
   await page.route('**/api/images/jobs', route => { submitted = true; return route.fulfill({ status: 202, json: { batch_id: 'unexpected', jobs: [] } }); });
-  await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
+  await imageProject(page); await page.goto('/#/assets?step=frame_images&workspace_id=story-1');
   await expect(page.getByRole('heading', { name: 'Clip frame step' })).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'Clip frame generation is automated from the saved setup' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Clip frame generation is automated from the saved setup' }).first()).toBeVisible();
   await expect.poll(() => stageRequest).toEqual({ workspace_id: 'story-1', screenplay_revision_id: 'screenplay-1', step: 'frame_images' });
   await expect(page.getByText('Director review selects at most one first frame and one last frame per clip.')).toBeVisible();
   await expect(page.getByText('Station · shot 1.1 · ending frame · candidate 1')).toBeVisible();
@@ -958,21 +965,20 @@ test('same-page image-stage and workspace handoff reloads context before automat
       target_count: 0, batches: [] } });
   });
 
-  await page.goto('/#/assets?step=character_images&workspace_id=story-1');
+  await imageProject(page); await page.goto('/#/assets?step=character_images&workspace_id=story-1');
   await expect(page.getByRole('heading', { name: 'Character image step' })).toBeVisible();
   await expect.poll(() => admissions).toEqual([{ workspace_id: 'story-1', screenplay_revision_id: 'screenplay-1', step: 'character_images' }]);
 
-  await page.getByRole('combobox', { name: 'Image generation workspace' }).selectOption('story-2');
-  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveValue('story-2');
-  await expect(page).toHaveURL(/step=character_images&workspace_id=story-2/);
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent('vibe-project-select',{detail:'story-2'})));
+  await expect(page).toHaveURL(/step=character_images/);
   await expect(page.getByRole('combobox', { name: 'Character target' })).toContainText('Character story-2');
   await expect.poll(() => admissions).toEqual([
     { workspace_id: 'story-1', screenplay_revision_id: 'screenplay-1', step: 'character_images' },
   ]);
 
   await page.evaluate(() => { window.location.hash = '#/assets?step=world_images&workspace_id=story-2'; });
-  await expect(page.getByRole('heading', { name: 'World image step' })).toBeVisible();
-  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveValue('story-2');
+  await expect(page.getByRole('heading', { name: 'Scene background step' })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Image generation workspace' })).toHaveCount(0);
   await expect(page.getByRole('combobox', { name: 'Location target' })).toContainText('Location story-2');
   await expect.poll(() => admissions).toEqual([
     { workspace_id: 'story-1', screenplay_revision_id: 'screenplay-1', step: 'character_images' },
@@ -990,7 +996,7 @@ test('story character prompts follow target and workflow and preserve director e
   const setup = { mode: 'assisted_manual', automate_steps: { character_images: true, character_voice: true, world_images: true, frame_images: true, video: true },
     video_quality: 'high', duration_policy: { kind: 'fixed', seconds: 5 },
     image_stage_settings: Object.fromEntries(['character_images', 'world_images', 'frame_images'].map(step => [step, { workflow_id: 'z_image_turbo', width: 1280, height: 720, steps: 8, cfg: 1 }])) };
-  await page.route('**/api/**', route => route.fulfill({ json: {} }));
+  await page.route('**/api/**', route => route.fulfill({ status:404,json:{error:{message:'Unused fixture route'}} }));
   await page.route('**/api/images/workflows**', route => route.fulfill({ json: { workflows: ['z_image_turbo','qwen_image_2512'].map(workflow_id => ({ workflow_id, prompt_knowledge_ref: { knowledge_id: guidanceId, guidance_version: 1, workflow_sha256: 'a' }, label: workflow_id, available: true, automation_available: false, defaults: { width: 1280, height: 720, steps: 8, cfg: 1 } })), gpu_admission: { available: true } } }));
   await page.route('**/api/video/runtime', route => route.fulfill({ json: { safe_to_submit: true } }));
   await page.route('**/api/images/worker', route => route.fulfill({ json: { available: true } }));
@@ -1017,7 +1023,7 @@ test('story character prompts follow target and workflow and preserve director e
     return route.fulfill({ json: { workflow_id: body.workflow_id, prompt: `${body.target_record_id} for ${body.workflow_id}`, knowledge_ref: { knowledge_id: guidanceId, guidance_version: 1, workflow_sha256: 'a' }, sources: [] } });
   });
   await page.route('**/api/images/jobs', route => { jobs++; return route.fulfill({ status: 500, json: {} }); });
-  await page.goto('/#/assets?step=character_images&workspace_id=story-test');
+  await imageProject(page); await page.goto('/#/assets?step=character_images&workspace_id=story-test');
   const prompt = page.getByRole('textbox', { name: 'Image prompt', exact: true });
   await expect(page.getByRole('combobox', { name: 'Frame role' })).toHaveCount(0);
   await expect(page.getByRole('combobox', { name: 'Character target', exact: true })).toHaveValue('Ivo');
@@ -1061,7 +1067,7 @@ for (const targetKind of ['character','location']) test(`${targetKind} master re
   const batch = {batch_id:'batch-1',jobs:assets.map((asset,index)=>({job_id:`job-${index+1}`,asset_role:role,candidate_index:index+1,status:'completed',output_asset_id:asset.asset_id,settings:{lineage}}))};
   let selected='pa-2'; let failSideViews=true; const drafts=[]; const validations=[]; const submissions=[];
   await page.addInitScript(({role})=>{if(!localStorage.getItem('seeded')) {localStorage.setItem('seeded','yes');localStorage.setItem('vibe-story-selected-v1','story-test');localStorage.setItem('vibe-image-draft-v1',JSON.stringify({workspaceId:'story-test',role,workflowId:'z_image_turbo',targetRecordId:'first',seed:42}));localStorage.setItem('vibe-image-active-v1',JSON.stringify({workspaceId:'story-test',batchId:'batch-1'}));}}, {role});
-  await page.route('**/api/**',r=>r.fulfill({json:{}}));
+  await page.route('**/api/**',r=>r.fulfill({status:404,json:{error:{message:'Unused fixture route'}}}));
   await page.route('**/api/images/workflows**',r=>r.fulfill({json:{workflows:['z_image_turbo','qwen_image_multi_angle_2511'].map(workflow_id=>({workflow_id,label:workflow_id,available:true,defaults:{width:1280,height:720,steps:8,cfg:1}})),gpu_admission:{available:true}}}));
   await page.route('**/api/video/runtime',r=>r.fulfill({json:{safe_to_submit:true}}));
   await page.route('**/api/images/worker',r=>r.fulfill({json:{available:true}}));
@@ -1080,12 +1086,12 @@ for (const targetKind of ['character','location']) test(`${targetKind} master re
   await page.route('**/api/images/prompts/prepare',async r=>{const body=r.request().postDataJSON();drafts.push(body);if(body.asset_role===viewRole&&failSideViews){await new Promise(resolve=>setTimeout(resolve,400));return r.fulfill({status:503,json:{error:{message:'side view draft failed'}}});}if(body.target_record_id==='second'&&drafts.filter(x=>x.target_record_id==='second').length===1)return r.fulfill({status:503,json:{error:{message:'temporary draft failure'}}});return r.fulfill({json:{workflow_id:body.workflow_id,prompt:`${body.target_record_id} ${body.asset_role} draft`,knowledge_ref:{knowledge_id:'k',guidance_version:1,workflow_sha256:'a'},sources:[]}});});
   await page.route('**/api/images/validations',r=>{validations.push(r.request().postDataJSON());return r.fulfill({json:{candidates:[]}});});
   await page.route('**/api/images/jobs',r=>{submissions.push(r.request().postDataJSON());return r.fulfill({status:202,json:batch});});
-  await page.goto(`/#/${routeName}`);
+  await imageProject(page); await page.goto(`/#/${routeName}`);
   const prompt=page.getByRole('textbox',{name:'Image prompt',exact:true});
   await expect(prompt).toHaveValue(`first ${role} draft`);
   await expect(page.getByRole('button',{name:'Selected',exact:true})).toHaveCount(1);
   if(targetKind==='character') await expect(page.getByRole('img',{name:'First reference',exact:true})).toHaveAttribute('src','/candidate-2.png');
-  await page.getByRole('button',{name:targetKind==='character'?'Use as Character image':'Use as World / location image',exact:true}).click();
+  await page.getByRole('button',{name:targetKind==='character'?'Use as Character image':'Use as Scene background / base location',exact:true}).click();
   await expect(page.getByRole('button',{name:'Selected',exact:true})).toHaveCount(1);
   expect(selected).toBe('pa-1');
   if(targetKind==='character') await expect(page.getByRole('img',{name:'First reference',exact:true})).toHaveAttribute('src','/candidate-1.png');
@@ -1095,7 +1101,7 @@ for (const targetKind of ['character','location']) test(`${targetKind} master re
   await page.getByRole('button',{name:'Prepare prompt',exact:true}).click();
   await expect(prompt).toHaveValue(`second ${role} draft`);
   // Selecting a candidate from the previous batch still uses its original first target.
-  await page.getByRole('button',{name:targetKind==='character'?'Use as Character image':'Use as World / location image',exact:true}).click();
+  await page.getByRole('button',{name:targetKind==='character'?'Use as Character image':'Use as Scene background / base location',exact:true}).click();
   expect(selected).toBe('pa-2');
   await page.getByRole('combobox',{name:targetLabel,exact:true}).selectOption('first');
   await page.getByRole('combobox',{name:'Number of candidates'}).selectOption('1');
@@ -1151,7 +1157,7 @@ for (const savedRetry of [false, true]) {
         : r.fulfill({ status: 202, json: { batch_id: 'new-guidance', jobs: [] } });
     });
     await page.route('**/api/images/batches/new-guidance?**', r => r.fulfill({ json: { batch_id: 'new-guidance', jobs: [] } }));
-    await page.goto('/#/assets');
+    await imageProject(page); await page.goto('/#/assets');
     await page.getByRole('button', { name: savedRetry ? 'Resume saved request' : 'Generate four' }).click();
     await expect(page.getByText(/No job was queued/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Discard saved retry' })).toHaveCount(0);
@@ -1160,9 +1166,17 @@ for (const savedRetry of [false, true]) {
     await page.getByRole('button', { name: 'Prepare prompt' }).click();
     await expect(page.locator('.image-prompt-label textarea')).toHaveValue('Reviewed current portrait');
     await page.getByRole('button', { name: 'Generate four' }).click();
-    await expect(page.getByRole('heading', { name: 'Candidate batch' })).toBeVisible();
+    await expect(page.getByRole('status').filter({hasText:'Candidate batch queued'})).toBeVisible();
     expect(submissions).toHaveLength(2);
     expect(submissions[1].prompt_knowledge_ref).toEqual(newRef);
     expect(submissions[1].idempotency_key).not.toBe(submissions[0].idempotency_key);
   });
+}
+
+async function imageProject(page) {
+  await mockProject(page,undefined,'vibe-image-draft-v1');
+  await page.route('**/api/director/settings',r=>r.fulfill({json:{settings:{provider:'codex',model:'fixture',lessons:[]},models:[]}}));
+  await page.route('**/api/studio-tools/loras',r=>r.fulfill({json:{loras:[]}}));
+  await page.route('**/api/studio-tools/loras/checkpoints',r=>r.fulfill({json:{checkpoints:[]}}));
+  await page.route('**/api/studio-tools/output-destination',route=>route.fulfill({json:{mode:'default',path:'/fixture/images',available:true}}));
 }

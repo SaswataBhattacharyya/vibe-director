@@ -99,14 +99,8 @@ def handle(root,environ,start_response,read_json,respond):
             return stream()
         else: raise ValueError('Unsupported 3D action.')
     elif path=='/api/studio-tools/chat' and method=='POST':
-        from .reasoning_provider import generate_json
-        from . import multiview_3d
-        context=body.get('context',{})
-        keys={'seed','fov','faces'} if context.get('backend')=='pixal' else multiview_3d.REMOTE_PARAMS if context.get('input_mode')=='multiview' else trellis.PARAMS
-        schema={'type':'object','properties':{'reply':{'type':'string'},'settings':{'type':'object','additionalProperties':False,'properties':{k:{'type':'number'} for k in keys}}},'required':['reply','settings'],'additionalProperties':False}
-        text=str(body.get('text',''))
-        if not 0<len(text)<=8000: raise ValueError('Message must contain 1–8000 characters.')
-        result=generate_json(prompt='You are the Vibe Director studio assistant. Discuss the request; never run tools or start generation. TRELLIS is image-conditioned, not text-conditioned. Suggest only explicitly requested supported settings for the selected backend and input mode, using only schema keys; otherwise settings must be empty. Return reply and settings. Current context: '+json.dumps(body.get('context',{}))[:12000]+'\nRecent conversation: '+json.dumps(body.get('history',[]))[-16000:]+'\nUser: '+text,output_schema=schema,cpu_only=True)
+        from .studio_guidance import suggest
+        result=suggest(body.get('text'),body.get('context',{}),body.get('history',[]))
     else:
         return respond(start_response,'404 Not Found',{'error':{'message':'Studio action not found.'}})
     return respond(start_response,'200 OK',result)

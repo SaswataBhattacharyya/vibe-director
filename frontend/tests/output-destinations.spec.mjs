@@ -22,6 +22,8 @@ test('output selection saves a folder and missing-folder recovery verifies befor
  const card=page.getByRole('region',{name:'audio-utilities output destination'});
  await expect(card.getByText('/data/audio_studio/output',{exact:true})).toBeVisible();
  await expect(page.getByLabel('Audio utility workspace')).toHaveCount(0);
+ await expect(card.getByLabel('audio-utilities output folder path')).toBeHidden();
+ await card.getByRole('button',{name:'Change',exact:true}).click();
  await card.getByRole('button',{name:'Choose folder',exact:true}).click();
  await expect(card.getByText('/chosen/output',{exact:true})).toBeVisible();
  expect(changes[0]).toMatchObject({tool:'audio-utilities',workspace_id:'tool-library',choice:{mode:'folder',grant:'chosen'}});
@@ -31,6 +33,7 @@ test('output selection saves a folder and missing-folder recovery verifies befor
  expect(folderRequests.at(-1)).toEqual({path:'/typed/output'});
  missing=true;await page.reload();
  await expect(card.getByText('Unavailable: /missing',{exact:true})).toBeVisible();
+ await expect(card.getByLabel('audio-utilities output folder path')).toBeVisible();
  await card.getByRole('button',{name:'Choose folder',exact:true}).click();
  await expect(card.getByText('/chosen/output',{exact:true})).toBeVisible();
  expect(changes.at(-1)).toMatchObject({tool:'audio-utilities',workspace_id:'tool-library',grant:'chosen'});

@@ -1,0 +1,876 @@
+{
+  "comparison": "working tree vs b1c0f17d576f4ccdd7c614055169e8583e6e7a01",
+  "mode": "manual with Graphify discovery",
+  "limitations": [
+    "Bounded traversal of changed runtime entry points and their direct consumers to two levels; no exhaustive repository call graph claim.",
+    "Forced code-only Graphify refresh: 5319 nodes / 16087 edges. Source references, not graph edges, establish dependencies; no measured coverage claim.",
+    "CSS/type/fixture changes are covered by their owning runtime entries; no indexed TESTED_BY edges or measured coverage claimed.",
+    "Synthetic CPU/backend and mocked browser tests do not establish real provider/GPU generation or encoded media acceptance."
+  ],
+  "overall_risk": "high (0.60 maximum heuristic score), due to existing validation/SQL boundary on the shared conversation flow; not a defect probability",
+  "findings": [
+    {
+      "node": "backend/story_builder/services/agent_conversation.py::def send(",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 42
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Image target ownership/size/version is validated before reasoning; AgentConversation history and isolated_server conversation route consume the saved context; test_agent_images.py exercises UUID reuse and interrupted requests."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/agent_conversation.py::def history(",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 24
+      },
+      "anchor": "    def history(self, owner):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "SQL context_json supplies optional proposal to DirectorRuntime via agent-tasks.ts. Existing records without proposals retain their response shape; test_agent_images.py and director-runtime.spec.mjs cover replay/reload."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/image_prompt_context.py::def prepare(",
+      "location": {
+        "file": "backend/story_builder/services/image_prompt_context.py",
+        "line": 11
+      },
+      "anchor": "def prepare(payload, *, root, story, styles, ledger, workflow_knowledge, lineage_resolver, provider=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both isolated_server manual image prompt route and AgentConversation image_prepare use this validation/context helper; prepare_image_prompt consumes the same generated context. test_image_prompt_drafts.py and test_agent_images.py provide static test references."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/isolated_server.py::def prepare_image_context(",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 326
+      },
+      "anchor": "    def prepare_image_context(payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared closure injects existing story/styles/ledger/lineage/provider into manual API and AgentConversation. Actual WSGI coverage is in test_agent_images.py."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/DirectorRuntime.tsx::const send =",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 107
+      },
+      "anchor": "  const send = () => attempt(async signal => {",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorConversation -> send -> agentRequest conversation -> AgentConversation.send. Image bridge owned by the open project; Editor/computer modes retain existing paths. director-runtime.spec.mjs checks image, Editor and computer tasks."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/agent_music.py::def discuss(root, owner, target, text):",
+      "location": {
+        "file": "backend/story_builder/services/agent_music.py",
+        "line": 19
+      },
+      "anchor": "def discuss(root, owner, target, text):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "AgentConversation delegates validated music targets to existing ace_studio command chat. The existing CPU chat job persists session responses and retains revision, owner, cancellation and recovery checks. test_agent_music.py tests target guards and reuse without generation."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/agent_story.py::def context(self, owner, target):",
+      "location": {
+        "file": "backend/story_builder/services/agent_story.py",
+        "line": 64
+      },
+      "anchor": "    def context(self, owner, target):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Strict project/revision/Unicode-span guards before reasoning; test_agent_story covers stale/invalid targets and explicit acceptance."
+      ],
+      "verification": "source anchor verified; bounded named-suite evidence"
+    },
+    {
+      "node": "backend/story_builder/services/agent_story.py::def propose_story_edit(story, workspace_id, payload, reason=None):",
+      "location": {
+        "file": "backend/story_builder/services/agent_story.py",
+        "line": 7
+      },
+      "anchor": "def propose_story_edit(story, workspace_id, payload, reason=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual route and Director share selected-edit ledger/provider logic. Existing selected-edit/authoring tests and test_agent_story cover CAS, bounded context and lost-response recovery."
+      ],
+      "verification": "source anchor verified; bounded named-suite evidence"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::def browse_catalogue(",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1302
+      },
+      "anchor": "def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = \"image,video,audio\",",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "isolated_server dispatches browse to shared picker; role/date/audio/index filters precede totals/paging. Existing catalogue plus new metadata regressions pass."
+      ],
+      "verification": "source anchor verified; focused CPU/mock evidence, owner acceptance pending"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::def reuse_catalogue_asset(",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1407
+      },
+      "anchor": "def reuse_catalogue_asset(root: Path, workspace_id: str, *, source_workspace_id: str, asset_id: str, role: str | None = None, mode: str = \"reference\") -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared picker requests reference by default. Existing location resolver links ordinary uploads without new bytes; explicit copy still deduplicates. Tests cover tamper, archive, link deletion protection and checkpoint reopen."
+      ],
+      "verification": "source anchor verified; focused CPU/mock evidence, owner acceptance pending"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::def deletion_preview(",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 1549
+      },
+      "anchor": "def deletion_preview(root: Path, workspace_id: str, asset_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Indirect consumer of new reference memberships: scans other manifests and physical paths before delete_media_file. New linked-upload regression verifies both membership deletion attempts are refused."
+      ],
+      "verification": "source anchor verified; focused CPU/mock evidence, owner acceptance pending"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::def save(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 338
+      },
+      "anchor": "def save(root, workspace, folder, memory):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Indirect persistence consumer: existing checkpoint materialization reads linked asset_path. New recovery test restores linked upload bytes and stable identity without the source workspace; no save implementation change."
+      ],
+      "verification": "source anchor verified; focused CPU/mock evidence, owner acceptance pending"
+    },
+    {
+      "node": "frontend/src/MediaSourcePicker.tsx::export default function MediaSourcePicker(",
+      "location": {
+        "file": "frontend/src/MediaSourcePicker.tsx",
+        "line": 17
+      },
+      "anchor": "export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false,destination}: {",
+      "revision": "working-tree",
+      "risk": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "evidence": [
+        "Explicit destinations in DirectorConversation, AceStudioPage, VibeEditorPage and AudioUtilities bind registered assets to chat, model reference, Editor preview or utility inputs. All other onAdded callers retain library-only behavior. Registration failure, capacity and stale-scope guards remain shared. director-runtime.spec.mjs exercises exact ranges, capacity rejection and manual utility submission.",
+        "New CatalogueFilters passes metadata/date/name query controls and truthful current-index badges. Mocked browser tests cover filter clearing and utility selections without job submission."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/OutputDestination.tsx::export default function OutputDestination(",
+      "location": {
+        "file": "frontend/src/OutputDestination.tsx",
+        "line": 6
+      },
+      "anchor": "export default function OutputDestination({tool,workspaceId,disabled=false,onReady}:{tool:string;workspaceId:string;disabled?:boolean;onReady?:(ready:boolean)=>void}) {",
+      "revision": "working-tree",
+      "risk": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 1
+      },
+      "evidence": [
+        "All existing callers still use the same output destination/grant/relink APIs and onReady. Valid paths collapse; unavailable paths and errors stay visible. Frozen request publication services unchanged. output-destinations.spec.mjs covers choose/manual/relink."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/DirectorImage.tsx::export default function DirectorImageReview(",
+      "location": {
+        "file": "frontend/src/DirectorImage.tsx",
+        "line": 12
+      },
+      "anchor": "export default function DirectorImageReview({request, disabled, onApply}: {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "ImageAssetsContent installs target bridge consumed by DirectorRuntime; agent message proposal renders Apply/Discard; ImageAssetsContent callback retains provenance and local prompt mutation. Project state stores dismissal IDs; legacy localStorage history remains read-only."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/ImageAssetsPage.tsx::function ImageAssetsContent(",
+      "location": {
+        "file": "frontend/src/ImageAssetsPage.tsx",
+        "line": 117
+      },
+      "anchor": "function ImageAssetsContent({ section, onSection, legacyRoute }: { section: 'characters'|'worlds'|'frames'; onSection: (value: 'characters'|'worlds'|'frames') => void; legacyRoute: boolean }) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "App image routes -> ImageAssetsPage -> ImageAssetsContent -> existing image APIs/jobs; draft and pending/active request localStorage keys unchanged. Explicit accepted-screenplay stages now choose their first valid target; independent legacy image route still permits no target. image-assets.spec.mjs covers lineage/reference hashes/recovery/candidate counts."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/DirectorConversation.tsx::export default function DirectorConversation(",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 46
+      },
+      "anchor": "export default function DirectorConversation(props: Props) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorRuntime -> composer and context picker -> selected owned IDs -> backend asset validation. New attachment action supports existing audio/video modalities only; global catalogue does not submit jobs. director-runtime.spec.mjs covers capacity and failure."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/AceStudioPage.tsx::export default function AceStudioPage()",
+      "location": {
+        "file": "frontend/src/AceStudioPage.tsx",
+        "line": 25
+      },
+      "anchor": "export default function AceStudioPage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Music Director picker previously used items[0]; explicit model_reference now refuses more than one selected file before reuse and updates existing config.reference_id/task. Main ACE library picker remains separate. TypeScript validates the contract; ACE runtime acceptance remains outside this batch."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/TakeWorkspace.tsx::export default function TakeWorkspace(",
+      "location": {
+        "file": "frontend/src/TakeWorkspace.tsx",
+        "line": 13
+      },
+      "anchor": "export default function TakeWorkspace({enabled,workspaceId,children}:{enabled:boolean;workspaceId:string;children:ReactNode}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "VideoWorkspace take route now renders inline review once; Create route remains unwrapped. CSS scopes the hidden creation form to take-review-workspace. video-ui.spec.mjs covers history, acceptance, retake, Next and assembly."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/TakeWorkspace.tsx::export function DockedVideo(",
+      "location": {
+        "file": "frontend/src/TakeWorkspace.tsx",
+        "line": 5
+      },
+      "anchor": "export function DockedVideo({src,label}:{src:string;label:string}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "VideoWorkspace gallery and automated run clips render inline players. Existing vibe-take-position:<owner>:<src> playback key remains; no portal remount targets. Browser mock tests cover selected output URL, not real encoded-video playback."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/App.tsx::function VideoWorkspace(",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 129
+      },
+      "anchor": "function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: 'create'|'take'; visible?: boolean; workspaceId: string }) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "App routes -> VideoWorkspace -> TakeWorkspace/DockedVideo. Removed passthrough TakeReviewSection; saved submitted request becomes closed details on take route and remains expanded on Create. Existing handlers/pending requests/revisions/jobs are retained."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/tests/fixtures/project.mjs::export async function mockProject(",
+      "location": {
+        "file": "frontend/tests/fixtures/project.mjs",
+        "line": 4
+      },
+      "anchor": "export async function mockProject(page, owner, draftKey) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared UI fixtures retain default video-draft ownership; image tests explicitly pass the image draft key. Mock select changes the current owner, and memory requests retain it. Existing consumers: video-ui, media-source-picker, output-destinations and other page suites."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/lib/agent-tasks.ts::export type AgentMessage",
+      "location": {
+        "file": "frontend/src/lib/agent-tasks.ts",
+        "line": 14
+      },
+      "anchor": "export type AgentMessage = {request_id: string; text: string; reply: string; status: string; task_id: string | null; story_target?: StoryTarget; video_target?: VideoPromptTarget; proposal?: ImageProposal | VideoPromptProposal | StudioProposal};",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Optional image proposal type connects persisted backend message context to DirectorImage and DirectorConversation; no database schema migration or task execution schema change."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/agent_screenplay.py::    def context(",
+      "location": {
+        "file": "backend/story_builder/services/agent_screenplay.py",
+        "line": 8
+      },
+      "anchor": "    def context(self, owner, target):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Screenplay proposal adapter validates the current revision and delegates to existing Storyboard storage and selected-change Apply; test_agent_screenplay and storyboard browser regressions cover replay and partial Apply."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/agent_prompts.py::    def context(",
+      "location": {
+        "file": "backend/story_builder/services/agent_prompts.py",
+        "line": 9
+      },
+      "anchor": "    def context(self, owner, target):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "PromptDirectorAdapter shares existing prompt/workflow validation and proposal/rule persistence; test_agent_prompts and prompt-director browser regressions exercise manual Apply, learning, stale context and lost replies."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/agent_video_prompt.py::    def respond(",
+      "location": {
+        "file": "backend/story_builder/services/agent_video_prompt.py",
+        "line": 23
+      },
+      "anchor": "    def respond(self, owner, target, text, request_id):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "VideoPromptDirector calls existing FieldEditProposals with the shared message UUID. CreateWorkspace retains exact-key recovery and Unicode ranges; test_agent_video_prompt and create-panes cover interrupted requests and stale controls."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "backend/story_builder/services/studio_guidance.py::def suggest(",
+      "location": {
+        "file": "backend/story_builder/services/studio_guidance.py",
+        "line": 7
+      },
+      "anchor": "def suggest(text, context, history, provider=None):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared legacy studio endpoint and AgentConversation both use this validated numeric-suggestion helper. It never calls job dispatch. test_agent_studio and director-runtime browser checks cover unsupported keys, replay and explicit Apply."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/StudioChat.tsx::export default function StudioChat(",
+      "location": {
+        "file": "frontend/src/StudioChat.tsx",
+        "line": 9
+      },
+      "anchor": "export default function StudioChat({name,context,onApply,disabled=false}:{name:'trellis'|'audio';context:Record<string,unknown>;onApply?:(settings:Record<string,number>)=>void;disabled?:boolean}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "TrellisPage and AudioStudio retain read-only history and attachment metadata through a shared DirectorStudio bridge; only the settings review remains in the right pane. Trellis manual-generation and Pixal reload regression preserve independent tools."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/StudioShell.tsx::export default function StudioShell(",
+      "location": {
+        "file": "frontend/src/StudioShell.tsx",
+        "line": 53
+      },
+      "anchor": "export default function StudioShell({ route, children, context='Direct creation' }: { route:StudioRoute;children:ReactNode;context?:string }) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "StudioShell keeps sidebar/Media Prep and optional workflow navigation; capabilities move into the common pane toolbar. agent-inspector and director-runtime exercise keyboard discovery, draft retention, all eight pane combinations and four viewport sizes."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/DirectorWorkspace.tsx::export default function DirectorWorkspace(",
+      "location": {
+        "file": "frontend/src/DirectorWorkspace.tsx",
+        "line": 7
+      },
+      "anchor": "export default function DirectorWorkspace({children}: {children: ReactNode}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared pane controls and AgentInspector retain mounted work and conversation state, with no persistence schema change; director-runtime and agent-inspector test hide/show, project switching, resizing and disclosure."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/TextToImagePage.tsx::export default function TextToImagePage(",
+      "location": {
+        "file": "frontend/src/TextToImagePage.tsx",
+        "line": 45
+      },
+      "anchor": "export default function TextToImagePage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Text to Image reuses DirectorImageReview while preserving manual prompt, references and generation controls. director-runtime and projects tests cover one composer, stale Apply, reload and project isolation.",
+        "Registered Qwen references persist per workspace; only references with owned temporary tokens enter staging cleanup. Browser regression verifies reload and safe removal without DELETE/job writes."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/PromptDirector.tsx::export default function PromptDirector(",
+      "location": {
+        "file": "frontend/src/PromptDirector.tsx",
+        "line": 8
+      },
+      "anchor": "export default function PromptDirector({workspace,revision,shotPrompts,shotWorkflows,disabled,onApplyShots,onBusy}:{",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "PromptDirector retains focused local prompts, workflow references, review and save-learning CAS operations. Shared Director sends requests through a typed bridge; prompt-director tests cover all discussion modes and unsaved local image briefs."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/ScreenplayDirector.tsx::export default function ScreenplayDirector(",
+      "location": {
+        "file": "frontend/src/ScreenplayDirector.tsx",
+        "line": 9
+      },
+      "anchor": "export default function ScreenplayDirector({workspace, revision, disabled, onApplied}: {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Screenplay review delegates requests to the shared Director while retaining stored proposals, history, stale guards and selected Apply. storyboard and agent_screenplay regressions exercise this flow."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/CreateWorkspace.tsx::export default function CreateWorkspace(",
+      "location": {
+        "file": "frontend/src/CreateWorkspace.tsx",
+        "line": 10
+      },
+      "anchor": "export default function CreateWorkspace({ enabled, draft, disabled, onPrompt, children }: {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Video Create settings remain mounted independently of Director chat. Active-route gating prevents hidden Video Create from capturing studio messages; create-panes and director-runtime cover this dispatch seam and saved recovery."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/VibeEditorPage.tsx::const previewAsset=(asset:MediaAsset)=>{",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 125
+      },
+      "anchor": "  const previewAsset=(asset:MediaAsset)=>{",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "EditorAssetBrowser and MediaSourcePicker share previewAsset; existing ranges are restored and a current draft range survives reselection. Only saveRange/addRanges persists selection to the Editor; agent_editor checks exact ranges and expected revision. No schema change."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/MediaPrepPage.tsx::function AudioUtilities({onBack}:{onBack:()=>void}) {",
+      "location": {
+        "file": "frontend/src/MediaPrepPage.tsx",
+        "line": 881
+      },
+      "anchor": "function AudioUtilities({onBack}:{onBack:()=>void}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "MediaSourcePicker registers compatible assets then selects utility inputs. Operation changes filter incompatible existing inputs. createAudioUtilityJob remains solely on Run utility; stage_assets enforces 1\u2013100 inputs. director-runtime.spec.mjs covers selection without job creation."
+      ],
+      "verification": "source anchor verified; test evidence is bounded to the named suites"
+    },
+    {
+      "node": "frontend/src/StoryPage.tsx::const bridge = {prepareTarget: (): StoryTarget => {",
+      "location": {
+        "file": "frontend/src/StoryPage.tsx",
+        "line": 83
+      },
+      "anchor": "    const bridge = {prepareTarget: (): StoryTarget => {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared Story bridge guards drafts and pending edits. Read-only recovery retains proposals. director-story covers Unicode, acceptance, interrupted replies, discard and reload."
+      ],
+      "verification": "source anchor verified; bounded named-suite evidence"
+    },
+    {
+      "node": "frontend/src/App.tsx::destination={{kind:'model_reference',slot:label.toLowerCase(),capacity:1,onSelect:items=>{",
+      "location": {
+        "file": "frontend/src/App.tsx",
+        "line": 1063
+      },
+      "anchor": "                destination={{kind:'model_reference',slot:label.toLowerCase(),capacity:1,onSelect:items=>{",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Explicit frame slot roles/capacity/owner checks bind existing frame IDs. video-ui covers both slots, reload and no jobs; existing upload/drop/paste regressions pass."
+      ],
+      "verification": "source anchor verified; bounded named-suite evidence"
+    },
+    {
+      "node": "backend/story_builder/services/catalogue_filters.py::def content_indexed(record):",
+      "location": {
+        "file": "backend/story_builder/services/catalogue_filters.py",
+        "line": 5
+      },
+      "anchor": "def content_indexed(record):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Browse catalogue uses current hash-bound index metadata before paging; MediaCatalogueFilters and picker consume the flag; test_catalogue_filters covers stale hashes and full-set totals."
+      ],
+      "verification": "source anchor verified; focused CPU/mock evidence, owner acceptance pending"
+    },
+    {
+      "node": "backend/story_builder/services/catalogue_filters.py::class CatalogueFilters:",
+      "location": {
+        "file": "backend/story_builder/services/catalogue_filters.py",
+        "line": 13
+      },
+      "anchor": "class CatalogueFilters:",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Server catalogue query whitelist passes optional filters into browse_catalogue; date/category/role validation is shared and tested without generation."
+      ],
+      "verification": "source anchor verified; focused CPU/mock evidence, owner acceptance pending"
+    },
+    {
+      "node": "frontend/src/MediaCatalogueFilters.tsx::export default function MediaCatalogueFilters(",
+      "location": {
+        "file": "frontend/src/MediaCatalogueFilters.tsx",
+        "line": 3
+      },
+      "anchor": "export default function MediaCatalogueFilters({value,onChange,audio,disabled}: {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared picker supplies filter state and kinds. Optional audio categories, index and inclusive date controls serialize through media-api; mocked browser regression exercises requests, clearing and responsive layout."
+      ],
+      "verification": "source anchor verified; focused CPU/mock evidence, owner acceptance pending"
+    }
+  ]
+}

@@ -8,12 +8,18 @@
 .studio-shell.navigation-closed{grid-template-columns:minmax(0,1fr)}.navigation-closed>.studio-sidebar{display:none}.navigation-closed>.studio-taskbar{left:0}.studio-nav-toggle{border:1px solid var(--studio-line);background:var(--studio-surface);color:var(--studio-text);border-radius:8px;padding:6px 10px;font-size:11px}
 @media(max-width:1000px){.editor-panes{grid-template-columns:minmax(0,1fr)!important}.editor-preview{position:static;max-height:none}.editor-pane-controls label{display:none}.vibe-editor-page{padding:12px}}
 @media(prefers-reduced-motion:no-preference){.editor-preview,.editor-conversation{animation:editor-open .15s ease-out}@keyframes editor-open{from{opacity:.5;transform:translateX(6px)}to{opacity:1;transform:translateX(0)}}}
-.editor-mobile-tabs{display:none}.take-workspace-wrap{max-width:1800px!important}.take-workspace-wrap .editor-conversation .layout-grid{grid-template-columns:minmax(0,1fr)}.take-workspace-wrap .editor-conversation{max-height:88vh;overflow:auto;overflow-wrap:anywhere}.take-workspace-wrap .editor-preview{overflow-wrap:anywhere}.take-review-dock{display:grid;gap:16px}.take-review-dock .card{min-width:0;margin:0}.take-docked-clip h3{margin-bottom:10px}.take-workspace-wrap .take-selected-preview{margin-top:12px}.take-workspace-wrap .editor-conversation video{max-width:100%}
+.editor-mobile-tabs{display:none}
+.take-review-workspace { min-width: 0; }
+.take-review-workspace .layout-grid { grid-template-columns: minmax(0,1fr); }
+.take-review-workspace .composer-column { display: none; }
+.take-review-workspace .result-column { min-width: 0; }
+.take-review-workspace .docked-video { width: 100%; max-height: 65vh; object-fit: contain; background: #111; }
+.take-review-workspace .take-selected-preview { margin-top: 12px; }
 @media(max-width:1000px){.editor-mobile-tabs{display:flex;gap:10px;padding:10px 0}.editor-workspace.mobile-conversation .editor-preview,.editor-workspace.mobile-preview .editor-conversation{display:none}.editor-workspace.mobile-preview .editor-preview:not([hidden]),.editor-workspace.mobile-conversation .editor-conversation:not([hidden]){display:block}}
 
 .editor-timeline-strip{display:flex;gap:.5rem;overflow:auto;padding:.75rem 0}.editor-timeline-strip span{flex:none;max-width:14rem;padding:.5rem;border:1px solid var(--border);border-radius:.5rem;overflow-wrap:anywhere}
 
-@media(max-width:1000px){.take-workspace-wrap .editor-conversation{max-height:none}}
+
 
 .editor-asset-carousel{display:flex;gap:12px;overflow-x:auto;padding:16px 4px;scroll-snap-type:x proximity}.editor-asset-card{flex:0 0 150px;min-width:0;text-align:left;scroll-snap-align:start}.editor-asset-card img,.editor-asset-card video{width:100%;height:96px;object-fit:cover;border-radius:6px}.editor-asset-card>span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}.editor-asset-card small{display:block;color:var(--studio-muted)}.editor-asset-card[aria-pressed=true]{border-color:var(--studio-accent);background:var(--studio-selected)}.editor-chat-attachments{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.editor-chat-attachments button{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.editor-attachment-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.editor-attachment-actions small{color:var(--studio-muted)}
 @media(prefers-reduced-motion:no-preference){.editor-asset-card{transition:transform .15s ease}.editor-asset-card:hover{transform:scale(1.03)}}

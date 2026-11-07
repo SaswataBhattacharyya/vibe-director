@@ -16,11 +16,12 @@ test('3D batch has explicit start, recovery and collapsible panels',async({page}
  await page.route('**/mock/image.png',r=>r.fulfill({contentType:'image/png',body:png}));
  await mockProject(page); await page.goto('/#/image-to-3d');
  await expect(page.getByRole('heading',{name:'Image to 3D · TRELLIS.2'})).toBeVisible();
- await page.getByRole('button',{name:'Hide conversation',exact:true}).click();
+ await page.getByRole('button',{name:'Hide Director conversation',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Director',exact:true})).toBeHidden();
- await page.getByRole('button',{name:'Show conversation',exact:true}).click();
- await page.getByRole('button',{name:'Hide creation controls',exact:true}).click();
- await page.getByRole('button',{name:'Show creation controls',exact:true}).click();
+ await page.getByRole('button',{name:'Show Director conversation',exact:true}).click();
+ await page.getByRole('button',{name:'Hide workspace',exact:true}).click();
+ await page.getByRole('button',{name:'Show workspace',exact:true}).click();
+ await page.getByText('Studio attachment context',{exact:true}).click();
  await page.getByLabel('Chat images').setInputFiles({name:'context.png',mimeType:'image/png',buffer:png});
  await page.getByRole('button',{name:'Remove context.png'}).click();
  await expect(page.getByRole('button',{name:'Remove context.png'})).toHaveCount(0);
@@ -46,7 +47,6 @@ test('3D batch has explicit start, recovery and collapsible panels',async({page}
  expect(submitted.mode).toBe('batch');expect(submitted.items).toHaveLength(2);expect(submitted.output_grant).toBe('testgrant');
  await expect(page.getByRole('button',{name:'Open with Blender'})).toHaveCount(0);await page.screenshot({path:'/tmp/vibe-trellis-desktop.png',fullPage:true});
  await page.setViewportSize({width:480,height:900});
- await page.getByRole('button',{name:'creation controls panel',exact:true}).click();
  await expect(page.getByRole('heading',{name:'Image to 3D · TRELLIS.2'})).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/vibe-trellis-mobile.png',fullPage:true});expect(errors).toEqual([]);

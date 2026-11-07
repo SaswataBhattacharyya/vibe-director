@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import {mockProject} from './fixtures/project.mjs';
 
 test('failed story preparation shows its saved error and retry preserves the graph key', async ({ page }) => {
   let graphPosts = 0, screenplayPosts = 0;
@@ -16,8 +17,9 @@ test('failed story preparation shows its saved error and retry preserves the gra
       if (request.method() === 'POST') { graphPosts++; expect(request.postDataJSON().idempotency_key).toBe(graph.idempotency_key); }
       return route.fulfill({ json: graph });
     }
-    return route.fulfill({ json: {} });
+    return route.fulfill({status:404,json:{error:{message:'Unused mock endpoint'}}});
   });
+  await mockProject(page,'story-test');
   await page.goto('/#/screenplay');
   await expect(page.getByRole('alert').filter({ hasText: 'Story preparation needs attention' })).toContainText('Graph evidence quote does not exactly match');
   expect(graphPosts).toBe(0);

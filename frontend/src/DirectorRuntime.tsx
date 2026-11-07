@@ -7,6 +7,12 @@ import DirectorConversation from './DirectorConversation';
 import {useProjectState} from './lib/project-state';
 import './director-runtime.css';
 import {DirectorEditor, type EditorBridge} from './DirectorEditor';
+import {DirectorStory, type StoryTarget} from './DirectorStory';
+import {DirectorMusic, type MusicTarget} from './DirectorMusic';
+import {DirectorStudio, type StudioTarget} from './DirectorStudio';
+import {DirectorVideo, type VideoPromptTarget} from './DirectorVideo';
+import {DirectorImage, type ImageBridge} from './DirectorImage';
+import {DirectorScreenplay, DirectorPrompts, type ScreenplayBridge, type PromptBridge} from './DirectorScreenplay';
 
 const Slot = createContext<(element: HTMLDivElement | null) => void>(() => {});
 type Panes = {chat: boolean; work: boolean};
@@ -56,6 +62,13 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
   const abort = useRef(new AbortController());
   const pending = useRef<{id: string; key: string} | null>(null);
   const editor = useRef<EditorBridge | null>(null);
+  const image = useRef<ImageBridge | null>(null);
+  const story = useRef<{prepareTarget:()=>StoryTarget}|null>(null);
+  const screenplay = useRef<ScreenplayBridge | null>(null);
+  const prompts = useRef<PromptBridge | null>(null);
+  const music = useRef<{prepareTarget:()=>Promise<MusicTarget>;refresh:()=>Promise<unknown>}|null>(null);
+  const studio = useRef<{prepareTarget:()=>StudioTarget}|null>(null);
+  const video = useRef<{prepareTarget:()=>VideoPromptTarget}|null>(null);
   const refresh = useCallback(async (signal: AbortSignal) => {
     const [history, listing] = await Promise.all([
       agentRequest<{messages: AgentMessage[]}>(owner, 'conversation', signal),
@@ -101,16 +114,37 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
     }
     const editing = location.hash.startsWith('#/editor');
     if (editing && !editor.current) throw new Error('Wait for the Editor session to load.');
-    const target = editing ? await editor.current!.prepareTarget() : undefined;
+    const inStory = location.hash.split('?')[0] === '#/story';
+    if (inStory && !story.current) throw new Error('Wait for the Story workspace to load.');
+    const storyTarget = inStory ? story.current!.prepareTarget() : undefined;
+    if (storyTarget && storyTarget.workspace_id !== owner) throw new Error('Wait for the current project’s story to load.');
+    const screenplayTarget = !editing && !storyTarget ? screenplay.current?.prepareTarget() : undefined;
+    if (screenplayTarget && screenplayTarget.workspace_id !== owner) throw new Error('Wait for the current project’s screenplay to load.');
+    const promptTarget = !editing && !storyTarget && !screenplayTarget ? prompts.current?.prepareTarget() : undefined;
+    if (promptTarget && promptTarget.workspace_id !== owner) throw new Error('Wait for the current project’s prompts to load.');
+    const imageTarget = !editing && !storyTarget && !screenplayTarget && !promptTarget ? image.current?.prepareTarget() : undefined;
+    if (imageTarget && imageTarget.request.workspace_id !== owner) throw new Error('Wait for the current project’s image controls to load.');
+    const videoTarget = location.hash.split('?')[0] === '#/video' && !screenplayTarget && !promptTarget && !imageTarget ? video.current?.prepareTarget() : undefined;
+    if (videoTarget && videoTarget.workspace_id !== owner) throw new Error('Wait for the current project’s video controls to load.');
+    const studioTarget = !editing && !storyTarget && !screenplayTarget && !promptTarget && !imageTarget && !videoTarget ? studio.current?.prepareTarget() : undefined;
+    if (studioTarget && studioTarget.workspace_id !== owner) throw new Error('Wait for the current studio to load.');
+    const musicTarget = !editing && !storyTarget && !screenplayTarget && !promptTarget && !imageTarget && !videoTarget && !studioTarget ? await music.current?.prepareTarget() : undefined;
+    if (musicTarget && musicTarget.workspace_id !== owner) throw new Error('Wait for the current music session to load.');
+    const target = editing ? await editor.current!.prepareTarget() : storyTarget || screenplayTarget || promptTarget || imageTarget || videoTarget || studioTarget || musicTarget;
     if (signal.aborted) return;
     const payload = {text, asset_ids: selected, skill_refs: skills,
-      surface: editing ? 'editor' : 'director', ...(target ? {target} : {})};
+      surface: editing ? 'editor' : storyTarget ? 'story' : screenplayTarget ? 'screenplay' : promptTarget ? 'prompt' : imageTarget ? 'image' : videoTarget ? 'video' : studioTarget ? 'studio' : musicTarget ? 'music' : 'director', ...(target ? {target} : {})};
     const key = JSON.stringify(payload);
     if (!pending.current || pending.current.key !== key) pending.current = {id: crypto.randomUUID(), key};
     const result = await agentRequest<{messages: AgentMessage[]}>(owner, 'conversation', signal, {
       request_id: pending.current.id, ...payload,
     });
-    if (!signal.aborted) {setMessages(result.messages); setText(''); pending.current = null; await refresh(signal);}
+    if (!signal.aborted) {
+      setMessages(result.messages); setText(''); pending.current = null; await refresh(signal);
+      if (!signal.aborted && screenplayTarget) await screenplay.current?.refresh();
+      if (!signal.aborted && promptTarget) await prompts.current?.refresh();
+      if (!signal.aborted && musicTarget) await music.current?.refresh();
+    }
   });
   const control = (task: AgentTask, action: 'approve' | 'run' | 'cancel') => attempt(async signal => {
     const token = task.plan.tool_id === 'computer.execute' ? await computerGrant(signal) : undefined;
@@ -118,9 +152,9 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
     if (!signal.aborted) setTasks(rows => rows.map(row => row.task_id === updated.task_id ? updated : row));
     if (!signal.aborted && updated.plan.tool_id === 'editor.prepare_brief') await editor.current?.refresh();
   });
-  return <DirectorEditor.Provider value={editor}><PaneContext.Provider value={{panes, togglePane, openPane}}><Slot.Provider value={setSlot}>{children}{slot && createPortal(<DirectorConversation
+  return <DirectorStory.Provider value={{bridge:story,messages}}><DirectorMusic.Provider value={music}><DirectorStudio.Provider value={{bridge:studio,messages}}><DirectorVideo.Provider value={{bridge:video,messages}}><DirectorPrompts.Provider value={prompts}><DirectorScreenplay.Provider value={screenplay}><DirectorImage.Provider value={{bridge: image, messages}}><DirectorEditor.Provider value={editor}><PaneContext.Provider value={{panes, togglePane, openPane}}><Slot.Provider value={setSlot}>{children}{slot && createPortal(<DirectorConversation
     access={access} setAccess={setAccess} messages={messages} tasks={tasks} discovery={discovery} text={text} setText={setText}
     selected={selected} setSelected={setSelected} skills={skills} setSkills={setSkills}
     busy={busy} error={error} send={send} control={control} loadContext={loadContext}
-    onCollapse={() => togglePane('chat')} refresh={() => void attempt(refresh)}/>, slot)}</Slot.Provider></PaneContext.Provider></DirectorEditor.Provider>;
+    onCollapse={() => togglePane('chat')} refresh={() => void attempt(refresh)}/>, slot)}</Slot.Provider></PaneContext.Provider></DirectorEditor.Provider></DirectorImage.Provider></DirectorScreenplay.Provider></DirectorPrompts.Provider></DirectorVideo.Provider></DirectorStudio.Provider></DirectorMusic.Provider></DirectorStory.Provider>;
 }

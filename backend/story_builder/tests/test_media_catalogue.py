@@ -6,7 +6,11 @@ from story_builder.services.media_library import (browse_catalogue, reuse_catalo
     register_upload, asset_path, set_asset_archived, update_annotations, ProductionAssetError)
 
 class CatalogueTests(unittest.TestCase):
-    setUp = fixtures.MediaLibraryTests.setUp
+    def setUp(self):
+        fixtures.MediaLibraryTests.setUp(self)
+        temporary = Path(self.temporary.name)
+        self.addCleanup(lambda: self.assertFalse(temporary.exists()))
+        self.addCleanup(self.temporary.cleanup)
     png = fixtures.MediaLibraryTests.png
     # Reuse fixture helpers, not the unrelated inherited test suite.
     def test_cross_workspace_filters_and_independent_copy(self):
@@ -17,7 +21,7 @@ class CatalogueTests(unittest.TestCase):
         self.assertNotIn("relative_path", page["assets"][0])
         self.assertEqual(browse_catalogue(self.root, "target", kinds="audio")["total"], 0)
         self.assertEqual(browse_catalogue(self.root, "target", source="current")["total"], 0)
-        copied = reuse_catalogue_asset(self.root, "target", source_workspace_id="source", asset_id=source["asset_id"])
+        copied = reuse_catalogue_asset(self.root, "target", source_workspace_id="source", asset_id=source["asset_id"], mode="copy")
         self.assertNotEqual(copied["asset_id"], source["asset_id"])
         a, _, _ = asset_path(self.root, "source", source["asset_id"])
         b, _, _ = asset_path(self.root, "target", copied["asset_id"])
@@ -26,10 +30,48 @@ class CatalogueTests(unittest.TestCase):
         a.unlink()
         self.assertTrue(b.exists())
 
+    def test_uploaded_reference_links_original_and_protects_both_memberships(self):
+        from story_builder.services.media_library import deletion_preview, delete_media_file
+        source = register_upload(self.root, "source", filename="original.png", content=self.png(), role="character_master")
+        original = asset_path(self.root, "source", source["asset_id"])[0]
+        before = original.stat()
+        linked = reuse_catalogue_asset(self.root, "target", source_workspace_id="source", asset_id=source["asset_id"])
+        repeated = reuse_catalogue_asset(self.root, "target", source_workspace_id="source", asset_id=source["asset_id"])
+        self.assertEqual(linked["asset_id"], repeated["asset_id"])
+        self.assertEqual(asset_path(self.root, "target", linked["asset_id"])[0], original)
+        self.assertEqual(list(self.root.rglob("*.png")), [original])
+        for owner, asset in [("source", source), ("target", linked)]:
+            preview = deletion_preview(self.root, owner, asset["asset_id"])
+            self.assertFalse(preview["can_delete"])
+            with self.assertRaises(ProductionAssetError):
+                delete_media_file(self.root, owner, asset["asset_id"], source["sha256"])
+        set_asset_archived(self.root, "source", source["asset_id"], archived=True)
+        self.assertEqual(asset_path(self.root, "target", linked["asset_id"])[0].read_bytes(), self.png())
+        self.assertEqual(original.stat().st_ino, before.st_ino)
+
+    def test_linked_upload_checkpoint_restores_without_source_workspace(self):
+        from story_builder.services import projects
+        from story_builder.services.production_ledger import ProductionLedger
+        from story_builder.services.story_authoring import StoryAuthoring
+        story = StoryAuthoring(ProductionLedger(self.root / projects.DATABASES[0]), data_root=self.root)
+        owner = story.create_workspace(title="Target", source_text="A scene.")["workspace_id"]
+        source = register_upload(self.root, "source", filename="original.png", content=self.png(), role="project_image")
+        linked = reuse_catalogue_asset(self.root, owner, source_workspace_id="source", asset_id=source["asset_id"])
+        folder = Path(self.temporary.name) / "saved target"
+        folder.mkdir()
+        projects.save(self.root, owner, folder, {})
+        fresh = Path(self.temporary.name) / "fresh"
+        StoryAuthoring(ProductionLedger(fresh / projects.DATABASES[0]), data_root=fresh)
+        projects.open_project(fresh, folder)
+        restored, _, _ = asset_path(fresh, owner, linked["asset_id"])
+        self.assertEqual(restored.read_bytes(), self.png())
+        self.assertEqual(linked["sha256"], source["sha256"])
+        self.assertFalse((fresh / "projects/source").exists())
+
     def test_archive_tamper_traversal_and_target_dedup(self):
         source = register_upload(self.root, "source", filename="portrait.png", content=self.png(), role="character_master")
         target = register_upload(self.root, "target", filename="own.png", content=self.png(), role="world_master")
-        copied = reuse_catalogue_asset(self.root, "target", source_workspace_id="source", asset_id=source["asset_id"])
+        copied = reuse_catalogue_asset(self.root, "target", source_workspace_id="source", asset_id=source["asset_id"], mode="copy")
         self.assertEqual(copied["asset_id"], target["asset_id"])
         self.assertEqual(copied["roles"], ["world_master"])
         with self.assertRaises(ProductionAssetError):

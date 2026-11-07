@@ -4,8 +4,11 @@
 
 - **One persistent chat:** `DirectorRuntime.tsx` / `DirectorConversation.tsx`. Keep only one active AI composer; technical prompts, screenplay editors, property editors and search controls are not duplicate chats.
 - **Visual Editor:** `VibeEditorPage.tsx` owns current AI Editor preview/media/timeline/style/export + clearance UI. Add a gated HyperFrames Studio composition view in its right work pane with full-window expansion after HF-01 compatibility proof. Prefer slim child components/typed view models, no new nested nav and no second chat. Unmount/mount must not discard unsaved plan, playback, running job or chat draft.
-- **Media:** `MediaSourcePicker.tsx`, `EditorAssetBrowser.tsx`, `LocalImageFolderBrowser.tsx`, `lib/media-api.ts` and `App.tsx` R2V bindings; re-use picker across surfaces but preserve explicit distinct chat attachments, model slots, tool inputs and Editor ranges. Do not remove import/folder consent or delete management by accident.
+- **Media:** `MediaSourcePicker.tsx`, `MediaPickerManagement.tsx`, `LocalImageFolderBrowser.tsx`, `lib/media-api.ts` and `App.tsx` R2V bindings; re-use picker across surfaces but preserve explicit distinct chat attachments, model slots, tool inputs and Editor ranges. Do not remove import/folder consent or delete management by accident.
 - **Storyboard:** `StoryboardPage.tsx` remains authoritative for panels, scene/shot planning, revisions and manual routing. OpenMontage Production Board is optional, not replacement.
 - **Compact page regressions:** Image Assets, Current Take, Output, Screenplay, Prompt, Text to Image, Media Prep and 3D retain real controls. `EditorWorkspace.tsx` and `StudioChat.tsx` are still used/export helpers; trace imports before deletion.
 
 Use `fixes/ACCEPTANCE_TESTS.md` for focused source, keyboard/mobile, save/reload and regression coverage.
+
+Editor speech review: `EditorSpeechReview.tsx` loads completed source-correlated evidence and submits reviewed segment indices, not model-authored cut timestamps. The server derives retained ranges; existing clearance 2 controls rendering.
+Storyboard production metadata export uses the saved revision and `lib/storyboard-api.ts`; it does not start or embed OpenMontage.

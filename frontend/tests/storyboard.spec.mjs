@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
 const w='story-aaaaaaaaaaaa',r='screenplay-test';
 const shot=(n)=>({shot_number:n,presentation:'image',planned_duration_seconds:2,action:'Mira holds the key.',dialogue:'MIRA: Here it is.',direction:{camera:'Static',lighting:'Day',mood:'Quiet',sfx:'Keys',music:'Soft'},evidence:[]});
 const script={workspace_id:w,screenplay_revision_id:r,source_revision_id:'source-1',accepted:true,created_at:'2026-11-04',screenplay:{title:'The key',scenes:[{scene_number:1,slugline:'INT. ROOM — DAY',summary:'Mira finds the key and opens the door.',shots:[shot(1),shot(2),shot(3),shot(4)]}]}};
@@ -28,6 +29,7 @@ async function fixture(page,missing=false){
   }
   else if(path.endsWith('/storyboard/'+r)){if(req.method()==='PUT'){board={...board,revision:board.revision+1,body:req.postDataJSON().body};}json=board;}
   else if(path.endsWith('/storyboard/'+r+'/editor'))json={id:'edit-storyboard'};
+  else if(path.endsWith('/storyboard/'+r+'/production-manifest'))json={schema:'vibe-director.production-manifest',version:1,project:{workspace_id:w,screenplay_revision_id:r,storyboard_revision:board.revision},capabilities:{metadata_only:true,media_bundled:false,write_back:false}};
   else if(path.endsWith('/assets')&&new URL(req.url()).searchParams.get('kind')==='video')json={total:0,assets:[]};
   else if(path.endsWith('/assets'))json={total:1,assets:[{asset_id:'asset-image',filename:'key.svg',kind:'image',sha256:'a'.repeat(64),content_url:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="#243347"/><circle cx="320" cy="170" r="55" fill="#f5cc67"/></svg>'),media:{width:640,height:360}}]};
   else if(path==='/api/images/jobs')json={batch_id:'batch-'+requests.length,jobs:[]};
@@ -70,6 +72,25 @@ test('unfinished local edits recover across navigation without silently saving',
  const fx=await fixture(page);await page.goto('/#/storyboard');await page.getByRole('textbox',{name:'Dialogue',exact:true}).fill('MIRA: Keep this draft.');
  await page.reload();await expect(page.getByRole('textbox',{name:'Dialogue',exact:true})).toHaveValue('MIRA: Keep this draft.');
  await expect(page.getByText('Unsaved storyboard edits',{exact:true})).toBeVisible();expect(fx.getBoard().revision).toBe(1);
+});
+test('production metadata export uses the saved revision and cannot export an unsaved draft',async({page})=>{
+ const fx=await fixture(page);await page.goto('/#/storyboard');
+ const button=page.getByRole('button',{name:'Export production metadata',exact:true});
+ await expect(button).toBeEnabled();
+ await page.getByRole('textbox',{name:'Scene description',exact:true}).fill('Reviewed production scene');
+ await expect(button).toBeDisabled();
+ await page.getByRole('button',{name:'Save storyboard',exact:true}).click();await expect(button).toBeEnabled();
+ const pending=page.waitForEvent('download');await button.click();const downloaded=await pending;
+ try {
+  const manifest=JSON.parse(await readFile(await downloaded.path(),'utf8'));
+  expect(manifest.schema).toBe('vibe-director.production-manifest');
+  expect(manifest.project.storyboard_revision).toBe(2);
+  expect(manifest.capabilities).toEqual({metadata_only:true,media_bundled:false,write_back:false});
+  expect(fx.requests.find(q=>q.path.endsWith('/production-manifest')).body).toEqual({expected_revision:2});
+  await expect(page.getByText(/Production metadata exported/)).toBeVisible();
+ } finally {await downloaded.delete();}
+ expect(fx.requests.filter(q=>q.path==='/api/images/jobs')).toEqual([]);
+ expect(fx.errors).toEqual([]);
 });
 test('whole screenplay Director reveals reviewable changes and never applies on propose',async({page})=>{
  const fx=await fixture(page);await page.goto('/#/screenplay');

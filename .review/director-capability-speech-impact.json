@@ -1,0 +1,1380 @@
+{
+  "comparison": "working tree vs HEAD f89b758b0349",
+  "mode": "manual source trace with Graphify discovery",
+  "graph": {
+    "nodes": 5414,
+    "edges": 16371,
+    "files_scanned": 571,
+    "uncached_ast_files": 317,
+    "refresh": "conda run -n react graphify extract . --code-only --no-cluster --force --max-workers 4",
+    "coverage": "Local code-only AST. 92 JSON/review-like source files produced zero nodes; 240 non-code documents skipped. No communities or measured coverage.",
+    "queries": [
+      "query agent_transcription --budget 700 (broad module discovery, 114 structural neighbors; truncated)",
+      "affected speech_evidence --depth 2 (no indexed reverse callers)",
+      "affected exact transcription run ID --depth 2 --relation calls (no indexed reverse callers)",
+      "path exact transcription run ID to asset_path (one EXTRACTED call)",
+      "query exact run ID --context call --budget 600 (bounded two-level call discovery)"
+    ]
+  },
+  "limitations": [
+    "Manual trace is limited to the changed conversation/task/worker/UI execution paths and directly reused ownership/output/clearance modules, two levels at the seams plus the full durable flow. Broad shared-helper import/call neighbors are discovery candidates, not proven behavioral impact.",
+    "Graph reverse calls omit bound methods and dynamic dispatcher imports; source/tests verify those edges. EXTRACTED/INFERRED graph edges are discovery, not test coverage.",
+    "Test gap factor 0 means relevant source test references exist and focused tests ran, not measured line/branch coverage. Caller counts remain unknown.",
+    "Mock durable jobs and UI do not establish real provider/GPU execution. Actual CPU ASR, retained-cut CPU render and isolated Studio checks are separate evidence; Backlot export is metadata-only.",
+    "No database schema migration, provider/model generation or unrestricted Studio server. The bounded sandboxed runtime preview supports unfiltered 1\u00d7 plans; rich layer editing and preprocessed preview remain open. Graph/cache artifacts and docs are excluded from runtime node scoring."
+  ],
+  "overall_risk": {
+    "lower": 0.6,
+    "upper": 0.7,
+    "level": "high",
+    "reason": "Existing ownership/execution seams are extended; this score prioritizes review, not a vulnerability probability."
+  },
+  "findings": [
+    {
+      "node": "backend/story_builder/services/agent_conversation.py::send",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 62
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing conversation route \u2192 send \u2192 typed proposal or discussion; completed matching evidence \u2192 bounded editor_instruction \u2192 brief proposal \u2192 existing clearances.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_editor.py and test_agent_transcription.py assert selected-source resolution, evidence provenance, instruction budget and no implicit dispatch.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_editor.py::prepare",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 50
+      },
+      "anchor": "def prepare(root, owner, settings):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Verified speech excerpt enters existing brief instruction; selected ranges stay unchanged; no automatic cuts/approval/render added.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_editor_tool_handoff.py and test_agent_transcription.py retain revision/range checks and two clearances.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_editor.py::submit",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/agent_editor.py",
+        "line": 70
+      },
+      "anchor": "def submit(root, owner, plan, invocation, on_created):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Verified speech excerpt enters existing brief instruction; selected ranges stay unchanged; no automatic cuts/approval/render added.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_editor_tool_handoff.py and test_agent_transcription.py retain revision/range checks and two clearances.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_assets",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 28
+      },
+      "anchor": "    def _assets(self, owner, ids, *, extensions=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing task gateway consumers now accept an additional durable kind and audio operations without schema migration; _assets resolves owned records and hashes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "Existing test_agent_*.py suite and new transcription regressions exercise ownership, repeat/recovery and cancellation.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_observe",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 341
+      },
+      "anchor": "    def _observe(self, owner, task, job):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation proposes; approval freezes hashes; run selects adapter; poll observes correlated job/output. speech_evidence reads only matching selected source bytes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_tasks.py, test_agent_transcription.py and test_agent_editor.py cover changed contracts with mock durable jobs.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_plan",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 49
+      },
+      "anchor": "    def _plan(self, owner, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation proposes; approval freezes hashes; run selects adapter; poll observes correlated job/output. speech_evidence reads only matching selected source bytes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_tasks.py, test_agent_transcription.py and test_agent_editor.py cover changed contracts with mock durable jobs.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_validate_job",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 267
+      },
+      "anchor": "    def _validate_job(row, job):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation proposes; approval freezes hashes; run selects adapter; poll observes correlated job/output. speech_evidence reads only matching selected source bytes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_tasks.py, test_agent_transcription.py and test_agent_editor.py cover changed contracts with mock durable jobs.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::approve",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 226
+      },
+      "anchor": "    def approve(self, owner, task, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing task gateway consumers now accept an additional durable kind and audio operations without schema migration; _assets resolves owned records and hashes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "Existing test_agent_*.py suite and new transcription regressions exercise ownership, repeat/recovery and cancellation.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::cancel",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 414
+      },
+      "anchor": "    def cancel(self, owner, task):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing task gateway consumers now accept an additional durable kind and audio operations without schema migration; _assets resolves owned records and hashes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "Existing test_agent_*.py suite and new transcription regressions exercise ownership, repeat/recovery and cancellation.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::poll",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 391
+      },
+      "anchor": "    def poll(self, owner, task):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing task gateway consumers now accept an additional durable kind and audio operations without schema migration; _assets resolves owned records and hashes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "Existing test_agent_*.py suite and new transcription regressions exercise ownership, repeat/recovery and cancellation.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::propose",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 94
+      },
+      "anchor": "    def propose(self, owner, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing task gateway consumers now accept an additional durable kind and audio operations without schema migration; _assets resolves owned records and hashes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "Existing test_agent_*.py suite and new transcription regressions exercise ownership, repeat/recovery and cancellation.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::run",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 284
+      },
+      "anchor": "    def run(self, owner, task, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation proposes; approval freezes hashes; run selects adapter; poll observes correlated job/output. speech_evidence reads only matching selected source bytes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_tasks.py, test_agent_transcription.py and test_agent_editor.py cover changed contracts with mock durable jobs.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::speech_evidence",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 163
+      },
+      "anchor": "    def speech_evidence(self, owner, assets):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation proposes; approval freezes hashes; run selects adapter; poll observes correlated job/output. speech_evidence reads only matching selected source bytes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_tasks.py, test_agent_transcription.py and test_agent_editor.py cover changed contracts with mock durable jobs.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_transcription.py::run",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_transcription.py",
+        "line": 105
+      },
+      "anchor": "def run(root, job_id, request):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "tools \u2192 capability; task run \u2192 submit \u2192 durable worker main \u2192 run \u2192 owned asset_path/digest/FFmpeg/offline Docker \u2192 validate \u2192 task report/chat evidence.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py validates frozen input/result, source timing, CPU dispatch, readiness and cleanup; actual isolated CPU WAV/MP4 worker acceptance passed.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_transcription.py::submit",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_transcription.py",
+        "line": 35
+      },
+      "anchor": "def submit(root, owner, assets, invocation, on_created):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "tools \u2192 capability; task run \u2192 submit \u2192 durable worker main \u2192 run \u2192 owned asset_path/digest/FFmpeg/offline Docker \u2192 validate \u2192 task report/chat evidence.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py validates frozen input/result, source timing, CPU dispatch, readiness and cleanup; actual isolated CPU WAV/MP4 worker acceptance passed.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_transcription.py::validate",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_transcription.py",
+        "line": 64
+      },
+      "anchor": "def validate(result, source):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "tools \u2192 capability; task run \u2192 submit \u2192 durable worker main \u2192 run \u2192 owned asset_path/digest/FFmpeg/offline Docker \u2192 validate \u2192 task report/chat evidence.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py validates frozen input/result, source timing, CPU dispatch, readiness and cleanup; actual isolated CPU WAV/MP4 worker acceptance passed.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/audio_utilities.py::run_job",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 225
+      },
+      "anchor": "def run_job(job: dict[str, Any], *, data_root: Path, progress: Callable[[dict[str, Any]], None]) -> list[dict[str, Any]]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "New Director denoise/stem task IDs map into existing Audio Utilities operations; its readiness, ownership, workload admission and output registration remain authoritative.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_audio_utilities_integration.py and test_agent_tasks.py cover reused readiness, frozen settings, registered output and repeated invocation with mocks.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/audio_utilities.py::submit",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 174
+      },
+      "anchor": "def submit(root: Path, workspace_id: str, payload: dict, *, invocation_id: str | None = None,",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "New Director denoise/stem task IDs map into existing Audio Utilities operations; its readiness, ownership, workload admission and output registration remain authoritative.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_audio_utilities_integration.py and test_agent_tasks.py cover reused readiness, frozen settings, registered output and repeated invocation with mocks.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::asset_path",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 821
+      },
+      "anchor": "def asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "ASR run and task inputs resolve registered asset \u2192 owner-scoped locator; cross-project IDs or changed hashes cannot become approved source bytes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "New transcription tests and real registered fixture acceptance resolve an owned source; no media-library implementation changed.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::digest",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 51
+      },
+      "anchor": "def digest(path):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Input freeze and private staging checksum compare use existing digest. No source media is modified.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "New transcription tests reject changed hashes and assert original bytes survive worker failure.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::_stop_job_containers",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 1065
+      },
+      "anchor": "def _stop_job_containers(job_id: str, label_name: str | tuple[str, ...]) -> list[str]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "submit/start persist an invocation; worker/poll/read/cancel consume the same durable job record. Container cleanup uses a job-specific host-owned label.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py exercises durable records, dispatch mocks, CPU worker result and owned cleanup; real worker cleanup checked separately.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::cancel_job",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 991
+      },
+      "anchor": "def cancel_job(kind: str, job_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Task cancel \u2192 cancel_job \u2192 owned container cleanup before/after worker exit. Registered transcription kind participates in existing job/checkpoint readers.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py checks owned-label cancellation, pending launch/recovery; existing task tests cover durable correlation.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::create_job",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 806
+      },
+      "anchor": "def create_job(kind: str, request: dict[str, Any]) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "submit/start persist an invocation; worker/poll/read/cancel consume the same durable job record. Container cleanup uses a job-specific host-owned label.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py exercises durable records, dispatch mocks, CPU worker result and owned cleanup; real worker cleanup checked separately.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::read_job",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 832
+      },
+      "anchor": "def read_job(kind: str, job_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "submit/start persist an invocation; worker/poll/read/cancel consume the same durable job record. Container cleanup uses a job-specific host-owned label.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py exercises durable records, dispatch mocks, CPU worker result and owned cleanup; real worker cleanup checked separately.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::start_job",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 975
+      },
+      "anchor": "def start_job(kind: str, job_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "submit/start persist an invocation; worker/poll/read/cancel consume the same durable job record. Container cleanup uses a job-specific host-owned label.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py exercises durable records, dispatch mocks, CPU worker result and owned cleanup; real worker cleanup checked separately.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire_worker.py::main",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire_worker.py",
+        "line": 1135
+      },
+      "anchor": "def main() -> int:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing worker main dispatches agent-transcription to run under nullcontext; other GPU workload locking and configured thermal/clock limits are unchanged.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_worker_dispatch_persists_result_without_gpu_admission proves transcription bypasses GPU admission; test_workload_policy remains passing.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_conversation.py::editor_instruction",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 9
+      },
+      "anchor": "def editor_instruction(text, evidence):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing conversation route \u2192 send \u2192 typed proposal or discussion; completed matching evidence \u2192 bounded editor_instruction \u2192 brief proposal \u2192 existing clearances.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_editor.py and test_agent_transcription.py assert selected-source resolution, evidence provenance, instruction budget and no implicit dispatch.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_kind",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 22
+      },
+      "anchor": "    def _kind(plan):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation proposes; approval freezes hashes; run selects adapter; poll observes correlated job/output. speech_evidence reads only matching selected source bytes.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_tasks.py, test_agent_transcription.py and test_agent_editor.py cover changed contracts with mock durable jobs.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tools.py::tools",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tools.py",
+        "line": 23
+      },
+      "anchor": "def tools() -> dict:",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Inspector/API and conversation consume catalogue; readiness does not dispatch or approve a job.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_tools.py and test_agent_api.py check seven tools, blocked readiness and schemas.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_transcription.py::capability",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_transcription.py",
+        "line": 23
+      },
+      "anchor": "def capability():",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "tools \u2192 capability; task run \u2192 submit \u2192 durable worker main \u2192 run \u2192 owned asset_path/digest/FFmpeg/offline Docker \u2192 validate \u2192 task report/chat evidence.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py validates frozen input/result, source timing, CPU dispatch, readiness and cleanup; actual isolated CPU WAV/MP4 worker acceptance passed.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_transcription.py::model_path",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_transcription.py",
+        "line": 19
+      },
+      "anchor": "def model_path():",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "tools \u2192 capability; task run \u2192 submit \u2192 durable worker main \u2192 run \u2192 owned asset_path/digest/FFmpeg/offline Docker \u2192 validate \u2192 task report/chat evidence.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py validates frozen input/result, source timing, CPU dispatch, readiness and cleanup; actual isolated CPU WAV/MP4 worker acceptance passed.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/agent_transcription.py::report",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_transcription.py",
+        "line": 147
+      },
+      "anchor": "def report(result, source):",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "tools \u2192 capability; task run \u2192 submit \u2192 durable worker main \u2192 run \u2192 owned asset_path/digest/FFmpeg/offline Docker \u2192 validate \u2192 task report/chat evidence.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_agent_transcription.py validates frozen input/result, source timing, CPU dispatch, readiness and cleanup; actual isolated CPU WAV/MP4 worker acceptance passed.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/audio_utilities.py::capabilities",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 126
+      },
+      "anchor": "def capabilities() -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "New Director denoise/stem task IDs map into existing Audio Utilities operations; its readiness, ownership, workload admission and output registration remain authoritative.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_audio_utilities_integration.py and test_agent_tasks.py cover reused readiness, frozen settings, registered output and repeated invocation with mocks.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/audio_utilities.py::validate_settings",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/audio_utilities.py",
+        "line": 31
+      },
+      "anchor": "def validate_settings(operation: str, settings: dict[str, Any]) -> None:",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "New Director denoise/stem task IDs map into existing Audio Utilities operations; its readiness, ownership, workload admission and output registration remain authoritative.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "test_audio_utilities_integration.py and test_agent_tasks.py cover reused readiness, frozen settings, registered output and repeated invocation with mocks.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "frontend/src/AgentInspector.tsx::AgentInspector",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/AgentInspector.tsx",
+        "line": 6
+      },
+      "anchor": "export default function AgentInspector() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Catalogue metadata \u2192 inspector description/scope/runtime/exact-plan label; no authorization granted by display.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "director-runtime.spec.mjs exercises the shared inspector and existing draft preservation.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "frontend/src/DirectorConversation.tsx::TaskCard",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 25
+      },
+      "anchor": "function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> & {task: AgentTask}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Durable task/result \u2192 shared TaskCard; exact model/dry/stems/device visible before explicit approval/run.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "director-runtime.spec.mjs checks completed speech evidence and denoise/stem settings/labels after reload.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "frontend/src/VibeEditorPage.tsx::VibeEditorPage",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 19
+      },
+      "anchor": "export default function VibeEditorPage() {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Registered asset metadata \u2192 preview/range control \u2192 saved Editor range and shared Director target; whole-source tool source identity stays separate.",
+        "Cross-module producer/consumer traced in the cited source and tests.",
+        "editor-assets.spec.mjs checks default 5s vs complete 12s range, selection save/reload and chat target; editor-effects.spec.mjs checks preserved ranges/new clearance.",
+        "Caller count is unknown: AST misses bound-method/dynamic dispatch and no complete manual enumeration was claimed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR (bundled citation verifier; does not verify factors or coverage)"
+    },
+    {
+      "node": "backend/story_builder/services/editor_speech.py::def propose(",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/editor_speech.py",
+        "line": 42
+      },
+      "anchor": "def propose(root, tasks, project_id, body):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "completed transcript \u2192 strict reviewed indices \u2192 retained plan \u2192 existing clearance; test_editor_speech covers provenance, ownership, edits and unsupported timing",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_speech.py::def retained_ranges(",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/editor_speech.py",
+        "line": 17
+      },
+      "anchor": "def retained_ranges(selection, asset_id, cuts):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "interval union/subtraction preserves unrelated clips/order/properties; focused repeated-occurrence and overlap test",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/production_manifest.py::def export(",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/production_manifest.py",
+        "line": 9
+      },
+      "anchor": "def export(board, owner, screenplay_revision, expected_revision):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "saved board \u2192 versioned metadata export \u2192 existing download; owned bytes/revision checked; test_production_manifest covers stale/foreign/changed/no-write contracts",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor_render.py::def render(",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor_render.py",
+        "line": 52
+      },
+      "anchor": "def render(root, job_id, request, progress):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "approved cut provenance checked against source and staged bytes; expected audio required before registered output; real disposable CPU picture/audio acceptance",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/EditorSpeechReview.tsx::export default function EditorSpeechReview(",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/EditorSpeechReview.tsx",
+        "line": 9
+      },
+      "anchor": "export default function EditorSpeechReview({project, disabled, onSaved}:{",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "current session revision \u2192 correlated evidence playback \u2192 selected indices \u2192 inert cut proposal; browser save/reload test",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/MediaSourcePicker.tsx::export default function MediaSourcePicker(",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/MediaSourcePicker.tsx",
+        "line": 18
+      },
+      "anchor": "export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false,destination,editor,refreshToken=0}: {",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "consolidated catalogue \u2192 optional management \u2192 preview/explicit attachment, references/deletion preserved; affected browser regressions",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/MediaPickerManagement.tsx::export default function MediaPickerManagement(",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/MediaPickerManagement.tsx",
+        "line": 14
+      },
+      "anchor": "export default function MediaPickerManagement({kind,disabled,selected,onImport,onDelete}:{",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "existing import/folder/delete callbacks; confirmed deletion remains in owner page, no new generic deletion API",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_preview.py::def prepare",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/editor_preview.py",
+        "line": 17
+      },
+      "anchor": "def prepare(root, project_id, body):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Read-only state lock \u2192 selected_plan \u2192 owned content URLs \u2192 shared composition. No job dispatch, raw HTML input or generic file path.",
+        "Three focused backend cases passed; real installed player decoded and sought synthetic H264 with correct source offsets.",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_preview.py::def runtime_file",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/editor_preview.py",
+        "line": 5
+      },
+      "anchor": "def runtime_file(name):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "GET fixed runtime allowlist \u2192 installed Apache-2.0 scripts; traversal and Studio paths rejected.",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_composition.py::def document",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/editor_composition.py",
+        "line": 6
+      },
+      "anchor": "def document(plan, staged, *, processed=None, gsap='gsap.js', shaders='shaders.js'):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Preview and CPU renderer now call the same escaped markup generator; preprocessing remains in CPU renderer.",
+        "Real CPU retained-cut render regression passed picture/audio/duration checks.",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::def selected_plan",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 365
+      },
+      "anchor": "def selected_plan(root, p, raw):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared selected-range enforcement for propose_plan and preview; normalized source ranges cannot exceed selection.",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/EditorVisualTimeline.tsx::export default function EditorVisualTimeline",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/EditorVisualTimeline.tsx",
+        "line": 5
+      },
+      "anchor": "export default function EditorVisualTimeline({project, plan, disabled, onChange, onSave, canSave}:{",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Owner page retains plan state; revision/plan changes invalidate preview and stale responses. iframe sandbox allows scripts only; incoming message source checked.",
+        "Mocked UI save/reload/approval/conflict checks and inspected desktop/mobile screenshots.",
+        "Source trace, not measured graph/test coverage."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ],
+  "changed_files": [
+    ".review/director-capability-speech-impact.json",
+    "backend/story_builder/isolated_server.py",
+    "backend/story_builder/services/agent_conversation.py",
+    "backend/story_builder/services/agent_tasks.py",
+    "backend/story_builder/services/agent_tools.py",
+    "backend/story_builder/services/agent_transcription.py",
+    "backend/story_builder/services/change_readme.md",
+    "backend/story_builder/services/editor_composition.py",
+    "backend/story_builder/services/editor_preview.py",
+    "backend/story_builder/services/editor_speech.py",
+    "backend/story_builder/services/media_library.py",
+    "backend/story_builder/services/production_manifest.py",
+    "backend/story_builder/services/vibe_editor.py",
+    "backend/story_builder/services/vibe_editor_api.py",
+    "backend/story_builder/services/vibe_editor_render.py",
+    "backend/story_builder/services/video_repertoire.py",
+    "backend/story_builder/services/video_repertoire_worker.py",
+    "backend/story_builder/tests/test_agent_api.py",
+    "backend/story_builder/tests/test_agent_editor.py",
+    "backend/story_builder/tests/test_agent_tasks.py",
+    "backend/story_builder/tests/test_agent_tools.py",
+    "backend/story_builder/tests/test_agent_transcription.py",
+    "backend/story_builder/tests/test_catalogue_filters.py",
+    "backend/story_builder/tests/test_editor_preview.py",
+    "backend/story_builder/tests/test_editor_speech.py",
+    "backend/story_builder/tests/test_production_manifest.py",
+    "design/vibe-editor/change_readme.md",
+    "fixes/ACCEPTANCE_TESTS.md",
+    "fixes/ACTIVE_FIXES.md",
+    "fixes/COMPLETED_BASELINE.md",
+    "fixes/INTEGRATION_ARCHITECTURE.md",
+    "frontend/src/AgentInspector.tsx",
+    "frontend/src/DirectorConversation.tsx",
+    "frontend/src/EditorAssetBrowser.tsx",
+    "frontend/src/EditorSpeechReview.tsx",
+    "frontend/src/EditorVisualTimeline.tsx",
+    "frontend/src/MediaPickerManagement.tsx",
+    "frontend/src/MediaSourcePicker.tsx",
+    "frontend/src/StoryboardPage.tsx",
+    "frontend/src/VibeEditorPage.tsx",
+    "frontend/src/change_readme.md",
+    "frontend/src/lib/agent-api.ts",
+    "frontend/src/lib/agent-tasks.ts",
+    "frontend/src/lib/storyboard-api.ts",
+    "frontend/src/vibe-editor.css",
+    "frontend/tests/ace-editor-ux.spec.mjs",
+    "frontend/tests/director-runtime.spec.mjs",
+    "frontend/tests/editor-assets.spec.mjs",
+    "frontend/tests/editor-preview.manual.mjs",
+    "frontend/tests/editor-speech.spec.mjs",
+    "frontend/tests/editor-visual.spec.mjs",
+    "frontend/tests/hyperframes-studio.manual.mjs",
+    "frontend/tests/media-source-picker.spec.mjs",
+    "frontend/tests/storyboard.spec.mjs",
+    "graphify-out/cache/ast/v0.9.17/03197f40a20f3dfc968ab70c29ebd14b308b409ae717561bebba694ffe77d48f.json",
+    "graphify-out/cache/ast/v0.9.17/04e644504988398ccc950e9900a55f16a6548b201650b91971a7a4847b4e3330.json",
+    "graphify-out/cache/ast/v0.9.17/0bd1cabc2f590c8dcbfb10c179da74cc2cc6fdb341b125064e01f0a3e435a0a9.json",
+    "graphify-out/cache/ast/v0.9.17/112f02c110ed4c6d27e412fd686f3051fbda51b822b1a4e066e0e7ea22dd1944.json",
+    "graphify-out/cache/ast/v0.9.17/126799d0b870f9a93ad8128df914393065152fa929375083ee0f29fdefb6de38.json",
+    "graphify-out/cache/ast/v0.9.17/18e9ef396562935b4fe5895728b99b0a7b01ec9d1c0c3981e70fd893a9274f60.json",
+    "graphify-out/cache/ast/v0.9.17/1c1b3febbf17132e844c0a149cd83dd628a7d2133302d6125db68a4bdbfe778d.json",
+    "graphify-out/cache/ast/v0.9.17/1eab287fe0b293d50ec87bfffe7675a7af2dc198a6657b577e63ac4215830223.json",
+    "graphify-out/cache/ast/v0.9.17/204dc86cdba979ac6c86d58d1fc92fbb81df6fbf4bc01f62711406386d62a519.json",
+    "graphify-out/cache/ast/v0.9.17/2f569ccde87bb980aada7f9394c6788f0b1ab4d3178ea839dfb6cbaa825650dc.json",
+    "graphify-out/cache/ast/v0.9.17/39a9abd470f8111b774934f56eab43cb58e1d3348c48a02bddee3b981bdeaf11.json",
+    "graphify-out/cache/ast/v0.9.17/3dec6e6b219afc40249ffbb44949ec6881f58d7503350a20673a0e804195a0ac.json",
+    "graphify-out/cache/ast/v0.9.17/40329ad72a99a26892699a911b997491b329f23a9ef4bf49133cf7aa08eb38ed.json",
+    "graphify-out/cache/ast/v0.9.17/41142750b79c7c6f5ad77bff88794f233f826d9978b0f019e8d709626c585bb9.json",
+    "graphify-out/cache/ast/v0.9.17/46aa784eae979f6aa0209daab75e5e996d0590c14031d2e60e942060e694af83.json",
+    "graphify-out/cache/ast/v0.9.17/49b6f487886999d80c973929ac9a6925cd26bbdac1ef4100054aa1ed9405a7e0.json",
+    "graphify-out/cache/ast/v0.9.17/509b769c0b3c62726dffea0c1f7186b3fb6ad51a56ee6350cd7c8e66f80d0209.json",
+    "graphify-out/cache/ast/v0.9.17/543b79e1ee6bc3c0e6c0dbe66452034c0c35c2e505dd1f81ab181e64ae87b2ef.json",
+    "graphify-out/cache/ast/v0.9.17/65a0d3a387c45ffef7c50f55e6d7304b249f4c4ffa1b3b28e48f20a03a503459.json",
+    "graphify-out/cache/ast/v0.9.17/65a2815c62808298d4ed9b4936995c6afe4015e30bc17bb3ea2f6acadcfb1eb8.json",
+    "graphify-out/cache/ast/v0.9.17/65cd93f456da28a2ee7a41780cf7e63a0fb181f5bceff079789a383176d17c4e.json",
+    "graphify-out/cache/ast/v0.9.17/6d35e27b9c4f3bf527bbd9eac7bc1dc9a92bc2c2c714634fd1c0f66e9fc30eb0.json",
+    "graphify-out/cache/ast/v0.9.17/8bdddf2776be69c783ba32b1162093f227e1e25dda144a4c15c48efd453cf2f2.json",
+    "graphify-out/cache/ast/v0.9.17/b3db023d6bbc02043066e50fde49613f90005156ea058d154409c5e747ef7876.json",
+    "graphify-out/cache/ast/v0.9.17/ba0f3d3783d9f091e69f4c9e36319bd91e0590b0af0ea2bbae1864c1b0f3d705.json",
+    "graphify-out/cache/ast/v0.9.17/ba3068084ae3d01cdf46ac7a54f5fd8ca709ca97aacb705cbf10038695ec7f5b.json",
+    "graphify-out/cache/ast/v0.9.17/c7019228c6fbf431b1772574a7ca8001f695e501e3de5bef75b6f494a04acd5c.json",
+    "graphify-out/cache/ast/v0.9.17/d2c014da24cd3eed26669df827072c2101fcecc6e99adb9a367a8b2ea345955a.json",
+    "graphify-out/cache/ast/v0.9.17/d4485d0bcec205c0675ab0f3b5697b54a78de4949a50d81e96da1dc3a733a243.json",
+    "graphify-out/cache/ast/v0.9.17/d9a6e998b066e89395ab0c0511deeb68da27512d41127e0c5e731ca126c037ed.json",
+    "graphify-out/cache/ast/v0.9.17/e33adadee93244b0e86afce3d5cd241ec16f384c3cc1b491d1e280e502c91671.json",
+    "graphify-out/cache/ast/v0.9.17/e5c1da8dfe4d7403b7b96115c19a3229177a92390af0cbdbaf0ff0fddb8127e7.json",
+    "graphify-out/cache/ast/v0.9.17/e5f5e08aa12fcc953c02f7e703a7ac64650c9f80fa3a86a6b4e40054daf0b889.json",
+    "graphify-out/cache/ast/v0.9.17/fd72b55f53ddd976e6194a2431e3c069ca5f12df6a189b9c8091ae23db4b5e8c.json",
+    "graphify-out/cache/stat-index.json",
+    "graphify-out/graph.json",
+    "graphify-out/manifest.json"
+  ]
+}

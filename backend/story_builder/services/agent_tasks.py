@@ -3,10 +3,13 @@ import json
 import uuid
 from pathlib import Path
 
-from . import agent_computer, agent_continuity, agent_editor, agent_graph, audio_utilities, media_library, projects, video_repertoire
+from . import agent_computer, agent_continuity, agent_editor, agent_graph, agent_transcription, audio_utilities, media_library, projects, video_repertoire
 from .agent_task_schema import SCHEMA
 from .production_ledger import LedgerConflict, LedgerNotFound, _now, stable_hash
 from .storage_paths import generated_root, media_root
+
+AUDIO_OPERATIONS = {'audio.extract_mp3': 'extract_mp3', 'audio.noise_cleanup': 'noise_cleanup',
+                    'audio.demucs_stems': 'demucs_stems'}
 
 
 class AgentTasks:
@@ -17,8 +20,10 @@ class AgentTasks:
 
     @staticmethod
     def _kind(plan):
+        if plan['tool_id'] in AUDIO_OPERATIONS:
+            return 'audio-utilities'
         return {"video.continuity_last_frame": "continuity-frame", "computer.execute": "agent-computer",
-                "audio.extract_mp3": "audio-utilities", 'editor.prepare_brief': 'vibe-editor'}[plan["tool_id"]]
+                'audio.transcribe': agent_transcription.KIND, 'editor.prepare_brief': 'vibe-editor'}[plan["tool_id"]]
 
     def _assets(self, owner, ids, *, extensions=None):
         if not isinstance(ids, list) or not 1 <= len(ids) <= 100 or any(not isinstance(i, str) for i in ids):
@@ -58,15 +63,29 @@ class AgentTasks:
             settings = agent_computer.prepare(self.root, owner, payload['settings'], self.ledger)
             scope = ('Full local access, including files outside this project and network.' if settings['access_mode'] == 'full'
                      else 'Project folder access; unrelated personal files and network are blocked.')
+        elif payload['tool_id'] == 'audio.transcribe':
+            if payload['settings'] != {} or not isinstance(payload['asset_ids'], list) or len(payload['asset_ids']) != 1:
+                raise ValueError('Speech analysis requires one complete audio/video source and empty settings.')
+            assets = self._assets(owner, payload['asset_ids'])
+            settings, scope = {}, 'Transcribe one complete source on CPU with source-relative timestamps. Review evidence before proposing cuts; preserve original media.'
         elif payload['tool_id'] == 'video.continuity_last_frame':
             if payload['settings'] != {} or not isinstance(payload['asset_ids'], list) or len(payload['asset_ids']) != 1:
                 raise ValueError('Last-frame extraction requires one video and empty settings.')
             assets = self._assets(owner, payload['asset_ids'], extensions=audio_utilities.VIDEO_EXTS)
             settings, scope = {}, 'Extract the last frame as a continuity reference; preserve the original video.'
-        elif payload['tool_id'] == 'audio.extract_mp3':
-            audio_utilities.validate_settings('extract_mp3', payload['settings'])
-            assets = self._assets(owner, payload['asset_ids'])
-            settings, scope = {'quality': payload['settings'].get('quality', 2)}, 'Extract whole assets to MP3; preserve original media.'
+        elif payload['tool_id'] in AUDIO_OPERATIONS:
+            operation = AUDIO_OPERATIONS[payload['tool_id']]
+            audio_utilities.validate_settings(operation, payload['settings'])
+            defaults = {'extract_mp3': {'quality': 2}, 'noise_cleanup': {'model': 'master64', 'dry': 0},
+                        'demucs_stems': {'stems': 2, 'device': 'cpu'}}
+            settings = {**defaults[operation], **payload['settings']}
+            if operation == 'demucs_stems' and settings['device'] != 'cpu':
+                raise ValueError('Director stem separation requires CPU; use manual Audio tools for GPU settings.')
+            assets = self._assets(owner, payload['asset_ids'], extensions=(audio_utilities.AUDIO_EXTS | audio_utilities.VIDEO_EXTS
+                if operation == 'extract_mp3' else audio_utilities.AUDIO_EXTS))
+            scope = {'extract_mp3': 'Extract whole assets to MP3; preserve original media.',
+                     'noise_cleanup': 'Denoise complete audio sources using GPU admission; preserve original media.',
+                     'demucs_stems': 'Separate complete audio sources into stems on CPU; preserve original media.'}[operation]
         else:
             raise ValueError('Unsupported agent task tool.')
         return {'tool_id': payload['tool_id'], 'assets': assets, 'settings': settings,
@@ -141,6 +160,50 @@ class AgentTasks:
             ids = [r[0] for r in db.execute('SELECT task_id FROM agent_tasks WHERE project_id=? ORDER BY created_at DESC LIMIT 50', (owner,))]
         return {'tasks': [self.get(owner, ident) for ident in ids]}
 
+    def speech_evidence(self, owner, assets):
+        """Only completed, correlated jobs for the current source bytes inform chat."""
+        selected = {a['asset_id']: a['sha256'] for a in assets}
+        evidence, seen = [], set()
+        for row in self.list(owner)['tasks'] if selected else []:
+            plan, invocation = row['plan'], row['invocation']
+            if plan['tool_id'] != 'audio.transcribe' or not invocation or not invocation['job_id']:
+                continue
+            source = plan['assets'][0]
+            if source['asset_id'] in seen or selected.get(source['asset_id']) != source['sha256']:
+                continue
+            job = video_repertoire.read_job(agent_transcription.KIND, invocation['job_id'])
+            self._validate_job(row, job)
+            if job['status'] != 'completed':
+                continue
+            result = job.get('result') or {}
+            if result.get('workspace_id') != owner:
+                raise LedgerConflict('Transcript belongs to another project.')
+            report = agent_transcription.report(result.get('transcript'), source)
+            evidence.append({'task_id': row['task_id'], 'job_id': job['job_id'], **source,
+                'report': report[:16000], 'truncated': len(report) > 16000})
+            seen.add(source['asset_id'])
+            if len(evidence) == 3:
+                break
+        return evidence
+
+    def transcript(self, owner, task):
+        """Return complete timed evidence only after checking its current owned bytes."""
+        row = self.get(owner, task)
+        if row['plan']['tool_id'] != 'audio.transcribe' or not row['invocation'] or not row['invocation']['job_id']:
+            raise ValueError('Choose a completed speech analysis task.')
+        source = row['plan']['assets'][0]
+        current = self._assets(owner, [source['asset_id']])[0]
+        if current['sha256'] != source['sha256']:
+            raise LedgerConflict('Analyzed source changed. Analyze the current bytes before cutting.')
+        job = video_repertoire.read_job(agent_transcription.KIND, row['invocation']['job_id'])
+        self._validate_job(row, job)
+        result = job.get('result') or {}
+        if job['status'] != 'completed' or result.get('workspace_id') != owner:
+            raise ValueError('Speech analysis has no completed evidence for this project.')
+        transcript = result.get('transcript')
+        agent_transcription.validate(transcript, source)
+        return {'task_id': task, 'job_id': job['job_id'], **source, 'transcript': transcript}
+
     @staticmethod
     def _expected(row, payload):
         if not isinstance(payload, dict) or set(payload) != {'revision', 'plan_hash'}:
@@ -213,7 +276,7 @@ class AgentTasks:
         inputs = request.get('inputs', [])
         if (request.get('workspace_id') != row['project_id']
                 or request.get('agent_invocation_id') != row['invocation']['invocation_id']
-                or request.get('operation') != {'video.continuity_last_frame': 'last_frame', 'computer.execute': 'computer', 'audio.extract_mp3': 'extract_mp3'}[plan['tool_id']] or request.get('settings') != plan['settings']
+                or request.get('operation') != {**AUDIO_OPERATIONS, 'audio.transcribe': 'transcribe', 'video.continuity_last_frame': 'last_frame', 'computer.execute': 'computer'}[plan['tool_id']] or request.get('settings') != plan['settings']
                 or [(i.get('asset_id'), i.get('sha256')) for i in inputs] != [(a['asset_id'], a['sha256']) for a in plan['assets']]
                 or row['invocation']['job_id'] and row['invocation']['job_id'] != job['job_id']):
             raise LedgerConflict('Frozen job does not match the approved invocation.')
@@ -258,11 +321,13 @@ class AgentTasks:
                     job = agent_editor.submit(self.root, owner, plan, invocation, created)
                 elif plan['tool_id'] == 'computer.execute':
                     job = agent_computer.submit(self.root, owner, plan['settings'], invocation, created)
+                elif plan['tool_id'] == 'audio.transcribe':
+                    job = agent_transcription.submit(self.root, owner, plan['assets'], invocation, created)
                 elif plan['tool_id'] == 'video.continuity_last_frame':
                     job = agent_continuity.submit(self.root, owner, plan['assets'], invocation, created)
                 else:
                     job = audio_utilities.submit(self.root, owner,
-                        {'operation': 'extract_mp3', 'asset_ids': [a['asset_id'] for a in plan['assets']], 'settings': plan['settings']},
+                        {'operation': AUDIO_OPERATIONS[plan['tool_id']], 'asset_ids': [a['asset_id'] for a in plan['assets']], 'settings': plan['settings']},
                         invocation_id=invocation, expected_hashes={a['asset_id']: a['sha256'] for a in plan['assets']},
                         on_created=created)
             except Exception:
@@ -283,6 +348,11 @@ class AgentTasks:
             if result.get('pending_clearance') != 'brief' or result.get('revision') != plan['settings']['target']['expected_revision'] + 1:
                 raise LedgerConflict('Editor job has no verified brief clearance result.')
             report = 'Creative brief prepared. Review clearance 1 in Vibe Editor; no render was authorized.'
+        elif state == 'completed' and plan['tool_id'] == 'audio.transcribe':
+            result = job.get('result') or {}
+            if result.get('workspace_id') != owner:
+                raise LedgerConflict('Transcript belongs to another project.')
+            report = agent_transcription.report(result.get('transcript'), plan['assets'][0])
         elif state == 'completed' and self._kind(plan) == agent_computer.KIND:
             result = job.get('result') or {}
             report = result.get('report')
@@ -293,9 +363,10 @@ class AgentTasks:
             outputs = result.get('assets') if isinstance(result, dict) else None
             if not isinstance(result, dict) or result.get('workspace_id') != owner or not isinstance(outputs, list) or not outputs or any(not isinstance(a, dict) for a in outputs):
                 raise LedgerConflict('Completed job has no registered outputs.')
-            suffix = '.png' if self.get(owner, task)['plan']['tool_id'] == 'video.continuity_last_frame' else '.mp3'
+            extensions = ({'.png'} if plan['tool_id'] == 'video.continuity_last_frame' else
+                          {'.mp3'} if plan['tool_id'] == 'audio.extract_mp3' else audio_utilities.AUDIO_EXTS)
             for output in outputs:
-                verified = self._assets(owner, [output.get('asset_id')], extensions={suffix})[0]
+                verified = self._assets(owner, [output.get('asset_id')], extensions=extensions)[0]
                 if verified['sha256'] != output.get('sha256'):
                     raise LedgerConflict('Job output identity could not be verified.')
             outputs = [media_library.public_asset_record(output, owner) for output in outputs]

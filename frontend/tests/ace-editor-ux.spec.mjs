@@ -87,7 +87,7 @@ test('nested folder imports filter by kind, attach/drop/remove persist and delet
   }
   if(path.endsWith('/deletion')){const id=path.split('/').at(-2);if(req.method()==='POST'){deletes++;assets=assets.filter(a=>a.asset_id!==id);return route.fulfill({json:{deleted:true}});}return route.fulfill({json:{asset_id:id,path:'/managed/'+id,sha256:'a'.repeat(64),can_delete:!project.selection.some(r=>r.asset_id===id),references:project.selection.some(r=>r.asset_id===id)?['editor selection']:[]}});}
   if(path==='/api/studio-tools/output-folder')return route.fulfill({json:{path:'/chosen/editor',grant:'grant'}});
-  if(path.endsWith('/assets/catalogue'))return route.fulfill({json:{assets:[],total:0,workspaces:[]}});
+  if(path.endsWith('/assets/catalogue'))return route.fulfill({json:{assets:assets.filter(a=>a.kind===url.searchParams.get('kinds')),total:assets.length,workspaces:[]}});
   if(path==='/api/story/workspaces')return route.fulfill({json:{items:[]}});
   return route.fulfill({status:404,json:{error:{message:'Unexpected mock endpoint'}}});
  });
@@ -104,9 +104,9 @@ test('nested folder imports filter by kind, attach/drop/remove persist and delet
   await page.getByRole('button',{name:'Delete selected permanently'}).click();
   await expect(page.getByRole('alert').filter({hasText:'Files are still used'})).toBeVisible();
   expect(deletes).toBe(0);
-  await page.getByRole('combobox',{name:'Asset view',exact:true}).selectOption('list');
-  await page.getByRole('combobox',{name:'Sort assets',exact:true}).selectOption('name');
-  await expect(page.locator('.editor-asset-list .editor-asset-card')).toHaveCount(2);
+  await page.getByRole('combobox',{name:'View',exact:true}).selectOption('list');
+  await page.getByRole('combobox',{name:'Change sort order',exact:true}).selectOption('name_asc');
+  await expect(page.locator('.media-source-list article')).toHaveCount(2);
   await page.screenshot({path:info.outputPath('editor-assets.png'),fullPage:true});
   await page.getByLabel('Editing attachments').locator('.editor-attachment-chip').first().getByTitle('View attachment').focus();
   await expect(page.getByRole('button',{name:'Remove attachment 1',exact:true})).toHaveCSS('opacity','1');
@@ -149,6 +149,7 @@ test('first Editor import keeps successful files visible after a partial failure
   if(path==='/api/editor/state')return route.fulfill({json:{projects:project?[project]:[],styles:[],runtime:{checks:{}}}});
   if(path==='/api/editor/projects'){project={id:'first-import',name:'Fresh edit',workspace_id:'tool-library',revision:0,messages:[],revisions:[],selection:[],overrides:{},view:{}};return route.fulfill({json:project});}
   if(path==='/api/editor/projects/first-import'){if(req.method()==='PUT')project={...project,...req.postDataJSON()};return route.fulfill({json:project});}
+  if(path.endsWith('/assets/catalogue'))return route.fulfill({json:{assets:uploads?[asset]:[],total:uploads?1:0,workspaces:[]}});
   if(path==='/api/media/tool-library/assets'){
    if(req.method()==='POST'){uploads++;return route.fulfill(uploads===1?{json:asset}:{status:503,json:{error:{message:'Second upload failed'}}});}
    return route.fulfill({json:{assets:uploads?[asset]:[],total:uploads?1:0}});

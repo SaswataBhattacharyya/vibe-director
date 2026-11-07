@@ -45,12 +45,12 @@ test('compatible sources are explicitly added without starting a job',async({pag
   await expect(picker.getByRole('checkbox',{name:'Reference clip.mp4',exact:true})).not.toBeChecked();
   await picker.getByRole('button',{name:/Select all/}).click();
   expect(reused).toHaveLength(0);
-  await picker.getByRole('button',{name:'Add selected (1)',exact:true}).click();
-  await expect(picker.getByText('1 added. Choose them in the tool below.')).toBeVisible();
+  await picker.getByRole('button',{name:'Use as MP3 extraction (1)',exact:true}).click();
+  await expect(picker.getByText('1 selected for MP3 extraction. No generation started.')).toBeVisible();
   expect(reused).toHaveLength(1);
   expect(reused[0]).toMatchObject({source_workspace_id:'other',asset_id:'pa-source'});
   expect(writes).toEqual(['/api/media/ws-test/assets/catalogue-refresh','/api/media/ws-test/assets/reuse']);
-  await expect(page.getByRole('checkbox',{name:/Select Reference clip/})).not.toBeChecked();
+  await expect(page.getByRole('checkbox',{name:/Select Reference clip/})).toBeChecked();
 });
 
 test('R2V warns before overfilling a reference group and keeps the draft',async({page})=>{

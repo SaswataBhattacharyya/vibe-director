@@ -133,3 +133,50 @@ class AgentEditorTests(AgentTaskFixture):
         self.assertEqual(self.tasks.list(self.owner)['tasks'], [])
         self.assertEqual(chat.history(self.owner)['messages'][-1]['status'], 'interrupted')
         self.dispatch.assert_not_called()
+
+    def test_extraction_uses_editor_sources_not_five_second_selection(self):
+        self.editor = vibe_editor.update_project(self.root, self.editor['id'], {'selection': [
+            {'asset_id': self.asset['asset_id'], 'start': 0, 'end': .1}]})
+        reason = Mock(return_value={'reply': 'Already extracted!', 'intent': 'extract_mp3', 'quality': 2})
+        payload = {'request_id': str(uuid.uuid4()), 'text': 'Extract the audio.', 'asset_ids': [],
+                   'skill_refs': [], 'surface': 'editor', 'target': self.target()}
+        chat = AgentConversation(self.tasks, reason)
+        with patch('story_builder.services.agent_tools.shutil.which', return_value='/test/ffmpeg'):
+            message = chat.send(self.owner, payload)['messages'][-1]
+            chat.send(self.owner, payload)
+        task = self.tasks.get(self.owner, message['task_id'])
+        self.assertEqual([a['asset_id'] for a in task['plan']['assets']], [self.asset['asset_id']])
+        self.assertEqual(task['plan']['settings'], {'quality': 2})
+        self.assertIn('whole assets', task['plan']['scope'])
+        self.assertNotIn('Already extracted', message['reply'])
+        self.assertIn('No media has been processed', message['reply'])
+        prompt = reason.call_args.kwargs['prompt']
+        self.assertIn('"tools":', prompt)
+        self.assertIn('whole_source', prompt)
+        self.assertIn('source_assets', prompt)
+        self.assertEqual(len(self.tasks.list(self.owner)['tasks']), 1)
+        self.dispatch.assert_not_called()
+
+    def test_explicit_attachments_override_editor_and_blocked_tools_do_not_propose(self):
+        reason = Mock(return_value={'reply': 'Done', 'intent': 'extract_mp3', 'quality': 2})
+        payload = {'request_id': str(uuid.uuid4()), 'text': 'Extract attached audio.',
+                   'asset_ids': [self.asset['asset_id']], 'skill_refs': [], 'surface': 'editor', 'target': self.target()}
+        chat = AgentConversation(self.tasks, reason)
+        with patch('story_builder.services.agent_tools.shutil.which', return_value='/test/ffmpeg'):
+            message = chat.send(self.owner, payload)['messages'][-1]
+        self.assertEqual(self.tasks.get(self.owner, message['task_id'])['plan']['assets'][0]['asset_id'], self.asset['asset_id'])
+        payload['request_id'] = str(uuid.uuid4())
+        with patch('story_builder.services.agent_tools.shutil.which', return_value=None):
+            message = chat.send(self.owner, payload)['messages'][-1]
+        self.assertIsNone(message['task_id'])
+        self.assertIn('ffmpeg is unavailable', message['reply'])
+        reason.return_value['intent'] = 'analyze_speech'
+        payload.update(request_id=str(uuid.uuid4()), text='Find the gibberish and remove it.')
+        with patch('story_builder.services.agent_transcription.capability', return_value={
+                'status': 'blocked', 'execution_enabled': False, 'reason': 'Prepared ASR model is missing.'}):
+            message = chat.send(self.owner, payload)['messages'][-1]
+        self.assertIsNone(message['task_id'])
+        self.assertIn('Prepared ASR model is missing', message['reply'])
+        self.assertIn('No processing has run', message['reply'])
+        self.assertEqual(len(self.tasks.list(self.owner)['tasks']), 1)
+        self.dispatch.assert_not_called()

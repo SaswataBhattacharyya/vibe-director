@@ -2,7 +2,7 @@ import {mockProject} from './fixtures/project.mjs';
 import {test,expect} from '@playwright/test';
 test('editor library selections and pasted/dropped attachments persist into chat',async({page})=>{
   page.on('pageerror',e=>console.log('PAGE ERROR',e.message));
-  const asset=(id,kind,name)=>({asset_id:id,workspace_id:'w',kind,filename:name,created_at:'2026-10-26',media:{duration_seconds:3},content_url:'/mock/'+name,roles:[]});
+  const asset=(id,kind,name)=>({asset_id:id,workspace_id:'w',kind,filename:name,created_at:'2026-10-26',media:{duration_seconds:kind==='video'?12:3},content_url:'/mock/'+name,roles:[]});
   const video=asset('v','video','clip.mp4'), image=asset('i','image','portrait.png');
   let project={id:'edit-assets',name:'Asset edit',workspace_id:'w',style_id:null,revision:1,messages:[],revisions:[],selection:[],overrides:{},view:{}};
   let chatSelection,uploads=0;const known=new Map([[video.asset_id,video],[image.asset_id,image]]);
@@ -18,6 +18,7 @@ test('editor library selections and pasted/dropped attachments persist into chat
       if(req.method()==='PUT'){const body=req.postDataJSON();if(body.selection)body.selection=body.selection.map(r=>({...r,filename:known.get(r.asset_id)?.filename}));project={...project,...body,view:{...project.view,...body.view},revision:project.revision+1};}
       return route.fulfill({json:project});
     }
+    if(path.endsWith('/assets/catalogue'))return route.fulfill({json:{assets:url.searchParams.get('kinds')==='video'?[video]:[image],total:1,workspaces:[]}});
     if(path==='/api/media/w/assets'){
       if(req.method()==='POST'){uploads++;const uploaded=asset('upload'+uploads,'image',url.searchParams.get('filename'));known.set(uploaded.asset_id,uploaded);return route.fulfill({json:uploaded});}
       return route.fulfill({json:{assets:url.searchParams.get('kind')==='video'?[video]:[image],total:1}});
@@ -27,15 +28,19 @@ test('editor library selections and pasted/dropped attachments persist into chat
   await mockProject(page,'w'); await page.goto('/#/editor');
   await page.getByRole('navigation',{name:'Editor panels'}).getByRole('button',{name:'Asset selection',exact:true}).click();
   await page.getByRole('button',{name:'Preview clip.mp4',exact:true}).click();
+  await expect(page.getByLabel('Out / image hold end (seconds)')).toHaveValue('5');
+  await expect(page.getByText('Complete source: 12.00 seconds.',{exact:false})).toBeVisible();
+  await page.getByRole('button',{name:'Use complete source as edit range'}).click();
+  await expect(page.getByLabel('Out / image hold end (seconds)')).toHaveValue('12');
   await page.getByRole('button',{name:'Add to edit selection',exact:true}).click();
-  await expect(page.getByLabel('Editing attachments')).toContainText('clip.mp4 · 0–3s');
+  await expect(page.getByLabel('Editing attachments')).toContainText('clip.mp4 · 0–12s');
   await page.locator('.editor-preview').getByLabel('Kind').selectOption('image');
   await page.getByRole('button',{name:'Preview portrait.png',exact:true}).click();
   await page.getByRole('button',{name:'Add to edit selection',exact:true}).click();
-  await expect(page.locator('#project-director-message')).toBeEnabled();
+  await expect(page.getByRole('button',{name:'Attach files',exact:true})).toBeEnabled();
   await page.locator('.editor-attachments').evaluate(el=>{const data=new DataTransfer();data.items.add(new File(['png'],'pasted.png',{type:'image/png'}));el.dispatchEvent(new ClipboardEvent('paste',{clipboardData:data,bubbles:true,cancelable:true}));});
   await expect(page.getByLabel('Editing attachments')).toContainText('pasted.png');
-  await expect(page.locator('#project-director-message')).toBeEnabled();
+  await expect(page.getByRole('button',{name:'Attach files',exact:true})).toBeEnabled();
   await page.locator('.editor-attachments').evaluate(el=>{const data=new DataTransfer();data.items.add(new File(['png'],'dropped.png',{type:'image/png'}));el.dispatchEvent(new DragEvent('drop',{dataTransfer:data,bubbles:true,cancelable:true}));});
   await expect(page.getByLabel('Editing attachments')).toContainText('dropped.png');
   await page.reload();
@@ -45,4 +50,5 @@ test('editor library selections and pasted/dropped attachments persist into chat
   await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
   await expect.poll(()=>chatSelection?.length).toBe(4);
   expect(chatSelection.map(r=>r.asset_id)).toEqual(['v','i','upload1','upload2']);
+  expect(chatSelection[0]).toEqual({asset_id:'v',start:0,end:12});
 });

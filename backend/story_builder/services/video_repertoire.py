@@ -65,7 +65,7 @@ def youtube_downloads_root() -> Path:
 def analyzer_runs_root() -> Path:
     return REPERTOIRE_ROOT / "runs"
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".m4v", ".avi"}
-JOB_KINDS = {"agent-computer", "continuity-frame", "music-jukebox", "voice-studio", "trellis", "ace-studio", "vibe-editor", "youtube", "analysis", "semantic-index", "image-detailer", "style-frames", "timed-tts", "audio-effects", "audio-scene-split", "audio-scene-stitch", "ace-music", "control-foley", "audio-utilities", "f5-prepare"}
+JOB_KINDS = {"agent-transcription", "agent-computer", "continuity-frame", "music-jukebox", "voice-studio", "trellis", "ace-studio", "vibe-editor", "youtube", "analysis", "semantic-index", "image-detailer", "style-frames", "timed-tts", "audio-effects", "audio-scene-split", "audio-scene-stitch", "ace-music", "control-foley", "audio-utilities", "f5-prepare"}
 
 # Keep the durable Media Prep queue cheap while it waits: API requests enqueue
 # only an ID, and one dispatcher starts the next subprocess after the current
@@ -1005,6 +1005,8 @@ def cancel_job(kind: str, job_id: str) -> dict[str, Any]:
         _stop_analysis_job_containers(job_id)
     if kind == "semantic-index":
         _stop_semantic_index_job_containers(job_id)
+    if kind == "agent-transcription":
+        _stop_job_containers(job_id, "vibe-director.transcription-job")
 
     if not pid:
         # The dispatcher may have launched the process but not yet attached its
@@ -1032,6 +1034,8 @@ def cancel_job(kind: str, job_id: str) -> dict[str, Any]:
         _stop_analysis_job_containers(job_id)
     if kind == "semantic-index":
         _stop_semantic_index_job_containers(job_id)
+    if kind == "agent-transcription":
+        _stop_job_containers(job_id, "vibe-director.transcription-job")
 
     current = _read_json(job_path(kind, job_id))
     if current.get("status") in {"completed", "failed"}:

@@ -276,3 +276,34 @@ class AgentTaskTests(AgentTaskFixture):
         self.assertEqual(recovered['status'], 'approved')
         self.assertEqual(agent_knowledge.read(fresh, tasks.ledger, owner)['content'], 'Keep the base room layout.')
         self.assertEqual(tasks._assets(owner, [asset['asset_id']])[0]['sha256'], asset['sha256'])
+
+class AgentAudioProcessingTests(AgentTaskFixture):
+    def test_audio_adapters_freeze_settings_recover_and_verify_registered_wav(self):
+        for operation, settings in [('noise_cleanup', {'model': 'dns64', 'dry': .25}),
+                                    ('demucs_stems', {'stems': 2, 'device': 'cpu'})]:
+            with self.subTest(operation=operation), patch.object(audio_utilities, 'capabilities', return_value={
+                    'operations': [{'id': operation, 'status': 'available'}]}):
+                row = self.tasks.propose(self.owner, {'tool_id': 'audio.' + operation,
+                    'asset_ids': [self.asset['asset_id']], 'settings': settings})
+                self.tasks.approve(self.owner, row['task_id'], self.approval(row))
+                started = self.tasks.run(self.owner, row['task_id'], self.approval(row))
+                self.assertEqual(started['invocation'], self.tasks.run(self.owner, row['task_id'], self.approval(row))['invocation'])
+                job = video_repertoire.read_job('audio-utilities', started['invocation']['job_id'])
+                self.assertEqual(job['request']['operation'], operation)
+                self.assertEqual(job['request']['settings'], settings)
+                # Mock worker completion with registered CPU fixture audio; never run a model.
+                job.update(status='completed', result={'workspace_id': self.owner, 'assets': [self.asset]})
+                video_repertoire.job_path('audio-utilities', job['job_id']).write_text(json.dumps(job))
+                self.assertEqual(self.tasks.poll(self.owner, row['task_id'])['status'], 'completed')
+                job['request']['operation'] = 'extract_mp3'
+                video_repertoire.job_path('audio-utilities', job['job_id']).write_text(json.dumps(job))
+                with self.assertRaises(LedgerConflict):
+                    self.tasks.poll(self.owner, row['task_id'])
+        self.assertEqual(self.original.read_bytes(), self.before)
+
+    def test_director_stems_reject_gpu_and_unknown_settings(self):
+        for settings in ({'device': 'cuda'}, {'command': 'anything'}):
+            with self.assertRaises(ValueError):
+                self.tasks.propose(self.owner, {'tool_id': 'audio.demucs_stems',
+                    'asset_ids': [self.asset['asset_id']], 'settings': settings})
+        self.dispatch.assert_not_called()

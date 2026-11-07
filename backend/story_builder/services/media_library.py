@@ -1379,7 +1379,9 @@ def browse_catalogue(root: Path, workspace_id: str, *, kinds: str = "image,video
                 continue
             if source not in {"all", "projects", "current", "style", "ace_generated", category} and not (source == "repertoire" and category == "extracted"):
                 continue
-            text = " ".join([str(record.get("filename", "")), str(record.get("description", "")), *map(str, record.get("tags") or [])]).casefold()
+            text = " ".join([str(record.get("filename", "")), str(record.get("description", "")),
+                             str((record.get('metadata') or {}).get('analysis_summary', '')),
+                             *map(str, record.get("tags") or [])]).casefold()
             if query.strip().casefold() not in text:
                 continue
             relative = Path(record.get("relative_path") or record.get("filename") or "")

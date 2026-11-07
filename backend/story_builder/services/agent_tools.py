@@ -1,5 +1,23 @@
 """Service-backed descriptions only. Discovery never authorizes execution."""
 import shutil
+from . import agent_transcription, audio_utilities
+
+_CONTRACTS = {
+    'audio.extract_mp3': ('Extract audio from complete audio/video sources into MP3 files.',
+                         ['audio', 'video'], 'whole_source', 'ffmpeg', 'registered_audio'),
+    'video.continuity_last_frame': ('Extract one video’s final frame as a continuity reference.',
+                                    ['video'], 'whole_source', 'ffmpeg', 'registered_image'),
+    'editor.prepare_brief': ('Prepare an edit brief for review; cannot analyze speech, approve cuts or render.',
+                             ['audio', 'video', 'image'], 'saved_editor_selection', 'reasoning_provider', 'pending_editor_brief'),
+    'computer.execute': ('Run an explicitly approved coding, terminal or filesystem task.',
+                         [], 'explicit_access_mode', 'codex_cli', 'verified_report'),
+    'audio.transcribe': ('Transcribe one complete source on CPU with timed speech and confidence evidence; review required before cuts.',
+                         ['audio', 'video'], 'whole_source', 'video-audio-analyzer-peav:dev', 'timed_transcript'),
+    'audio.noise_cleanup': ('Denoise audio using the installed denoiser. Requires GPU admission at execution.',
+                           ['audio'], 'whole_source', 'story-audio-denoiser', 'registered_audio'),
+    'audio.demucs_stems': ('Separate vocals and accompaniment from audio using Demucs on CPU.',
+                         ['audio'], 'whole_source', 'story-audio-demucs', 'registered_audio'),
+}
 
 
 def tools() -> dict:
@@ -22,6 +40,21 @@ def tools() -> dict:
     if ready:
         for row in rows:
             row['reason'] = 'Propose a task, approve its exact plan, then run it through the shared task gateway.'
+    operations = {row['id']: row for row in audio_utilities.capabilities()['operations']}
+    for operation, settings in (
+        ('noise_cleanup', {'model': {'enum': ['master64', 'dns64'], 'default': 'master64'},
+                           'dry': {'type': 'number', 'minimum': 0, 'maximum': 1, 'default': 0}}),
+        ('demucs_stems', {'stems': {'enum': [2, 4, 6], 'default': 2},
+                          'device': {'const': 'cpu', 'default': 'cpu'}}),
+    ):
+        readiness = operations.get(operation, {})
+        available = readiness.get('status') == 'available'
+        rows.append({'id': 'audio.' + operation, 'effect': 'submit',
+            'status': 'available' if available else 'blocked', 'execution_enabled': available,
+            'reason': 'Requires exact-plan approval; preserves originals.' if available else readiness.get('reason', 'Audio runtime is unavailable.'),
+            'input_schema': {'type': 'object', 'additionalProperties': False, 'required': ['asset_ids', 'settings'],
+                'properties': {'asset_ids': asset_ids, 'settings': {'type': 'object',
+                    'additionalProperties': False, 'properties': settings}}}})
     computer = bool(shutil.which('codex'))
     editor_target = {
         'type': 'object', 'additionalProperties': False,
@@ -50,4 +83,12 @@ def tools() -> dict:
                 'properties': {'instruction': {'type': 'string', 'minLength': 1, 'maxLength': 12000},
                     'access_mode': {'enum': ['project', 'full']},
                     'skill_refs': {'type': 'array', 'maxItems': 6, 'items': {'type': 'string'}}}}}}})
+    rows.append({'id': 'audio.transcribe', 'effect': 'submit', **agent_transcription.capability(),
+        'input_schema': {'type': 'object', 'additionalProperties': False,
+            'required': ['asset_ids', 'settings'], 'properties': {'asset_ids': {**asset_ids, 'maxItems': 1},
+                'settings': {'type': 'object', 'additionalProperties': False, 'properties': {}}}}})
+    for row in rows:
+        description, media, scope, runtime, result = _CONTRACTS[row['id']]
+        row.update(description=description, accepted_media=media, scope=scope, runtime=runtime,
+                   approval='exact_plan', result_kind=result)
     return {'tools': rows}

@@ -52,7 +52,7 @@ def write(path, value):
 
 
 @contextmanager
-def state(root):
+def state(root, *, readonly=False):
     folder = Path(root) / "services/editor"
     folder.mkdir(parents=True, exist_ok=True)
     with (folder / ".lock").open("a+b") as lock:
@@ -61,7 +61,8 @@ def state(root):
         data = json.loads(path.read_text()) if path.exists() else {"version": 1, "profile": PROFILE, "projects": [], "styles": []}
         data = load_project_documents(root, data)
         yield data
-        write(path, save_project_documents(root, data, "editor", write))
+        if not readonly:
+            write(path, save_project_documents(root, data, "editor", write))
 
 
 def project(data, project_id):
@@ -307,7 +308,8 @@ def command(root, project_id, body, *, agent_request=None, on_created=None):
                 else:
                     if not pending["value"].get("clips"):
                         raise ValueError("Select media before rendering.")
-                    start = _enqueue(p, "render", plan=pending["value"], style_snapshot=pending["style_snapshot"])
+                    start = _enqueue(p, "render", plan=pending["value"], style_snapshot=pending["style_snapshot"],
+                                     **({'review_evidence': pending['evidence']} if pending.get('evidence') else {}))
                     p["pause_requested"] = False
                     message(p, "assistant", "Media and tool plan approved. Rendering this exact revision.")
             else:
@@ -360,7 +362,15 @@ def validate_plan(root, workspace, value):
             "clips": clips, "audio": audio[0] if audio else None}
 
 
-def propose_plan(root, project_id, body):
+def selected_plan(root, p, raw):
+    value = validate_plan(root, p['workspace_id'], raw)
+    for clip in value['clips'] + ([value['audio']] if value['audio'] else []):
+        if not any(r['asset_id'] == clip['asset_id'] and r['start'] <= clip['start'] and clip['end'] <= r['end'] for r in p['selection']):
+            raise ValueError('The timeline exceeds the selected media ranges. Select and review those ranges first.')
+    return value
+
+
+def propose_plan(root, project_id, body, *, evidence=None):
     with state(root) as data:
         p = project(data, project_id)
         busy(p)
@@ -368,16 +378,15 @@ def propose_plan(root, project_id, body):
             raise ValueError("Stale revision. Refresh before saving a plan.")
         if not p.get("brief"):
             raise ValueError("Approve the creative brief first.")
-        value = validate_plan(root, p["workspace_id"], body.get("plan"))
-        for clip in value['clips'] + ([value['audio']] if value['audio'] else []):
-            if not any(r['asset_id'] == clip['asset_id'] and r['start'] <= clip['start'] and clip['end'] <= r['end'] for r in p['selection']):
-                raise ValueError('The timeline exceeds the selected media ranges. Select and review those ranges first.')
+        value = selected_plan(root, p, body.get("plan"))
         p["revision"] += 1
         selected = style(data, p["style_id"]) if p.get("style_id") else {"id": None, "version": 0, "rules": []}
         selected = copy.deepcopy(selected)
         selected["rules"] = [r for r in selected["rules"] if r["confirmed"]]
         selected["project_override"] = p["overrides"].get(p.get("style_id") or "default", "")
         p["pending"] = {"kind": "plan", "revision": p["revision"], "value": value, "style_snapshot": copy.deepcopy(selected)}
+        if evidence is not None:
+            p['pending']['evidence'] = copy.deepcopy(evidence)
         message(p, "assistant", "Review the updated media and tool plan below. Approval is required before rendering.")
         return copy.deepcopy(p)
 

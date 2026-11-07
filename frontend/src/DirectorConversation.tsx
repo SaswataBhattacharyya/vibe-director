@@ -16,16 +16,24 @@ type Props = {
   onCollapse: () => void;
   control: (task: AgentTask, action: 'approve' | 'run' | 'cancel') => void;
 };
+const taskLabels: Record<string, string> = {
+  'audio.extract_mp3': 'Extract MP3', 'audio.transcribe': 'Analyze complete-source speech',
+  'audio.noise_cleanup': 'Denoise audio', 'audio.demucs_stems': 'Separate audio stems',
+  'editor.prepare_brief': 'Prepare Editor brief', 'computer.execute': 'Codex computer task',
+  'video.continuity_last_frame': 'Extract continuity frame',
+};
 function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> & {task: AgentTask}) {
   return <article className="director-task" aria-label={`Task ${task.task_id}`}>
-    <div className="director-task-heading"><strong>{task.plan.tool_id === 'editor.prepare_brief' ? 'Prepare Editor brief' : task.plan.tool_id === 'computer.execute' ? 'Codex computer task' : task.plan.tool_id === 'video.continuity_last_frame' ? 'Extract continuity frame' : 'Extract MP3'}</strong><span className="director-status">{task.status.replaceAll('_', ' ')}</span></div>
+    <div className="director-task-heading"><strong>{taskLabels[task.plan.tool_id] || task.plan.tool_id}</strong><span className="director-status">{task.status.replaceAll('_', ' ')}</span></div>
     <p>{task.plan.scope}</p>
+    {task.plan.tool_id === 'audio.noise_cleanup' && <small>Model {task.plan.settings.model} · dry mix {task.plan.settings.dry}</small>}
+    {task.plan.tool_id === 'audio.demucs_stems' && <small>{task.plan.settings.stems} stems · {task.plan.settings.device}</small>}
     {task.plan.settings.target && <><small>Editor session {task.plan.settings.target.editor_session_id} · revision {task.plan.settings.target.expected_revision}</small>
       <p>{task.plan.settings.instruction}</p><ul>{task.plan.settings.target.selected_ranges.map((range, index) => <li key={index}>{range.asset_id} · {range.start}–{range.end}s</li>)}</ul><a href="#/editor">Review in Vibe Editor</a></>}
     {task.plan.settings.access_mode && <><strong>{task.plan.settings.access_mode === 'full' ? 'Full access' : 'Project only'}</strong>
       <small className="director-job">{task.plan.settings.workspace_path} · {task.plan.settings.model}</small>
       <pre style={{whiteSpace: 'pre-wrap'}}>{task.plan.settings.instruction}</pre></>}
-    {task.report && <><small>{task.plan.tool_id === 'editor.prepare_brief' ? 'Editor result' : 'Codex report · deliverables require inspection'}</small><pre style={{whiteSpace: 'pre-wrap'}}>{task.report}</pre></>}
+    {task.report && <><small>{task.plan.tool_id === 'editor.prepare_brief' ? 'Editor result' : task.plan.tool_id === 'audio.transcribe' ? 'Timed speech evidence · review against playback before cutting' : 'Codex report · deliverables require inspection'}</small><pre style={{whiteSpace: 'pre-wrap'}}>{task.report}</pre></>}
     <ul>{task.plan.assets.map(asset => <li key={asset.asset_id}>{asset.filename}</li>)}</ul>
     <small>{task.plan.settings.quality !== undefined && `Quality ${task.plan.settings.quality} · `}revision {task.current_revision} · {task.plan_hash.slice(0, 10)}</small>
     {task.invocation?.job_id && <small className="director-job">Job {task.invocation.job_id}</small>}

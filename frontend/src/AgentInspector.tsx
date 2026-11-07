@@ -32,6 +32,8 @@ export default function AgentInspector() {
       {error ? <p role="alert">{error}</p> : !data ? <p role="status">Loading capabilities…</p> : <>
         <h3>Shared tools</h3>
         <ul>{data.tools.map(tool => <li key={tool.id}><b>{tool.id}</b> · {tool.status} · {tool.effect}
+          {tool.description && <p>{tool.description}</p>}
+          {tool.scope && <small>Scope: {tool.scope.replaceAll('_', ' ')} · Runtime: {tool.runtime} · Approval: exact plan</small>}
           {tool.reason && <p>{tool.reason}</p>}</li>)}</ul>
         <h3>Skills</h3>
         <ul>{data.skills.map(skill => <li key={skill.ref}><b>{skill.ref}</b> · {skill.available ? 'available' : 'unavailable'}

@@ -539,7 +539,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 return handle(root, environ, start_response, _read_json, _json_response)
             if path.startswith("/api/editor/"):
                 from story_builder.services.vibe_editor_api import handle
-                return handle(root, environ, start_response, _read_json, _json_response)
+                return handle(root, environ, start_response, _read_json, _json_response, tasks=agent_tasks)
             if path == "/api/director/status" and method == "GET":
                 from story_builder.services.reasoning_status import provider_status
                 return _json_response(start_response, "200 OK", provider_status())
@@ -2568,6 +2568,13 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         return _json_response(start_response, "200 OK", storyboard.save(workspace_id, revision_id, _read_story_json(environ, story_limit)))
                 if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "export" and method == "GET":
                     return _json_response(start_response, "200 OK", storyboard.export(workspace_id, parts[2]))
+                if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "production-manifest" and method == "POST":
+                    from story_builder.services import production_manifest
+                    payload = _read_story_json(environ, story_limit)
+                    if set(payload) != {"expected_revision"}:
+                        raise ValueError("Supply the saved storyboard expected_revision.")
+                    return _json_response(start_response, "200 OK", production_manifest.export(
+                        storyboard, workspace_id, parts[2], payload["expected_revision"]))
                 if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "editor" and method == "POST":
                     if _read_story_json(environ, story_limit) != {}:
                         raise ValueError("No editor import options are required.")

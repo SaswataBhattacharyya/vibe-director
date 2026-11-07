@@ -52,3 +52,13 @@ class CatalogueFilterTests(unittest.TestCase):
                         {'created_after':'invalid'}, {'created_after':'2026-11-07','created_before':'2026-11-06'}):
             with self.subTest(options=options), self.assertRaises(ValueError):
                 CatalogueFilters(**options)
+
+    def test_literal_search_preserves_analysis_summary_before_pagination(self):
+        media.register_upload(self.root, 'filters', filename='ordinary.png',
+            content=fixtures.MediaLibraryTests.png(self, (255, 0, 0)), role='project_image')
+        match = media.register_upload(self.root, 'filters', filename='another.png',
+            content=fixtures.MediaLibraryTests.png(self, (0, 255, 0)), role='project_image',
+            metadata={'analysis_summary': 'A luminous jellyfish in the ocean.'})
+        result = media.browse_catalogue(self.root, 'filters', source='current', query='JELLYFISH', limit=1)
+        self.assertEqual(result['total'], 1)
+        self.assertEqual(result['assets'][0]['asset_id'], match['asset_id'])

@@ -1,8 +1,6 @@
 """Trusted JSON-to-HyperFrames adapter. No provider-authored HTML or shell execution."""
 from __future__ import annotations
 from story_builder.services.storage_paths import generated_root, checked, project_root
-import html
-import json
 import os
 import shutil
 import signal
@@ -10,7 +8,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from . import media_library, video_repertoire, editor_effects
+from . import media_library, video_repertoire, editor_effects, projects
 
 APP = Path(__file__).resolve().parents[3]
 RUNTIME = APP / 'local_data/runtimes/editor/node_modules/hyperframes'
@@ -58,66 +56,44 @@ def render(root, job_id, request, progress):
         raise ValueError('Editor runtime is incomplete. Inspect the runtime checks before rendering.')
     approved = request['plan']
     plan = validate_plan(root, request['workspace_id'], approved)
+    evidence = request.get('review_evidence')
+    if evidence:
+        source, _, _ = media_library.asset_path(root, request['workspace_id'], evidence['asset_id'])
+        if projects.digest(source) != evidence['sha256']:
+            raise ValueError('The reviewed speech source changed. Analyze and review the current bytes before rendering.')
     folder = checked(project_root(root, request['workspace_id']), 'editor', 'editor', request['project_id'], 'renders', job_id)
     folder.mkdir(parents=True, exist_ok=False)
     (folder / 'assets').mkdir()
     write(folder / 'plan.json', {'revision': request['revision'], 'style': request['style_snapshot'], 'plan': plan})
     progress('stage', 'Staging only the approved assets and ranges.', 15)
-    staged = {}
+    staged, needs_audio = {}, bool(plan['audio'])
     for clip in plan['clips'] + ([plan['audio']] if plan['audio'] else []):
         source, _, _ = media_library.asset_path(root, request['workspace_id'], clip['asset_id'])
         original = next(c for c in approved['clips'] + ([approved['audio']] if approved.get('audio') else []) if c['asset_id'] == clip['asset_id'])
         if source.stat().st_size != original.get('size') or source.stat().st_mtime_ns != original.get('mtime_ns'):
             raise ValueError('An approved media file changed. Select and review the media again.')
         if clip['asset_id'] not in staged:
+            if clip['mime'].startswith('video/'):
+                needs_audio |= 'audio' in media_library._probe(source, 'video')['streams']
             filename = clip['asset_id'] + source.suffix.lower()
             shutil.copyfile(source, folder / 'assets' / filename)
+            if evidence and clip['asset_id'] == evidence['asset_id'] and projects.digest(folder / 'assets' / filename) != evidence['sha256']:
+                raise ValueError('The reviewed speech source changed during staging; it was not rendered.')
             staged[clip['asset_id']] = 'assets/' + filename
     vendor = RUNTIME / 'dist/vendor/npm/gsap@3.15.0/dist/gsap.min.js'
     shutil.copyfile(vendor, folder / 'gsap.js')
-    duration, elements, animations, transitions, scenes = 0.0, [], [], [], []
-    has_transitions = any(c['transition']['kind'] != 'cut' for c in plan['clips'])
+    from .editor_composition import document as compose
+    processed = {}
     cpu_env = {**os.environ, 'DO_NOT_TRACK': '1'}
     for index, clip in enumerate(plan['clips']):
-        length = clip['render_duration']
-        source_start = clip['start']
-        media = staged[clip['asset_id']]
         if clip['effect']['preset'] != 'none' or clip['speed'] != {'start': 1, 'end': 1}:
             progress('effects', f'Preparing filter / speed for clip {index+1}.', 25)
-            media = f'assets/effect-{index}.mp4'
-            editor_effects.preprocess(folder / staged[clip['asset_id']], folder / media,
+            processed[index] = f'assets/effect-{index}.mp4'
+            editor_effects.preprocess(folder / staged[clip['asset_id']], folder / processed[index],
                 clip, plan, _run, folder, cpu_env, progress)
-            source_start = 0
-        attrs = f'id="clip-{index}" class="clip" data-start="{duration}" data-duration="{length}" data-track-index="{index}"'
-        src = html.escape(media, quote=True)
-        fit = clip['fit']
-        if clip['mime'].startswith('video/') or media.endswith(f'effect-{index}.mp4'):
-            sound = 'muted' if plan['audio'] else 'data-has-audio="true"'
-            element = f'<video {attrs} data-media-start="{source_start}" {sound} playsinline src="{src}" style="object-fit:{fit}"></video>'
-        else:
-            element = f'<img {attrs} src="{src}" style="object-fit:{fit}"/>'
-        if clip['caption']:
-            element += f'<div id="caption-{index}" class="clip caption" data-start="{duration}" data-duration="{length}" data-track-index="{index+50}">{html.escape(clip["caption"])}</div>'
-        scenes.append(f'scene-{index}')
-        elements.append(f'<div id="scene-{index}" class="scene" style="opacity:{1 if index==0 or not has_transitions else 0}">{element}</div>')
-        animations.append(f'tl.to({{}}, {{duration:{length}}}, {duration});')
-        duration += length
-        if index < len(plan['clips'])-1:
-            transition = clip['transition']
-            duration -= transition['duration']
-            transitions.append({'time': duration, 'duration': transition['duration'],
-                                **({'shader': transition['kind']} if transition['kind'] not in {'cut', 'dissolve'} else {})})
-    shader_script = ''
-    if has_transitions:
+    if any(c['transition']['kind'] != 'cut' for c in plan['clips']):
         shutil.copyfile(SHADER, folder / 'shaders.js')
-        shader_script = '<script src="shaders.js"></script>'
-        animations.append('HyperShader.init(' + json.dumps({'scenes': scenes, 'transitions': transitions, 'bgColor': '#000'})[:-1] + ',timeline:tl});')
-    if plan['audio']:
-        audio = plan['audio']
-        elements.append(f'<audio id="soundtrack" class="clip" data-start="0" data-duration="{min(duration, audio["end"]-audio["start"])}" data-track-index="100" data-media-start="{audio["start"]}" data-volume="1" src="{html.escape(staged[audio["asset_id"]], quote=True)}"></audio>')
-    document = f'''<!doctype html><html><head><meta charset="utf-8"><style>
-html,body{{margin:0;background:#000;width:100%;height:100%;overflow:hidden}}#main{{position:absolute;inset:0}}.scene{{position:absolute;inset:0}}video,img{{position:absolute;inset:0;width:100%;height:100%}}.caption{{position:absolute;left:10%;right:10%;bottom:10%;z-index:2;color:white;text-shadow:0 2px 4px black;font:48px sans-serif;text-align:center;white-space:pre-wrap}}
-</style></head><body><div id="main" data-composition-id="main" data-start="0" data-duration="{duration}" data-width="{plan['width']}" data-height="{plan['height']}">{''.join(elements)}</div><script src="gsap.js"></script>{shader_script}<script>window.__timelines={{}};const tl=gsap.timeline({{paused:true}});{''.join(animations)}window.__timelines.main=tl;</script></body></html>'''
+    document, duration = compose(plan, staged, processed=processed)
     (folder / 'index.html').write_text(document)
     # Minimal read-only runtime surface; only this render directory is writable.
     args = ['bwrap', '--die-with-parent', '--unshare-all', '--new-session', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/tmp', '--dir', '/home', '--dir', '/etc']
@@ -134,6 +110,8 @@ html,body{{margin:0;background:#000;width:100%;height:100%;overflow:hidden}}#mai
     _run(args, folder, env, progress)
     final = folder / 'final.mp4'
     probe = media_library._probe(final, 'video')
+    if needs_audio and 'audio' not in probe['streams']:
+        raise ValueError('The render lost the approved audio stream; it was not published.')
     if abs(probe['duration_seconds'] - duration) > max(.25, 2 / plan['fps']) or (probe['width'], probe['height']) != (plan['width'], plan['height']):
         raise ValueError('The render does not match the approved duration/dimensions; it was not published.')
     while True:

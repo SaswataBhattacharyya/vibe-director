@@ -634,3 +634,32 @@ test('shared media picker selects audio utility inputs without starting a job',a
   await expect(utility.getByText('0 selected',{exact:true})).toBeVisible();
   await expect(utility.getByRole('button',{name:'Run utility',exact:true})).toBeDisabled();
 });
+
+test('speech and audio tasks keep truthful labels, settings and timed evidence after reload', async ({page}) => {
+  const writes = await fixture(page);
+  const rows = [
+    ['audio.transcribe', 'Analyze complete-source speech', {}],
+    ['audio.noise_cleanup', 'Denoise audio', {model: 'master64', dry: 0}],
+    ['audio.demucs_stems', 'Separate audio stems', {stems: 2, device: 'cpu'}],
+  ].map(([id, label, settings], index) => ({project_id: owner, task_id: `task-audio-${index}`, status: 'completed',
+    current_revision: 1, plan_hash: 'f'.repeat(64), plan: {tool_id: id, scope: 'Complete source; preserve original media.',
+      assets: [{asset_id: 'pa-owned', filename: 'speech.wav', sha256: 'b'.repeat(64)}], settings},
+    invocation: {invocation_id: `call-${index}`, job_id: `job-${index}`, state: 'completed'}, events: [], outputs: [],
+    report: index === 0 ? '6.500–8.000s: review this speech. No cuts or render have been approved.' : undefined, label}));
+  await page.route('**/api/agent/projects/*/tasks**', route => {
+    const path = new URL(route.request().url()).pathname;
+    return route.fulfill({json: path.endsWith('/tasks') ? {tasks: rows} : rows.find(row => path.endsWith(row.task_id))});
+  });
+  await page.goto('/#/editor');
+  for (const row of rows) await expect(page.getByRole('article', {name: `Task ${row.task_id}`})).toContainText(row.label);
+  const speech = page.getByRole('article', {name: 'Task task-audio-0'});
+  await expect(speech).toContainText('6.500–8.000s');
+  await expect(speech).toContainText('review against playback before cutting');
+  await expect(speech.getByRole('button', {name: 'Offer audio to Editor'})).toHaveCount(0);
+  await expect(page.getByRole('article', {name: 'Task task-audio-1'})).toContainText('Model master64 · dry mix 0');
+  await expect(page.getByRole('article', {name: 'Task task-audio-2'})).toContainText('2 stems · cpu');
+  await page.reload();
+  await expect(speech).toContainText('6.500–8.000s');
+  await expect(page.getByLabel('Message the project Director', {exact: true})).toHaveCount(1);
+  expect(writes.filter(path => path.includes('/jobs') || path.endsWith('/run'))).toEqual([]);
+});

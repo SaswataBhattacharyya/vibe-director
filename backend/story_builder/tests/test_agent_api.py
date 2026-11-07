@@ -43,7 +43,7 @@ class AgentApiTests(unittest.TestCase):
              patch('story_builder.services.agent_tools.shutil.which', return_value=None):
             status, value = self.call('/api/agent/tools', 'workspace_id=tool-library')
             self.assertEqual(status, '200 OK')
-            self.assertEqual(len(value['tools']), 4)
+            self.assertEqual(len(value['tools']), 7)
             self.assertTrue(all(t['status'] == 'blocked' and t['execution_enabled'] is False
                                 for t in value['tools'] if t['id'] != 'editor.prepare_brief'))
             self.assertEqual(next(t['status'] for t in value['tools'] if t['id'] == 'editor.prepare_brief'), 'available')

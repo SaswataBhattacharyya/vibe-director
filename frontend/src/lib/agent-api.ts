@@ -3,6 +3,8 @@ export type AgentTool = {
   id: string; effect: 'read' | 'draft' | 'submit' | 'external' | 'destructive';
   input_schema: Record<string, unknown>; status: 'available' | 'blocked' | 'unknown' | 'navigation_only';
   execution_enabled: boolean; reason?: string;
+  description?: string; accepted_media?: string[]; scope?: string; runtime?: string;
+  approval?: 'exact_plan'; result_kind?: string;
 };
 export type AgentSkill = {
   ref: string; id: string; scope: 'global' | 'application' | 'project'; provider: string;

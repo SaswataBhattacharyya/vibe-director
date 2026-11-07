@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {editorApi, type EditorPlan, type EditorProject, type EditorRange} from './lib/editor-api';
+import EditorClipEffects from './EditorClipEffects';
 
 type Preview = {revision:number; duration:number; document:string};
 export default function EditorVisualTimeline({project, plan, disabled, onChange, onSave, canSave}:{
@@ -10,6 +11,7 @@ export default function EditorVisualTimeline({project, plan, disabled, onChange,
   const [position,setPosition]=useState(0),[playing,setPlaying]=useState(false),[ready,setReady]=useState(false);
   const frame=useRef<HTMLIFrameElement>(null),version=useRef(0);
   const fingerprint=JSON.stringify(plan);
+  const needsCpuPreview=plan.clips.some(clip=>(clip.effect?.preset||'none')!=='none'||(clip.speed?.start??1)!==1||(clip.speed?.end??1)!==1);
   // A response to an older plan/session may never replace the current preview.
   useEffect(()=>{version.current++;setPreview(null);setReady(false);setPlaying(false);setPosition(0);setLoading(false);setError('');},[fingerprint,project.id,project.revision]);
   useEffect(()=>{
@@ -48,13 +50,14 @@ export default function EditorVisualTimeline({project, plan, disabled, onChange,
     <div className="editor-visual-preview" style={{aspectRatio:`${plan.width}/${plan.height}`}}>
       {preview?<iframe title="HyperFrames plan preview" ref={frame} sandbox="allow-scripts" srcDoc={preview.document}/>:<p>Load a preview of this timeline.</p>}
     </div>
-    <div className="editor-visual-toolbar"><button disabled={disabled||loading} onClick={()=>void loadPreview()}>{loading?'Loading preview…':'Load HyperFrames preview'}</button>
+    <div className="editor-visual-toolbar"><button disabled={disabled||loading||needsCpuPreview} onClick={()=>void loadPreview()}>{loading?'Loading preview…':'Load HyperFrames preview'}</button>
       <button disabled={!ready} onClick={()=>transport(playing?'pause':'play')}>{playing?'Pause timeline':'Play timeline'}</button>
       <output>{position.toFixed(2)} / {(preview?.duration||0).toFixed(2)} s</output>
     </div>
     <input type="range" aria-label="Seek timeline preview" min="0" max={preview?.duration||0} step={1/plan.fps} value={position} disabled={!ready} onChange={e=>{setPosition(Number(e.target.value));transport('seek',Number(e.target.value));}}/>
     {error&&<p role="alert">{error}</p>}
-    <small>Live preview supports unfiltered 1× clips, captions and transitions. Filters and speed ramps use the approved CPU render.</small>
+    {needsCpuPreview&&<p role="status">The selected plan contains filters or speed changes. Review and approve the plan for a CPU render to see those effects accurately.</p>}
+    <small>HyperFrames-powered preview supports unfiltered 1× clips, captions and transitions. The complete native HyperFrames Studio GUI is not connected yet.</small>
     <div className="editor-visual-track" aria-label="Visual clip order">{plan.clips.map((row,i)=><button type="button" key={i} aria-pressed={i===index} onClick={()=>setSelected(i)} style={{flexGrow:Math.max(.1,row.render_duration??row.end-row.start)}}>
       <b>{i+1}. {row.filename||row.asset_id}</b><span>{row.start.toFixed(2)}–{row.end.toFixed(2)} s</span>
     </button>)}</div>
@@ -63,7 +66,7 @@ export default function EditorVisualTimeline({project, plan, disabled, onChange,
       <label>Source out (seconds)<input type="number" min=".01" step=".01" value={clip.end} onChange={e=>change({end:Number(e.target.value)})}/></label>
       <label>Visual caption<input value={clip.caption||''} onChange={e=>change({caption:e.target.value})}/></label>
       <label>Visual framing<select value={clip.fit||'contain'} onChange={e=>change({fit:e.target.value})}><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
-    </div><button disabled={index===0} onClick={()=>move(-1)}>Move selected clip earlier</button><button disabled={index===plan.clips.length-1} onClick={()=>move(1)}>Move selected clip later</button></fieldset>}
+    </div><EditorClipEffects clip={clip} last={index===plan.clips.length-1} onChange={updated=>onChange({...plan,clips:plan.clips.map((row,i)=>i===index?updated:row)})}/><button disabled={index===0} onClick={()=>move(-1)}>Move selected clip earlier</button><button disabled={index===plan.clips.length-1} onClick={()=>move(1)}>Move selected clip later</button></fieldset>}
     <button disabled={disabled||!canSave} onClick={onSave}>Save visual timeline proposal</button>
   </section>;
 }

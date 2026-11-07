@@ -54,3 +54,9 @@
 .editor-visual-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
 .editor-visual-expanded{position:fixed;inset:1rem;z-index:100;background:var(--studio-bg,#171320);padding:1.5rem;overflow:auto;border:1px solid #494455;border-radius:16px;box-shadow:0 20px 100px #0009}
 @media(max-width:600px){.editor-visual-expanded{inset:.25rem;padding:.75rem}.editor-visual-fields{grid-template-columns:1fr}}
+
+/* Keep the visual timeline discoverable without passing through clearance cards. */
+.editor-header-actions{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.editor-mode-shortcut{font-weight:600}
+.editor-mode-shortcut[aria-pressed=true]{border-color:var(--studio-accent);background:var(--studio-selected)}
+.editor-visual .editor-clip-effects{margin:.8rem 0}

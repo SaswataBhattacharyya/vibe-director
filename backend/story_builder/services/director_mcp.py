@@ -84,6 +84,8 @@ class Gateway:
         else:
             task = self.tasks.get(self.owner, step['task_id'])
         self.authorized()
+        if task['plan']['tool_id'] != tool or task['current_revision'] != 1:
+            raise LedgerConflict('Gateway task was revised or substituted. Host read authority cannot approve it.')
         if name in {'editor_propose_session', 'editor_propose_selection'}:
             result = {'task_id': task['task_id'], 'status': 'waiting_for_approval',
                       'revision': task['current_revision'], 'plan_hash': task['plan_hash']}

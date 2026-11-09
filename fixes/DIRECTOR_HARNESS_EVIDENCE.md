@@ -348,3 +348,87 @@ Tests: `backend/story_builder/tests/test_director_harness.py`, new `test_directo
 Generated discovery artifacts: `graphify-out/graph.json`, `graphify-out/manifest.json`, `graphify-out/cache/stat-index.json` and the new AST cache JSON files. `conda run -n react graphify extract . --code-only --no-cluster` initially refreshed a partial incremental graph (176 nodes, 673 edges); another incremental run replaced it with only 20 nodes/62 edges. A full local AST refresh with `--force --max-workers 4` corrected that coverage problem: **6,010 nodes / 18,413 edges, 657 code files scanned**, no LLM/API calls or clustering. The tool reported 102 zero-node files and 50 unclassified files; the graph remains a discovery aid. Depth-two `affected DirectorHarness` output was source-checked, generic `uses` edges excluded. Impact report has 25 source citations verified, zero rejected; max prioritization risk 0.60 (high), not a defect probability or a full security audit.
 
 Rollback: keep `VIBE_DIRECTOR_HARNESS` unset (or clear the exact project allowlist) before the owner's next manual launch. Do not restart active services to apply it. Preserve all task/approval/invocation/goal tables and media. No schema rollback is needed. If removing this local slice, revert **only the listed H3 patch after saving subsequent local work**, never reset the checkout or delete project/runtime databases. Disablement does not undo already authorized tasks; review them through the existing task UI.
+
+## H3 native authorization correction — 2026-11-09, working tree over b4ef025
+
+**The previously reproduced browser credential vulnerability is fixed for the restricted Director harness. Bounded H3 acceptance passed, including physical owner confirmation and real Codex continuation.** This section supersedes the earlier H3 BLOCKED status, without erasing the failed probe. H4 five-clip rendering and H5 playback have not passed and the complete harness is not finished. Harness remains opt-in; no owner service was restarted.
+
+### Boundary and implementation
+
+Capability discovery no longer creates or returns `session_token`. Shared Director/Editor JavaScript no longer retrieves or transmits an authorization credential. Every AgentTask HTTP Approve and Run operation preflights the existing exact plan, then invokes backend-controlled `/usr/bin/zenity` outside the browser. The owner reviews the complete plain-text plan (including frozen source hashes/settings), project/root, task, action, revision and plan hash. A checkbox and distinct Approve/Run controls require two separate decisions. Closing, rejection, timeout, missing desktop or unavailable executable fails closed. No HTML, shell interpolation or browser fallback is used; concurrent dialogs are rejected.
+
+A host-only object binds this decision to the exact data root/project/task/action/revision/hash/plan/status/invocation. It expires ten seconds after confirmation and is consumed once inside the existing project lock immediately before the existing approval/execution path. Current source identity and goal binding are revalidated there. No credential crosses HTTP, no additional approval database exists and no schema migration is required. Existing approval rows, durable invocation/job identity and goal continuation remain authoritative.
+
+The typed MCP gateway retains no approval tool. Review also found a revised-read-task authority-laundering path: a saved host-read task could be substituted before a retry. The gateway now rejects changed tool identity or any revision other than its original revision before applying its existing read policy. A real ledger regression tests this denial.
+
+**Security scope:** this protects against model/MCP/browser automation under the existing H1 restricted harness. It does not establish isolation against unrestricted same-UID desktop code, X11 input injection, a compromised backend or an owner deliberately approving an attack dialog. Full computer access is not exposed through the harness MCP allowlist. Do not add unrestricted desktop/system tools to this harness and assume native consent still distinguishes their automation from a human. No production sandbox permissions/network configuration were weakened.
+
+### Actual human/browser acceptance
+
+The owner explicitly agreed to the dialogs and physically completed separate native Approve and Run confirmations through the real Vibe Editor UI:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE=/home/riki/.cache/ms-playwright/chromium_headless_shell-1234/chrome-linux/headless_shell PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m story_builder.tests.harness_browser_authority_probe --human
+```
+
+**Exit 0.** Actual localhost backend, actual browser UI and actual native dialog; no simulated native input for the human decisions. Attack requests used real native dialogs with a two-second expiry, clearly marked TEST ATTACK; no scripted input answered them. Both the current browser and fresh browser failed to approve/run independently before and after normal UI approval, including discovery and forged legacy headers. The later human-authorized Run created exactly one CPU Editor session. Result:
+
+```json
+{"human_native_approve_and_run":"PASS","job":{"invocation_id":"call-db212d431f654196a1cbf92a8e1f3bc9","job_id":"agent-workspace-204320e5f997","state":"completed"},"completed_CPU_session":true}
+{"browser_cannot_independently_approve_or_run":"PASS","fresh_identity_and_after_UI":true,"reusable_browser_credential":false,"native_input":"actual-human"}
+```
+
+The default probe also passed after its cleanup-root adjustment, with native rejection mocked. This is additional regression evidence, not a substitute for the physical acceptance above.
+
+### Actual Codex + human approval + job + continuation
+
+After the owner explicitly agreed to two final native confirmations:
+
+```bash
+PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m story_builder.tests.harness_approval_acceptance --live-account
+```
+
+**Exit 0.** Real signed-in Codex app-server, real tool results, real existing task APIs, real human native Approve and Run, real CPU subprocess and saved goal recovery. The application was recreated after approval and before Run. No second user message was supplied.
+
+- Codex thread: `01a1c03a-d0e4-7d53-8dd5-f09ac9356355`, unchanged across continuation/recovery.
+- Task: `task-9e3b8af9d29d4f309884fc5c33cdf32d`; invocation: `call-3c04a569dc3845d3b06d54d8a7ecf5dc`; job: `agent-workspace-eecd7b896b25`.
+- CPU-created Editor session: `edit-f4d78608fbad4484`.
+- Consumed result receipt: `9eb98d5c9aaa4ebe052ee0d84c0545f8469662402f9c3d03541591a64249df9c`.
+- Steps: `media_list → media_inspect → editor_propose_session → media_list(kind=audio)`; `task_status` also consumed the protected result. Persisted `thread/read` confirmed exactly one userMessage. The source was measured at 0.3 seconds and its hash stayed unchanged.
+- Final goal honestly reports blocked film completion; this is not evidence of five-clip assembly or playback.
+
+### Focused regressions and actual crash boundaries
+
+Final combined command (before the separate six process-death cases):
+
+```bash
+PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m unittest story_builder.tests.test_agent_confirmation story_builder.tests.test_director_harness_approvals story_builder.tests.test_agent_computer story_builder.tests.test_agent_api story_builder.tests.test_director_harness story_builder.tests.test_agent_tasks story_builder.tests.test_agent_tool_access story_builder.tests.test_director_codex_bridge story_builder.tests.test_projects -q
+```
+
+**90 run: 88 passed, 1 skipped, 1 expected failure, 85.783s, exit 0.** The skip is the explicitly opt-in offline sandbox test (`VIBE_TEST_CODEX_SANDBOX`), not a newly demonstrated sandbox failure. The unchanged expected failure is the unfinished full-film objective. Native consent is mocked in unit regressions; actual consent is evidenced separately above. Tests cover replay/expiry/forgery/root/project/task/action/revision/hash/settings/status changes, post-dialog plan mutation, rejection, missing desktop, timeout, concurrent dialog and substituted read task denial. Existing API runtime-unavailable assertions remain intact.
+
+Additional command:
+
+```bash
+PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m unittest story_builder.tests.test_agent_confirmation_recovery -q
+```
+
+**6 passed, 7.342s.** Disposable child processes actually `os._exit(83)` before approval, after approval, before dispatch, after job creation, after saved mapping, and during a CPU effect (after session creation but before completion acknowledgement). Existing ledger/job files recover without duplicate jobs or repeated effects. An interrupted worker leaves the task `recovery_required` and the job `interrupted`, preserving the existing safety contract. The trusted-host fixture records approval in this fault test; this is not six additional physical human checks. Earlier attempts exposed test-fixture reuse and an incorrect task-vs-job state expectation; corrected after inspecting existing recovery mapping, without changing production recovery semantics or weakening non-duplication assertions.
+
+Frontend `npm run typecheck` and `npm run build`: **passed**, existing large-chunk warning remains. Isolated mocked-API UI checks `npm run test:ui -- director-harness.spec.mjs agent-inspector.spec.mjs` with test port 5187 and the Chromium executable above: **11 passed, 13.2s**. Controls preserve separate actions and assert no browser authorization-token header. These are distinct from the actual native/browser probe.
+
+H3 mandatory cases 1–10 now have bounded evidence: actual unapproved proposal; no preauthorization effect; exact-plan authorization; one invocation; real automatic original-thread continuation; rejection; stale/hash denial; retained approval/goal on restart; actual process-death non-duplication; model/MCP denial plus fresh same-origin browser denial after human UI interaction. Broader previously recorded Kdenlive/browser baseline failures are not silently reclassified or fixed by this slice.
+
+### Cleanup, inventory and rollback
+
+All test-owned media, sessions, approval rows, job files, isolated Codex credentials/history and localhost/browser processes were removed by test `finally`/fixture cleanup, including failed attempts. Tests assert removal. No owner media, project records, approval history, jobs or live services were changed. No GPU, paid media or production rendering was run. Signed-in Codex reasoning used the prior explicit allowance.
+
+Application files: services `agent_access.py`, `agent_api.py`, `agent_tasks.py`, `director_mcp.py`, new `agent_confirmation.py`; frontend `DirectorConversation.tsx`, `DirectorRuntime.tsx`, `lib/agent-tasks.ts`.
+
+Tests: `harness_approval_acceptance.py`, `harness_browser_acceptance.py`, `harness_browser_authority_probe.py`, `harness_production_acceptance.py`, `test_agent_computer.py`, `test_agent_tasks.py`, `test_director_harness_approvals.py`, new `test_agent_confirmation.py`, new `test_agent_confirmation_recovery.py`; frontend `director-harness.spec.mjs`. Documentation: this evidence, `ACTIVE_FIXES.md`, `.review/director-harness-h3-native-impact.json`. Generated Graphify graph/manifest/cache files also refreshed.
+
+Graphify required incremental refresh reproduced its partial replacement issue (162 nodes/549 edges). Full local AST refresh `conda run -n react graphify extract . --code-only --no-cluster --force --max-workers 4` restored **6,037 nodes / 18,499 edges, 660 code files scanned**; 102 zero-node and 50 unclassified files remain reported limitations. No LLM/API extraction. Source remains authoritative.
+
+Rollback: keep harness opt-in disabled for owner projects until the remaining gates pass. Preserve all existing approvals/tasks/goals/jobs and media. No database rollback is needed. If reverting this security slice, first disable the harness and affected protected controls: restoring the earlier browser-token flow reintroduces the demonstrated vulnerability. Revert only this bounded patch after saving other local work; never reset the checkout or delete runtime data. Apply changes at the owner's next manual launch; do not restart an active service.
+
+Final static validation: `.review/director-harness-h3-native-impact.json` contains 15 direct/indirect source citations; bundled citation verifier checked 15, rejected zero. This validates anchors only, not security or coverage. `git diff --check` passed. Final `/tmp/vibe-h3-*` and `/tmp/vibe-agent-task-*` directory inventories were empty.

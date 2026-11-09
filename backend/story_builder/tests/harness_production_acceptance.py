@@ -22,14 +22,12 @@ from story_builder.services.production_ledger import ProductionLedger
 from story_builder.tests.harness_probe import cleanup_jobs, fixture
 
 
-def call(app, method, owner, resource='conversation', payload=None, *, grant=None):
+def call(app, method, owner, resource='conversation', payload=None):
     raw = json.dumps(payload or {}).encode()
     statuses = []
     env = {'PATH_INFO': f'/api/agent/projects/{owner}/{resource}', 'QUERY_STRING': '',
            'HTTP_HOST': '127.0.0.1:3020', 'REQUEST_METHOD': method,
            'CONTENT_LENGTH': str(len(raw)), 'wsgi.input': io.BytesIO(raw)}
-    if grant:
-        env['HTTP_X_VIBE_COMPUTER_TOKEN'] = grant
     result = json.loads(b''.join(app(env, lambda status, headers: statuses.append(status))))
     assert statuses == ['200 OK'], (statuses, result)
     return result

@@ -969,7 +969,7 @@
       "label": "local_request()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L9",
+      "source_location": "L5",
       "_origin": "ast"
     },
     {
@@ -977,20 +977,12 @@
       "label": "capabilities()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L21",
-      "_origin": "ast"
-    },
-    {
-      "id": "backend_story_builder_services_agent_access_require_grant",
-      "label": "require_grant()",
-      "file_type": "code",
-      "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L28",
+      "source_location": "L17",
       "_origin": "ast"
     },
     {
       "id": "backend_story_builder_services_agent_access_rationale_1",
-      "label": "Local browser grant boundary; no CORS or unauthenticated computer dispatch.",
+      "label": "Local request checks and secret-free capability discovery. Consent is native.",
       "file_type": "rationale",
       "source_file": "backend/story_builder/services/agent_access.py",
       "source_location": "L1",
@@ -1226,6 +1218,70 @@
       "file_type": "rationale",
       "source_file": "backend/story_builder/services/agent_computer.py",
       "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation",
+      "label": "agent_confirmation.py",
+      "file_type": "code",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation_binding",
+      "label": "_binding()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation_consent",
+      "label": "_Consent",
+      "file_type": "code",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L30",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation_desktop_confirm",
+      "label": "_desktop_confirm()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L37",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation_confirm",
+      "label": "confirm()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L57",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation_consume",
+      "label": "consume()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L82",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation_rationale_1",
+      "label": "One-use, host-only consent for an exact AgentTask operation.  No HTTP exchange,",
+      "file_type": "rationale",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_confirmation_rationale_83",
+      "label": "Called under the existing project lock, immediately before mutation.",
+      "file_type": "rationale",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L83",
       "_origin": "ast"
     },
     {
@@ -2197,11 +2253,19 @@
       "_origin": "ast"
     },
     {
+      "id": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
+      "label": ".review_action()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L322",
+      "_origin": "ast"
+    },
+    {
       "id": "backend_story_builder_services_agent_tasks_agenttasks_approve",
       "label": ".approve()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L322",
+      "source_location": "L338",
       "_origin": "ast"
     },
     {
@@ -2209,7 +2273,7 @@
       "label": "._set()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L341",
+      "source_location": "L361",
       "_origin": "ast"
     },
     {
@@ -2217,7 +2281,7 @@
       "label": "._map_job()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L345",
+      "source_location": "L365",
       "_origin": "ast"
     },
     {
@@ -2225,7 +2289,7 @@
       "label": "._find_job()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L353",
+      "source_location": "L373",
       "_origin": "ast"
     },
     {
@@ -2233,7 +2297,7 @@
       "label": "._validate_job()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L365",
+      "source_location": "L385",
       "_origin": "ast"
     },
     {
@@ -2241,7 +2305,7 @@
       "label": ".run()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L399",
+      "source_location": "L419",
       "_origin": "ast"
     },
     {
@@ -2249,7 +2313,7 @@
       "label": "._observe()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L477",
+      "source_location": "L500",
       "_origin": "ast"
     },
     {
@@ -2257,7 +2321,7 @@
       "label": ".poll()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L563",
+      "source_location": "L586",
       "_origin": "ast"
     },
     {
@@ -2265,7 +2329,7 @@
       "label": ".cancel()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L586",
+      "source_location": "L609",
       "_origin": "ast"
     },
     {
@@ -2290,6 +2354,14 @@
       "file_type": "rationale",
       "source_file": "backend/story_builder/services/agent_tasks.py",
       "source_location": "L269",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_services_agent_tasks_rationale_323",
+      "label": "Reject invalid requests before prompting; repeat validation at mutation.",
+      "file_type": "rationale",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L323",
       "_origin": "ast"
     },
     {
@@ -4785,7 +4857,7 @@
       "label": "serve()",
       "file_type": "code",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L126",
+      "source_location": "L128",
       "_origin": "ast"
     },
     {
@@ -18893,11 +18965,19 @@
       "_origin": "ast"
     },
     {
+      "id": "backend_story_builder_tests_harness_browser_acceptance_serve_ui",
+      "label": "serve_ui()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
       "id": "backend_story_builder_tests_harness_browser_acceptance_submit",
       "label": "submit()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
-      "source_location": "L15",
+      "source_location": "L55",
       "_origin": "ast"
     },
     {
@@ -18921,12 +19001,12 @@
       "label": "main()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L23",
+      "source_location": "L27",
       "_origin": "ast"
     },
     {
       "id": "backend_story_builder_tests_harness_browser_authority_probe_rationale_1",
-      "label": "Read the existing same-origin grant boundary with a fresh browser identity.  Dia",
+      "label": "Fresh same-origin browser attack, before/after normal human UI approval.  Defaul",
       "file_type": "rationale",
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
       "source_location": "L1",
@@ -19089,7 +19169,7 @@
       "label": "wait()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L38",
+      "source_location": "L36",
       "_origin": "ast"
     },
     {
@@ -19097,7 +19177,7 @@
       "label": "main()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L49",
+      "source_location": "L47",
       "_origin": "ast"
     },
     {
@@ -19477,8 +19557,8 @@
       "_origin": "ast"
     },
     {
-      "id": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_local_browser_grant_and_cross_site_rejection",
-      "label": ".test_local_browser_grant_and_cross_site_rejection()",
+      "id": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_native_consent_and_cross_site_rejection",
+      "label": ".test_native_consent_and_cross_site_rejection()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
       "source_location": "L80",
@@ -19489,7 +19569,7 @@
       "label": ".test_worker_report_and_no_replay()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L95",
+      "source_location": "L98",
       "_origin": "ast"
     },
     {
@@ -19497,7 +19577,7 @@
       "label": ".test_cancellation_terminates_owned_provider_group()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L119",
+      "source_location": "L122",
       "_origin": "ast"
     },
     {
@@ -19505,7 +19585,7 @@
       "label": ".test_cpu_child_input_delivery_is_bounded_and_reaped()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L136",
+      "source_location": "L139",
       "_origin": "ast"
     },
     {
@@ -19513,7 +19593,7 @@
       "label": ".test_real_project_sandbox_hides_sibling_and_blocks_network()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L159",
+      "source_location": "L162",
       "_origin": "ast"
     },
     {
@@ -19521,6 +19601,150 @@
       "label": "Computer boundary checks. Provider execution is mocked; all storage is disposabl",
       "file_type": "rationale",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation",
+      "label": "test_agent_confirmation.py",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "label": "ConsentTests",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_consenttests_row",
+      "label": ".row()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_one_use_exact_binding_and_expiration",
+      "label": ".test_one_use_exact_binding_and_expiration()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L14",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_changes_during_native_review_rejected_inside_task_lock",
+      "label": ".test_changes_during_native_review_rejected_inside_task_lock()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L39",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_native_rejection_unavailable_timeout_and_concurrency_fail_closed",
+      "label": ".test_native_rejection_unavailable_timeout_and_concurrency_fail_closed()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L52",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_revised_read_task_cannot_launder_protected_host_approval",
+      "label": ".test_revised_read_task_cannot_launder_protected_host_approval()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L69",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_rationale_1",
+      "label": "Host consent invariants; native user input mocked, existing task storage real.",
+      "file_type": "rationale",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "label": "test_agent_confirmation_recovery.py",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "label": "ProcessRecoveryTests",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L48",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "label": ".check_boundary()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L49",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_before_approval",
+      "label": ".test_before_approval()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L87",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_approval",
+      "label": ".test_after_approval()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L90",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_before_dispatch",
+      "label": ".test_before_dispatch()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L93",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_creation",
+      "label": ".test_after_creation()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L96",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_mapping",
+      "label": ".test_after_mapping()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L99",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_during_cpu_effect",
+      "label": ".test_during_cpu_effect()",
+      "file_type": "code",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L102",
+      "_origin": "ast"
+    },
+    {
+      "id": "backend_story_builder_tests_test_agent_confirmation_recovery_rationale_1",
+      "label": "Real process death around existing durable protected-task dispatch.  No Codex/na",
+      "file_type": "rationale",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
       "source_location": "L1",
       "_origin": "ast"
     },
@@ -22601,7 +22825,7 @@
       "label": ".draft_goal()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L33",
+      "source_location": "L32",
       "_origin": "ast"
     },
     {
@@ -22609,15 +22833,15 @@
       "label": ".settle()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L39",
+      "source_location": "L38",
       "_origin": "ast"
     },
     {
-      "id": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_existing_local_grant",
-      "label": ".test_approval_is_exact_inert_and_requires_existing_local_grant()",
+      "id": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_native_consent",
+      "label": ".test_approval_is_exact_inert_and_requires_native_consent()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L46",
+      "source_location": "L45",
       "_origin": "ast"
     },
     {
@@ -22625,7 +22849,7 @@
       "label": ".test_rejection_and_changed_plan_cannot_execute()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L59",
+      "source_location": "L58",
       "_origin": "ast"
     },
     {
@@ -22633,7 +22857,7 @@
       "label": ".test_modified_revision_is_not_adopted_by_saved_goal()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L67",
+      "source_location": "L66",
       "_origin": "ast"
     },
     {
@@ -22641,7 +22865,7 @@
       "label": ".test_authorized_cpu_execution_once_and_same_thread_auto_continuation()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L75",
+      "source_location": "L74",
       "_origin": "ast"
     },
     {
@@ -22649,7 +22873,7 @@
       "label": ".test_restart_observes_approved_but_does_not_dispatch()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L123",
+      "source_location": "L122",
       "_origin": "ast"
     },
     {
@@ -22657,7 +22881,7 @@
       "label": ".test_uncertain_dispatch_reconciles_existing_job_without_replay()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L132",
+      "source_location": "L131",
       "_origin": "ast"
     },
     {
@@ -22665,7 +22889,7 @@
       "label": ".test_model_cannot_approve_or_run_via_gateway()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L149",
+      "source_location": "L148",
       "_origin": "ast"
     },
     {
@@ -22673,7 +22897,7 @@
       "label": ".test_source_bytes_changed_after_approval_are_rejected_before_dispatch()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L158",
+      "source_location": "L157",
       "_origin": "ast"
     },
     {
@@ -22681,7 +22905,7 @@
       "label": ".test_crash_before_job_creation_is_not_blindly_retried()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L174",
+      "source_location": "L173",
       "_origin": "ast"
     },
     {
@@ -22689,7 +22913,7 @@
       "label": ".test_restart_during_queued_job_recovers_same_invocation_without_dispatch()",
       "file_type": "code",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L186",
+      "source_location": "L185",
       "_origin": "ast"
     },
     {
@@ -40153,7 +40377,7 @@
       "label": "DirectorConversation()",
       "file_type": "code",
       "source_file": "frontend/src/DirectorConversation.tsx",
-      "source_location": "L67",
+      "source_location": "L68",
       "_origin": "ast"
     },
     {
@@ -43018,14 +43242,6 @@
       "file_type": "code",
       "source_file": "frontend/src/lib/agent-tasks.ts",
       "source_location": "L35",
-      "_origin": "ast"
-    },
-    {
-      "id": "frontend_src_lib_agent_tasks_computergrant",
-      "label": "computerGrant()",
-      "file_type": "code",
-      "source_file": "frontend/src/lib/agent-tasks.ts",
-      "source_location": "L37",
       "_origin": "ast"
     },
     {
@@ -52164,8 +52380,8 @@
     },
     {
       "source": "backend_story_builder_services_agent_access",
-      "target": "hmac",
-      "relation": "imports",
+      "target": "urllib_parse",
+      "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_access.py",
@@ -52175,33 +52391,11 @@
     },
     {
       "source": "backend_story_builder_services_agent_access",
-      "target": "secrets",
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_access",
-      "target": "urllib_parse",
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_access",
       "target": "backend_story_builder_services_agent_access_local_request",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L9",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -52211,17 +52405,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_access",
-      "target": "backend_story_builder_services_agent_access_require_grant",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L28",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -52232,18 +52416,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_access_require_grant",
-      "target": "backend_story_builder_services_agent_access_local_request",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_access.py",
-      "source_location": "L29",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -52791,6 +52964,219 @@
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_computer.py",
       "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "subprocess",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "threading",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "time",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "dataclasses",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "pathlib",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_production_ledger",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_agent_confirmation_binding",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_agent_confirmation_consent",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_agent_confirmation_desktop_confirm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L37",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_agent_confirmation_confirm",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L57",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_agent_confirmation_consume",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L82",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_confirm",
+      "target": "backend_story_builder_services_agent_confirmation_binding",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L60",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_confirm",
+      "target": "backend_story_builder_services_agent_confirmation_desktop_confirm",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L75",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_confirm",
+      "target": "backend_story_builder_services_agent_confirmation_consent",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L77",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_consume",
+      "target": "backend_story_builder_services_agent_confirmation_consent",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L84",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_consume",
+      "target": "backend_story_builder_services_agent_confirmation_binding",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_rationale_1",
+      "target": "backend_story_builder_services_agent_confirmation",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_rationale_83",
+      "target": "backend_story_builder_services_agent_confirmation_consume",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L83",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54916,7 +55302,7 @@
     },
     {
       "source": "backend_story_builder_services_agent_tasks_agenttasks",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_approve",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
@@ -54926,11 +55312,21 @@
     },
     {
       "source": "backend_story_builder_services_agent_tasks_agenttasks",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_approve",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L338",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks",
       "target": "backend_story_builder_services_agent_tasks_agenttasks_set",
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L341",
+      "source_location": "L361",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54940,7 +55336,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L345",
+      "source_location": "L365",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54950,7 +55346,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L353",
+      "source_location": "L373",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54960,7 +55356,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L365",
+      "source_location": "L385",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54970,7 +55366,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L399",
+      "source_location": "L419",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54980,7 +55376,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L477",
+      "source_location": "L500",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -54990,7 +55386,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L563",
+      "source_location": "L586",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55000,7 +55396,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L586",
+      "source_location": "L609",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55280,13 +55676,46 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L326",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_expected",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L328",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_check_inputs",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L335",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_story_builder_services_agent_tasks_agenttasks_approve",
       "target": "backend_story_builder_services_agent_tasks_agenttasks_get",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L325",
+      "source_location": "L341",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55297,7 +55726,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L328",
+      "source_location": "L348",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55308,7 +55737,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L329",
+      "source_location": "L349",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55319,7 +55748,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L333",
+      "source_location": "L353",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55330,7 +55759,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L337",
+      "source_location": "L357",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55341,7 +55770,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L343",
+      "source_location": "L363",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55352,7 +55781,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L350",
+      "source_location": "L370",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55363,7 +55792,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L357",
+      "source_location": "L377",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55374,7 +55803,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L366",
+      "source_location": "L386",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55385,7 +55814,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L403",
+      "source_location": "L423",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55396,7 +55825,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L406",
+      "source_location": "L429",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55407,7 +55836,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L419",
+      "source_location": "L442",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55418,7 +55847,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L421",
+      "source_location": "L444",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55429,7 +55858,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L421",
+      "source_location": "L444",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55440,7 +55869,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L426",
+      "source_location": "L449",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55451,7 +55880,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L428",
+      "source_location": "L451",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55462,7 +55891,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L430",
+      "source_location": "L453",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55473,7 +55902,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L437",
+      "source_location": "L460",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55484,7 +55913,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L449",
+      "source_location": "L472",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55495,7 +55924,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L478",
+      "source_location": "L501",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55506,35 +55935,13 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L493",
+      "source_location": "L516",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "backend_story_builder_services_agent_tasks_agenttasks_observe",
       "target": "backend_story_builder_services_agent_tasks_agenttasks_kind",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L528",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_observe",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_list",
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L536",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_observe",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_row",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -55545,62 +55952,18 @@
     },
     {
       "source": "backend_story_builder_services_agent_tasks_agenttasks_observe",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_set",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_list",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L553",
+      "source_location": "L559",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_get",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L565",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_find_job",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L571",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_kind",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L571",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_validate_job",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L573",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_map_job",
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_observe",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_row",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -55610,29 +55973,18 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
-      "target": "backend_story_builder_services_agent_tasks_agenttasks_observe",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L575",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_observe",
       "target": "backend_story_builder_services_agent_tasks_agenttasks_set",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L579",
+      "source_location": "L576",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_services_agent_tasks_agenttasks_cancel",
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
       "target": "backend_story_builder_services_agent_tasks_agenttasks_get",
       "relation": "calls",
       "context": "call",
@@ -55643,13 +55995,90 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_find_job",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L594",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_kind",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L594",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_validate_job",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L596",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_map_job",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L597",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_observe",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L598",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_poll",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_set",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L602",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_cancel",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_get",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L611",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_story_builder_services_agent_tasks_agenttasks_cancel",
       "target": "backend_story_builder_services_agent_tasks_agenttasks_find_job",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L590",
+      "source_location": "L613",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55660,7 +56089,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L590",
+      "source_location": "L613",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55671,7 +56100,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L594",
+      "source_location": "L617",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55682,7 +56111,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L599",
+      "source_location": "L622",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55693,7 +56122,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L603",
+      "source_location": "L626",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -55724,6 +56153,16 @@
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
       "source_location": "L269",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_rationale_323",
+      "target": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L323",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -64276,7 +64715,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L126",
+      "source_location": "L128",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -64298,7 +64737,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L133",
+      "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -64309,7 +64748,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L142",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -64320,7 +64759,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L155",
+      "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -119111,8 +119550,8 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "signal",
-      "relation": "imports",
+      "target": "contextlib",
+      "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
@@ -119122,7 +119561,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "socket",
+      "target": "signal",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119133,7 +119572,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "subprocess",
+      "target": "socket",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119144,7 +119583,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "threading",
+      "target": "subprocess",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119155,7 +119594,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "time",
+      "target": "threading",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119166,8 +119605,8 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "pathlib",
-      "relation": "imports_from",
+      "target": "time",
+      "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
@@ -119177,7 +119616,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "urllib_request",
+      "target": "pathlib",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119188,7 +119627,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
-      "target": "wsgiref_simple_server",
+      "target": "urllib_request",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119199,12 +119638,33 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_acceptance",
+      "target": "wsgiref_simple_server",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_acceptance",
       "target": "story_builder_isolated_server",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
-      "source_location": "L12",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_acceptance",
+      "target": "backend_story_builder_tests_harness_browser_acceptance_serve_ui",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
+      "source_location": "L17",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -119214,7 +119674,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
-      "source_location": "L15",
+      "source_location": "L55",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_acceptance_submit",
+      "target": "backend_story_builder_tests_harness_browser_acceptance_serve_ui",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
+      "source_location": "L57",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -119230,29 +119701,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "json",
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "os",
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "tempfile",
+      "target": "argparse",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119263,8 +119712,8 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "threading",
-      "relation": "imports",
+      "target": "contextlib",
+      "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
@@ -119274,7 +119723,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "uuid",
+      "target": "json",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119285,8 +119734,8 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "pathlib",
-      "relation": "imports_from",
+      "target": "os",
+      "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
@@ -119296,8 +119745,8 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "wsgiref_simple_server",
-      "relation": "imports_from",
+      "target": "tempfile",
+      "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
@@ -119307,7 +119756,18 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "playwright_sync_api",
+      "target": "uuid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_authority_probe",
+      "target": "pathlib",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119318,7 +119778,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "story_builder_isolated_server",
+      "target": "unittest_mock",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119329,18 +119789,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "story_builder_services",
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "story_builder_services_agent_tasks",
+      "target": "playwright_sync_api",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119351,7 +119800,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "story_builder_services_director_goals",
+      "target": "story_builder_isolated_server",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119362,7 +119811,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "story_builder_services_director_mcp",
+      "target": "story_builder_services",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119373,7 +119822,7 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
-      "target": "story_builder_services_production_ledger",
+      "target": "story_builder_services_agent_tasks",
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -119384,11 +119833,55 @@
     },
     {
       "source": "backend_story_builder_tests_harness_browser_authority_probe",
+      "target": "story_builder_services_director_goals",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_authority_probe",
+      "target": "story_builder_services_director_mcp",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_authority_probe",
+      "target": "story_builder_services_production_ledger",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_authority_probe",
+      "target": "story_builder_tests_harness_browser_acceptance",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_authority_probe",
       "target": "backend_story_builder_tests_harness_browser_authority_probe_main",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L23",
+      "source_location": "L27",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120107,7 +120600,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L38",
+      "source_location": "L36",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120117,7 +120610,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L49",
+      "source_location": "L47",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120128,7 +120621,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L41",
+      "source_location": "L39",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120139,7 +120632,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L77",
+      "source_location": "L75",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -120150,7 +120643,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L83",
+      "source_location": "L81",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121344,7 +121837,7 @@
     },
     {
       "source": "backend_story_builder_tests_test_agent_computer_agentcomputertests",
-      "target": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_local_browser_grant_and_cross_site_rejection",
+      "target": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_native_consent_and_cross_site_rejection",
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
@@ -121358,7 +121851,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L95",
+      "source_location": "L98",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121368,7 +121861,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L119",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121378,7 +121871,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L136",
+      "source_location": "L139",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121388,7 +121881,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L159",
+      "source_location": "L162",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121415,7 +121908,7 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_local_browser_grant_and_cross_site_rejection",
+      "source": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_native_consent_and_cross_site_rejection",
       "target": "backend_story_builder_tests_test_agent_computer_agentcomputertests_http",
       "relation": "calls",
       "context": "call",
@@ -121426,13 +121919,13 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_local_browser_grant_and_cross_site_rejection",
+      "source": "backend_story_builder_tests_test_agent_computer_agentcomputertests_test_native_consent_and_cross_site_rejection",
       "target": "backend_story_builder_tests_test_agent_computer_agentcomputertests_proposal",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L82",
+      "source_location": "L87",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121443,7 +121936,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L96",
+      "source_location": "L99",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121454,7 +121947,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L120",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121465,7 +121958,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L140",
+      "source_location": "L143",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -121475,6 +121968,450 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation",
+      "target": "copy",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation",
+      "target": "time",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation",
+      "target": "unittest_mock",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation",
+      "target": "story_builder_services",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation",
+      "target": "story_builder_services_production_ledger",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation",
+      "target": "story_builder_tests_test_director_harness",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_tests_test_director_harness_directorharnessfixture",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_row",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_one_use_exact_binding_and_expiration",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_changes_during_native_review_rejected_inside_task_lock",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L39",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_native_rejection_unavailable_timeout_and_concurrency_fail_closed",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L52",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_revised_read_task_cannot_launder_protected_host_approval",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L69",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_one_use_exact_binding_and_expiration",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_row",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_changes_during_native_review_rejected_inside_task_lock",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_row",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L40",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_native_rejection_unavailable_timeout_and_concurrency_fail_closed",
+      "target": "backend_story_builder_tests_test_agent_confirmation_consenttests_row",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L53",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_rationale_1",
+      "target": "backend_story_builder_tests_test_agent_confirmation",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "json",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "os",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "subprocess",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "sys",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "uuid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "story_builder_services",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "story_builder_tests_test_agent_tasks",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "story_builder_services_director_goals",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "story_builder_services_director_mcp",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L48",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_tasks_agenttaskfixture",
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L48",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L49",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_before_approval",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L87",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_approval",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L90",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_before_dispatch",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L93",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_creation",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L96",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_mapping",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L99",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_during_cpu_effect",
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L102",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_before_approval",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L88",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_approval",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L91",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_before_dispatch",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_creation",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_after_mapping",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L100",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_test_during_cpu_effect",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L103",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_rationale_1",
+      "target": "backend_story_builder_tests_test_agent_confirmation_recovery",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
       "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast"
@@ -130207,7 +131144,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L33",
+      "source_location": "L32",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130217,17 +131154,17 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L39",
+      "source_location": "L38",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests",
-      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_existing_local_grant",
+      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_native_consent",
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L46",
+      "source_location": "L45",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130237,7 +131174,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L59",
+      "source_location": "L58",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130247,7 +131184,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L67",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130257,7 +131194,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L75",
+      "source_location": "L74",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130267,7 +131204,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L123",
+      "source_location": "L122",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130277,7 +131214,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L132",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130287,7 +131224,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L149",
+      "source_location": "L148",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130297,7 +131234,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L158",
+      "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130307,7 +131244,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L174",
+      "source_location": "L173",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130317,13 +131254,24 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L186",
+      "source_location": "L185",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_existing_local_grant",
+      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_native_consent",
       "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_draft_goal",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
+      "source_location": "L46",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_native_consent",
+      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_api",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -130333,30 +131281,30 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_existing_local_grant",
-      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_api",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L48",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_existing_local_grant",
+      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_approval_is_exact_inert_and_requires_native_consent",
       "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_settle",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L53",
+      "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_rejection_and_changed_plan_cannot_execute",
       "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_draft_goal",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
+      "source_location": "L59",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_rejection_and_changed_plan_cannot_execute",
+      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_api",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -130367,7 +131315,7 @@
     },
     {
       "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_rejection_and_changed_plan_cannot_execute",
-      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_api",
+      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_settle",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -130377,24 +131325,13 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_rejection_and_changed_plan_cannot_execute",
-      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_settle",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L62",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
       "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_modified_revision_is_not_adopted_by_saved_goal",
       "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_draft_goal",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L68",
+      "source_location": "L67",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130405,7 +131342,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L72",
+      "source_location": "L71",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130416,7 +131353,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L104",
+      "source_location": "L103",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130427,7 +131364,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L106",
+      "source_location": "L105",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130438,7 +131375,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L124",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130449,7 +131386,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L127",
+      "source_location": "L126",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130460,7 +131397,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L133",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130471,7 +131408,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L139",
+      "source_location": "L138",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130482,13 +131419,24 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L145",
+      "source_location": "L144",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
       "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_source_bytes_changed_after_approval_are_rejected_before_dispatch",
       "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_api",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
+      "source_location": "L164",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_source_bytes_changed_after_approval_are_rejected_before_dispatch",
+      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_settle",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -130498,24 +131446,13 @@
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_source_bytes_changed_after_approval_are_rejected_before_dispatch",
-      "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_settle",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L166",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
       "source": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_test_crash_before_job_creation_is_not_blindly_retried",
       "target": "backend_story_builder_tests_test_director_harness_approvals_approvaltests_draft_goal",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L175",
+      "source_location": "L174",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130526,7 +131463,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L182",
+      "source_location": "L181",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130537,7 +131474,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L187",
+      "source_location": "L186",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -130548,7 +131485,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L202",
+      "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -176814,7 +177751,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/DirectorConversation.tsx",
-      "source_location": "L67",
+      "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -177117,17 +178054,6 @@
     {
       "source": "frontend_src_directorruntime",
       "target": "frontend_src_lib_agent_tasks_agentrequest",
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "frontend/src/DirectorRuntime.tsx",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "frontend_src_directorruntime",
-      "target": "frontend_src_lib_agent_tasks_computergrant",
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -190335,16 +191261,6 @@
       "_origin": "ast"
     },
     {
-      "source": "frontend_src_lib_agent_tasks",
-      "target": "frontend_src_lib_agent_tasks_computergrant",
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "frontend/src/lib/agent-tasks.ts",
-      "source_location": "L37",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
       "source": "frontend_src_lib_debug_recorder",
       "target": "frontend_src_lib_debug_recorder_debugstatus",
       "relation": "contains",
@@ -202534,6 +203450,28 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation",
+      "target": "backend_story_builder_services_production_ledger_stable_hash",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_story_builder_services_agent_continuity",
       "target": "backend_story_builder_services_storage_paths_media_root",
       "relation": "imports",
@@ -202892,7 +203830,18 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L324",
+      "source_location": "L325",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks",
+      "target": "backend_story_builder_services_agent_confirmation_consume",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L344",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -203310,7 +204259,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L129",
+      "source_location": "L131",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -203321,7 +204270,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L130",
+      "source_location": "L132",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -205186,6 +206135,17 @@
     },
     {
       "source": "backend_story_builder_services_agent_api",
+      "target": "backend_story_builder_services_agent_confirmation",
+      "relation": "imports_from",
+      "context": "submodule_import",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_api.py",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_api",
       "target": "backend_story_builder_services_agent_graph",
       "relation": "imports_from",
       "context": "submodule_import",
@@ -205209,17 +206169,6 @@
     {
       "source": "backend_story_builder_services_agent_api",
       "target": "backend_story_builder_services_agent_tools",
-      "relation": "imports_from",
-      "context": "submodule_import",
-      "confidence": "EXTRACTED",
-      "source_file": "backend/story_builder/services/agent_api.py",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_api",
-      "target": "backend_story_builder_services_director_goal_tasks",
       "relation": "imports_from",
       "context": "submodule_import",
       "confidence": "EXTRACTED",
@@ -206049,7 +206998,7 @@
       "context": "submodule_import",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L446",
+      "source_location": "L469",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -209266,6 +210215,28 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_story_builder_services_agent_confirmation_binding",
+      "target": "backend_story_builder_services_production_ledger_stable_hash",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_confirmation_consume",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L85",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_story_builder_services_agent_continuity_submit",
       "target": "backend_story_builder_services_audio_utilities_utilityunavailable",
       "relation": "calls",
@@ -209789,7 +210760,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L133",
+      "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -209800,7 +210771,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L133",
+      "source_location": "L135",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -213227,6 +214198,16 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_story_builder_services_agent_confirmation_consent",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/story_builder/services/agent_confirmation.py",
+      "source_location": "L15",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_story_builder_services_agent_conversation_agentconversation",
       "target": "backend_story_builder_services_production_ledger_ledgerconflict",
       "relation": "uses",
@@ -213432,7 +214413,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L129",
+      "source_location": "L131",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -213442,7 +214423,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L130",
+      "source_location": "L132",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -214547,6 +215528,56 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L7",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests",
+      "target": "backend_story_builder_tests_test_director_harness_directorharnessfixture",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L8",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_tests_test_agent_tasks_agenttaskfixture",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L13",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_services_director_goals_goals",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L14",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests",
+      "target": "backend_story_builder_services_director_mcp_gateway",
+      "relation": "uses",
+      "confidence": "INFERRED",
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L15",
+      "weight": 0.8,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_story_builder_tests_test_agent_continuity_agentcontinuitytests",
       "target": "backend_story_builder_services_production_ledger_ledgerconflict",
       "relation": "uses",
@@ -215542,7 +216573,7 @@
       "relation": "uses",
       "confidence": "INFERRED",
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L193",
+      "source_location": "L192",
       "weight": 0.8,
       "_origin": "ast"
     },
@@ -218495,6 +219526,30 @@
       "_origin": "ast"
     },
     {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
+      "target": "backend_story_builder_services_director_goal_tasks_validate_action",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L327",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_review_action",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L330",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
       "source": "backend_story_builder_services_agent_tasks_agenttasks_approve",
       "target": "backend_story_builder_services_director_goal_tasks_validate_action",
       "relation": "calls",
@@ -218502,7 +219557,19 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L325",
+      "source_location": "L342",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_approve",
+      "target": "backend_story_builder_services_agent_confirmation_consume",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L345",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218514,7 +219581,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L331",
+      "source_location": "L351",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218526,7 +219593,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L335",
+      "source_location": "L355",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218538,7 +219605,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L342",
+      "source_location": "L362",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218550,7 +219617,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L361",
+      "source_location": "L381",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218562,7 +219629,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L382",
+      "source_location": "L402",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218574,7 +219641,19 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L405",
+      "source_location": "L425",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_services_agent_tasks_agenttasks_run",
+      "target": "backend_story_builder_services_agent_confirmation_consume",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/story_builder/services/agent_tasks.py",
+      "source_location": "L428",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218586,7 +219665,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L413",
+      "source_location": "L436",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218598,7 +219677,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L434",
+      "source_location": "L457",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218610,7 +219689,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L490",
+      "source_location": "L513",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -218622,7 +219701,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_tasks.py",
-      "source_location": "L592",
+      "source_location": "L615",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -219150,7 +220229,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L121",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -219162,7 +220241,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L132",
+      "source_location": "L134",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -219174,7 +220253,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/services/director_mcp.py",
-      "source_location": "L159",
+      "source_location": "L161",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223506,7 +224585,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_approval_acceptance.py",
-      "source_location": "L87",
+      "source_location": "L88",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223518,7 +224597,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_approval_acceptance.py",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223530,19 +224609,19 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_approval_acceptance.py",
-      "source_location": "L109",
+      "source_location": "L110",
       "weight": 1.0,
       "_origin": "ast"
     },
     {
-      "source": "backend_story_builder_tests_harness_browser_acceptance_submit",
+      "source": "backend_story_builder_tests_harness_browser_acceptance_serve_ui",
       "target": "backend_story_builder_isolated_server_threadedwsgiserver",
       "relation": "indirect_call",
       "context": "argument",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_browser_acceptance.py",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223554,7 +224633,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L27",
+      "source_location": "L37",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223566,7 +224645,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L28",
+      "source_location": "L38",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223578,7 +224657,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L28",
+      "source_location": "L38",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223590,7 +224669,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L29",
+      "source_location": "L39",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223602,7 +224681,31 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
-      "source_location": "L32",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_authority_probe_main",
+      "target": "backend_story_builder_tests_harness_browser_acceptance_serve_ui",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
+      "source_location": "L67",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_harness_browser_authority_probe_main",
+      "target": "backend_story_builder_tests_harness_probe_cleanup_jobs",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/story_builder/tests/harness_browser_authority_probe.py",
+      "source_location": "L123",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223710,7 +224813,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L33",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223722,7 +224825,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L65",
+      "source_location": "L63",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223734,7 +224837,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L67",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223746,7 +224849,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L67",
+      "source_location": "L65",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223758,7 +224861,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L68",
+      "source_location": "L66",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223770,7 +224873,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L76",
+      "source_location": "L74",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223782,7 +224885,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/harness_production_acceptance.py",
-      "source_location": "L148",
+      "source_location": "L146",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -223938,7 +225041,67 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/test_agent_computer.py",
-      "source_location": "L107",
+      "source_location": "L110",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_one_use_exact_binding_and_expiration",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_changes_during_native_review_rejected_inside_task_lock",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L47",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_consenttests_test_revised_read_task_cannot_launder_protected_host_approval",
+      "target": "backend_story_builder_services_production_ledger_ledgerconflict",
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/story_builder/tests/test_agent_confirmation.py",
+      "source_location": "L77",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "target": "backend_story_builder_services_director_goals_goals",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L51",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "backend_story_builder_tests_test_agent_confirmation_recovery_processrecoverytests_check_boundary",
+      "target": "backend_story_builder_tests_harness_probe_mcp_gateway",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/story_builder/tests/test_agent_confirmation_recovery.py",
+      "source_location": "L54",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -226698,7 +227861,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L100",
+      "source_location": "L99",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -226710,7 +227873,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L126",
+      "source_location": "L125",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -226722,7 +227885,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L195",
+      "source_location": "L194",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -226734,7 +227897,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "backend/story_builder/tests/test_director_harness_approvals.py",
-      "source_location": "L196",
+      "source_location": "L195",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -238410,7 +239573,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "frontend/src/DirectorConversation.tsx",
-      "source_location": "L68",
+      "source_location": "L69",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -238422,7 +239585,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "frontend/src/DirectorConversation.tsx",
-      "source_location": "L126",
+      "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -238488,25 +239651,13 @@
     },
     {
       "source": "frontend_src_directorruntime_directorruntime",
-      "target": "frontend_src_lib_agent_tasks_computergrant",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "frontend/src/DirectorRuntime.tsx",
-      "source_location": "L119",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "frontend_src_directorruntime_directorruntime",
       "target": "frontend_src_lib_agent_tasks_exactapproval",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "frontend/src/DirectorRuntime.tsx",
-      "source_location": "L174",
+      "source_location": "L172",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -243168,25 +244319,13 @@
     },
     {
       "source": "backend_story_builder_services_agent_api_handle",
-      "target": "backend_story_builder_services_director_goal_tasks_linked",
+      "target": "backend_story_builder_services_agent_confirmation_confirm",
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_api.py",
-      "source_location": "L63",
-      "weight": 1.0,
-      "_origin": "ast"
-    },
-    {
-      "source": "backend_story_builder_services_agent_api_handle",
-      "target": "backend_story_builder_services_agent_access_require_grant",
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "backend/story_builder/services/agent_api.py",
-      "source_location": "L65",
+      "source_location": "L67",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -243198,7 +244337,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_api.py",
-      "source_location": "L94",
+      "source_location": "L96",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -243210,7 +244349,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_api.py",
-      "source_location": "L94",
+      "source_location": "L96",
       "weight": 1.0,
       "_origin": "ast"
     },
@@ -243222,7 +244361,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "backend/story_builder/services/agent_api.py",
-      "source_location": "L94",
+      "source_location": "L96",
       "weight": 1.0,
       "_origin": "ast"
     },

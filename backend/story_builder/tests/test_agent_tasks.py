@@ -56,7 +56,7 @@ class AgentTaskFixture(unittest.TestCase):
     def call(self, method, path, payload=None):
         raw = json.dumps(payload or {}).encode()
         response = []
-        env = {'PATH_INFO': path, 'QUERY_STRING': '', 'REQUEST_METHOD': method,
+        env = {'PATH_INFO': path, 'QUERY_STRING': '', 'REQUEST_METHOD': method, 'HTTP_HOST': '127.0.0.1:3020',
                'CONTENT_LENGTH': str(len(raw)), 'wsgi.input': io.BytesIO(raw)}
         result = b''.join(self.app(env, lambda status, headers: response.append(status)))
         return response[0], json.loads(result)
@@ -83,7 +83,7 @@ class AgentTaskTests(AgentTaskFixture):
 
     def test_http_runtime_unavailable_keeps_recoverable_task(self):
         row = self.ready()
-        with patch.object(audio_utilities, 'capabilities', return_value={'operations': [{'id': 'extract_mp3', 'status': 'blocked', 'reason': 'Test runtime unavailable'}]}):
+        with patch.object(audio_utilities, 'capabilities', return_value={'operations': [{'id': 'extract_mp3', 'status': 'blocked', 'reason': 'Test runtime unavailable'}]}), patch('story_builder.services.agent_confirmation._desktop_confirm', return_value=True):
             status, result = self.call('POST', f'/api/agent/projects/{self.owner}/tasks/{row["task_id"]}/run', self.approval(row))
         self.assertEqual(status, '503 Service Unavailable')
         self.assertEqual(result['error']['code'], 'agent_runtime_unavailable')

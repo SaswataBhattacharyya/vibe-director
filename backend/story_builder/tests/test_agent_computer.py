@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from story_builder.services import agent_access, agent_computer, agent_permissions, projects, video_repertoire
+from story_builder.services import agent_confirmation, agent_computer, agent_permissions, projects, video_repertoire
 from story_builder.services.production_ledger import LedgerConflict
 from story_builder.tests.test_agent_tasks import AgentTaskFixture
 
@@ -77,19 +77,22 @@ class AgentComputerTests(AgentTaskFixture):
         result = b''.join(self.app(environ, lambda status, _: response.append(status)))
         return response[0], json.loads(result)
 
-    def test_local_browser_grant_and_cross_site_rejection(self):
+    def test_native_consent_and_cross_site_rejection(self):
         path = f'/api/agent/projects/{self.owner}/tasks'
-        self.assertEqual(self.http(path, self.proposal())[0], '400 Bad Request')
         status, access = self.http('/api/agent/computer-access')
         self.assertEqual(status, '200 OK')
-        token = {'HTTP_X_VIBE_COMPUTER_TOKEN': access['session_token']}
+        self.assertNotIn('session_token', access)
         for headers in ({'HTTP_ORIGIN': 'https://attacker.example'}, {'HTTP_HOST': 'attacker.example'},
                         {'HTTP_SEC_FETCH_SITE': 'cross-site'}):
-            self.assertEqual(self.http(path, self.proposal(), **{**token, **headers})[0], '400 Bad Request')
-        status, row = self.http(path, self.proposal(), **token)
-        self.assertEqual(status, '200 OK')
-        self.assertEqual(self.http(path + '/' + row['task_id'] + '/approve', self.approval(row))[0], '400 Bad Request')
-        self.assertEqual(self.http(path + '/' + row['task_id'] + '/approve', self.approval(row), **token)[0], '200 OK')
+            self.assertEqual(self.http(path, self.proposal(), **headers)[0], '400 Bad Request')
+        status, row = self.http(path, self.proposal())
+        self.assertEqual(status, '200 OK')  # Drafting is inert, no consent required.
+        approve = path + '/' + row['task_id'] + '/approve'
+        with patch.object(agent_confirmation, '_desktop_confirm', return_value=False):
+            self.assertEqual(self.http(approve, self.approval(row))[0], '400 Bad Request')
+        with patch.object(agent_confirmation, '_desktop_confirm', return_value=True) as desktop:
+            self.assertEqual(self.http(approve, self.approval(row))[0], '200 OK')
+            desktop.assert_called_once()
         self.dispatch.assert_not_called()
 
     def test_worker_report_and_no_replay(self):

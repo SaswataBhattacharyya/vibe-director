@@ -51,6 +51,7 @@ export function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> 
     <small>{task.plan.settings.quality !== undefined && `Quality ${task.plan.settings.quality} · `}revision {task.current_revision} · {task.plan_hash.slice(0, 10)}</small>
     {task.invocation?.job_id && <small className="director-job">Job {task.invocation.job_id}</small>}
     <div className="director-task-actions">
+      {['draft', 'approved'].includes(task.status) && <small>Approve and Run each require a separate confirmation on your desktop.</small>}
       {task.status === 'draft' && <button disabled={busy} onClick={() => control(task, 'approve')}>Approve this plan</button>}
       {task.status === 'approved' && <button disabled={busy} onClick={() => control(task, 'run')}>Run approved task</button>}
       {['draft', 'approved', 'running', 'submitting', 'cancel_requested', 'recovery_required'].includes(task.status) && <button disabled={busy} onClick={() => control(task, 'cancel')}>Cancel task</button>}

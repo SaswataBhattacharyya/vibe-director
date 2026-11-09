@@ -1,7 +1,7 @@
 """Opt-in H3 actual Codex/CPU approval continuation and browser-boundary probe.
 
-The host represents the human reviewer through existing exact-plan APIs. This
-is not evidence of a physical human click. No generation/rendering/owner data.
+The host requests existing exact-plan APIs; the human must authorize each
+operation in a real native dialog. No automatic confirmation. No generation/rendering/owner data.
 """
 import argparse
 import json
@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from story_builder.isolated_server import create_app
-from story_builder.services import agent_access, media_library, projects
+from story_builder.services import media_library, projects
 from story_builder.services.agent_tasks import AgentTasks
 from story_builder.services.director_goals import Goals
 from story_builder.services.production_ledger import ProductionLedger
@@ -52,10 +52,11 @@ def main():
             saved_thread = goal['thread_id']
             print(json.dumps({'initial_proposal': 'PASS', 'thread': saved_thread, 'task': draft['task_id'],
                               'status': goal['status']}), flush=True)
-            # Existing exact-plan human route; token remains only in trusted host.
+            # Existing exact-plan route; real native owner confirmation, no browser token.
             exact = {'revision': draft['current_revision'], 'plan_hash': draft['plan_hash']}
             def human(action):
-                return call(app, 'POST', owner, f'tasks/{draft["task_id"]}/{action}', exact, grant=agent_access._TOKEN)
+                print(f'NATIVE OWNER ACTION REQUIRED: {action} disposable task {draft["task_id"]}', flush=True)
+                return call(app, 'POST', owner, f'tasks/{draft["task_id"]}/{action}', exact)
             assert human('approve')['status'] == 'approved'
             history, approved = wait(app, goals, owner, request)
             assert approved['status'] == 'waiting_for_execution', approved
@@ -74,7 +75,7 @@ def main():
             result = json.loads(task['report'])['result']['result']
             assert result['project_id'] in history['messages'][0]['reply'], history
             before = task['invocation']
-            assert human('run')['invocation'] == before
+            assert tasks.poll(owner, draft['task_id'])['invocation'] == before
             print(json.dumps({'automatic_approval_continuation': 'PASS', 'thread': saved_thread,
                 'user_messages': 1, 'created_editor': result['project_id'], 'invocation': before,
                 'consumed_result': resumed['state']['consumed_tasks'],

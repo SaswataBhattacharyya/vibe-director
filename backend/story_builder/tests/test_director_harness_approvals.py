@@ -9,7 +9,7 @@ import time
 from unittest.mock import patch
 
 from story_builder.isolated_server import create_app
-from story_builder.services import agent_access, vibe_editor
+from story_builder.services import agent_confirmation, vibe_editor
 from story_builder.services.director_mcp import Gateway
 from story_builder.services.production_ledger import LedgerConflict
 from story_builder.tests.test_director_harness import DirectorHarnessFixture
@@ -17,17 +17,16 @@ from story_builder.tests.test_director_harness import DirectorHarnessFixture
 
 class ApprovalTests(DirectorHarnessFixture):
 
-    def api(self, action, row, *, grant=True, payload=None, origin=None):
+    def api(self, action, row, *, human=True, payload=None, origin=None):
         body = json.dumps(payload if payload is not None else {} if action == 'cancel' else self.approval(row)).encode()
         env = {'PATH_INFO': f'/api/agent/projects/{self.owner}/tasks/{row["task_id"]}/{action}',
                'QUERY_STRING': '', 'REQUEST_METHOD': 'POST', 'HTTP_HOST': '127.0.0.1:3020',
                'CONTENT_LENGTH': str(len(body)), 'wsgi.input': io.BytesIO(body)}
-        if grant:
-            env['HTTP_X_VIBE_COMPUTER_TOKEN'] = agent_access._TOKEN
         if origin:
             env['HTTP_ORIGIN'] = origin
         statuses = []
-        value = json.loads(b''.join(self.app(env, lambda s, h: statuses.append(s))))
+        with patch.object(agent_confirmation, '_desktop_confirm', return_value=human):
+            value = json.loads(b''.join(self.app(env, lambda s, h: statuses.append(s))))
         return statuses[0], value
 
     def draft_goal(self):
@@ -43,9 +42,9 @@ class ApprovalTests(DirectorHarnessFixture):
         self.assertFalse(controller.workers, 'Goal worker did not settle')
         return self.goals.get(self.owner, self.request)
 
-    def test_approval_is_exact_inert_and_requires_existing_local_grant(self):
+    def test_approval_is_exact_inert_and_requires_native_consent(self):
         row = self.draft_goal()
-        self.assertEqual(self.api('approve', row, grant=False)[0], '400 Bad Request')
+        self.assertEqual(self.api('approve', row, human=False)[0], '400 Bad Request')
         self.assertEqual(self.api('approve', row, origin='https://untrusted.test')[0], '400 Bad Request')
         self.assertEqual(self.api('run', row)[0], '409 Conflict')
         self.assertEqual(self.api('approve', row, payload={**self.approval(row), 'revision': 9})[0], '409 Conflict')

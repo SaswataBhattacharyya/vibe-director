@@ -1,7 +1,7 @@
 """Shared discovery and explicitly approved task boundary."""
 import re
 from urllib.parse import parse_qs
-from . import agent_access, agent_graph, agent_skills, agent_tools, director_goal_tasks
+from . import agent_access, agent_confirmation, agent_graph, agent_skills, agent_tools
 
 
 def handle(root, environ, start_response, respond, *, tasks=None, conversation=None, read_json=None):
@@ -60,9 +60,11 @@ def handle(root, environ, start_response, respond, *, tasks=None, conversation=N
             if not isinstance(proposed, dict):
                 raise ValueError('Task proposal must be an object.')
             harness = conversation.harness if conversation else None
-            goal = director_goal_tasks.linked(harness.goals, owner, task) if task and harness else None
-            if goal or proposed.get('tool_id') == 'computer.execute' or (task and tasks.get(owner, task)['plan']['tool_id'] == 'computer.execute'):
-                agent_access.require_grant(environ)
+            agent_access.local_request(environ)
+            consent = None
+            if task and action in {'approve', 'run'}:
+                reviewed = tasks.review_action(owner, task, payload, action)
+                consent = agent_confirmation.confirm(root, owner, reviewed, action)
             if not task:
                 result = tasks.propose(owner, payload)
             elif action == 'cancel':
@@ -70,7 +72,7 @@ def handle(root, environ, start_response, respond, *, tasks=None, conversation=N
                     raise ValueError('Cancel does not accept fields.')
                 result = tasks.cancel(owner, task)
             else:
-                result = getattr(tasks, action)(owner, task, payload)
+                result = getattr(tasks, action)(owner, task, payload, **({'authorization': consent} if consent else {}))
             if task and harness:
                 harness.task_changed(owner, task)
         else:

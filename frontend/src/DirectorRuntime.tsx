@@ -1,7 +1,7 @@
 import {createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import {useProject} from './ProjectController';
-import {agentRequest, computerGrant, exactApproval, type AgentMessage, type AgentTask} from './lib/agent-tasks';
+import {agentRequest, exactApproval, type AgentMessage, type AgentTask} from './lib/agent-tasks';
 import {discoverAgent, type AgentDiscovery} from './lib/agent-api';
 import DirectorConversation from './DirectorConversation';
 import {useProjectState} from './lib/project-state';
@@ -116,9 +116,8 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
     return attempt(async signal => {
       if (access !== 'app') {
         if (selected.length) throw new Error('Chat attachments are available in Application tools mode. Switch back to discuss these files, or remove the attachments before preparing a computer task.');
-        const token = await computerGrant(signal);
         await agentRequest<AgentTask>(owner, 'tasks', signal, {tool_id: 'computer.execute', asset_ids: [],
-          settings: {instruction: text, access_mode: access, skill_refs: skills}}, token);
+          settings: {instruction: text, access_mode: access, skill_refs: skills}});
         if (!signal.aborted) {setText(''); await refresh(signal);}
         return;
       }
@@ -170,8 +169,7 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
   };
   const control = (task: AgentTask, action: 'approve' | 'run' | 'cancel') => attempt(async signal => {
     const goalLinked = messages.some(message => message.goal?.steps.some(step => step.task_id === task.task_id));
-    const token = task.plan.tool_id === 'computer.execute' || goalLinked ? await computerGrant(signal) : undefined;
-    const updated = await agentRequest<AgentTask>(owner, `tasks/${task.task_id}/${action}`, signal, action === 'cancel' ? {} : exactApproval(task), token);
+    const updated = await agentRequest<AgentTask>(owner, `tasks/${task.task_id}/${action}`, signal, action === 'cancel' ? {} : exactApproval(task));
     if (!signal.aborted) setTasks(rows => rows.map(row => row.task_id === updated.task_id ? updated : row));
     if (!signal.aborted && updated.plan.tool_id === 'editor.prepare_brief') await editor.current?.refresh();
     if (!signal.aborted && goalLinked) await refresh(signal);

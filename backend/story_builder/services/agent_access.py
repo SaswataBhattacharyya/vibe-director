@@ -1,9 +1,5 @@
-"""Local browser grant boundary; no CORS or unauthenticated computer dispatch."""
-import hmac
-import secrets
+"""Local request checks and secret-free capability discovery. Consent is native."""
 from urllib.parse import urlsplit
-
-_TOKEN = secrets.token_urlsafe(32)
 
 
 def local_request(environ):
@@ -21,12 +17,6 @@ def local_request(environ):
 def capabilities(environ):
     local_request(environ)
     import shutil
-    return {'available': bool(shutil.which('codex')), 'session_token': _TOKEN,
+    return {'available': bool(shutil.which('codex')), 'authorization': 'native-per-operation',
+            'native_confirmation_available': bool(shutil.which('zenity')),
             'modes': ['project', 'full'], 'browser_control': False}
-
-
-def require_grant(environ):
-    local_request(environ)
-    supplied = environ.get('HTTP_X_VIBE_COMPUTER_TOKEN', '')
-    if not hmac.compare_digest(supplied, _TOKEN):
-        raise ValueError('Refresh computer access in the local application before approving or running.')

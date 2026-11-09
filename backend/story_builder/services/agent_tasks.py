@@ -319,10 +319,30 @@ class AgentTasks:
         elif self._assets(owner, [a['asset_id'] for a in plan['assets']]) != plan['assets']:
             raise LedgerConflict('Inputs changed. Propose a new plan.')
 
-    def approve(self, owner, task, payload):
+    def review_action(self, owner, task, payload, action):
+        """Reject invalid requests before prompting; repeat validation at mutation."""
+        with projects.locked(self.root):
+            from .director_goal_tasks import validate_action
+            row = self.get(owner, task)
+            validate_action(self, owner, row)
+            self._expected(row, payload)
+            if action == 'approve' and row['status'] not in {'draft', 'approved'}:
+                raise LedgerConflict('Only an unstarted task can be approved.')
+            if action == 'run' and row['status'] == 'draft':
+                raise LedgerConflict('Approve the exact plan before running.')
+            if row['status'] in {'cancelled', 'failed'}:
+                raise LedgerConflict('Cancelled or failed tasks cannot be authorized.')
+            self._check_inputs(owner, row['plan'])
+            return row
+
+    def approve(self, owner, task, payload, *, authorization=None):
         with projects.locked(self.root), self.ledger._connect() as db:
             from .director_goal_tasks import validate_action
-            validate_action(self, owner, self.get(owner, task))
+            reviewed = self.get(owner, task)
+            validate_action(self, owner, reviewed)
+            if authorization is not None:
+                from .agent_confirmation import consume
+                consume(authorization, self.root, owner, reviewed, 'approve')
             agent_graph.resolve_workspace(self.root, owner)
             db.execute('BEGIN IMMEDIATE')
             row = self._row(db, owner, task)
@@ -396,13 +416,16 @@ class AgentTasks:
                 or row['invocation']['job_id'] and row['invocation']['job_id'] != job['job_id']):
             raise LedgerConflict('Frozen job does not match the approved invocation.')
 
-    def run(self, owner, task, payload):
+    def run(self, owner, task, payload, *, authorization=None):
         # The same cross-process lock guards project switching and job allocation.
         # A crashed runner releases it; frozen correlation resolves acknowledgment loss.
         with projects.locked(self.root):
             row = self.get(owner, task)
             from .director_goal_tasks import validate_action
             goal_linked = validate_action(self, owner, row)
+            if authorization is not None:
+                from .agent_confirmation import consume
+                consume(authorization, self.root, owner, row, 'run')
             self._expected(row, payload)
             if row['status'] in {'completed', 'cancelled', 'failed'}:
                 return row

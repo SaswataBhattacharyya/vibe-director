@@ -1,0 +1,369 @@
+{
+  "comparison": "working tree vs b4ef025",
+  "mode": "manual source tracing with Graphify discovery",
+  "traversal": {
+    "depth": 2,
+    "node_count": 15,
+    "filters": "Protected AgentTask consent and shared UI \u2192 exact-plan mutation/job \u2192 goal continuation; generic graph uses edges excluded unless source-confirmed"
+  },
+  "graph": {
+    "nodes": 6037,
+    "edges": 18499,
+    "code_files": 660,
+    "command": "conda run -n react graphify extract . --code-only --no-cluster --force --max-workers 4"
+  },
+  "max_risk": 0.6,
+  "overall_risk": "high",
+  "limitations": [
+    "Security boundary changes justify high prioritization; risk is not defect probability. Caller factor 0 means threshold of five confirmed callers not established.",
+    "Test-gap 0 indicates named focused regression evidence, not branch coverage. Graph lacks full dependency/test coverage; 102 zero-node and 50 unclassified files.",
+    "Native boundary assumes restricted H1 harness; unrestricted same-UID desktop processes are outside scope. H4/H5 film render/playback and broader existing baseline failures remain open."
+  ],
+  "findings": [
+    {
+      "node": "backend/story_builder/services/agent_access.py::def capabilities(",
+      "location": {
+        "file": "backend/story_builder/services/agent_access.py",
+        "line": 17
+      },
+      "anchor": "def capabilities(environ):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_api.py::def handle(",
+      "location": {
+        "file": "backend/story_builder/services/agent_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root, environ, start_response, respond, *, tasks=None, conversation=None, read_json=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_confirmation.py::def confirm(",
+      "location": {
+        "file": "backend/story_builder/services/agent_confirmation.py",
+        "line": 57
+      },
+      "anchor": "def confirm(root, owner, task, action):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_confirmation.py::def consume(",
+      "location": {
+        "file": "backend/story_builder/services/agent_confirmation.py",
+        "line": 82
+      },
+      "anchor": "def consume(consent, root, owner, task, action):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_confirmation.py::def _desktop_confirm(",
+      "location": {
+        "file": "backend/story_builder/services/agent_confirmation.py",
+        "line": 37
+      },
+      "anchor": "def _desktop_confirm(text, action):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::def review_action(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 322
+      },
+      "anchor": "    def review_action(self, owner, task, payload, action):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::def approve(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 338
+      },
+      "anchor": "    def approve(self, owner, task, payload, *, authorization=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::def run(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 419
+      },
+      "anchor": "    def run(self, owner, task, payload, *, authorization=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_mcp.py::def call(",
+      "location": {
+        "file": "backend/story_builder/services/director_mcp.py",
+        "line": 46
+      },
+      "anchor": "    def call(self, name, arguments):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::def poll(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 586
+      },
+      "anchor": "    def poll(self, owner, task):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_harness.py::def task_changed(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 91
+      },
+      "anchor": "    def task_changed(self, owner, task_id):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goal_tasks.py::def ",
+      "location": {
+        "file": "backend/story_builder/services/director_goal_tasks.py",
+        "line": 15
+      },
+      "anchor": "def linked(goals, owner, task_id):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "frontend/src/lib/agent-tasks.ts::export async function agentRequest",
+      "location": {
+        "file": "frontend/src/lib/agent-tasks.ts",
+        "line": 18
+      },
+      "anchor": "export async function agentRequest<T>(workspace: string, resource: string, signal: AbortSignal, body?: unknown): Promise<T> {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "frontend/src/DirectorConversation.tsx::Approve and Run each require",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 54
+      },
+      "anchor": "      {['draft', 'approved'].includes(task.status) && <small>Approve and Run each require a separate confirmation on your desktop.</small>}",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "frontend/src/DirectorRuntime.tsx::exactApproval(task)",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 172
+      },
+      "anchor": "    const updated = await agentRequest<AgentTask>(owner, `tasks/${task.task_id}/${action}`, signal, action === 'cancel' ? {} : exactApproval(task));",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Source trace: secret-free discovery and shared chat controls \u2192 local task HTTP preflight \u2192 native exact consent \u2192 locked existing approval/run \u2192 durable jobs \u2192 saved goal observer \u2192 same-thread continuation. MCP read-policy retry rejects revised/substituted task before host approval.",
+        "Focused test-reference evidence: test_agent_confirmation, test_agent_confirmation_recovery, test_director_harness_approvals; real human browser/native probe and real Codex approval acceptance. No measured coverage claim."
+      ],
+      "verification": "PENDING"
+    }
+  ]
+}

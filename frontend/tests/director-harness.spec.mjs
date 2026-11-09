@@ -93,7 +93,7 @@ for (const surface of ['video', 'editor']) {
       events: [], ...(status === 'completed' ? {report: '{"diagnostics":"saved result"}'} : {})});
     await page.route('**/api/agent/**', route => {
       const req = route.request(), path = new URL(req.url()).pathname;
-      if (path === '/api/agent/computer-access') return route.fulfill({json: {available: true, session_token: 'test-owner-grant'}});
+      if (path === '/api/agent/computer-access') return route.fulfill({json: {available: true, authorization: 'native-per-operation'}});
       if (path.endsWith('/conversation')) return route.fulfill({json: {runtime: {harness_enabled: true}, messages: [{request_id: request,
         text: 'Prepare a reviewed edit, then continue.', status: 'answered', reply: status === 'completed' ? 'Consumed verified result; continued original objective.' : 'Review the proposal.',
         goal: {request_id: request, status: goalStatus, objective: 'Prepare a reviewed edit, then continue.',
@@ -119,6 +119,6 @@ for (const surface of ['video', 'editor']) {
     await card.getByRole('button', {name: 'Run approved task'}).click();
     await expect(page.getByRole('log', {name: 'Director conversation history'})).toContainText('Consumed verified result');
     await expect(card.locator('details').filter({hasText: 'Tool result'})).not.toHaveAttribute('open', '');
-    expect(actions).toEqual(['approve', 'run'].map(action => ({action, body: {revision: 1, plan_hash: 'a'.repeat(64)}, grant: 'test-owner-grant'})));
+    expect(actions).toEqual(['approve', 'run'].map(action => ({action, body: {revision: 1, plan_hash: 'a'.repeat(64)}, grant: undefined})));
   });
 }

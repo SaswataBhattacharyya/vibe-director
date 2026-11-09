@@ -15,9 +15,9 @@ export type DirectorGoal = {request_id: string; objective: string; status: strin
   state: {phase: string; progress: string; stop_reason: string | null; authorization: string; dependencies: string[]};
   steps: Array<{tool: string; task_id: string | null; status: string}>};
 export type AgentMessage = {request_id: string; text: string; reply: string; status: string; task_id: string | null; goal?: DirectorGoal; attachments?: Array<{asset_id:string;filename:string;sha256:string}>; story_target?: StoryTarget; video_target?: VideoPromptTarget; proposal?: ImageProposal | VideoPromptProposal | StudioProposal};
-export async function agentRequest<T>(workspace: string, resource: string, signal: AbortSignal, body?: unknown, computerToken?: string): Promise<T> {
+export async function agentRequest<T>(workspace: string, resource: string, signal: AbortSignal, body?: unknown): Promise<T> {
   const response = await fetch(`/api/agent/projects/${encodeURIComponent(workspace)}/${resource}`, {
-    signal, ...(body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json', ...(computerToken ? {'X-Vibe-Computer-Token': computerToken} : {})}, body: JSON.stringify(body)}),
+    signal, ...(body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}),
   });
   const value = await response.json();
   if (!response.ok) {
@@ -33,10 +33,3 @@ export async function agentRequest<T>(workspace: string, resource: string, signa
   return value;
 }
 export const exactApproval = (task: AgentTask) => ({revision: task.current_revision, plan_hash: task.plan_hash});
-
-export async function computerGrant(signal: AbortSignal): Promise<string> {
-  const response = await fetch('/api/agent/computer-access', {signal});
-  const value = await response.json();
-  if (!response.ok || !value.available || !value.session_token) throw new Error(value?.error?.message || 'Installed Codex computer runtime is unavailable.');
-  return value.session_token;
-}

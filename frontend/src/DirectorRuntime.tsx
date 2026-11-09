@@ -106,6 +106,7 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
   });
   const send = () => attempt(async signal => {
     if (access !== 'app') {
+      if (selected.length) throw new Error('Chat attachments are available in Application tools mode. Switch back to discuss these files, or remove the attachments before preparing a computer task.');
       const token = await computerGrant(signal);
       await agentRequest<AgentTask>(owner, 'tasks', signal, {tool_id: 'computer.execute', asset_ids: [],
         settings: {instruction: text, access_mode: access, skill_refs: skills}}, token);

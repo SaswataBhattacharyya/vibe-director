@@ -83,6 +83,25 @@ test('separate folder pickers send the New save location and Load project folder
  await expect.poll(()=>opened?.folder).toBe('/existing/film');
  await expect(page.getByLabel('Project controls')).toContainText('Existing film');
 });
+test('New project preserves old drafts and opens even when old media cannot checkpoint',async({page})=>{
+ const state=await fixture(page);
+ await page.goto('/#/text-to-image');await open(page,'/projects/A','Project A');
+ await expect(page.getByLabel('Project controls')).toContainText('Project A');
+ await page.getByLabel('Image prompt',{exact:true}).fill('Keep the original project draft');
+ let checkpoints=0;
+ await page.route('**/api/projects/save',route=>{checkpoints++;return route.fulfill({status:422,json:{error:{message:'Registered media changed; restore it before saving the project.'}}});});
+ await page.getByRole('button',{name:'Save project',exact:true}).click();
+ await expect(page.getByLabel('Project controls').getByRole('alert')).toContainText('Registered media changed');
+ await page.getByRole('button',{name:'New project',exact:true}).click();
+ await page.getByLabel('New project name',{exact:true}).fill('Project B');
+ await page.getByRole('button',{name:'Create project',exact:true}).click();
+ await expect(page.getByLabel('Project controls')).toContainText('Project B');
+ await expect(page.getByRole('dialog',{name:'New project',exact:true})).toHaveCount(0);
+ await expect(page.getByLabel('Image prompt',{exact:true})).toHaveValue('');
+ expect(checkpoints).toBe(1);
+ expect(JSON.stringify(state.memories[A])).toContain('Keep the original project draft');
+ expect(await page.evaluate(id=>localStorage.getItem('vibe-project-browser:'+id),A)).toContain('Keep the original project draft');
+});
 test('one folder restores isolated image settings and chat A → B → A, including cleared browser storage',async({page})=>{
  const state=await fixture(page);await page.goto('/#/text-to-image');
  await expect(page.getByLabel('Image prompt',{exact:true})).toBeVisible();
@@ -97,8 +116,9 @@ test('one folder restores isolated image settings and chat A → B → A, includ
  await open(page,'/projects/A');await expect(page.getByLabel('Image prompt',{exact:true})).toHaveValue('A distinct project prompt');
  await expect(page.getByLabel('Message the project Director',{exact:true})).toHaveValue('Remember A camera style');
  await expect(page.getByLabel('Width',{exact:true})).toHaveValue('1024');
+ const savesBefore=state.saves.length;
  await page.getByRole('button',{name:'Save project',exact:true}).click();
- await expect.poll(()=>state.saves.length).toBeGreaterThan(2);
+ await expect.poll(()=>state.saves.length).toBe(savesBefore+1);
  await page.evaluate(()=>{localStorage.clear();sessionStorage.clear();});await page.reload();
  await expect(page.getByLabel('Image prompt',{exact:true})).toHaveValue('A distinct project prompt');
  await expect(page.getByLabel('Width',{exact:true})).toHaveValue('1024');

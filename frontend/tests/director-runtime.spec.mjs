@@ -62,6 +62,63 @@ test('standalone Text to Image uses the shared Director, keeps references typed 
   expect(writes.filter(path=>path.includes('/jobs'))).toEqual([]);
 });
 const owner = 'story-aaaaaaaaaaaa';
+test('chat attachments support paste and drop, persist, and remove without deleting media', async ({page}) => {
+  const writes = await fixture(page), uploads = [], bodies = [];
+  const files = [];
+  const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5ZkAAAAASUVORK5CYII=', 'base64');
+  await page.route(`**/api/media/${owner}/assets?*`, async route => {
+    if (route.request().method() === 'POST') {
+      uploads.push(new URL(route.request().url()).searchParams.get('filename'));
+      files.push({workspace_id:owner,asset_id:`pa-chat-${uploads.length}`,filename:uploads.at(-1),kind:'image',content_url:`/fixture/chat-${uploads.length}.png`,sha256:'d'.repeat(64),roles:['project_image']});
+      return route.fulfill({json:files.at(-1)});
+    }
+    return route.fulfill({json:{assets:files,total:files.length}});
+  });
+  await page.route('**/fixture/chat-*.png', route => route.fulfill({contentType:'image/png',body:pixel}));
+  await page.route('**/api/agent/projects/*/conversation', route => {
+    if (route.request().method() === 'POST') bodies.push(route.request().postDataJSON());
+    return route.fulfill({json:{workspace_id:owner,messages:[]}});
+  });
+  await page.goto('/#/home');
+  const composer = page.getByLabel('Message the project Director', {exact:true});
+  await composer.fill('Discuss this lighting.');
+  await composer.evaluate((element, bytes) => {
+    const data = new DataTransfer();
+    data.items.add(new File([new Uint8Array(bytes)], 'pasted.png', {type:'image/png'}));
+    element.dispatchEvent(new ClipboardEvent('paste', {clipboardData:data,bubbles:true,cancelable:true}));
+  }, Array.from(pixel));
+  await expect(page.getByRole('list', {name:'Chat attachments',exact:true})).toContainText('pasted.png');
+  await expect(composer).toHaveValue('Discuss this lighting.');
+  await composer.evaluate((element, bytes) => {
+    const data = new DataTransfer();
+    data.items.add(new File([new Uint8Array(bytes)], 'dropped.png', {type:'image/png'}));
+    element.dispatchEvent(new DragEvent('drop', {dataTransfer:data,bubbles:true,cancelable:true}));
+  }, Array.from(pixel));
+  await expect(page.getByRole('list', {name:'Chat attachments',exact:true}).locator('img')).toHaveCount(2);
+  await page.reload();
+  await expect(page.getByRole('list', {name:'Chat attachments',exact:true})).toContainText('dropped.png');
+  await expect(composer).toHaveValue('Discuss this lighting.');
+  await page.getByRole('button',{name:'Remove chat attachment pasted.png',exact:true}).click();
+  await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+  await expect.poll(()=>bodies.length).toBe(1);
+  expect(bodies[0].asset_ids).toEqual(['pa-chat-2']);
+  expect(uploads).toEqual(['pasted.png','dropped.png']);
+  expect(files).toHaveLength(2);
+  expect(writes.filter(path=>path.includes('/jobs'))).toEqual([]);
+});
+test('older backend chat error explains restart and preserves the creative draft', async ({page}) => {
+  await fixture(page);
+  await page.route('**/api/agent/projects/*/conversation',route=>route.fulfill(route.request().method()==='POST'
+    ? {status:400,json:{error:{message:'Supply request_id, text, asset_ids, skill_refs and surface.'}}}
+    : {json:{workspace_id:owner,messages:[]}}));
+  await page.goto('/#/text-to-image');
+  await page.getByLabel('Image prompt',{exact:true}).fill('A room.');
+  const composer=page.getByLabel('Message the project Director',{exact:true});
+  await composer.fill('Explain the reference mismatch.');
+  await page.getByRole('button',{name:'Send to project Director',exact:true}).click();
+  await expect(page.getByRole('alert').filter({hasText:'running backend is older'})).toBeVisible();
+  await expect(composer).toHaveValue('Explain the reference mismatch.');
+});
 test('shared image references survive reload and removal never deletes library media',async({page})=>{
   const writes=await fixture(page);
   const source={workspace_id:'other',asset_id:'pa-foreign',kind:'image',filename:'saved-reference.png',roles:['project_image'],sha256:'d'.repeat(64),content_url:'/fixture/reference.png',created_at:'2026-11-06'};
@@ -633,6 +690,30 @@ test('shared media picker selects audio utility inputs without starting a job',a
   await utility.getByLabel('Audio utility operation').selectOption('noise_cleanup');
   await expect(utility.getByText('0 selected',{exact:true})).toBeVisible();
   await expect(utility.getByRole('button',{name:'Run utility',exact:true})).toBeDisabled();
+});
+
+test('sampled frames show images and exact approved settings in shared chat', async ({page}) => {
+  const writes = await fixture(page);
+  const task = {project_id: owner, task_id: 'task-sampled-frames', status: 'completed', current_revision: 1,
+    plan_hash: 'f'.repeat(64), plan: {tool_id: 'video.sample_frames', scope: 'Explicit timestamps; preserve original media.',
+      assets: [{asset_id: 'pa-video', filename: 'shot.mp4', sha256: 'b'.repeat(64)}], settings: {timestamps_seconds: [0, 0.8], snapshot: {}}},
+    invocation: {invocation_id: 'call-samples', job_id: 'agent-workspace-samples', state: 'completed'}, events: [],
+    outputs: [{workspace_id: owner, asset_id: 'pa-frame', filename: 'frame-0.png', kind: 'image', content_url: '/fixture/frame.png', sha256: 'c'.repeat(64)}],
+    report: 'Sample at 0 seconds from approved source.'};
+  await page.route('**/fixture/frame.png', route => route.fulfill({contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5ZkAAAAASUVORK5CYII=', 'base64')}));
+  await page.route('**/api/agent/projects/*/tasks**', route => route.fulfill({json: new URL(route.request().url()).pathname.endsWith('/tasks') ? {tasks: [task]} : task}));
+  await page.goto('/#/editor');
+  const card = page.getByRole('article', {name: 'Task task-sampled-frames'});
+  await expect(card).toContainText('Inspect video frames');
+  await card.getByText('Exact tool settings', {exact: true}).click();
+  await expect(card.locator('details pre')).toContainText('timestamps_seconds');
+  await expect(card.locator('details pre')).toContainText('0.8');
+  await expect(card.getByRole('img', {name: 'frame-0.png'})).toBeVisible();
+  await expect(card.locator('audio')).toHaveCount(0);
+  await expect(card.getByRole('button', {name: 'Offer audio to Editor'})).toHaveCount(0);
+  await page.reload();
+  await expect(card.getByRole('img', {name: 'frame-0.png'})).toBeVisible();
+  expect(writes.filter(path => path.includes('/jobs') || path.endsWith('/run'))).toEqual([]);
 });
 
 test('speech and audio tasks keep truthful labels, settings and timed evidence after reload', async ({page}) => {

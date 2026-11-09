@@ -76,6 +76,18 @@ class R2VSocketCapabilityTests(TestCase):
 
 
 class IsolatedR2VContractTests(TestCase):
+    def test_reference_tag_error_names_missing_extra_and_available_tags(self):
+        from story_builder.services.isolated_r2v_contract import request_digest
+        with self.assertRaises(R2VContractError) as caught:
+            compile_preview(request(workflow_version=2, workflow_sha256=request_digest({'workflow_version': 2}),
+                steps=4, prompt='Use <Picture 2> for identity. <Subject 1> watches.'))
+        message = str(caught.exception)
+        self.assertIn('Connected references missing from the prompt: <Picture 1>', message)
+        self.assertIn('Tags in the prompt without connected media: <Picture 2>', message)
+        self.assertIn('Available tags: <Picture 1>', message)
+        self.assertIn('not <Subject 1>', message)
+        self.assertEqual(caught.exception.code, 'prompt_reference_tags_mismatch')
+
     def test_story_r2v_admission_accepts_only_its_pinned_style_media(self):
         import binascii
         import struct

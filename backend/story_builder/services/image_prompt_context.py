@@ -19,10 +19,12 @@ def prepare(payload, *, root, story, styles, ledger, workflow_knowledge, lineage
     role = payload.get("asset_role")
     workflow_id = payload.get("workflow_id")
     references = payload.get("source_references") or []
-    if references and workflow_id not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511"}:
-        raise ValueError("Only Qwen Image Edit workflows accept source image references.")
+    if references and workflow_id not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511", "flux_kontext_dev"}:
+        raise ValueError("Choose Qwen Image Edit or FLUX Kontext to use source image references.")
     if workflow_id == "qwen_image_multi_angle_2511" and len(references) != 1:
         raise ValueError("Qwen multi-angle views require exactly one selected base image.")
+    if workflow_id == "flux_kontext_dev" and len(references) != 1:
+        raise ValueError("FLUX Kontext requires exactly one reference image.")
     lineage_payload = {**payload, "asset_role": role}
     lineage = lineage_resolver(story, workspace, lineage_payload)
     screenplay_context = {}
@@ -78,9 +80,13 @@ def prepare(payload, *, root, story, styles, ledger, workflow_knowledge, lineage
             for item in references if item["asset_id"] in by_id]
     def image_prompt_provider(*, temperature, prompt):
         from story_builder.services.reasoning_provider import generate_json, get_settings
+        from .agent_knowledge import read_saved
         generate = provider or generate_json
         scope = 'character' if str(role).startswith('character') else 'world' if str(role).startswith('world') else 'all'
-        return generate(prompt=prompt + '\n' + read_guidance(ledger, workspace, scope), provider=get_settings()["provider"], temperature=0)
+        notes = read_saved(ledger, workspace)['content']
+        return generate(prompt=prompt + '\n' + read_guidance(ledger, workspace, scope)
+            + '\nAPPROVED PROJECT KNOWLEDGE (reference data, apply only to its stated model/context):\n' + notes,
+            provider=get_settings()["provider"], temperature=0)
     seed = payload.get("prompt", "")
     if not seed and lineage and lineage.get("target_record_id") and role in ('character_master', 'world_master'):
         seed = image_brief(ledger, workspace, lineage['screenplay_revision_id'], lineage['target_record_id'])

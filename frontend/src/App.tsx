@@ -4,6 +4,7 @@ import OutputDestination from './OutputDestination';
 import SelectionToggle from './SelectionToggle';
 import MediaSourcePicker from './MediaSourcePicker';
 import CreateWorkspace from './CreateWorkspace';
+import FrameEndpointDraft from './FrameEndpointDraft';
 import TakeWorkspace, {DockedVideo} from './TakeWorkspace';
 import T2VBatchPanel from './T2VBatchPanel';
 import RunClipLiveView from './RunClipLiveView';
@@ -42,7 +43,7 @@ import './video-references.css';
 
 export type R2VReferenceDraft = { speakerIds?: string[]; assetId: string; role: string; intent: string; startSec?: number; endSec?: number; includePairedSoundtrack?: boolean; audioIntent?: string };
 type SourceLineage = Pick<StoryVideoLineage, 'screenplay_revision_id'|'setup_hash'|'scene_number'|'shot_number'|'source_prompt_sha256'|'knowledge_ref'|'style_ref'|'planned_clip_id'|'board_revision'>;
-type StoryHandoff = SourceLineage & { workspace_id: string; clip_id: string; workflow_id: string; prompt: string; duration?:number; first_frame_id?:string;last_frame_id?:string;r2v_images?:R2VReferenceDraft[] };
+type StoryHandoff = SourceLineage & { source_kind?: string; workspace_id: string; clip_id: string; workflow_id: string; prompt: string; duration?:number; first_frame_id?:string;last_frame_id?:string;r2v_images?:R2VReferenceDraft[] };
 export type Draft = { directorPrepared?: boolean; directorWarnings?: string[]; referenceReviews?: Record<string, string>; prompt: string; r2vMainPrompt?: string; r2vCollatedPrompt?: string; r2vImages?: R2VReferenceDraft[]; r2vVideos?: R2VReferenceDraft[]; r2vAudios?: R2VReferenceDraft[]; duration: number; aspectRatio?: VideoAspectRatio; resolution: VideoResolution; workspaceId: string; clipId: string; workflowId: string; sourceLineage?: SourceLineage; firstFrameAssetId?: string; lastFrameAssetId?: string; pendingKey?: string; pendingRequest?: VideoRequest; retakeOf?: string; keepOriginal?: boolean };
 const DRAFT_KEY = 'vibe-video-draft-v1';
 const shotDraftKey = (draft: Draft) => draft.sourceLineage ? `${DRAFT_KEY}:shot:${draft.workspaceId}:${draft.sourceLineage.screenplay_revision_id}:${draft.sourceLineage.setup_hash}:${draft.workflowId}:${draft.clipId}` : '';
@@ -355,7 +356,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
     if ((draft.prompt.trim() || draft.sourceLineage) && !window.confirm('Replace the current video draft with the selected saved screenplay shot?')) return;
     const workflowId = handoff.workflow_id;
     setDraft(prev => ({ ...prev, workspaceId: handoff.workspace_id, clipId: handoff.clip_id,
-      prompt: handoff.prompt, workflowId, sourceLineage: {
+      prompt: handoff.prompt, workflowId, sourceLineage: handoff.source_kind === 'brief_media' ? undefined : {
         screenplay_revision_id: handoff.screenplay_revision_id, setup_hash: handoff.setup_hash, ...(handoff.board_revision ? {board_revision:handoff.board_revision}:{}),
         scene_number: handoff.scene_number, shot_number: handoff.shot_number,
         source_prompt_sha256: handoff.source_prompt_sha256, knowledge_ref: handoff.knowledge_ref, style_ref: handoff.style_ref,
@@ -364,7 +365,7 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
       firstFrameAssetId: handoff.first_frame_id, lastFrameAssetId: handoff.last_frame_id, pendingKey: undefined,
       pendingRequest: undefined, retakeOf: undefined, keepOriginal: undefined }));
     setPreview(null); setCapability(null); setCapState('idle');
-    setMessage(`Opened saved screenplay Scene ${handoff.scene_number}, Shot ${handoff.shot_number}. Confirm the workflow settings in Video; the job has not started.`);
+    setMessage(`Opened saved ${handoff.source_kind === 'brief_media' ? 'storyboard' : 'screenplay'} Scene ${handoff.scene_number}, Shot ${handoff.shot_number}. Confirm the workflow settings in Video; the job has not started.`);
     localStorage.removeItem(STORY_HANDOFF_KEY);
   // Handoff is consumed only when the Video workspace becomes visible.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -375,7 +376,8 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
   const firstFrame = mediaWorkspaceId === draft.workspaceId ? mediaAssets.find(asset => asset.asset_id === draft.firstFrameAssetId) : undefined;
   const lastFrame = mediaWorkspaceId === draft.workspaceId ? mediaAssets.find(asset => asset.asset_id === draft.lastFrameAssetId) : undefined;
   const frameCandidates = (role: 'first_frame'|'last_frame') => mediaAssets
-    .filter(asset => asset.kind === 'image' && asset.roles.includes(role))
+    .filter(asset => asset.kind === 'image' && (asset.roles.includes(role)
+      || asset.asset_id === (role === 'first_frame' ? draft.firstFrameAssetId : draft.lastFrameAssetId)))
     .sort((a,b) => Number(isStoryFrame(b, role)) - Number(isStoryFrame(a, role)) || a.filename.localeCompare(b.filename));
   function isStoryFrame(asset: MediaAsset, role: 'first_frame'|'last_frame') {
     const job = asset.metadata?.production_image_job;
@@ -1004,6 +1006,13 @@ function VideoWorkspace({ view='create', visible=true, workspaceId }: { view?: '
       <TakeWorkspace enabled={view==='take'} workspaceId={draft.workspaceId}><div className="page-heading"><div><div className="eyebrow">STUDIO / VIDEO</div><h1>{view==='take'?'Current take':'Create video'}</h1><p>{view === 'take' && fullRunWorkspace ? `${fullRunTitle} · Fully automated` : view==='take'?'Review your take.':draft.sourceLineage ? `Screenplay · Scene ${draft.sourceLineage.scene_number}, Shot ${draft.sourceLineage.shot_number}` : 'Isolated video · no story linked'}</p></div><button className="quiet-button" onClick={() => { const next = {...defaultDraft(), workspaceId: draft.workspaceId}; setDraftState(next); localStorage.setItem(DRAFT_KEY, JSON.stringify(next)); setMessage(activeUnresolved ? `New draft created. Existing job ${active?.job.job_id} remains active and must settle before another job can start.` : 'New local draft created. Current take and history are preserved.'); }} disabled={formLocked || (view === 'take' && Boolean(fullRunWorkspace))}><span>＋</span> New draft</button></div>
       {view === 'take' && message && <div className={`notice ${message.toLowerCase().includes('unavailable') || message.toLowerCase().includes('error') || message.toLowerCase().includes('could not') ? 'notice-warn' : ''}`} role="status"><span>{message}</span><button onClick={() => setMessage('')} aria-label="Dismiss"><X size={15}/></button></div>}
       {view === 'create' && <OutputDestination tool="video-generation" workspaceId={draft.workspaceId} disabled={busy||fullRunBusy||formLocked}/>}
+      {view === 'create' && <FrameEndpointDraft owner={draft.workspaceId} disabled={busy||formLocked||hasPendingAttempt||activeUnresolved} onApply={endpoints=>{
+        localStorage.setItem(`${DRAFT_KEY}:before-frame-handoff:${draft.clipId}`,JSON.stringify(draft));
+        setDraft(()=>({...defaultDraft(),workspaceId:draft.workspaceId,workflowId:FL2VA_WORKFLOW_ID,
+          firstFrameAssetId:endpoints.first_frame.asset_id,lastFrameAssetId:endpoints.last_frame.asset_id}));
+        setPreview(null);setCapability(null);setCapState('idle');
+        setMessage('Approved endpoints selected in a new video draft. Add the shot prompt and review settings before Generate.');
+      }}/>}
       {view === 'take' && <T2VBatchPanel key={`batch-take:${draft.workspaceId}`} workspaceId={draft.workspaceId} showVideos={false} />}
       {view === 'take' && fullRunLoading && <section className="card" aria-label="Fully automated run">Checking selected story and saved setup…</section>}
       {view === 'take' && !fullRunLoading && fullRunWorkspace && fullRunState && <section className="card full-run-panel" aria-label="Fully automated run">

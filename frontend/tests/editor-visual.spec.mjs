@@ -32,13 +32,22 @@ test('visual edits share the plan, block old approval, save and reload without r
  await expect(page.locator('.editor-visual-expanded')).toBeVisible();
  await page.keyboard.press('Escape');await expect(page.locator('.editor-visual-expanded')).toHaveCount(0);
  await page.getByText('Filters, speed & transition', {exact:true}).click();
- await page.getByLabel('Video filter',{exact:true}).selectOption('cinematic');
+ await page.getByRole('combobox',{name:/^Video filter/}).selectOption('cinematic');
  await page.getByLabel('Starting speed (×)',{exact:true}).fill('1.5');
  await expect(page.getByRole('button',{name:'Load HyperFrames preview',exact:true})).toBeDisabled();
+ await page.getByRole('button',{name:'Add text layer',exact:true}).click();
+ await page.getByLabel('Layer 1 text',{exact:true}).fill('A layered title');
+ await page.getByText('Animation keyframes',{exact:true}).click();
+ await page.getByRole('button',{name:'Add keyframe to layer 1',exact:true}).click();
+ await page.getByLabel('Layer 1 keyframe 1 opacity',{exact:true}).fill('0');
+ await page.getByRole('button',{name:'Add keyframe to layer 1',exact:true}).click();
+ await page.getByLabel('Layer 1 keyframe 2 opacity',{exact:true}).fill('1');
  await page.getByRole('button',{name:'Save visual timeline proposal',exact:true}).click();
  await expect.poll(()=>posted?.plan?.clips?.[1]?.caption).toBe('Edited visually');
  expect(posted.plan.clips.map(c=>c.asset_id)).toEqual(['v2','v1']);expect(posted.plan.clips[1].end).toBe(2);
  expect(posted.plan.clips[1].effect.preset).toBe('cinematic');expect(posted.plan.clips[1].speed.start).toBe(1.5);
+ expect(posted.plan.layers[0].text).toBe('A layered title');
+ expect(posted.plan.layers[0].motion).toEqual([{time:0,opacity:0},{time:.5,opacity:1}]);
  expect(commands).toBe(0);
  await expect(page.getByRole('button',{name:'Approve this revision',exact:true})).toBeEnabled();
  // Simulate a previously approved plan on reload; the editable timeline must restore it.

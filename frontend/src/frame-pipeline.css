@@ -1,0 +1,11 @@
+.frame-pipeline { margin-block: 24px; padding: 24px; }
+.frame-pipeline summary { cursor: pointer; font-weight: 650; font-size: 1.05rem; }
+.frame-pipeline p { max-width: 80ch; line-height: 1.6; margin-block: 16px; }
+.frame-pipeline-controls { display:flex; flex-wrap:wrap; gap:16px; align-items:end; margin-block:16px; }
+.frame-pipeline label { display:grid; gap:8px; }
+.frame-pipeline input { max-width:150px; }
+.frame-pipeline textarea { width:100%; min-height:100px; }
+.frame-pipeline-keys { display:flex; gap:16px; overflow-x:auto; padding-block:16px; }
+.frame-pipeline-keys article { flex:0 0 230px; display:grid; align-content:start; gap:10px; }
+.frame-pipeline-keys img { width:100%; height:150px; object-fit:contain; background:#111; border-radius:10px; }
+.frame-pipeline button { margin:4px; }

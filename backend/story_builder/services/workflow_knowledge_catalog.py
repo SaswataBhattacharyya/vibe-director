@@ -131,6 +131,11 @@ def seed_minimax_h3_workflow_knowledge(store: WorkflowKnowledge) -> list[dict]:
 
 
 _IMAGE_GUIDANCE = {
+    "flux_kontext_dev": {
+        "model_id": "flux_kontext_dev",
+        "prompt_rule": "Instruct a specific edit to the reference image and explicitly preserve identity, clothing, style, scene geometry and camera where required. Negative conditioning is zeroed. ReferenceLatent supplies true image conditioning; no temporal consistency guarantee.",
+        "reference_rule": "Exactly one image is required. Output follows FluxKontextImageScale native aspect buckets, not width/height controls. Review actual dimensions and visual drift before accepting.",
+    },
     "qwen_image_2512": {
         "model_id": "qwen_image_2512",
         "prompt_rule": "This text-to-image graph sends the prompt string to its CLIPTextEncode node; it has no LoadImage reference input.",
@@ -216,6 +221,7 @@ def seed_image_workflow_knowledge(store: WorkflowKnowledge) -> list[dict]:
         step_limits = (4, 16) if workflow_id in {"z_image_turbo", "qwen_image_edit_2511"} else (20, 80)
         cfg_max = 2.0 if workflow_id == "z_image_turbo" else 8.0
         dimension_contract = {
+            "flux_kontext_dev": "Width/height are nominal metadata only; FluxKontextImageScale determines the native aspect bucket from the reference. Guidance 2.5, denoise 1, Euler/simple are pinned in the graph.",
             "qwen_image_2512": "Width and height are applied directly to the EmptySD3LatentImage node.",
             "z_image_turbo": "Width and height are applied directly to the EmptySD3LatentImage node.",
             "qwen_image_edit_2511": "Width and height are converted to a target megapixel count (0.3–2.0) for source-image scaling; output aspect ratio follows the source image, so these values do not set exact output dimensions.",

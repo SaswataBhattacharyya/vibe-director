@@ -1,8 +1,13 @@
 """Service-backed descriptions only. Discovery never authorizes execution."""
 import shutil
-from . import agent_transcription, audio_utilities
+from . import agent_transcription, audio_utilities, frame_pipeline
 
 _CONTRACTS = {
+    'image.generate_next_keyframe': ('Generate one Kontext candidate from the approved take head; owner review is required.', ['image'], 'reviewed_take', 'comfyui', 'unreviewed_candidate'),
+    'video.interpolate_keyframes': ('Interpolate an approved continuous-shot take with FILM or RIFE; never interpolate across cuts.', ['image'], 'reviewed_take', 'comfyui', 'verified_frame_sequence'),
+    'video.export_frame_sequence': ('Export a completed reviewed sequence as silent MP4 and lossless FFV1.', ['image'], 'reviewed_take', 'ffmpeg', 'registered_video'),
+    'editor.prepare_clip_join': ('Prepare a Kdenlive join preview from completed overlap evidence; never approve or render the final cut.', ['video'], 'saved_editor_selection', 'kdenlive_mcp', 'pending_editor_join'),
+    'video.compare_clip_overlap': ('Compare two ordered videos for moving tail/head overlap; evidence only, no edits.', ['video'], 'bounded_tail_head', 'ffmpeg', 'overlap_evidence'),
     'audio.extract_mp3': ('Extract audio from complete audio/video sources into MP3 files.',
                          ['audio', 'video'], 'whole_source', 'ffmpeg', 'registered_audio'),
     'video.continuity_last_frame': ('Extract one video’s final frame as a continuity reference.',
@@ -33,10 +38,16 @@ def tools() -> dict:
             'properties': {'asset_ids': {**asset_ids, 'maxItems': 1},
                 'settings': {'type': 'object', 'additionalProperties': False, 'properties': {}}}}},
     ]
+    rows.append({'id': 'video.compare_clip_overlap', 'effect': 'submit', 'input_schema': {
+        'type': 'object', 'additionalProperties': False, 'required': ['asset_ids', 'settings'],
+        'properties': {'asset_ids': {**asset_ids, 'minItems': 2, 'maxItems': 2, 'uniqueItems': True},
+            'settings': {'type': 'object', 'additionalProperties': False, 'properties': {
+                'window_seconds': {'type': 'number', 'minimum': .5, 'maximum': 10, 'default': 3}}}}}})
+    ready = ready and bool(shutil.which('ffprobe'))
     for row in rows:
         row.update(status='available' if ready else 'blocked', execution_enabled=ready)
         if not ready:
-            row['reason'] = 'ffmpeg is unavailable.'
+            row['reason'] = 'ffmpeg is unavailable.' if not shutil.which('ffmpeg') else 'ffprobe is unavailable.'
     if ready:
         for row in rows:
             row['reason'] = 'Propose a task, approve its exact plan, then run it through the shared task gateway.'
@@ -67,6 +78,14 @@ def tools() -> dict:
                 'properties': {'asset_id': {'type': 'string'}, 'start': {'type': 'number'}, 'end': {'type': 'number'}}}},
         },
     }
+    from .kdenlive_mcp import capability
+    kdenlive = capability()
+    rows.append({'id': 'editor.prepare_clip_join', 'effect': 'submit',
+        'status': 'available' if kdenlive['ready'] else 'blocked', 'execution_enabled': kdenlive['ready'],
+        'reason': kdenlive['message'], 'input_schema': {'type': 'object', 'additionalProperties': False,
+            'required': ['asset_ids', 'settings'], 'properties': {'asset_ids': {**asset_ids, 'minItems': 2, 'maxItems': 2},
+                'settings': {'type': 'object', 'additionalProperties': False, 'required': ['target', 'comparison_task_id'],
+                    'properties': {'target': editor_target, 'comparison_task_id': {'type': 'string'}}}}}})
     rows.append({'id': 'editor.prepare_brief', 'effect': 'submit', 'status': 'available', 'execution_enabled': True,
         'reason': 'Requires a saved Editor session and exact task approval. Prepares clearance 1; never approves or renders.',
         'input_schema': {'type': 'object', 'additionalProperties': False, 'required': ['asset_ids', 'settings'],
@@ -87,8 +106,21 @@ def tools() -> dict:
         'input_schema': {'type': 'object', 'additionalProperties': False,
             'required': ['asset_ids', 'settings'], 'properties': {'asset_ids': {**asset_ids, 'maxItems': 1},
                 'settings': {'type': 'object', 'additionalProperties': False, 'properties': {}}}}})
+    for tool, operation in frame_pipeline.TOOLS.items():
+        fields = {'take_id': {'type':'string'}, 'revision': {'type':'integer','minimum':1}}
+        fields.update({'prompt':{'type':'string','minLength':1},'seed':{'type':'integer','minimum':0}} if operation == 'next'
+            else {'model':{'enum':['film','rife']},'multiplier':{'type':'integer','minimum':2,'maximum':16},
+                  'fps':{'type':'number','minimum':1,'maximum':60},'hold':{'type':'number','minimum':0,'maximum':10}} if operation == 'interpolate'
+            else {'sequence_job_id':{'type':'string'}})
+        rows.append({'id':tool,'effect':'submit','status':'available' if ready else 'blocked',
+            'execution_enabled':ready,'reason':'Requires an approved take and exact-plan approval. Backend model readiness is checked at execution.',
+            'input_schema':{'type':'object','additionalProperties':False,'required':['asset_ids','settings'],
+                'properties':{'asset_ids':asset_ids,'settings':{'type':'object','additionalProperties':False,
+                    'required':list(fields),'properties':fields}}}})
     for row in rows:
         description, media, scope, runtime, result = _CONTRACTS[row['id']]
         row.update(description=description, accepted_media=media, scope=scope, runtime=runtime,
                    approval='exact_plan', result_kind=result)
-    return {'tools': rows}
+    from .agent_native_tools import catalogue
+    from .agent_generation_tools import catalogue as generation_catalogue
+    return {'tools': rows + catalogue() + generation_catalogue()}

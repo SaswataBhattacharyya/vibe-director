@@ -1,4 +1,4 @@
-"""Validate and stage frozen image references for the Qwen edit workflow."""
+"""Validate and stage frozen image references for reference-conditioned workflows."""
 from __future__ import annotations
 
 import copy
@@ -97,6 +97,8 @@ def prepare_image_edit_graph(*, job: dict[str, Any], media_root: Path,
     canonical = validate_image_references(media_root=media_root, workspace_id=workspace_id,
         references=references, style_selection=style_selection or settings.get("style_selection"),
         required_role=("character_master" if job.get("asset_role") == "character_view" else "world_master") if job.get("workflow_id") == "qwen_image_multi_angle_2511" else None)
+    if job.get('workflow_id') == 'flux_kontext_dev' and len(canonical) != 1:
+        raise ImageReferenceError('FLUX Kontext requires exactly one reference image.')
     owner_id = f"image-{job.get('job_id', '')}"
     if not _ID.fullmatch(owner_id):
         raise ImageReferenceError("Image-reference staging owner is invalid.")
@@ -133,7 +135,7 @@ def prepare_image_edit_graph(*, job: dict[str, Any], media_root: Path,
             comfy_input_root=comfy_input_root, owner_root=owner_root)
         raise
     graph = copy.deepcopy(job["graph"])
-    node_ids = ("41",) if job.get("workflow_id") == "qwen_image_multi_angle_2511" else ("78", "120", "121")
+    node_ids = ("1",) if job.get("workflow_id") == "flux_kontext_dev" else ("41",) if job.get("workflow_id") == "qwen_image_multi_angle_2511" else ("78", "120", "121")
     if job.get("workflow_id") == "qwen_image_multi_angle_2511" and len(filenames) != 1:
         cleanup_image_reference_staging(owner_id=owner_id,
             comfy_input_root=comfy_input_root, owner_root=owner_root)
@@ -141,7 +143,7 @@ def prepare_image_edit_graph(*, job: dict[str, Any], media_root: Path,
     for node_id, filename in zip(node_ids, filenames):
         node = graph.get(node_id)
         if not isinstance(node, dict) or node.get("class_type") != "LoadImage":
-            raise ImageReferenceError("Qwen image-edit graph no longer matches its input contract.")
+            raise ImageReferenceError("Image-edit graph no longer matches its input contract.")
         node["inputs"]["image"] = filename
     return graph
 

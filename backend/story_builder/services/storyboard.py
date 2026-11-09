@@ -39,6 +39,8 @@ class Storyboard:
     def __init__(self, ledger, story, root):
         self.ledger, self.story, self.root = ledger, story, root
         self.edits = FieldEditProposals(ledger)
+        from . import storyboard_sources
+        storyboard_sources.setup(ledger)
         with closing(ledger._connect()) as db:
             db.execute('''CREATE TABLE IF NOT EXISTS story_storyboards (
                 workspace_id TEXT NOT NULL, screenplay_revision_id TEXT NOT NULL,
@@ -48,6 +50,9 @@ class Storyboard:
             db.commit()
 
     def screenplay(self, workspace, revision):
+        if revision.startswith('board-'):
+            from . import storyboard_sources
+            return storyboard_sources.get(self, workspace, revision)
         return self.story.get_screenplay_revision(workspace, revision)
 
     def assets(self, workspace):
@@ -86,6 +91,11 @@ class Storyboard:
                         'Keep approved character identity and location continuity. No text or watermarks.'])),
                     'video_prompt': '\n'.join(filter(None, [shot.get('action'), shot.get('dialogue')])),
                     'batch_id': '', 'request_key': '', 'image_request': '', 'batch_target': 'image', 'notes': ''}
+        for index, source in enumerate(envelope.get('source_assets', []), 1):
+            shot = body['shots'][f'1.{index}']
+            shot.update(media_asset_id=source['asset_id'], route='existing')
+            if shot['presentation'] == 'image':
+                shot['image_asset_id'] = source['asset_id']
         return {'workspace_id': workspace, 'screenplay_revision_id': revision, 'revision': 0, 'body': body, 'fflf_automation_paused': True}
 
     def validate(self, workspace, revision, value):
@@ -359,7 +369,8 @@ class Storyboard:
                     'Preserve image holds. Review dialogue, music and SFX before rendering.\n' +
                     json.dumps(self.screenplay(workspace, revision)['screenplay'], ensure_ascii=False))
                 item = {'id': editor_id, 'name': f'Storyboard · {revision[-12:]} · v{state["revision"]}',
-                    'workspace_id': workspace, 'style_id': None, 'revision': 0,
+                    'workspace_id': workspace, 'storyboard_source': {'source_id': revision, 'revision': state['revision']},
+                    'style_id': None, 'revision': 0,
                     'created_at': vibe_editor.now(), 'updated_at': vibe_editor.now(), 'messages': [],
                     'revisions': [], 'selection': selection, 'overrides': {'default': notes[:4000]},
                     'view': {'tab': 'media'}, 'job_id': None}
@@ -375,7 +386,8 @@ class Storyboard:
         state = self.get(workspace, revision)
         if not state['revision']:
             raise ValueError('Save the storyboard before opening a video shot.')
-        if not self.screenplay(workspace, revision).get('accepted'):
+        source = self.screenplay(workspace, revision)
+        if not source.get('accepted') and source.get('source_kind') != 'brief_media':
             raise ValueError('Accept the current screenplay before preparing a video.')
         self.validate(workspace, revision, state['body'])
         shot = state['body']['shots'].get(key)
@@ -397,6 +409,7 @@ class Storyboard:
             raise ValueError('Choose first and last frames for this manual FFLF shot.')
         sn, hn = map(int, key.split('.'))
         return {'workspace_id':workspace,'screenplay_revision_id':revision, 'board_revision':state['revision'],
+            'source_kind': source.get('source_kind', 'screenplay'),
             'setup_hash': self.digest(state['body']), 'source_prompt_sha256': hashlib.sha256(shot['video_prompt'].encode()).hexdigest(),
             'scene_number':sn,'shot_number':hn,'clip_id':story_clip_id(workspace, revision,sn,hn),
             'workflow_id':workflow,'prompt':shot['video_prompt'],'duration':int(shot['duration']),
@@ -410,7 +423,7 @@ class Storyboard:
         source = json.dumps(state['body'], ensure_ascii=False)
         instruction = text(payload['instruction'], 'Instruction', 4000)
         screenplay = self.screenplay(workspace, revision)
-        style = self.story.get_workspace(workspace).get('style_selection')
+        style = self.story.get_workspace(workspace).get('style_selection') if not revision.startswith('board-') else None
         assets = [{'asset_id':a['asset_id'], 'filename':a['filename'], 'kind':a['kind'], 'description':a.get('description',''), 'roles':a.get('roles',[])} for a in self.assets(workspace).values()]
         def call(**kwargs):
             prompt = ('You are the storyboard production Director. Return JSON with replacement (a JSON-encoded complete storyboard body) and explanation. '

@@ -228,7 +228,7 @@ class ProductionImageWorkflowTests(unittest.TestCase):
     def test_bundled_image_graphs_match_adapter_node_and_default_contracts(self):
         graph_root = Path(__file__).resolve().parents[1] / "workflows" / "api"
         sampler_nodes = {
-            "qwen_image_2512": "230", "z_image_turbo": "44",
+            "flux_kontext_dev": "11", "qwen_image_2512": "230", "z_image_turbo": "44",
             "qwen_image_edit_2511": "3", "qwen_image_multi_angle_2511": "65",
         }
         latent_nodes = {
@@ -249,7 +249,9 @@ class ProductionImageWorkflowTests(unittest.TestCase):
                 defaults = spec["defaults"]
                 self.assertEqual(sampler["steps"], defaults["steps"])
                 self.assertEqual(sampler["cfg"], defaults["cfg"])
-                if workflow_id == "qwen_image_edit_2511":
+                if workflow_id == "flux_kontext_dev":
+                    self.assertEqual(graph["5"]["class_type"], "FluxKontextImageScale")
+                elif workflow_id == "qwen_image_edit_2511":
                     self.assertEqual(graph["93"]["class_type"], "ImageScaleToTotalPixels")
                     self.assertEqual(graph["89"]["class_type"], "LoraLoaderModelOnly")
                 else:
@@ -820,6 +822,11 @@ class ProductionImageWorkflowTests(unittest.TestCase):
                     model.touch()
             graph_root = Path(__file__).resolve().parents[1] / "workflows" / "api"
             live_nodes = {node: {} for spec in SPECS.values() for node in spec["required_nodes"]}
+            kontext = json.loads((graph_root / SPECS['flux_kontext_dev']['graph']).read_text())
+            for node in kontext.values():
+                live_nodes[node['class_type']] = {'input': {'required': {
+                    field: [[value]] if isinstance(value,str) else ['ANY']
+                    for field,value in node['inputs'].items()}}}
             catalog = image_workflow_catalog(comfy_root=root / "ComfyUI",
                 workflow_root=graph_root, smoke_root=root / "smokes", object_info=live_nodes)
             self.assertTrue(all(row["available"] for row in catalog["workflows"]))

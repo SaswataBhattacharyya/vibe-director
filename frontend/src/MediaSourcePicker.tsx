@@ -15,9 +15,9 @@ export type MediaDestination =
 const destinationLabel=(destination:MediaDestination)=>destination.kind==='chat_attachment'?'Director chat':destination.kind==='editor_preview'?'Editor preview':destination.slot;
 
 /** Discovery is global. Explicit Add preserves the tool's existing destination and slot selection. */
-export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false,destination,editor,refreshToken=0}: {
+export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false,destination,editor,refreshToken=0,buttonLabel='Browse media sources'}: {
   workspaceId:string;kinds:Array<MediaAsset['kind']>;onAdded?:(assets:MediaAsset[])=>void;destination?:MediaDestination;disabled?:boolean;role?:string;compact?:boolean;
-  editor?:EditorMediaActions;refreshToken?:number;
+  editor?:EditorMediaActions;refreshToken?:number;buttonLabel?:string;
 }) {
   const [open,setOpen]=useState(Boolean(editor)),[source,setSource]=useState(editor?'current':'all'),[owner,setOwner]=useState(''),[folder,setFolder]=useState('');
   const [navigation,setNavigation]=useState(false),[query,setQuery]=useState(''),[order,setOrder]=useState('newest'),[offset,setOffset]=useState(0),[view,setView]=useState('cards');
@@ -124,5 +124,5 @@ export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=fa
       </div>
       {naming&&<dialog ref={nameDialog} className="media-source-modal" aria-label="Name workspace" onCancel={e=>{if(savingName)e.preventDefault();else setNaming('');}}><div className="card"><h3>Name this workspace</h3><p>A name helps you find this work later. Its files and identity stay unchanged.</p><label>Workspace name<input autoFocus maxLength={120} value={name} onChange={e=>setName(e.target.value)}/></label><div className="media-source-footer"><button type="button" className="quiet-button" disabled={savingName} onClick={()=>setNaming('')}>Cancel</button><button type="button" className="generate-button" disabled={savingName||!name.trim()} onClick={()=>void saveName()}>{savingName?'Saving…':'Save name'}</button></div></div></dialog>}
     </>;
-  return editor?<section className="media-source-picker" aria-label="Library assets">{content}</section>:compact ? <CompactPopover label="Browse media sources" onOpenChange={setOpen} disabled={disabled}><div className="media-source-picker">{content}</div></CompactPopover> : <details className="card media-source-picker" onToggle={event=>setOpen(event.currentTarget.open)}><summary>Browse media sources</summary>{content}</details>;
+  return editor?<section className="media-source-picker" aria-label="Library assets">{content}</section>:compact ? <CompactPopover label={buttonLabel} onOpenChange={setOpen} disabled={disabled}><div className="media-source-picker">{content}</div></CompactPopover> : <details className="card media-source-picker" onToggle={event=>setOpen(event.currentTarget.open)}><summary>{buttonLabel}</summary>{content}</details>;
 }

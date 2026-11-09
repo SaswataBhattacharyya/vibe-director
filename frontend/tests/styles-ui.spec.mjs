@@ -14,12 +14,12 @@ test('style selection is explicitly frozen and recovered without a reload POST; 
   const posts = [];
   await page.route('**/api/styles/**', async route => {
     const request = route.request(), url = new URL(request.url());
-    if (url.pathname === '/api/styles/catalog' && request.method() === 'GET') return route.fulfill({ json: { catalog_version: 'fixture-catalog-v1', production_types: styles } });
+    if (url.pathname === '/api/styles/catalog' && request.method() === 'GET') return route.fulfill({ json: { catalog_version: 'fixture-catalog-v1', production_types: styles, film_approaches: [{id:'cinematic',display_name:'Cinematic',version:1,guidance:'Motivated shots'}, {id:'documentary_montage',display_name:'Documentary Montage',version:1,guidance:'Evidence-led footage'}, {id:'animated_explainer',display_name:'Animated Explainer',version:1,guidance:'Clear visual beats'}] } });
     if (url.pathname === '/api/styles/selections' && request.method() === 'GET') return route.fulfill({ json: { selections: selection ? [selection] : [] } });
     if (url.pathname === '/api/styles/selections' && request.method() === 'POST') {
       posts.push({ path: url.pathname, body: request.postDataJSON() });
       const body = request.postDataJSON(), item = styles.find(style => style.style_version_id === body.style_version_id);
-      selection = { ...item, snapshot_id: 'snapshot-1', isolated_context_id: body.isolated_context_id };
+      selection = { ...item, snapshot_id: 'snapshot-1', isolated_context_id: body.isolated_context_id, film_approach: body.film_approach ? {id:body.film_approach} : null };
       return route.fulfill({ status: 201, json: selection });
     }
     if (url.pathname === '/api/styles/types' && request.method() === 'POST') {
@@ -40,11 +40,12 @@ test('style selection is explicitly frozen and recovered without a reload POST; 
   expect(context).toMatch(/^setup-/);
   await page.getByLabel('Production type and version').selectOption('story_film-v1');
   await expect(page.getByText('Selected type: Story / film · v1.')).toBeVisible();
+  await page.getByLabel('Film production style', {exact:true}).selectOption('documentary_montage');
   expect(posts).toHaveLength(0);
   await page.getByRole('button', { name: 'Save selection' }).click();
   await expect(page.getByText('Saved Story / film with Cinematic direction. Both choices are frozen in this setup context.')).toBeVisible();
   await expect(page.getByText('Saved type: story_film · story_film-v1.')).toBeVisible();
-  expect(posts[0].body).toEqual({ isolated_context_id: context, production_type: 'story_film', style_version_id: 'story_film-v1', directing_style_id: 'cinematic' });
+  expect(posts[0].body).toEqual({ isolated_context_id: context, production_type: 'story_film', style_version_id: 'story_film-v1', directing_style_id: 'cinematic', film_approach: 'documentary_montage' });
 
   await page.getByLabel('Type ID').fill('custom_doc_film');
   await page.getByRole('form', { name: 'Create production type' }).getByLabel('Display name').fill('Documentary film');
@@ -82,6 +83,7 @@ test('style selection is explicitly frozen and recovered without a reload POST; 
 
 test('story style editor saves to the workspace and explains derived-work staleness', async ({ page }) => {
   const workspaceId = 'story-workspace-123';
+  await page.route('**/api/projects/current', route => route.fulfill({json:{workspace_id:workspaceId,title:'Fixture story',browser_state:{},folder:'/fixture/story'}}));
   const styles = [makeStyle('story_film', 'Story / film')];
   let saved = null;
   const posts = [];
@@ -104,7 +106,7 @@ test('story style editor saves to the workspace and explains derived-work stalen
   await page.getByLabel('Production type and version').selectOption('story_film-v1');
   await page.getByRole('button', {name:'Save selection'}).click();
   await expect(page.getByText(/New screenplay drafts will use this selection; earlier derived work is stale\./)).toBeVisible();
-  expect(posts).toEqual([{workspace_id:workspaceId,production_type:'story_film',style_version_id:'story_film-v1',directing_style_id:'cinematic',directing_style_version_id:undefined}]);
+  expect(posts).toEqual([{workspace_id:workspaceId,production_type:'story_film',style_version_id:'story_film-v1',directing_style_id:'cinematic',directing_style_version_id:undefined,film_approach:'cinematic'}]);
 });
 
 test('lost selection response blocks retries until a read-only refresh confirms the committed snapshot', async ({ page }) => {
@@ -117,7 +119,7 @@ test('lost selection response blocks retries until a read-only refresh confirms 
     if (url.pathname === '/api/styles/selections' && request.method() === 'GET') return route.fulfill({ json: { selections: committed ? [committed] : [] } });
     if (url.pathname === '/api/styles/selections' && request.method() === 'POST') {
       posts.push(request.postDataJSON());
-      const body = request.postDataJSON(); committed = { ...styles[0], snapshot_id: 'committed-but-response-lost', isolated_context_id: body.isolated_context_id };
+      const body = request.postDataJSON(); committed = { ...styles[0], snapshot_id: 'committed-but-response-lost', isolated_context_id: body.isolated_context_id, film_approach: body.film_approach ? {id:body.film_approach} : null };
       return route.abort('failed');
     }
     return route.fulfill({ status: 404, json: { error: { code: 'not_found', message: 'Unexpected mocked style API request' } } });

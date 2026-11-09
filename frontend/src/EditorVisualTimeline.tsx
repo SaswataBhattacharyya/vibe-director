@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {editorApi, type EditorPlan, type EditorProject, type EditorRange} from './lib/editor-api';
 import EditorClipEffects from './EditorClipEffects';
+import EditorLayers from './EditorLayers';
 
 type Preview = {revision:number; duration:number; document:string};
 export default function EditorVisualTimeline({project, plan, disabled, onChange, onSave, canSave}:{
@@ -57,7 +58,7 @@ export default function EditorVisualTimeline({project, plan, disabled, onChange,
     <input type="range" aria-label="Seek timeline preview" min="0" max={preview?.duration||0} step={1/plan.fps} value={position} disabled={!ready} onChange={e=>{setPosition(Number(e.target.value));transport('seek',Number(e.target.value));}}/>
     {error&&<p role="alert">{error}</p>}
     {needsCpuPreview&&<p role="status">The selected plan contains filters or speed changes. Review and approve the plan for a CPU render to see those effects accurately.</p>}
-    <small>HyperFrames-powered preview supports unfiltered 1× clips, captions and transitions. The complete native HyperFrames Studio GUI is not connected yet.</small>
+    <small>HyperFrames-powered preview supports unfiltered 1× clips, captions and transitions. Use Open HyperFrames Studio above for the native interface.</small>
     <div className="editor-visual-track" aria-label="Visual clip order">{plan.clips.map((row,i)=><button type="button" key={i} aria-pressed={i===index} onClick={()=>setSelected(i)} style={{flexGrow:Math.max(.1,row.render_duration??row.end-row.start)}}>
       <b>{i+1}. {row.filename||row.asset_id}</b><span>{row.start.toFixed(2)}–{row.end.toFixed(2)} s</span>
     </button>)}</div>
@@ -67,6 +68,7 @@ export default function EditorVisualTimeline({project, plan, disabled, onChange,
       <label>Visual caption<input value={clip.caption||''} onChange={e=>change({caption:e.target.value})}/></label>
       <label>Visual framing<select value={clip.fit||'contain'} onChange={e=>change({fit:e.target.value})}><option value="contain">Contain</option><option value="cover">Cover</option></select></label>
     </div><EditorClipEffects clip={clip} last={index===plan.clips.length-1} onChange={updated=>onChange({...plan,clips:plan.clips.map((row,i)=>i===index?updated:row)})}/><button disabled={index===0} onClick={()=>move(-1)}>Move selected clip earlier</button><button disabled={index===plan.clips.length-1} onClick={()=>move(1)}>Move selected clip later</button></fieldset>}
+    <EditorLayers plan={plan} project={project} disabled={disabled} onChange={onChange}/>
     <button disabled={disabled||!canSave} onClick={onSave}>Save visual timeline proposal</button>
   </section>;
 }

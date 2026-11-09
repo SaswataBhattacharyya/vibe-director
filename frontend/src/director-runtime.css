@@ -32,10 +32,19 @@
 .director-knowledge textarea {width:100%;resize:vertical;min-height:100px}
 .director-composer {padding:12px;border:1px solid var(--studio-line);border-radius:18px;background:var(--studio-field);box-shadow:0 4px 24px #00000012}
 .studio-shell .director-composer textarea {width:100%;border:0;background:transparent;resize:vertical;height:72px;min-height:72px;max-height:240px;padding:4px;font-size:14px;line-height:1.6}
-.director-composer>div {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;margin-top:12px}
-.director-composer>div>small {grid-row:2;grid-column:1/-1}
-.director-composer>div>button {grid-column:2;grid-row:1}
-.studio-shell .director-composer>div>button {border-radius:50%;min-height:36px;width:36px;padding:8px;display:grid;place-items:center;background:var(--studio-accent);color:var(--studio-ink)}
+.director-composer-footer {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;margin-top:12px}
+.director-composer-footer>small {grid-row:2;grid-column:1/-1}
+.director-composer-footer>button {grid-column:2;grid-row:1}
+.studio-shell .director-composer-footer>button {border-radius:50%;min-height:36px;width:36px;padding:8px;display:grid;place-items:center;background:var(--studio-accent);color:var(--studio-ink)}
+.director-attachment-zone {min-width:0}
+.director-attachment-actions {display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:8px 0}
+.studio-shell .director-attachment-actions button {display:flex;align-items:center;gap:6px;min-height:32px;padding:6px 8px;font-size:11px}
+.director-attachments {display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0 0 12px;max-height:160px;overflow:auto}
+.director-attachments li {display:flex;align-items:center;gap:8px;min-width:0;max-width:100%;padding:8px;border:1px solid var(--studio-line);border-radius:10px;font-size:12px}
+.director-attachments img {width:44px;height:44px;object-fit:cover;border-radius:6px}
+.director-attachments span {overflow-wrap:anywhere;min-width:0}
+.studio-shell .director-attachments button {padding:4px;min-height:24px;flex-shrink:0}
+.director-message-attachments {padding-left:16px;font-size:12px;overflow-wrap:anywhere}
 .director-task {padding:16px;margin-bottom:16px;border:1px solid color-mix(in srgb,var(--studio-line),transparent 40%);border-radius:12px;background:var(--studio-surface);font-size:13px}
 .director-task-heading {display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
 .director-status {font-size:11px;color:var(--studio-muted)}

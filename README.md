@@ -21,8 +21,22 @@ The application keeps its operational working copy in `local_data/`; the chosen 
 
 Read only the guide relevant to the current task. Retain third-party notices in `third_party_licenses/` and bundled skill/runtime license files. The nested blueprint under `fixes/` is also a **runtime skill source**, not an active task queue.
 
+## Native filmmaking interfaces
+
+Vibe Editor → **Open Visual Editor → Open HyperFrames Studio** opens the native Studio. Storyboard → **Open OpenMontage Backlot** opens the native read-only production board. Studio imports supported edits as approval-required Vibe proposals; Backlot follows saved storyboard changes with playable media. Setup, limits, licenses and the verified synthetic workflow are in [Native Studio and Backlot](design/vibe-editor/native-interfaces.md). Restart the backend to load these changes.
+
 ## Focused checks
+
+FLUX Kontext editing and **Reviewed keyframes → silent video** are available in
+First & Last Frames and Vibe Editor. Review, branch, FILM/RIFE interpolation and
+silent MP4/FFV1 export share the Director task system. See
+[frame pipeline usage and limitations](docs/FRAME_PIPELINE_USAGE.md). Restart the
+backend using the normal launcher when active jobs have finished to load new code.
 
 From `frontend/`, use `npm run typecheck` or `npm run build`; run relevant browser specs with `npx --no-install playwright test tests/<name>.spec.mjs`. The test configuration starts a local frontend and specs may intercept API calls; consult each spec before treating it as a mocked check.
 
 From `backend/`, run targeted modules with `python3 -m unittest story_builder.tests.<module>`. Use the project's configured environment for dependencies. Mocked/CPU tests do not establish model compatibility or generated-media quality. Preserve runtime admission, saved-job recovery, original assets and output-folder collision handling.
+
+## Kdenlive clip continuity
+
+Compare two clips, inspect repeated footage, and approve a real Kdenlive MCP join through the existing Director and Editor. See [setup, usage, verification and remaining desktop check](plans/kdenlive_clip_continuity_usage.md).

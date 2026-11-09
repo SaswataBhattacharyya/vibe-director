@@ -11,13 +11,19 @@ export type AgentTask = {
   events: Array<{sequence: number; event_type: string; created_at: string}>;
   outputs?: MediaAsset[]; job_status?: string; report?: string;
 };
-export type AgentMessage = {request_id: string; text: string; reply: string; status: string; task_id: string | null; story_target?: StoryTarget; video_target?: VideoPromptTarget; proposal?: ImageProposal | VideoPromptProposal | StudioProposal};
+export type AgentMessage = {request_id: string; text: string; reply: string; status: string; task_id: string | null; attachments?: Array<{asset_id:string;filename:string;sha256:string}>; story_target?: StoryTarget; video_target?: VideoPromptTarget; proposal?: ImageProposal | VideoPromptProposal | StudioProposal};
 export async function agentRequest<T>(workspace: string, resource: string, signal: AbortSignal, body?: unknown, computerToken?: string): Promise<T> {
   const response = await fetch(`/api/agent/projects/${encodeURIComponent(workspace)}/${resource}`, {
     signal, ...(body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json', ...(computerToken ? {'X-Vibe-Computer-Token': computerToken} : {})}, body: JSON.stringify(body)}),
   });
   const value = await response.json();
-  if (!response.ok) throw new Error(value?.error?.message || 'Director request failed.');
+  if (!response.ok) {
+    const message = value?.error?.message;
+    if (resource === 'conversation' && message === 'Supply request_id, text, asset_ids, skill_refs and surface.' && body && typeof body === 'object' && 'target' in body) {
+      throw new Error('The running backend is older than this Director interface and cannot accept creative-tool context. Let active jobs finish, restart Vibe Director using its launcher, then send this message again. Your draft has been kept.');
+    }
+    throw new Error(message || 'Director request failed.');
+  }
   if (value.workspace_id && value.workspace_id !== workspace || value.project_id && value.project_id !== workspace) {
     throw new Error('Director returned a different project.');
   }

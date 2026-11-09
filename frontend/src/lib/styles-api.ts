@@ -16,7 +16,8 @@ export type ProductionStyle = {
   director_profile_version?: string;
   custom: boolean;
 };
-export type StyleCatalog = { catalog_version: string; production_types: ProductionStyle[] };
+export type FilmApproach = {id:string; display_name:string; guidance:string; version:number};
+export type StyleCatalog = { film_approaches?: FilmApproach[]; catalog_version: string; production_types: ProductionStyle[] };
 export type StyleSourceBlock = { locator:string; text:string };
 export type StyleSource = { source_id:string; sha256:string; filename:string; source_type:'pdf'|'markdown'|'text'; byte_length:number; text_character_count:number; evidence_blocks?:StyleSourceBlock[]; deduplicated?:boolean };
 export type DocumentStyleEvidence = {kind:'document';source_id:string;source_sha256:string;filename:string;locator:string;quote:string;intent:string};
@@ -25,6 +26,7 @@ export type ImageStyleProposal = {status:'proposal';persisted:false;published:fa
 export type DirectingStyle = { style_id:string; display_name:string; version:number; style_version_id?:string; guidance:string; style_hash:string; custom?:boolean; evidence?:Record<string,unknown>[]; scope_type?:'cross_type'|'production_type'; production_type_scope?:string|null };
 export type StyleSelection = {
   snapshot_id: string;
+  film_approach?: FilmApproach | null;
   isolated_context_id?: string;
   production_type: string;
   style_version_id: string;
@@ -49,7 +51,7 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
 const post = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
 export const getStyleCatalog = () => json<StyleCatalog & { directing_styles:DirectingStyle[] }>('/api/styles/catalog');
 export const getStyleSelections = (context: string, workspace_id?: string) => json<{ selections: StyleSelection[] }>(`/api/styles/selections?${workspace_id ? `workspace_id=${encodeURIComponent(workspace_id)}` : `isolated_context_id=${encodeURIComponent(context)}`}`);
-export const saveStyleSelection = (isolated_context_id: string, production_type: string, style_version_id: string, directing_style_id:string, directing_style_version_id?:string, workspace_id?: string) => json<StyleSelection>('/api/styles/selections', post({ ...(workspace_id ? { workspace_id } : { isolated_context_id }), production_type, style_version_id, directing_style_id, directing_style_version_id }));
+export const saveStyleSelection = (isolated_context_id: string, production_type: string, style_version_id: string, directing_style_id:string, directing_style_version_id?:string, workspace_id?: string, film_approach?: string) => json<StyleSelection>('/api/styles/selections', post({ ...(workspace_id ? { workspace_id } : { isolated_context_id }), production_type, style_version_id, directing_style_id, directing_style_version_id, film_approach }));
 export const publishProductionType = async (production_type: string, narrative_guidance: Record<string, string>, director_profile: DirectorProfile): Promise<ProductionStyle> => {
   const record = await json<Omit<ProductionStyle, 'display_name' | 'custom'> & { display_name?: string; custom?: boolean }>('/api/styles/types', post({ production_type, narrative_guidance, director_profile }));
   return { ...record, display_name: record.display_name || record.director_profile.display_name, custom: true };

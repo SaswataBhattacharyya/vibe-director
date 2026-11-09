@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from story_builder.isolated_server import create_app
-from story_builder.services.media_library import register_upload
+from story_builder.services.media_library import register_upload, asset_path
 
 
 class ProductionStyleApiTests(unittest.TestCase):
@@ -147,8 +147,7 @@ class ProductionStyleApiTests(unittest.TestCase):
         self.assertFalse(drafted["published"])
         self.assertEqual(drafted["evidence"], [{"kind": "image", "asset_id": image["asset_id"],
             "sha256": image["sha256"], "intent": "Use the subdued palette."}])
-        self.assertEqual([Path(path) for path in received["image_paths"]], [self.root / "projects" / "setup-test" /
-            "inputs" / "media" / f"{image['asset_id']}.png"])
+        self.assertEqual([Path(path) for path in received["image_paths"]], [asset_path(self.root, "setup-test", image["asset_id"])[0]])
 
         status, error = self.call("POST", "/api/styles/media/analyze", {
             "isolated_context_id": "setup-test", "asset_ids": [unrelated["asset_id"]]})

@@ -60,3 +60,8 @@
 .editor-mode-shortcut{font-weight:600}
 .editor-mode-shortcut[aria-pressed=true]{border-color:var(--studio-accent);background:var(--studio-selected)}
 .editor-visual .editor-clip-effects{margin:.8rem 0}
+
+.editor-layers { margin-block: 1rem; padding: 1rem; min-width: 0; }
+.editor-layer { margin-block: .75rem; padding: .75rem; border: 1px solid var(--border, #493d59); border-radius: .75rem; }
+.editor-layer summary { cursor: pointer; margin-bottom: .5rem; }
+.editor-layer textarea { width: 100%; min-height: 5rem; }

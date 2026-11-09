@@ -1,5 +1,5 @@
 """Read-only, revision-bound HyperFrames preview. No Studio server or raw HTML input."""
-from . import editor_composition, vibe_editor, vibe_editor_render
+from . import editor_layers, editor_composition, vibe_editor, vibe_editor_render
 
 # Static runtime files only; never expose the CLI's filesystem, AI or export routes.
 def runtime_file(name):
@@ -26,7 +26,7 @@ def prepare(root, project_id, body):
         if any(c['effect']['preset'] != 'none' or c['speed'] != {'start': 1, 'end': 1} for c in plan['clips']):
             raise ValueError('Filters and speed ramps require the approved CPU render. Live preview supports unfiltered clips at 1× speed.')
         sources = {c['asset_id']: f"/api/media/{p['workspace_id']}/assets/{c['asset_id']}/content"
-                   for c in plan['clips'] + ([plan['audio']] if plan['audio'] else [])}
+                   for c in editor_layers.media_ranges(plan)}
         for name in ('gsap.js', 'runtime.js', 'shaders.js'):
             runtime_file(name)
         document, duration = editor_composition.document(plan, sources,

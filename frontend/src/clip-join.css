@@ -1,0 +1,8 @@
+.clip-join-review {padding:20px; margin:16px 0; border:1px solid var(--border, #50435e); border-radius:16px;}
+.clip-join-review summary {cursor:pointer; font-weight:600;}
+.clip-join-review p, .clip-join-review ol {margin:12px 0; line-height:1.6;}
+.clip-join-review button {margin:6px 8px 6px 0;}
+.clip-join-players {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:16px 0;}
+.clip-join-review video {display:block;width:100%;max-height:320px;background:#08070c;border-radius:10px;}
+.clip-join-review figure {margin:20px 0;}
+.clip-join-review figcaption {margin-bottom:12px;}

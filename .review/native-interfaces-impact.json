@@ -1,0 +1,998 @@
+{
+  "comparison": "working tree vs HEAD 3a5bc11be4b3474db7f54a4f0bc154dbf936a116",
+  "mode": "manual with Graphify discovery",
+  "limitations": [
+    "Traced native UI/route/stage/import/render and saved-board/mirror/native UI flows to depth 2-4. Graphify misses dynamic HTTP registrations, iframe behavior and several JS callbacks; source and execution evidence take precedence.",
+    "No measured coverage collected. Test-gap factor is a source-reference proxy, not proof of complete tests. Idle expiry lacks a targeted timed test. No full security audit or owner-content quality acceptance.",
+    "Only these milestone adapters and directly affected shared consumers are scoped; unrelated broad filmmaking orchestration deferred. CSS/types/licenses/docs have no function call graph.",
+    "Graph refreshed with code-only no-cluster; extraction warnings and dynamic edge limitations remain."
+  ],
+  "overall_risk": "high: maximum heuristic 0.90 for untested idle reaper; security/flow nodes 0.60, shared caller-count upper bound 0.70. Prioritization, not vulnerability probability.",
+  "findings": [
+    {
+      "node": "backend/story_builder/services/interface_sessions.py::_reap",
+      "location": {
+        "file": "backend/story_builder/services/interface_sessions.py",
+        "line": 94
+      },
+      "anchor": "def _reap():",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.9,
+      "factors": {
+        "test_gap": 1,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both native adapters -> owned capability/process/session -> launch/close/expiry. Failed launch/idempotent close tested; real workflow verifies shutdown cleanup. Idle expiry itself is not time-travel tested.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::stage",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 14
+      },
+      "anchor": "def stage(root, project_id, body):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::open_workspace",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 59
+      },
+      "anchor": "def open_workspace(root, project_id, body):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::mapped_plan",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 107
+      },
+      "anchor": "def mapped_plan(s):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::operate",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 148
+      },
+      "anchor": "def operate(root, project_id, body):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/interface_sessions.py::create",
+      "location": {
+        "file": "backend/story_builder/services/interface_sessions.py",
+        "line": 19
+      },
+      "anchor": "def create(root, kind, owner):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both native adapters -> owned capability/process/session -> launch/close/expiry. Failed launch/idempotent close tested; real workflow verifies shutdown cleanup. Idle expiry itself is not time-travel tested.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/interface_sessions.py::get",
+      "location": {
+        "file": "backend/story_builder/services/interface_sessions.py",
+        "line": 29
+      },
+      "anchor": "def get(root, token, kind, owner, *, allow_stopped=False):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both native adapters -> owned capability/process/session -> launch/close/expiry. Failed launch/idempotent close tested; real workflow verifies shutdown cleanup. Idle expiry itself is not time-travel tested.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/interface_sessions.py::launch",
+      "location": {
+        "file": "backend/story_builder/services/interface_sessions.py",
+        "line": 40
+      },
+      "anchor": "def launch(s, command, *, env=None, health='/'):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both native adapters -> owned capability/process/session -> launch/close/expiry. Failed launch/idempotent close tested; real workflow verifies shutdown cleanup. Idle expiry itself is not time-travel tested.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/interface_sessions.py::close",
+      "location": {
+        "file": "backend/story_builder/services/interface_sessions.py",
+        "line": 67
+      },
+      "anchor": "def close(s):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both native adapters -> owned capability/process/session -> launch/close/expiry. Failed launch/idempotent close tested; real workflow verifies shutdown cleanup. Idle expiry itself is not time-travel tested.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/interface_sessions.py::_close",
+      "location": {
+        "file": "backend/story_builder/services/interface_sessions.py",
+        "line": 72
+      },
+      "anchor": "def _close(s):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both native adapters -> owned capability/process/session -> launch/close/expiry. Failed launch/idempotent close tested; real workflow verifies shutdown cleanup. Idle expiry itself is not time-travel tested.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/interface_sessions.py::_shutdown",
+      "location": {
+        "file": "backend/story_builder/services/interface_sessions.py",
+        "line": 104
+      },
+      "anchor": "def _shutdown():",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Both native adapters -> owned capability/process/session -> launch/close/expiry. Failed launch/idempotent close tested; real workflow verifies shutdown cleanup. Idle expiry itself is not time-travel tested.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::sync",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 24
+      },
+      "anchor": "def sync(board, s, expected_revision=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Storyboard HTTP/UI -> saved production manifest -> copied media/artifacts -> Backlot watcher/state/browser; mirror and real SSE tests pass.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::_sync",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 31
+      },
+      "anchor": "def _sync(board, s, expected_revision):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Storyboard HTTP/UI -> saved production manifest -> copied media/artifacts -> Backlot watcher/state/browser; mirror and real SSE tests pass.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::open_workspace",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 64
+      },
+      "anchor": "def open_workspace(board, owner, screenplay, body):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Storyboard HTTP/UI -> saved production manifest -> copied media/artifacts -> Backlot watcher/state/browser; mirror and real SSE tests pass.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::operate",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 85
+      },
+      "anchor": "def operate(board, owner, screenplay, body):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Storyboard HTTP/UI -> saved production manifest -> copied media/artifacts -> Backlot watcher/state/browser; mirror and real SSE tests pass.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/native_backlot.py::authorize",
+      "location": {
+        "file": "backend/story_builder/services/native_backlot.py",
+        "line": 19
+      },
+      "anchor": "async def authorize(request, call_next):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Owned launcher -> pinned read-only Backlot ASGI -> native board/media/SSE; actual simultaneous localhost embedding/playback/refresh passes.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "scripts/setup_production_interfaces.py::install",
+      "location": {
+        "file": "scripts/setup_production_interfaces.py",
+        "line": 17
+      },
+      "anchor": "def install():",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Explicit owner setup -> pinned source/license runtime -> production_board verifies recorded hashes before launch. Installed successfully in this checkout; refuses replacement.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor_api.py::def handle",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root, environ, start_response, read_json, respond, *, tasks=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Editor caller -> POST studio/studio-action -> editor_studio.open_workspace/operate; HTTP seam test exercises request body dispatch.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/isolated_server.py::def create_app",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 273
+      },
+      "anchor": "def create_app(*, data_root: Path, ledger_path: Path | None = None,",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Storyboard caller -> backlot/backlot-action branches -> production_board -> existing manifest; HTTP seam test confirms dispatch.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/NativeWorkspace.tsx::export default function NativeWorkspace",
+      "location": {
+        "file": "frontend/src/NativeWorkspace.tsx",
+        "line": 8
+      },
+      "anchor": "export default function NativeWorkspace({title,open,action,onImported,disabled,identity}:Props){",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "VibeEditorPage/StoryboardPage -> shared open/action controls -> isolated iframe; two mocked UI controls tests and real embedding pass.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/native_studio.mjs::function safeRewrite",
+      "location": {
+        "file": "backend/story_builder/services/native_studio.mjs",
+        "line": 14
+      },
+      "anchor": "function safeRewrite(text){",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native timeline whole-file fallback -> parsed DOM restriction -> installed native file persistence; native trim and executable source rejection tested.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/native_studio.mjs::function allowed",
+      "location": {
+        "file": "backend/story_builder/services/native_studio.mjs",
+        "line": 34
+      },
+      "anchor": "function allowed(path,method,body){",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Local HTTP wrapper -> read/typed mutation allowlist -> installed Studio app; native caption/trim/script-target/render rejection tested.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/native_studio.mjs::const server=createServer",
+      "location": {
+        "file": "backend/story_builder/services/native_studio.mjs",
+        "line": 61
+      },
+      "anchor": "const server=createServer(async(req,res)=>{",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Owned launch -> loopback host/origin/cookie gate -> native Studio. Bootstrap retains same-origin credentials; simultaneous localhost iframes passed.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::def selected_plan",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 365
+      },
+      "anchor": "def selected_plan(root, p, raw):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing validation enforces selected owned ranges on Studio opening and proposal import; foreign/range tests pass.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::def propose_plan",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 373
+      },
+      "anchor": "def propose_plan(root, project_id, body, *, evidence=None):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Studio import reuses CAS, brief, selected plan validation and normal pending revision; stale import test passes.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::def command",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 233
+      },
+      "anchor": "def command(root, project_id, body, *, agent_request=None, on_created=None):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Normal approval freezes imported JSON into the existing render job; real synthetic fixture follows this path.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor_render.py::def render",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor_render.py",
+        "line": 52
+      },
+      "anchor": "def render(root, job_id, request, progress):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing frozen render revalidates sources and uses network-isolated CPU renderer; actual synthetic output picture/duration/streams verified.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/media_library.py::def asset_path",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 821
+      },
+      "anchor": "def asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing resolver supplies owned original sources to Studio/manifest/render. Original bytes are copied and hashed, never moved or rewritten.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/production_manifest.py::def export",
+      "location": {
+        "file": "backend/story_builder/services/production_manifest.py",
+        "line": 9
+      },
+      "anchor": "def export(board, owner, screenplay_revision, expected_revision):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing saved revision and hash-verified manifest -> Backlot one-way playable mirror; existing manifest regressions pass.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::document",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 65
+      },
+      "anchor": "def document(plan, sources):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::__init__",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 83
+      },
+      "anchor": "    def __init__(self, text):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::handle_starttag",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 88
+      },
+      "anchor": "    def handle_starttag(self, tag, attrs):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::handle_endtag",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 98
+      },
+      "anchor": "    def handle_endtag(self, tag):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/editor_studio.py::handle_data",
+      "location": {
+        "file": "backend/story_builder/services/editor_studio.py",
+        "line": 102
+      },
+      "anchor": "    def handle_data(self, text):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native Studio stage/import -> existing selected_plan/propose_plan -> persisted revision -> renderer; tested by test_native_interfaces and real native-interfaces.manual.mjs.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::_write",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 14
+      },
+      "anchor": "def _write(path, value):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Storyboard HTTP/UI -> saved production manifest -> copied media/artifacts -> Backlot watcher/state/browser; mirror and real SSE tests pass.",
+        "Confirmed direct callers fewer than five in this scoped search; graph communities absent (--no-cluster)."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/VibeEditorPage.tsx::export default function VibeEditorPage",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 21
+      },
+      "anchor": "export default function VibeEditorPage() {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Visual tab -> NativeWorkspace -> editorApi -> native routes -> proposal -> refresh; existing visual/effects regressions and new controls test pass.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/StoryboardPage.tsx::export default function StoryboardPage",
+      "location": {
+        "file": "frontend/src/StoryboardPage.tsx",
+        "line": 12
+      },
+      "anchor": "export default function StoryboardPage({view}:{view:'frames'|'storyboard'}){",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Saved board -> openBacklot/operateBacklot -> shared native pane -> saved manifest; Backlot controls + existing nine storyboard regressions pass.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/EditorVisualTimeline.tsx::export default function EditorVisualTimeline",
+      "location": {
+        "file": "frontend/src/EditorVisualTimeline.tsx",
+        "line": 6
+      },
+      "anchor": "export default function EditorVisualTimeline({project, plan, disabled, onChange, onSave, canSave}:{",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Notice points to native workspace above. Existing edits still call parent onChange/save; effects/visual regressions pass.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/lib/storyboard-api.ts::export const openBacklot=",
+      "location": {
+        "file": "frontend/src/lib/storyboard-api.ts",
+        "line": 20
+      },
+      "anchor": "export const openBacklot=(state:BoardState)=>request<NativeSession>(base(state.workspace_id,state.screenplay_revision_id)+'/backlot',{expected_revision:state.revision});",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "StoryboardPage -> typed native session response from existing request helper -> POST saved revision.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "frontend/src/lib/storyboard-api.ts::export const operateBacklot=",
+      "location": {
+        "file": "frontend/src/lib/storyboard-api.ts",
+        "line": 21
+      },
+      "anchor": "export const operateBacklot=(w:string,r:string,token:string,action:NativeAction)=>request<unknown>(base(w,r)+'/backlot-action',{token,action});",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Native pane -> action token -> shared request helper -> same saved-board ownership route.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/native_studio.mjs::async function stop",
+      "location": {
+        "file": "backend/story_builder/services/native_studio.mjs",
+        "line": 91
+      },
+      "anchor": "async function stop(){server.close();await studio.shutdown();process.exit(0);}",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Backend owned process SIGTERM -> native shutdown -> cleanup; real fixture shutdown assertions pass.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "backend/story_builder/services/storyboard.py::def editor_handoff",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 334
+      },
+      "anchor": "    def editor_handoff(self, workspace, revision):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing saved board -> Editor session with shared owned media -> native Studio -> approved synthetic export. Real workflow exercises handoff.",
+        "At least two source levels traced manually; existing shared-module caller counts were not exhaustively enumerated."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ]
+}

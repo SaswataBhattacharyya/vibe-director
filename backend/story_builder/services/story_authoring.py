@@ -1632,6 +1632,7 @@ class StoryAuthoring:
                 "production_type": style_selection["production_type"],
                 "style_version_id": style_selection["style_version_id"],
                 "directing_style": style_selection.get("directing_style"),
+                "film_approach": style_selection.get("film_approach"),
                 "narrative_guidance": {
                     "story": style_selection["narrative_guidance"]["story"],
                     "scene_direction": style_selection["narrative_guidance"]["scene_direction"],

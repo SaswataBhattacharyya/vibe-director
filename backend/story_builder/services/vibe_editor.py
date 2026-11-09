@@ -16,7 +16,7 @@ from pathlib import Path
 from .agent_skills import read_content
 from typing import Any
 
-from . import media_library, video_repertoire
+from . import editor_layers, media_library, video_repertoire
 from .storage_paths import load_project_documents, save_project_documents
 
 PROFILE = "local-owner"
@@ -190,9 +190,11 @@ def validate_selection(root, workspace, values):
     return result
 
 
-def update_project(root, project_id, body):
+def update_project(root, project_id, body, *, expected_revision=None):
     with state(root) as data:
         p = project(data, project_id)
+        if expected_revision is not None and p['revision'] != expected_revision:
+            raise ValueError('Editor revision changed. Refresh before changing selected media.')
         if body.get("view") is not None:
             p["view"].update({k: v for k, v in body["view"].items() if k in {"tab", "position", "selected_asset", "export_folder", "export_filename"}})
         changes = set(body) - {"view"}
@@ -210,7 +212,7 @@ def update_project(root, project_id, body):
                 p["overrides"][key] = str(body["override"])[:4000]
                 p.pop("brief", None)
             p["revision"] += 1
-            if changes == {"selection"} and p.get("pending", {}).get("kind") == "brief":
+            if changes == {"selection"} and p.get("pending", {}).get("kind") == "brief" and not p['pending'].get('kdenlive_join'):
                 p["pending"]["revision"] = p["revision"]
             else:
                 p.pop("pending", None)
@@ -267,12 +269,19 @@ def command(root, project_id, body, *, agent_request=None, on_created=None):
             busy(p)
             if body.get("revision") != p["revision"]:
                 raise ValueError("This view is stale. Refresh and review the current revision.")
+            if action == "reject":
+                if not p.get('pending'):
+                    raise ValueError('There is no proposal to reject.')
+                p.pop('pending')
+                p['revision'] += 1
+                message(p, 'assistant', 'Proposal rejected. Original media and previous approved revisions are preserved.')
+                return copy.deepcopy(p)
             if action == "restore_plan":
                 saved = next((r for r in p['revisions'] if r['revision'] == body.get('saved_revision') and r['kind'] == 'plan'), None)
                 if not saved:
                     raise ValueError('Saved approved timeline not found.')
                 value = validate_plan(root, p['workspace_id'], saved['value'])
-                p['selection'] = value['clips'] + ([value['audio']] if value['audio'] else [])
+                p['selection'] = editor_layers.media_ranges(value)
                 p['revision'] += 1
                 p['pending'] = {**copy.deepcopy(saved), 'revision': p['revision'], 'value': value}
                 message(p, 'assistant', 'Saved timeline restored as a proposal. Review media and tools again before rendering.')
@@ -300,7 +309,9 @@ def command(root, project_id, body, *, agent_request=None, on_created=None):
                         raise ValueError("Answer the clarification questions in chat before approving the brief.")
                     p["brief"] = pending["value"]
                     p["brief_style_snapshot"] = pending["style_snapshot"]
-                    if p["selection"]:
+                    if pending.get("kdenlive_join"):
+                        start = _enqueue(p, "kdenlive_prepare", join=pending["kdenlive_join"], style_snapshot=pending["style_snapshot"])
+                    elif p["selection"]:
                         start = _enqueue(p, "plan", brief=p["brief"], selection=p["selection"], style_snapshot=pending["style_snapshot"])
                         message(p, "assistant", "Creative brief approved. Preparing the selected media and tool plan for clearance 2.")
                     else:
@@ -357,14 +368,29 @@ def validate_plan(root, workspace, value):
     audio = validate_selection(root, workspace, [value["audio"]]) if value.get("audio") else []
     if audio and not audio[0]["mime"].startswith("audio/"):
         raise ValueError("Choose an audio asset for the soundtrack.")
-    return {"summary": str(value.get("summary", "Sequential cuts with optional captions and audio."))[:4000],
-            "tools": ["HyperFrames", "FFmpeg"], "width": width, "height": height, "fps": fps,
+    backend = value.get('backend', 'hyperframes')
+    if backend not in {'hyperframes', 'kdenlive'}:
+        raise ValueError('Unsupported Editor backend.')
+    duration = sum(c['render_duration'] - c['transition']['duration'] for c in clips)
+    layers = editor_layers.validate(root, workspace, value.get('layers', []), duration, validate_selection)
+    extra = {'layers': layers} if layers else {}
+    if backend == 'kdenlive':
+        if (len(clips) != 2 or audio or layers or (width, height, fps) != (1920, 1080, 30)
+                or any(not c['mime'].startswith('video/') or c['caption'] or c['fit'] != 'contain'
+                    or c['effect']['preset'] != 'none' or c['speed'] != {'start': 1, 'end': 1}
+                    or c['transition']['kind'] != 'cut' for c in clips)):
+            raise ValueError('Kdenlive joins support two normal-speed videos, source audio, contain framing and hard cuts at 1080p/30. Other editing remains available in the visual editor.')
+        extra['backend'] = 'kdenlive'
+        if value.get('kdenlive_execution'):
+            extra['kdenlive_execution'] = ident(value['kdenlive_execution'])
+    return {**extra, "summary": str(value.get("summary", "Sequential cuts with optional captions and audio."))[:4000],
+            "tools": ["Kdenlive MCP", "MLT"] if backend == "kdenlive" else ["HyperFrames", "FFmpeg"], "width": width, "height": height, "fps": fps,
             "clips": clips, "audio": audio[0] if audio else None}
 
 
 def selected_plan(root, p, raw):
     value = validate_plan(root, p['workspace_id'], raw)
-    for clip in value['clips'] + ([value['audio']] if value['audio'] else []):
+    for clip in editor_layers.media_ranges(value):
         if not any(r['asset_id'] == clip['asset_id'] and r['start'] <= clip['start'] and clip['end'] <= r['end'] for r in p['selection']):
             raise ValueError('The timeline exceeds the selected media ranges. Select and review those ranges first.')
     return value
@@ -399,8 +425,18 @@ def _conversation(root, request):
 
 def run_job(root, job_id, request, progress):
     operation = request["operation"]
+    if operation == 'kdenlive_brief':
+        from .editor_kdenlive import _current
+        _current(root, request, job_id)
+        return {'pending_clearance': 'brief', 'revision': request['revision']}
+    if operation == 'kdenlive_prepare':
+        from .editor_kdenlive import prepare
+        return prepare(root, job_id, request, progress)
     if operation == "render":
-        from .vibe_editor_render import render
+        if request['plan'].get('backend') == 'kdenlive':
+            from .editor_kdenlive import render
+        else:
+            from .vibe_editor_render import render
         result = render(root, job_id, request, progress)
         with state(root) as data:
             p = project(data, request["project_id"])
@@ -421,7 +457,7 @@ def run_job(root, job_id, request, progress):
         prompt = common + '\nInterpret the requested edit into a concrete creative brief (scope, pace, audio, format, preserve). Ask up to three essential clarification questions only if necessary. Never put approval/confirmation requests in questions: the UI provides a separate approval button. If no creative details are missing, return questions: []. Return {"summary":"...", "questions":[], "preference_proposal":"one durable interpretation explicitly supported by the owner, or empty string"}. Never propose a rule already confirmed. Approval of the brief does NOT confirm this learning.'
     else:
         schema = None
-        prompt = common + '\nPropose a concrete executable plan from ONLY the selected assets/ranges. Supported now: sequential cuts and overlapping transitions, image holds, contain/cover framing, static captions, source audio or one replacement audio track, final width/height/fps. Per clip effect={preset:none|cinematic|vhs|black-white,strength:0..1}. speed={start:0.25..4,end:0.25..4} is a continuous speed ramp across the video source range (1,1 is normal). Audio follows the ramp with finely sliced tempo changes. transition={kind:cut|dissolve|domain-warp|whip-pan|cinematic-zoom|glitch|light-leak|cross-warp-morph,duration:0.1..3} leads into the next clip, overlaps both, and must fit in half of both clips. Last transition must be cut. cross-warp-morph is a warp/blend transition, not AI subject transformation. Preserve default none/1x/cut unless requested. Return {"summary":"...", "tools":["HyperFrames","FFmpeg"], "width":1280,"height":720,"fps":24,"clips":[{"asset_id":"selected ID","start":0,"end":5,"caption":"","fit":"contain"}],"audio":null}. If a specialist (Blender/FreeCAD/generation) or unsupported operation is needed, return {"blocker":"Explain the missing adapter and required step"}; never silently substitute tools.'
+        prompt = common + '\nPropose a concrete executable plan from ONLY the selected assets/ranges. Supported now: optional typed layers plus sequential cuts and overlapping transitions, image holds, contain/cover framing, static captions, source audio or one replacement audio track, final width/height/fps. Per clip effect={preset:none|cinematic|vhs|black-white,strength:0..1}. speed={start:0.25..4,end:0.25..4} is a continuous speed ramp across the video source range (1,1 is normal). Audio follows the ramp with finely sliced tempo changes. transition={kind:cut|dissolve|domain-warp|whip-pan|cinematic-zoom|glitch|light-leak|cross-warp-morph,duration:0.1..3} leads into the next clip, overlaps both, and must fit in half of both clips. Last transition must be cut. cross-warp-morph is a warp/blend transition, not AI subject transformation. Preserve default none/1x/cut unless requested. Return {"summary":"...", "tools":["HyperFrames","FFmpeg"], "width":1280,"height":720,"fps":24,"clips":[{"asset_id":"selected ID","start":0,"end":5,"caption":"","fit":"contain"}],"audio":null}. Optional layers array: each layer has distinct id, kind=text|shape|image|video|audio, at, duration within the composition, x/y/width/height, rotation, opacity=0..1, integer z=101..1000. Media layers use ONLY selected asset_id/start/end and fit=contain|cover, volume=0..1. Text supports text/font_size/color, shape supports rectangle|ellipse and color (hex). Visual motion is an increasing array of {time,x,y,scale,rotation,opacity} within the layer duration; omit unneeded fields. No scripts, URLs or arbitrary HTML. Kdenlive plans cannot contain layers. If a specialist (Blender/FreeCAD/generation) or unsupported operation is needed, return {"blocker":"Explain the missing adapter and required step"}; never silently substitute tools.'
     value = reasoning_provider.generate_json(prompt=prompt, include_director_lessons=False, output_schema=schema)
     if operation == "brief":
         value = {"summary": text(value.get("summary"), 8000), "questions": clarification_questions([text(q, 1000) for q in value.get("questions", [])[:3]]), "preference_proposal": str(value.get("preference_proposal", ""))[:2000].strip()}
@@ -434,12 +470,12 @@ def run_job(root, job_id, request, progress):
         return {"blocked": True, "reason": value["blocker"]}
     else:
         selected_ids = {r["asset_id"] for r in request.get("selection", [])}
-        if any(r.get("asset_id") not in selected_ids for r in value.get("clips", [])):
+        if any(r.get("asset_id") not in selected_ids for r in editor_layers.media_ranges(value)):
             raise ValueError("The plan used unselected media. Choose those assets before approval.")
         if value.get("audio") and value["audio"].get("asset_id") not in selected_ids:
             raise ValueError("The plan used an unselected soundtrack.")
         value = validate_plan(root, request["workspace_id"], value)
-        for clip in value["clips"] + ([value["audio"]] if value["audio"] else []):
+        for clip in editor_layers.media_ranges(value):
             if not any(r["asset_id"] == clip["asset_id"] and r["start"] <= clip["start"] and clip["end"] <= r["end"] for r in request["selection"]):
                 raise ValueError("The plan exceeds a selected media range. Select the wider range before planning.")
     with state(root) as data:

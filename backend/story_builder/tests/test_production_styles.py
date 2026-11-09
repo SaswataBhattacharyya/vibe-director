@@ -40,6 +40,19 @@ class ProductionStyleTests(unittest.TestCase):
         self.assertTrue(all(row["narrative_hash"] and row["director_profile_hash"] and
                             len(row["narrative_guidance"]) == 6 for row in rows))
 
+    def test_film_approaches_are_frozen_without_changing_legacy_selections(self):
+        legacy = self.service.select(isolated_context_id="film-test", production_type="story_film")
+        for item in self.service.list_catalog()['film_approaches']:
+            saved = self.service.select(isolated_context_id="film-test", production_type="story_film", film_approach=item['id'])
+            self.assertEqual(saved['film_approach'], item)
+            self.assertEqual(saved, self.service.get_selection(saved['snapshot_id']))
+            self.assertNotEqual(saved['narrative_hash'], legacy['narrative_hash'])
+            self.assertTrue(all(item['guidance'] in text for text in saved['narrative_guidance'].values()))
+        self.assertEqual(self.service.get_selection(legacy['snapshot_id']), legacy)
+        for value, kind in [('unknown', 'story_film'), ([], 'story_film'), ('cinematic', 'news_report')]:
+            with self.assertRaises(ValueError):
+                self.service.select(isolated_context_id="film-test", production_type=kind, film_approach=value)
+
     def test_types_and_directing_styles_are_separate_catalogs(self):
         catalog = self.service.list_catalog()
         self.assertEqual({row["style_id"] for row in catalog["directing_styles"]},

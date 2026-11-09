@@ -24,6 +24,8 @@ class AgentImageTests(AgentTaskFixture):
         self.app = create_app(data_root=self.root, reasoning_json_provider=provider,
             gpu_reader=lambda: self.fail('Prompt proposal must not query GPU'),
             worker_status_provider=lambda: self.fail('Prompt proposal must not query worker'))
+        from story_builder.services.agent_knowledge import save
+        save(self.root,self.tasks.ledger,self.owner,{'revision':0,'content':'Z Image: preserve the approved room geometry.'})
         payload = self.payload()
         path = '/api/agent/projects/tool-library/conversation'
         status, result = self.call('POST', path, payload)
@@ -35,6 +37,9 @@ class AgentImageTests(AgentTaskFixture):
         self.assertEqual(self.call('POST', path, payload)[1], result)
         self.assertEqual(self.call('GET', path)[1], result)
         self.assertEqual(provider.call_count, 2)
+        for call in provider.call_args_list:
+            self.assertIn('z-image-prompting/SKILL.md',call.kwargs['prompt'])
+            self.assertIn('preserve the approved room geometry',call.kwargs['prompt'])
         self.assertEqual(self.tasks.list(self.owner)['tasks'], [])
         self.dispatch.assert_not_called()
         self.assertEqual(self.original.read_bytes(), self.before)

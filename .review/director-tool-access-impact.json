@@ -1,0 +1,723 @@
+{
+  "comparison": "Scoped current tool-access changes in working tree against HEAD 3a5bc11be4b; unrelated pre-existing dirty changes excluded",
+  "mode": "manual two-level source tracing plus incremental Graphify discovery",
+  "graph": {
+    "refresh": "conda run -n react graphify extract . --code-only --no-cluster",
+    "changed_files": 10,
+    "unchanged_files": 645,
+    "nodes": 97,
+    "edges": 304,
+    "query": "query agent_tool_routing --budget 500: no matching nodes",
+    "affected": "affected agent_workspace_tools --depth 2: native-tools and conversation imports"
+  },
+  "limitations": [
+    "Incremental graph contains changed-file extraction, not a complete current-repository call graph. Dynamic/bound dispatch is verified manually. No communities or measured test coverage.",
+    "Trace covers the changed conversation/task/native/worker/media/Editor/UI flow and its two-level consumers, not unrelated application routes or every internal helper.",
+    "Test gap=0 means relevant focused tests exist and ran, not proof of branch coverage. Model/provider execution and native GUI parity are unverified.",
+    "No database migration. Prior dirty generation/native-interface source is reused rather than reset. Runtime docs and generated graph/cache files are excluded from scoring."
+  ],
+  "overall_risk": {
+    "lower": 0.6,
+    "upper": 0.7,
+    "level": "high",
+    "reason": "Shared authorization, ownership and job dispatch boundaries; prioritization heuristic, not a defect probability."
+  },
+  "findings": [
+    {
+      "node": "backend/story_builder/services/agent_tool_routing.py::propose",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tool_routing.py",
+        "line": 6
+      },
+      "anchor": "def propose(tasks, owner, catalogue, call):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation send calls catalogue validation and bounded completed-task evidence; routing delegates to AgentTasks.propose/poll and owned asset resolution. test_agent_tool_access exercises invalid/foreign requests and actual sampled vision inputs.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tool_routing.py::context",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tool_routing.py",
+        "line": 22
+      },
+      "anchor": "def context(tasks, owner, source_ids):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation send calls catalogue validation and bounded completed-task evidence; routing delegates to AgentTasks.propose/poll and owned asset resolution. test_agent_tool_access exercises invalid/foreign requests and actual sampled vision inputs.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_conversation.py::send",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 75
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared conversation API calls send; send invokes catalogue routing, task proposals and reasoning. Both surfaces tested in test_agent_tool_access; existing attachments/Editor tests passed.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_analysis_tools.py::schema",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_analysis_tools.py",
+        "line": 17
+      },
+      "anchor": "def schema(tool):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native catalogue/prepare/submit and AgentTasks planning consume these bindings. Fixed route calls reuse Image Detailer, analyzer, semantic index, scene surgery, download and style-frame jobs. Route binding mocks and real isolated WSGI scene-split submission tested; model jobs not run.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_analysis_tools.py::prepare",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_analysis_tools.py",
+        "line": 37
+      },
+      "anchor": "def prepare(root, owner, tool, settings):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native catalogue/prepare/submit and AgentTasks planning consume these bindings. Fixed route calls reuse Image Detailer, analyzer, semantic index, scene surgery, download and style-frame jobs. Route binding mocks and real isolated WSGI scene-split submission tested; model jobs not run.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_analysis_tools.py::validate_assets",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_analysis_tools.py",
+        "line": 63
+      },
+      "anchor": "def validate_assets(root, owner, tool, settings, assets):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native catalogue/prepare/submit and AgentTasks planning consume these bindings. Fixed route calls reuse Image Detailer, analyzer, semantic index, scene surgery, download and style-frame jobs. Route binding mocks and real isolated WSGI scene-split submission tested; model jobs not run.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_analysis_tools.py::submit",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_analysis_tools.py",
+        "line": 79
+      },
+      "anchor": "def submit(call, owner, tool, settings, assets):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native catalogue/prepare/submit and AgentTasks planning consume these bindings. Fixed route calls reuse Image Detailer, analyzer, semantic index, scene surgery, download and style-frame jobs. Route binding mocks and real isolated WSGI scene-split submission tested; model jobs not run.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_analysis_tools.py::descriptions",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_analysis_tools.py",
+        "line": 99
+      },
+      "anchor": "def descriptions():",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native catalogue/prepare/submit and AgentTasks planning consume these bindings. Fixed route calls reuse Image Detailer, analyzer, semantic index, scene surgery, download and style-frame jobs. Route binding mocks and real isolated WSGI scene-split submission tested; model jobs not run.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::schema",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 25
+      },
+      "anchor": "def schema(tool):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native adapter supplies plans; video_repertoire.create_job persists correlation before start; worker calls run; media library and Editor services consume owned sources. test_agent_tool_access validates CPU extraction/metadata, session/range creation and stale plans, and temporary-root/failure cleanup.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::prepare",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 41
+      },
+      "anchor": "def prepare(root, owner, tool, settings):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native adapter supplies plans; video_repertoire.create_job persists correlation before start; worker calls run; media library and Editor services consume owned sources. test_agent_tool_access validates CPU extraction/metadata, session/range creation and stale plans, and temporary-root/failure cleanup.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::validate_assets",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 62
+      },
+      "anchor": "def validate_assets(root, owner, tool, settings, assets):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native adapter supplies plans; video_repertoire.create_job persists correlation before start; worker calls run; media library and Editor services consume owned sources. test_agent_tool_access validates CPU extraction/metadata, session/range creation and stale plans, and temporary-root/failure cleanup.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::submit",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 84
+      },
+      "anchor": "def submit(root, owner, tool, settings, assets):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native adapter supplies plans; video_repertoire.create_job persists correlation before start; worker calls run; media library and Editor services consume owned sources. test_agent_tool_access validates CPU extraction/metadata, session/range creation and stale plans, and temporary-root/failure cleanup.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::run",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 89
+      },
+      "anchor": "def run(root, job_id, request):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native adapter supplies plans; video_repertoire.create_job persists correlation before start; worker calls run; media library and Editor services consume owned sources. test_agent_tool_access validates CPU extraction/metadata, session/range creation and stale plans, and temporary-root/failure cleanup.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::sample_frames",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 123
+      },
+      "anchor": "def sample_frames(root, owner, job_id, asset, path, timestamps):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native adapter supplies plans; video_repertoire.create_job persists correlation before start; worker calls run; media library and Editor services consume owned sources. test_agent_tool_access validates CPU extraction/metadata, session/range creation and stale plans, and temporary-root/failure cleanup.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::schema",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 16
+      },
+      "anchor": "def schema(tool):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared catalogue and AgentTasks call these dispatch seams. Existing capture/create/validate_job boundaries retain owner+plan+invocation correlation. Native/generation/render tests pass with mocked dispatch; real GPU acceptance excluded.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::catalogue",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 49
+      },
+      "anchor": "def catalogue():",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared catalogue and AgentTasks call these dispatch seams. Existing capture/create/validate_job boundaries retain owner+plan+invocation correlation. Native/generation/render tests pass with mocked dispatch; real GPU acceptance excluded.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::prepare",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 80
+      },
+      "anchor": "def prepare(root, owner, tool, settings, *, call=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared catalogue and AgentTasks call these dispatch seams. Existing capture/create/validate_job boundaries retain owner+plan+invocation correlation. Native/generation/render tests pass with mocked dispatch; real GPU acceptance excluded.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::check",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 141
+      },
+      "anchor": "def check(root, owner, tool, settings, *, call=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared catalogue and AgentTasks call these dispatch seams. Existing capture/create/validate_job boundaries retain owner+plan+invocation correlation. Native/generation/render tests pass with mocked dispatch; real GPU acceptance excluded.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::submit",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 193
+      },
+      "anchor": "def submit(root, owner, plan, invocation, on_created, *, call=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared catalogue and AgentTasks call these dispatch seams. Existing capture/create/validate_job boundaries retain owner+plan+invocation correlation. Native/generation/render tests pass with mocked dispatch; real GPU acceptance excluded.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_plan",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 57
+      },
+      "anchor": "    def _plan(self, owner, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation -> propose -> plan/native prepare; approve/run -> native submit -> create_job -> worker; poll -> validate_job/_observe -> UI outputs and follow-up evidence. Durable task and computer tests cover parallel submissions/recovery and access grants; source identities and sampled output hashes checked.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_observe",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 471
+      },
+      "anchor": "    def _observe(self, owner, task, job):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation -> propose -> plan/native prepare; approve/run -> native submit -> create_job -> worker; poll -> validate_job/_observe -> UI outputs and follow-up evidence. Durable task and computer tests cover parallel submissions/recovery and access grants; source identities and sampled output hashes checked.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::run",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 397
+      },
+      "anchor": "    def run(self, owner, task, payload):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation -> propose -> plan/native prepare; approve/run -> native submit -> create_job -> worker; poll -> validate_job/_observe -> UI outputs and follow-up evidence. Durable task and computer tests cover parallel submissions/recovery and access grants; source identities and sampled output hashes checked.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::poll",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 557
+      },
+      "anchor": "    def poll(self, owner, task):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation -> propose -> plan/native prepare; approve/run -> native submit -> create_job -> worker; poll -> validate_job/_observe -> UI outputs and follow-up evidence. Durable task and computer tests cover parallel submissions/recovery and access grants; source identities and sampled output hashes checked.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::update_project",
+      "change": "direct",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 193
+      },
+      "anchor": "def update_project(root, project_id, body, *, expected_revision=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Workspace run reuses existing Editor APIs: selected media calls update_project with atomic expected revision; plan proposals validate selected bounds and revision. Existing manual calls omit the optional keyword and retain behavior. tests cover stale revision rejection, source duration and no rendering.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::validate_selection",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 171
+      },
+      "anchor": "def validate_selection(root, workspace, values):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Workspace run reuses existing Editor APIs: selected media calls update_project with atomic expected revision; plan proposals validate selected bounds and revision. Existing manual calls omit the optional keyword and retain behavior. tests cover stale revision rejection, source duration and no rendering.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::selected_plan",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 391
+      },
+      "anchor": "def selected_plan(root, p, raw):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Workspace run reuses existing Editor APIs: selected media calls update_project with atomic expected revision; plan proposals validate selected bounds and revision. Existing manual calls omit the optional keyword and retain behavior. tests cover stale revision rejection, source duration and no rendering.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/vibe_editor.py::propose_plan",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/vibe_editor.py",
+        "line": 399
+      },
+      "anchor": "def propose_plan(root, project_id, body, *, evidence=None):",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Workspace run reuses existing Editor APIs: selected media calls update_project with atomic expected revision; plan proposals validate selected bounds and revision. Existing manual calls omit the optional keyword and retain behavior. tests cover stale revision rejection, source duration and no rendering.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::create_job",
+      "change": "indirect",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 806
+      },
+      "anchor": "def create_job(kind: str, request: dict[str, Any]) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Native submit -> create_job -> correlate/persist/created durable mapping -> start_job. Existing code unchanged except registered job kind; native and durable task tests cover this seam.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "frontend/src/DirectorConversation.tsx::TaskCard",
+      "change": "direct",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 34
+      },
+      "anchor": "export function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> & {task: AgentTask}) {",
+      "revision": "working-tree",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "DirectorRuntime renders TaskCard from shared task list/poll; card displays exact settings and typed outputs. Playwright sampled-frame and existing speech/audio cases passed with mocked APIs, reload and zero job submissions.",
+        "Caller counts are unknown; no complete direct-call enumeration or measured coverage is claimed."
+      ],
+      "verification": "PENDING"
+    }
+  ]
+}

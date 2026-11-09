@@ -314,7 +314,13 @@ def lint_prompt_tags(prompt: str, reference_map: ResolvedReferenceMap) -> None:
     unknown = mentioned - available
     unused = available - mentioned
     if unknown or unused:
-        raise GraphPlanError("prompt_reference_tags_mismatch", "Prompt reference tags must match every connected reference exactly.", context={"unknown_tags": sorted(unknown), "unused_tags": sorted(unused), "available_tags": sorted(available)})
+        details = ["Prompt reference tags do not match the connected media."]
+        if unused:
+            details.append("Connected references missing from the prompt: " + ", ".join(sorted(unused)) + ". Add these tags with their intended roles, or disconnect references you do not want to use.")
+        if unknown:
+            details.append("Tags in the prompt without connected media: " + ", ".join(sorted(unknown)) + ". Connect the corresponding media, or correct/remove these tags.")
+        details.append("Available tags: " + (", ".join(sorted(available)) or "none") + ". Images use <Picture 1>, not <Subject 1>; pictures, videos and audio each have their own numbering. Review reference choices and collate the prompt again before generating.")
+        raise GraphPlanError("prompt_reference_tags_mismatch", " ".join(details), context={"unknown_tags": sorted(unknown), "unused_tags": sorted(unused), "available_tags": sorted(available)})
     for speaker_id, audio_tag in reference_map.speaker_audio_tags.items():
         explicit_binding = re.search(re.escape(audio_tag) + r"[^.\n]{0,240}\(" + re.escape(speaker_id) + r"\)", prompt)
         if not explicit_binding or audio_tag not in mentioned:

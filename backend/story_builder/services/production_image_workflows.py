@@ -29,6 +29,19 @@ def comfyui_root() -> Path:
     return Path(os.environ.get("COMFYUI_ROOT", default)).expanduser().resolve()
 
 SPECS: dict[str, dict[str, Any]] = {
+    "flux_kontext_dev": {
+        "label": "FLUX Kontext Dev · reference edit", "version": "1",
+        "graph": "flux_kontext_recursive_frame.api.json", "models": {
+            "diffusion_model": ("diffusion_models", "flux1-dev-kontext_fp8_scaled.safetensors"),
+            "clip": ("text_encoders", "clip_l.safetensors"),
+            "t5": ("text_encoders", "t5xxl_fp8_e4m3fn_scaled.safetensors"),
+            "vae": ("vae", "ae.safetensors")},
+        "required_nodes": ["LoadImage", "UNETLoader", "DualCLIPLoader", "VAELoader",
+            "FluxKontextImageScale", "VAEEncode", "CLIPTextEncode", "FluxGuidance",
+            "ReferenceLatent", "ConditioningZeroOut", "KSampler", "VAEDecode", "SaveImage"],
+        "defaults": {"width": 1248, "height": 832, "steps": 20, "cfg": 1.0},
+    },
+
     "qwen_image_2512": {
         "label": "Qwen Image 2512 · text to image", "version": "1",
         "graph": "qwen_2512_t2i_api.json", "models": {
@@ -184,7 +197,11 @@ def image_workflow_catalog(*, comfy_root: Path | None = None, workflow_root: Pat
             reasons.append(connection_error or "ComfyUI is offline; live node capabilities are unknown.")
         elif missing_nodes:
             reasons.append("Required ComfyUI nodes are missing: " + ", ".join(missing_nodes) + ".")
-        available = graph_path.is_file() and not missing_models and comfy_online and not missing_nodes
+        incompatible = []
+        if workflow_id == 'flux_kontext_dev' and comfy_online and graph_path.is_file():
+            incompatible = graph_input_errors(json.loads(graph_path.read_text()), present_nodes)
+            reasons.extend(incompatible)
+        available = graph_path.is_file() and not missing_models and comfy_online and not missing_nodes and not incompatible
         automation_available = available and smoke is not None
         if available and smoke is None:
             automation_reason = "Run this workflow manually once; Assisted automatic use unlocks after a successful Vibe run."
@@ -206,6 +223,33 @@ def image_workflow_catalog(*, comfy_root: Path | None = None, workflow_root: Pat
     return {"schema_version": 1, "workflows": entries,
             "generation_policy": {"assisted_manual": {"initial_candidates": 4, "selection_authority": "user"},
                 "fully_automated": {"image_generation": "skipped"}}}
+
+
+def input_choices(contract):
+    """ComfyUI legacy and V3 combo schemas use different enum representations."""
+    if not isinstance(contract, (list,tuple)) or not contract:
+        return None
+    if isinstance(contract[0],list):
+        return contract[0]
+    if contract[0] == 'COMBO' and len(contract)>1 and isinstance(contract[1],dict):
+        return contract[1].get('options',[])
+    return None
+
+
+def graph_input_errors(graph, object_info):
+    """Check actual installed input names and enum/model choices without inference."""
+    errors = []
+    for node in graph.values():
+        name = node['class_type']
+        schema = object_info.get(name, {}).get('input', {})
+        inputs = {**schema.get('required', {}), **schema.get('optional', {})}
+        for field, value in node['inputs'].items():
+            contract = inputs.get(field)
+            if not contract:
+                errors.append(f'{name}.{field} is unavailable in the installed node schema.')
+            elif field != 'image' and not isinstance(value, list) and input_choices(contract) is not None and value not in input_choices(contract):
+                errors.append(f'{name}.{field} does not offer {value!r} on this ComfyUI backend.')
+    return errors
 
 
 def _safe_basename(value: str, *, field: str) -> str:
@@ -275,7 +319,9 @@ def compile_image_candidates(*, workflow_id: str, prompt: str, control_mode: str
     names = [_safe_basename(name, field="source_images[]") for name in (source_images or [])]
     if workflow_id in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511"} and not 1 <= len(names) <= (1 if workflow_id == "qwen_image_multi_angle_2511" else 3):
         raise ImageWorkflowError("edit_source_required", "Qwen Image Edit 2511 requires a primary image and accepts at most two additional references.")
-    if workflow_id not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511"} and names:
+    if workflow_id == "flux_kontext_dev" and len(names) != 1:
+        raise ImageWorkflowError("edit_source_required", "FLUX Kontext requires exactly one reference image.")
+    if workflow_id not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511", "flux_kontext_dev"} and names:
         raise ImageWorkflowError("unexpected_edit_sources", "Text-to-image workflows do not accept source images.")
     if workflow_id == "qwen_image_multi_angle_2511" and (type(world_view_count) is not int or world_view_count not in WORLD_VIEWS):
         raise ImageWorkflowError("invalid_world_view_count", "World view generation supports exactly two, three, four or eight directions.")
@@ -320,6 +366,11 @@ def compile_image_candidates(*, workflow_id: str, prompt: str, control_mode: str
                 sampler['model'] = ['vibe_lora',0]
             node(graph, "41", "EmptySD3LatentImage").update({"width": width, "height": height, "batch_size": 1})
             node(graph, "76", "SaveImage")["filename_prefix"] = f"{prefix}/candidate-{index + 1}"
+        elif workflow_id == "flux_kontext_dev":
+            node(graph, "1", "LoadImage")["image"] = names[0]
+            node(graph, "7", "CLIPTextEncode")["text"] = prompt.strip()
+            node(graph, "11", "KSampler").update(seed=candidate_seed, steps=steps, cfg=float(cfg))
+            node(graph, "13", "SaveImage")["filename_prefix"] = f"{prefix}/candidate-{index + 1}"
         else:
             if workflow_id == "qwen_image_multi_angle_2511":
                 view_label, angle = WORLD_VIEWS[world_view_count][index]
@@ -386,6 +437,8 @@ def compile_image_candidates(*, workflow_id: str, prompt: str, control_mode: str
                 scale["megapixels"] = min(2.0, max(0.3, round(width * height / 1_000_000, 2)))
         graphs.append({"candidate_index": index + 1, "seed": candidate_seed, "graph": graph})
     settings = {"width": width, "height": height, "steps": steps, "cfg": float(cfg)}
+    if workflow_id == "flux_kontext_dev":
+        settings["dimension_policy"] = "native_reference_bucket"
     if lora: settings["zimage_lora"] = lora
     if workflow_id == "qwen_image_multi_angle_2511":
         settings["multi_angle_batch"] = True

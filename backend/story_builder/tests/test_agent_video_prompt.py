@@ -22,6 +22,8 @@ class AgentVideoPromptTests(AgentTaskFixture):
         self.app = create_app(data_root=self.root, reasoning_json_provider=provider,
             gpu_reader=lambda: self.fail('Prompt preparation must not query GPU'),
             worker_status_provider=lambda: self.fail('Prompt preparation must not query worker'))
+        from story_builder.services.agent_knowledge import save
+        save(self.root,self.tasks.ledger,self.owner,{'revision':0,'content':'H3: keep ambience below dialogue.'})
         path = f'/api/agent/projects/{self.owner}/conversation'
         for prompt in ('A boat ⛵ at dawn.', ''):
             payload = self.payload(prompt)
@@ -38,6 +40,9 @@ class AgentVideoPromptTests(AgentTaskFixture):
         self.assertEqual(self.tasks.list(self.owner)['tasks'], [])
         self.dispatch.assert_not_called()
         self.assertEqual(self.original.read_bytes(), self.before)
+        for call in provider.call_args_list:
+            self.assertIn('minimax-h3.md',call.kwargs['prompt'])
+            self.assertIn('keep ambience below dialogue',call.kwargs['prompt'])
 
     def test_invalid_context_never_calls_provider(self):
         provider = Mock()
@@ -54,8 +59,8 @@ class AgentVideoPromptTests(AgentTaskFixture):
         edits = FieldEditProposals(self.tasks.ledger)
         adapter = VideoPromptDirector(edits, Mock(return_value={'replacement': 'A boat, slow dolly.'}))
         respond = adapter.respond
-        def lose_reply(*args):
-            respond(*args)
+        def lose_reply(*args, **kwargs):
+            respond(*args, **kwargs)
             raise RuntimeError('Lost reply after field suggestion saved')
         adapter.respond = Mock(side_effect=lose_reply)
         chat = AgentConversation(self.tasks, Mock(return_value={'reply': 'Review.', 'intent': 'video.prepare_prompt', 'quality': 2}), video=adapter)

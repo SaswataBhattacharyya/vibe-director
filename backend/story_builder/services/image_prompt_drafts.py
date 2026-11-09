@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from .director_skills import director_skill_context
 
 from story_builder.services.production_image_workflows import SPECS, IMAGE_PROMPT_MAX_CODEPOINTS, validate_multi_angle_prompt, ImageWorkflowError
 from story_builder.services.production_ledger import LedgerConflict
@@ -88,6 +89,7 @@ def prepare_image_prompt(*, workflow_knowledge, workflow_id: str, asset_role: st
         f"Keep prompt shorter than {IMAGE_PROMPT_MAX_CODEPOINTS + 1} Unicode code points.\n"
         f"ASSET BRIEF (required): {asset_brief}\n"
         f"MODEL: {model_id}\nWORKFLOW: {workflow_id}\nASSET ROLE: {asset_role}\n"
+        f"{director_skill_context(image_workflow=workflow_id)}\n"
         f"WORKFLOW GUIDANCE: {json.dumps(facts, ensure_ascii=False)}\n"
         f"SCREENPLAY CONTEXT: {json.dumps(story_context or {}, ensure_ascii=False)}\n"
         f"TARGET CONTEXT: {json.dumps(target_context or {}, ensure_ascii=False)}\n"

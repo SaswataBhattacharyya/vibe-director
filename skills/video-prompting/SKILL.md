@@ -25,6 +25,8 @@ Use [the H3 adapter](references/minimax-h3.md), based on MiniMax's official open
 
 Other models need their own cited adapter. These general principles are reusable; H3 field names and tags are not universal.
 
+Use the shared [visual craft glossary](../prompt-craft/references/visual-glossary.md) when choosing cinematic vocabulary. The owner's [frost-glider example](references/owner-frost-glider.md) demonstrates continuous chase choreography, speed ramps, atmosphere and light separation. Preserve its craft as a reference, not its story facts or an unverified promise of five-second execution.
+
 ## Concise rendering direction — owner correction, 2026-10-23
 Write short, crisp production prompts: concrete subject and essential setting/light, one observable event or tightly linked action, at most one camera move, and a clear endpoint. Aim for 60–120 words of visual direction, fewer when sufficient; this is a soft target excluding exact dialogue and required workflow fields. Never pad to the target or truncate source action or speech. Remove repeated instructions, decorative adjective/lens lists, reasoning and story summaries. Keep mandatory model section names, exact speaker-labelled dialogue and essential sound balance. 
 

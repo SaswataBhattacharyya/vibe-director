@@ -1148,7 +1148,11 @@ def main() -> int:
             publish_completed_result(kind, job_id, job, job["result"])
             return 0
         save_job(kind, job_id, stage="waiting", message="Waiting for a workload slot.")
-        with (nullcontext() if kind in {"ace-studio", "music-jukebox", "continuity-frame", "agent-computer", "agent-transcription"} else gpu_workload_lock()):
+        cpu_job = kind in {"agent-workspace", "frame-pipeline", "ace-studio", "music-jukebox", "continuity-frame", "agent-computer", "agent-transcription", "video-overlap"}
+        if kind == "vibe-editor":
+            request = job["request"]
+            cpu_job = request.get("operation") in {"kdenlive_prepare", "kdenlive_brief"} or request.get("plan", {}).get("backend") == "kdenlive"
+        with (nullcontext() if cpu_job else gpu_workload_lock()):
             current = store.read_job(kind, job_id)
             if current.get("status") in {"cancelled", "cancel_requested"}:
                 return 130
@@ -1187,12 +1191,21 @@ def main() -> int:
                 result = run_timed_tts(job_id, job["request"])
             elif kind in {"ace-music", "control-foley"}:
                 result = _publish_audio_job(job_id, job["request"], kind)
+            elif kind == "agent-workspace":
+                from .agent_workspace_tools import run
+                result = run(store._CONFIGURED_DATA_ROOT, job_id, job["request"])
             elif kind == "agent-computer":
                 from .agent_computer import run
                 result = run(store._CONFIGURED_DATA_ROOT, job_id, job["request"])
             elif kind == "agent-transcription":
                 from .agent_transcription import run
                 result = run(store._CONFIGURED_DATA_ROOT, job_id, job['request'])
+            elif kind == "frame-pipeline":
+                from .frame_pipeline_jobs import run
+                result = run(store._CONFIGURED_DATA_ROOT, job_id, job["request"])
+            elif kind == "video-overlap":
+                from .agent_overlap import run
+                result = run(store._CONFIGURED_DATA_ROOT, job['request'])
             elif kind == "continuity-frame":
                 from .agent_continuity import run
                 result = run(store._CONFIGURED_DATA_ROOT, job["request"])

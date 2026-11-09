@@ -1,5 +1,6 @@
 """Preview-only video prompt adapter. Uses existing durable field-edit requests."""
 import json
+from .director_skills import director_skill_context
 
 
 class VideoPromptDirector:
@@ -20,7 +21,7 @@ class VideoPromptDirector:
             raise ValueError('Supply a versioned video prompt target owned by the open project.')
         return target
 
-    def respond(self, owner, target, text, request_id):
+    def respond(self, owner, target, text, request_id, *, knowledge=''):
         self.context(owner, target)
         instruction = ('Prepare only the video prompt text. Do not run tools or claim generation. '
             'Keep the selected workflow, references and settings unchanged. '
@@ -28,7 +29,11 @@ class VideoPromptDirector:
             + json.dumps(target['settings'], ensure_ascii=False) + '\nConversation: '
             + json.dumps(target['history'], ensure_ascii=False) + '\nLatest request: ' + text)
         base = target['prompt'] or 'Write a new video shot prompt.'
+        def guided_provider(**kwargs):
+            kwargs['instruction'] += ('\n' + director_skill_context(video=True)
+                + '\nAPPROVED PROJECT KNOWLEDGE (reference data, apply only to its stated model/context):\n' + knowledge)
+            return self.provider(**kwargs)
         return self.edits.propose(owner, {'surface': 'prompt', 'revision_id': target['revision_id'],
             'field_key': f"video.{target['clip_id']}.chat", 'field_text': base, 'start_codepoint': 0,
             'end_codepoint': len(base), 'expected_text': base, 'instruction': instruction,
-            'idempotency_key': request_id}, self.provider)
+            'idempotency_key': request_id}, guided_provider)

@@ -3,7 +3,7 @@ import MediaSourcePicker from './MediaSourcePicker';
 import SelectionToggle from './SelectionToggle';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Check, LoaderCircle, Palette, RefreshCw, Save, Sparkles } from 'lucide-react';
-import { DirectorProfile, DirectingStyle, DirectingStyleEvidence, DocumentStyleEvidence, ImageStyleProposal, analyzeStyleImages, analyzeStyleSources, getStyleCatalog, getStyleSelections, ProductionStyle, publishProductionType, publishDirectingStyle, saveStyleSelection, StyleSelection, StyleSource, listStyleSources, getStyleSource, uploadStyleSource } from './lib/styles-api';
+import { FilmApproach, DirectorProfile, DirectingStyle, DirectingStyleEvidence, DocumentStyleEvidence, ImageStyleProposal, analyzeStyleImages, analyzeStyleSources, getStyleCatalog, getStyleSelections, ProductionStyle, publishProductionType, publishDirectingStyle, saveStyleSelection, StyleSelection, StyleSource, listStyleSources, getStyleSource, uploadStyleSource } from './lib/styles-api';
 import { cancelStyleFrameJob, extractMediaStyleFrames, getStyleFrameJob, linkMediaAssetToStyle, listMediaAssets, MediaAsset, StyleFrameJob, uploadMediaAsset } from './lib/media-api';
 
 const CONTEXT_KEY = 'vibe-style-setup-context-v1';
@@ -53,6 +53,8 @@ export default function ProductionStylesPage() {
   const [directingStyles, setDirectingStyles] = useState<DirectingStyle[]>([]);
   const [catalogVersion, setCatalogVersion] = useState('');
   const [selectedVersion, setSelectedVersion] = useState('');
+  const [filmApproaches, setFilmApproaches] = useState<FilmApproach[]>([]);
+  const [filmApproach, setFilmApproach] = useState('cinematic');
   const [selectedDirectionId, setSelectedDirectionId] = useState('cinematic');
   const [saved, setSaved] = useState<StyleSelection | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,6 +98,8 @@ export default function ProductionStylesPage() {
       const latest = selections.selections?.at(-1) || null;
       let listed = styles.production_types || [];
       setDirectingStyles(styles.directing_styles || []);
+      setFilmApproaches(styles.film_approaches || []);
+      setFilmApproach(latest?.film_approach?.id || 'cinematic');
       if (latest && !listed.some(item => item.style_version_id === latest.style_version_id)) {
         const retained: ProductionStyle = {
           production_type: latest.production_type,
@@ -177,7 +181,7 @@ export default function ProductionStylesPage() {
     setSaving(true); setNotice('');
     try {
       let frozen: StyleSelection;
-      try { const chosenDirection = directingStyles.find(style=>style.style_id===selectedDirectionId); frozen = await saveStyleSelection(contextId, selected.production_type, selected.style_version_id, selectedDirectionId, chosenDirection?.style_version_id, selectionWorkspaceId || undefined); }
+      try { const chosenDirection = directingStyles.find(style=>style.style_id===selectedDirectionId); frozen = await saveStyleSelection(contextId, selected.production_type, selected.style_version_id, selectedDirectionId, chosenDirection?.style_version_id, selectionWorkspaceId || undefined, selected.production_type === 'story_film' ? filmApproach : undefined); }
       catch (error) { setSelectionOutcomeUnknown(true); setNotice(`The save response was not confirmed: ${(error as Error).message}. The server may have saved this version. Refresh the catalog and selection before trying another save.`); return; }
       setSaved(frozen); setSelectedVersion(frozen.style_version_id); setSelectedDirectionId(frozen.directing_style?.style_id || 'cinematic');
       const direction = frozen.directing_style;
@@ -326,6 +330,10 @@ export default function ProductionStylesPage() {
           <button className="quiet-button style-card-select" type="button" onClick={()=>setSelectedVersion(item.style_version_id)} aria-pressed={selectedVersion===item.style_version_id}>{selectedVersion===item.style_version_id?'Selected draft':'Select this version'}</button>
         </article>)}</div>
         {selectionOutcomeUnknown && <p className="styles-outcome-lock" role="alert">Save outcome is unknown. Refresh to confirm before another selection can be saved.</p>}
+        {selected?.production_type === 'story_film' && <label className="style-select-label">Film production style
+          <select aria-label="Film production style" className="style-type-select" value={filmApproach} onChange={event=>setFilmApproach(event.target.value)}>{filmApproaches.map(item=><option key={item.id} value={item.id}>{item.display_name}</option>)}</select>
+          <small>{filmApproaches.find(item=>item.id===filmApproach)?.guidance} Visual treatment is selected separately below.</small>
+        </label>}
         <div className="style-save-row"><button className="generate-button" type="button" onClick={save} disabled={!selected || !selectedDirectionId || saving || loading || !contextId || Boolean(storageWarning) || selectionOutcomeUnknown}><Save size={15}/>{saving?'Saving selection…':'Save selection'}</button><span>{saved ? `Saved: ${saved.production_type}` : ''}</span></div>
       </>}
     </section>

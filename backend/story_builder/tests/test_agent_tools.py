@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import patch
 from story_builder.services.agent_tools import tools
+from story_builder.services import agent_native_tools, agent_generation_tools, frame_pipeline
+from jsonschema import Draft7Validator
 
 
 class AgentToolsTests(unittest.TestCase):
@@ -11,7 +13,11 @@ class AgentToolsTests(unittest.TestCase):
              patch('subprocess.run', side_effect=AssertionError('Passive discovery must not launch commands')):
             rows = {row['id']: row for row in tools()['tools']}
         self.assertEqual(set(rows), {'audio.extract_mp3', 'video.continuity_last_frame', 'computer.execute', 'editor.prepare_brief',
-                                     'audio.transcribe', 'audio.noise_cleanup', 'audio.demucs_stems'})
+                                     'audio.transcribe', 'audio.noise_cleanup', 'audio.demucs_stems', 'video.compare_clip_overlap',
+                                     'editor.prepare_clip_join', *frame_pipeline.TOOLS, *agent_native_tools.TOOLS, *agent_generation_tools.TOOLS})
+        for row in rows.values():
+            Draft7Validator.check_schema(row['input_schema'])
+            self.assertEqual(row['approval'], 'exact_plan')
         self.assertFalse(rows['audio.transcribe']['execution_enabled'])
         self.assertIn('Missing analyzer image', rows['audio.transcribe']['reason'])
         self.assertEqual(rows['audio.extract_mp3']['scope'], 'whole_source')

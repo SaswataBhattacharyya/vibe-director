@@ -9,7 +9,8 @@ async function fixture(page,missing=false){
  const requests=[];const errors=[];const conversation=[],messages=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/**',async route=>{const req=route.request(),path=new URL(req.url()).pathname;requests.push({path,method:req.method(),body:req.method()==='GET'?null:req.postDataJSON()});
   let json={};
-  if(path==='/api/projects/current')json={workspace_id:w,title:'The key',folder:'/projects/key',browser_state:{}};
+  if(path===`/api/storyboards/${w}`)json={sources:[]};
+  else if(path==='/api/projects/current')json={workspace_id:w,title:'The key',folder:'/projects/key',browser_state:{}};
   else if(path==='/api/projects/memory')json={saved:true};
   else if(path==='/api/story/workspaces')json={items:[],total:0};
   else if(path==='/api/story/workspaces/'+w)json={workspace_id:w,title:'The key',current_revision_id:'source-1'};
@@ -30,6 +31,8 @@ async function fixture(page,missing=false){
   else if(path.endsWith('/storyboard/'+r)){if(req.method()==='PUT'){board={...board,revision:board.revision+1,body:req.postDataJSON().body};}json=board;}
   else if(path.endsWith('/storyboard/'+r+'/editor'))json={id:'edit-storyboard'};
   else if(path.endsWith('/storyboard/'+r+'/production-manifest'))json={schema:'vibe-director.production-manifest',version:1,project:{workspace_id:w,screenplay_revision_id:r,storyboard_revision:board.revision},capabilities:{metadata_only:true,media_bundled:false,write_back:false}};
+  else if(path.endsWith('/storyboard/'+r+'/backlot'))json={token:'owned-board',url:new URL('/native-backlot',req.url()).href,revision:board.revision};
+  else if(path.endsWith('/storyboard/'+r+'/backlot-action'))json=req.postDataJSON().action==='proposal'?{body:{...board.body,shots:{...board.body.shots,'1.1':{...board.body.shots['1.1'],notes:'Backlot reviewed note'}}},base_revision:board.revision,explanation:'Backlot Vibe extension proposal'}:{revision:board.revision,write_back:false};
   else if(path.endsWith('/assets')&&new URL(req.url()).searchParams.get('kind')==='video')json={total:0,assets:[]};
   else if(path.endsWith('/assets'))json={total:1,assets:[{asset_id:'asset-image',filename:'key.svg',kind:'image',sha256:'a'.repeat(64),content_url:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="#243347"/><circle cx="320" cy="170" r="55" fill="#f5cc67"/></svg>'),media:{width:640,height:360}}]};
   else if(path==='/api/images/jobs')json={batch_id:'batch-'+requests.length,jobs:[]};
@@ -42,6 +45,36 @@ async function fixture(page,missing=false){
   return route.fulfill({json});
  });return {requests,errors,getBoard:()=>board};
 }
+test('native Backlot opens from a saved board, refreshes and closes without write-back',async({page})=>{
+ const fx=await fixture(page);
+ await page.route('**/native-backlot',route=>route.fulfill({contentType:'text/html',body:'<p>Native Backlot fixture</p>'}));
+ await page.goto('/#/storyboard');
+ const open=page.getByRole('button',{name:'Open OpenMontage Backlot',exact:true});
+ await open.click();await expect(page.getByTitle('OpenMontage Backlot')).toBeVisible();
+ expect(fx.requests.find(q=>q.path.endsWith('/backlot')).body).toEqual({expected_revision:1});
+ await expect.poll(()=>fx.requests.some(q=>q.path.endsWith('/backlot-action')&&q.body.action==='sync'),{timeout:8000}).toBe(true);
+ await page.getByRole('button',{name:'Close OpenMontage Backlot',exact:true}).click();
+ await expect(page.getByTitle('OpenMontage Backlot')).toHaveCount(0);
+ expect(fx.requests.some(q=>q.path.endsWith('/backlot-action')&&q.body.action==='close')).toBe(true);
+ await page.getByRole('textbox',{name:'Scene description',exact:true}).fill('Unsaved board');
+ await expect(open).toBeDisabled();
+ expect(fx.getBoard().revision).toBe(1);
+});
+test('Backlot changes require review, draft adoption and an explicit save',async({page})=>{
+ const fx=await fixture(page);
+ await page.route('**/native-backlot',route=>route.fulfill({contentType:'text/html',body:'<p>Native Backlot fixture</p>'}));
+ await page.goto('/#/storyboard');
+ await page.getByRole('button',{name:'Open OpenMontage Backlot',exact:true}).click();
+ await page.getByRole('button',{name:'Review Backlot edits',exact:true}).click();
+ await expect(page.getByText('Backlot Vibe extension proposal',{exact:true})).toBeVisible();
+ expect(fx.getBoard().body.shots['1.1'].notes).toBe('');
+ await page.getByRole('button',{name:'Use proposal as editable draft',exact:true}).click();
+ expect(fx.getBoard().revision).toBe(1);
+ await page.getByRole('button',{name:'Save storyboard',exact:true}).click();
+ await expect.poll(()=>fx.getBoard().revision).toBe(2);
+ expect(fx.getBoard().body.shots['1.1'].notes).toBe('Backlot reviewed note');
+ expect(fx.requests.some(q=>q.path==='/api/images/jobs')).toBe(false);
+});
 test('scene storyboard groups four ordered images right of editable text, retains project edits and fits narrow screens',async({page})=>{
  const fx=await fixture(page);await page.setViewportSize({width:1440,height:1000});await page.goto('/#/storyboard');
  await expect(page.getByRole('textbox',{name:'Scene description',exact:true})).toHaveValue('Mira finds the key and opens the door.');
@@ -146,4 +179,29 @@ test('shared screenplay chat discusses over multiple turns and reloads saved rev
  await page.setViewportSize({width:390,height:844});
  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  expect(fx.errors).toEqual([]);
+});
+
+test('brief-only storyboard creates, recovers edits and blocks switching while dirty',async({page})=>{
+ const fx=await fixture(page),id='board-11111111-1111-4111-8111-111111111111';
+ const source={...script,screenplay_revision_id:id,source_kind:'brief_media',accepted:false};
+ let board={workspace_id:w,screenplay_revision_id:id,revision:1,body:structuredClone(fx.getBoard().body)},created=false;
+ await page.route('**/api/storyboards/**',async route=>{
+  const req=route.request(),path=new URL(req.url()).pathname;
+  if(req.method()==='POST'){expect(req.postDataJSON().brief).toBe('A key in the doorway');expect(req.postDataJSON().asset_ids).toEqual([]);created=true;return route.fulfill({json:{source,board}});}
+  return route.fulfill({json:path.endsWith(id)?{source,board}:{sources:created?[{source_id:id,title:'The key'}]:[]}});
+ });
+ await page.route(`**/storyboard/${id}`,route=>{if(route.request().method()==='PUT')board={...board,revision:board.revision+1,body:route.request().postDataJSON().body};return route.fulfill({json:board});});
+ await page.goto('/#/storyboard');
+ await page.getByText('Start from a brief or project media',{exact:true}).click();
+ await page.getByLabel('Shot outline',{exact:true}).fill('A key in the doorway');
+ await page.getByRole('button',{name:'Create storyboard',exact:true}).click();
+ await expect(page.getByText('Storyboard opened. No screenplay acceptance is required for this outline.')).toBeVisible();
+ await page.getByRole('textbox',{name:'Scene description',exact:true}).fill('Unsaved standalone scene');
+ await expect(page.getByRole('button',{name:'Create storyboard',exact:true})).toBeDisabled();
+ await page.reload();
+ await expect(page.getByRole('textbox',{name:'Scene description',exact:true})).toHaveValue('Unsaved standalone scene');
+ await page.getByRole('button',{name:'Save storyboard',exact:true}).click();
+ await page.getByText('Start from a brief or project media',{exact:true}).click();
+ await expect(page.getByLabel('Shot outline',{exact:true})).toBeEnabled();
+ expect(fx.requests.some(q=>q.path==='/api/images/jobs')).toBe(false);expect(fx.errors).toEqual([]);
 });

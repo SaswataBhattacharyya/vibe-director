@@ -19,6 +19,7 @@ from story_builder.services.production_director_profiles import (
 )
 from story_builder.services.production_ledger import ProductionLedger, stable_hash
 from story_builder.services.prompt_styles import REQUIRED_STAGES, list_styles
+from story_builder.services.film_approaches import approach, catalogue as film_catalogue
 
 
 class ProductionStyleError(ValueError):
@@ -205,7 +206,7 @@ class ProductionStyleService:
                 "director_profile_hash": row["director_profile_hash"], "custom": True,
             })
         return {"catalog_version": "production_style_setup_v3", "production_types": bases,
-                "directing_styles": self.list_directing_styles()}
+                "directing_styles": self.list_directing_styles(), "film_approaches": film_catalogue()}
 
     def list_directing_styles(self) -> list[dict[str, Any]]:
         """Return built-ins and the latest immutable version of each user style."""
@@ -348,7 +349,8 @@ class ProductionStyleService:
     def select(self, *, workspace_id: str | None = None, isolated_context_id: str | None = None,
                production_type: str, style_version_id: str | None = None,
                directing_style_id: str | None = None,
-               directing_style_version_id: str | None = None) -> dict[str, Any]:
+               directing_style_version_id: str | None = None,
+               film_approach: str | None = None) -> dict[str, Any]:
         """Append a frozen selection for exactly one workspace or isolated context."""
         if type(production_type) is not str or not production_type:
             raise ProductionStyleError("production_type must be a non-empty string.")
@@ -378,18 +380,23 @@ class ProductionStyleService:
         directing_style = self._resolve_directing_style(directing_style_id, directing_style_version_id)
         if directing_style.get("scope_type") == "production_type" and directing_style.get("production_type_scope") != production_type:
             raise ProductionStyleError("This directing style is only available for its selected production type.")
+        film = approach(film_approach, production_type)
+        guidance = dict(selected["narrative_guidance"])
+        if film:
+            guidance = {stage: f"{text}\nFilm approach: {film['display_name']}. {film['guidance']}" for stage, text in guidance.items()}
         snapshot_id, now = uuid.uuid4().hex, _now()
         frozen = {"snapshot_id": snapshot_id, "workspace_id": workspace_id, "isolated_context_id": isolated_context_id,
                   "production_type": production_type, "style_version_id": selected["style_version_id"],
-                  "style_version": selected["style_version"], "narrative_guidance": selected["narrative_guidance"],
-                  "narrative_hash": selected["narrative_hash"], "director_profile": selected["director_profile"],
+                  "style_version": selected["style_version"], "narrative_guidance": guidance,
+                  "film_approach": film,
+                  "narrative_hash": stable_hash(guidance) if film else selected["narrative_hash"], "director_profile": selected["director_profile"],
                   "directing_style": directing_style,
                   "director_profile_hash": selected["director_profile_hash"], "created_at": now}
         with _ledger_connection(self.ledger) as db:
             db.execute("""INSERT INTO production_style_selections
                 (snapshot_id,workspace_id,isolated_context_id,production_type,style_version_id,style_version,narrative_hash,director_profile_hash,snapshot_json,created_at)
                 VALUES (?,?,?,?,?,?,?,?,?,?)""", (snapshot_id, workspace_id, isolated_context_id, production_type,
-                selected["style_version_id"], selected["style_version"], selected["narrative_hash"],
+                selected["style_version_id"], selected["style_version"], frozen["narrative_hash"],
                 selected["director_profile_hash"], json.dumps(frozen, ensure_ascii=False, sort_keys=True), now))
         return frozen
 

@@ -1,6 +1,7 @@
 """Trusted composition markup shared by CPU export and in-app HyperFrames preview."""
 import html
 import json
+from . import editor_layers
 
 
 def document(plan, staged, *, processed=None, gsap='gsap.js', shaders='shaders.js'):
@@ -40,6 +41,9 @@ def document(plan, staged, *, processed=None, gsap='gsap.js', shaders='shaders.j
     if plan['audio']:
         audio = plan['audio']
         elements.append(f'<audio id="soundtrack" class="clip" data-start="0" data-duration="{min(duration, audio["end"]-audio["start"])}" data-track-index="100" data-media-start="{audio["start"]}" data-volume="1" src="{html.escape(staged[audio["asset_id"]], quote=True)}"></audio>')
+    layer_elements, layer_animations = editor_layers.document(plan.get('layers', []), staged)
+    elements.append(layer_elements)
+    animations.append(layer_animations)
     document = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 html,body{{margin:0;background:#000;width:100%;height:100%;overflow:hidden}}#main{{position:absolute;inset:0}}.scene{{position:absolute;inset:0}}video,img{{position:absolute;inset:0;width:100%;height:100%}}.caption{{position:absolute;left:10%;right:10%;bottom:10%;z-index:2;color:white;text-shadow:0 2px 4px black;font:48px sans-serif;text-align:center;white-space:pre-wrap}}
 </style></head><body><div id="main" data-composition-id="main" data-start="0" data-duration="{duration}" data-width="{plan['width']}" data-height="{plan['height']}">{''.join(elements)}</div><script src="{html.escape(gsap, quote=True)}"></script>{shader_script}<script>window.__timelines={{}};const tl=gsap.timeline({{paused:true}});{''.join(animations)}window.__timelines.main=tl;</script></body></html>'''

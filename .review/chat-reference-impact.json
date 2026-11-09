@@ -1,0 +1,359 @@
+{
+  "comparison": "Task-scoped working tree vs HEAD; unrelated and earlier working changes excluded",
+  "mode": "manual with refreshed Graphify discovery",
+  "scope_files": [
+    "backend/story_builder/services/agent_conversation.py",
+    "backend/story_builder/services/minimax_h3_graph_compiler.py",
+    "backend/story_builder/tests/test_agent_chat_attachments.py",
+    "backend/story_builder/tests/test_isolated_r2v_contract.py",
+    "frontend/src/DirectorAttachments.tsx",
+    "frontend/src/DirectorConversation.tsx",
+    "frontend/src/DirectorRuntime.tsx",
+    "frontend/src/MediaSourcePicker.tsx",
+    "frontend/src/director-runtime.css",
+    "frontend/src/lib/agent-tasks.ts",
+    "frontend/tests/director-runtime.spec.mjs"
+  ],
+  "traversal": "Two levels: composer -> media/client APIs -> conversation -> owned media validation / provider; compiler -> tag validation -> unchanged GraphPlanError boundary. No claim of exhaustive global callers.",
+  "limitations": [
+    "Graph refreshed: 5502 nodes, 16628 edges; 93 sources yielded zero nodes, mainly JSON artifacts. No community clustering or measured coverage.",
+    "Caller-count factor unknown: no exhaustive global enumeration; test_gap=0 means test-reference evidence, not measured full coverage.",
+    "Runtime backend predates optional target support (verified with invalid UUID probes that cannot persist or call a provider). Backend not restarted to avoid disturbing jobs.",
+    "Full browser module: 25 passed / 6 failed initially. Three failures from duplicate browse labels fixed and verified with focused regressions; three Editor history/navigation failures remain outside this task.",
+    "Full legacy R2V contract run: old graph hashes, retired v1 jobs and old four-step fixtures fail; current v2 mismatch test passes. No production graph or safety policies changed.",
+    "Graph explain contains unrelated inferred send() edges; relationship claims above use verified source rather than inferred graph calls."
+  ],
+  "checks": {
+    "focused_backend": "16 passed, temporary project cleanup asserted by fixtures",
+    "codex_image_adapter": "3 passed with mocked subprocess",
+    "focused_browser": "5 passed after browse-label correction; mocked APIs and memory-only file fixtures",
+    "frontend_typecheck": "passed",
+    "diff_check": "passed",
+    "paid_or_gpu_generation": "not run"
+  },
+  "risk": "high 0.60-0.70 maximum heuristic, due to reused ownership boundary, not a defect probability",
+  "findings": [
+    {
+      "node": "AgentConversation.send",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 64
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "isolated_server.create_app injects this shared conversation; send reuses AgentTasks._assets and media_library.asset_path before generate_json. Attachment tests exercise owned, changed, missing and excess images."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "AgentTasks._assets",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 28
+      },
+      "anchor": "    def _assets(self, owner, ids, *, extensions=None):",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "send calls this existing ownership, archive, path and SHA256 validation; changed or unavailable image tests verify reasoning is never called."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "media_library.asset_path",
+      "location": {
+        "file": "backend/story_builder/services/media_library.py",
+        "line": 821
+      },
+      "anchor": "def asset_path(root: Path, workspace_id: str, asset_id: str) -> tuple[Path, str, str]:",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "_assets and send resolve owned media through this existing path boundary; original files remain untouched in cleanup assertions."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "AgentConversation.history",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 45
+      },
+      "anchor": "    def history(self, owner):",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "send and GET conversation consume persisted context_json; DirectorConversation displays optional attachment metadata. Idempotent replay and history are tested."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "reasoning_provider.generate_json",
+      "location": {
+        "file": "backend/story_builder/services/reasoning_provider.py",
+        "line": 309
+      },
+      "anchor": "def generate_json(",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "send supplies image_paths only for actual images; generate_json forwards them to _codex_json or reasoning_backends.generate. Three existing mocked Codex image tests passed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "lint_prompt_tags",
+      "location": {
+        "file": "backend/story_builder/services/minimax_h3_graph_compiler.py",
+        "line": 307
+      },
+      "anchor": "def lint_prompt_tags(prompt: str, reference_map: ResolvedReferenceMap) -> None:",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "compile_r2v_graph invokes lint before graph output. Error code and structured context are preserved. Focused current-version contract test checks missing, extra and available labels."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "compile_r2v_graph",
+      "location": {
+        "file": "backend/story_builder/services/minimax_h3_graph_compiler.py",
+        "line": 362
+      },
+      "anchor": "def compile_r2v_graph(",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Calls lint_prompt_tags; downstream GraphPlanError still blocks invalid generation. Legacy full contract suite has unrelated retired-version/graph-fixture failures."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "DirectorAttachments",
+      "location": {
+        "file": "frontend/src/DirectorAttachments.tsx",
+        "line": 11
+      },
+      "anchor": "export default function DirectorAttachments({owner, selected, setSelected, disabled, onBusy, children}: {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "DirectorConversation mounts owner-keyed wrapper; existing uploadMediaAsset/listMediaAssets and MediaSourcePicker retain shared identities. Browser paste/drop/reload/remove test passed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "DirectorConversation",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 55
+      },
+      "anchor": "export default function DirectorConversation(props: Props) {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "DirectorRuntime supplies project-scoped selection and draft; composer blocks send while uploading, displays history metadata, and reuses context selection. Five focused browser regressions passed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "DirectorRuntime",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 48
+      },
+      "anchor": "export default function DirectorRuntime({children}: {children: ReactNode}) {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Composer attachments remain project-scoped; computer execution rejects attachments explicitly rather than silently dropping them. Existing computer plan tests passed in broader browser run."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agentRequest",
+      "location": {
+        "file": "frontend/src/lib/agent-tasks.ts",
+        "line": 15
+      },
+      "anchor": "export async function agentRequest<T>(workspace: string, resource: string, signal: AbortSignal, body?: unknown, computerToken?: string): Promise<T> {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "DirectorRuntime sends optional target using agentRequest; exact stale-backend contract error becomes restart guidance without retry. Browser test confirms draft retention."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "MediaSourcePicker",
+      "location": {
+        "file": "frontend/src/MediaSourcePicker.tsx",
+        "line": 18
+      },
+      "anchor": "export default function MediaSourcePicker({workspaceId,kinds,onAdded,disabled=false,role,compact=false,destination,editor,refreshToken=0,buttonLabel='Browse media sources'}: {",
+      "revision": "working-tree",
+      "directly_changed": true,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "DirectorAttachments reuses picker with distinct Browse chat media label; all other callers retain default label. Cross-project reuse and capacity browser tests passed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "uploadMediaAsset",
+      "location": {
+        "file": "frontend/src/lib/media-api.ts",
+        "line": 213
+      },
+      "anchor": "export function uploadMediaAsset(workspaceId: string, file: File, role: string, storage: 'workspace' | 'recording' = 'workspace') {",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "DirectorAttachments uses existing binary upload API, with destination owner and project media role; upload requests are mocked in browser regressions."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "listMediaAssets",
+      "location": {
+        "file": "frontend/src/lib/media-api.ts",
+        "line": 98
+      },
+      "anchor": "export function listMediaAssets(workspaceId: string, kind: string, includeArchived = false, styleContextId = '') {",
+      "revision": "working-tree",
+      "directly_changed": false,
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Attachment names/previews use existing owned asset listing; blank kind includes image/audio/video without introducing invalid all filter. Reload persistence browser regression passed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ]
+}

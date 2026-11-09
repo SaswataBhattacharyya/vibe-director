@@ -1,5 +1,6 @@
 """Trusted JSON-to-HyperFrames adapter. No provider-authored HTML or shell execution."""
 from __future__ import annotations
+from . import editor_layers
 from story_builder.services.storage_paths import generated_root, checked, project_root
 import os
 import shutil
@@ -66,10 +67,10 @@ def render(root, job_id, request, progress):
     (folder / 'assets').mkdir()
     write(folder / 'plan.json', {'revision': request['revision'], 'style': request['style_snapshot'], 'plan': plan})
     progress('stage', 'Staging only the approved assets and ranges.', 15)
-    staged, needs_audio = {}, bool(plan['audio'])
-    for clip in plan['clips'] + ([plan['audio']] if plan['audio'] else []):
+    staged, needs_audio = {}, bool(plan['audio']) or any(l['kind']=='audio' for l in plan.get('layers', []))
+    for clip in editor_layers.media_ranges(plan):
         source, _, _ = media_library.asset_path(root, request['workspace_id'], clip['asset_id'])
-        original = next(c for c in approved['clips'] + ([approved['audio']] if approved.get('audio') else []) if c['asset_id'] == clip['asset_id'])
+        original = next(c for c in editor_layers.media_ranges(approved) if c['asset_id'] == clip['asset_id'])
         if source.stat().st_size != original.get('size') or source.stat().st_mtime_ns != original.get('mtime_ns'):
             raise ValueError('An approved media file changed. Select and review the media again.')
         if clip['asset_id'] not in staged:

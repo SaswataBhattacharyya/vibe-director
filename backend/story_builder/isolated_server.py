@@ -516,6 +516,9 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
         path = unquote(environ.get("PATH_INFO", ""))
         video_admission_started = False
         try:
+            if path.startswith('/api/frame-pipeline/'):
+                from story_builder.services.frame_pipeline_api import handle
+                return handle(root, environ, start_response, _read_json, _json_response, tasks=agent_tasks)
             if path.startswith('/api/agent/'):
                 from story_builder.services.agent_api import handle
                 from story_builder.services import audio_utilities
@@ -1226,7 +1229,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         raise ValueError("Character voice assignments must be a list of at most 200 characters.")
                     if not isinstance(payload["settings"], dict):
                         raise ValueError("Timed dialogue settings must be an object.")
-                    story.get_workspace(workspace_id, include_source=False)
+                    from .services.agent_graph import resolve_workspace
+                    resolve_workspace(root, workspace_id)
                     rewritten, resolved = audio_tts.prepare_srt(payload["srt_content"], payload["characters"], audio_catalog.discover_voices())
                     workflow = audio_tts.build_workflow(rewritten_srt=rewritten, narrator=resolved["narrator"],
                         settings=payload["settings"], filename_prefix=f"vibe_director/{workspace_id}/validation")
@@ -1962,7 +1966,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     production_type=payload.get("production_type"),
                     style_version_id=payload.get("style_version_id"),
                     directing_style_id=payload.get("directing_style_id"),
-                    directing_style_version_id=payload.get("directing_style_version_id"))
+                    directing_style_version_id=payload.get("directing_style_version_id"),
+                    film_approach=payload.get("film_approach"))
                 return _json_response(start_response, "201 Created", result)
             if method == "GET" and path == "/api/styles/selections":
                 query = parse_qs(environ.get("QUERY_STRING", ""), keep_blank_values=True)
@@ -2048,6 +2053,16 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     lineage = lineage_factory()
                     result = story.create_workspace(title=payload.get("title"), source_text=payload.get("source_text"), source_metadata=lineage)
                     return _json_response(start_response, "201 Created", result)
+            if path.startswith('/api/storyboards/'):
+                from .services import storyboard_sources
+                parts = path.removeprefix('/api/storyboards/').split('/')
+                owner = parts[0]
+                if len(parts) == 1 and method == 'GET':
+                    return _json_response(start_response, '200 OK', storyboard_sources.list_sources(storyboard, owner))
+                if len(parts) == 1 and method == 'POST':
+                    return _json_response(start_response, '200 OK', storyboard_sources.create(storyboard, owner, _read_json(environ)))
+                if len(parts) == 2 and method == 'GET':
+                    return _json_response(start_response, '200 OK', {'source': storyboard_sources.get(storyboard, owner, parts[1]), 'board': storyboard.get(owner, parts[1])})
             if path.startswith("/api/story/workspaces/"):
                 tail = path.removeprefix("/api/story/workspaces/")
                 parts = tail.split("/")
@@ -2575,6 +2590,11 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         raise ValueError("Supply the saved storyboard expected_revision.")
                     return _json_response(start_response, "200 OK", production_manifest.export(
                         storyboard, workspace_id, parts[2], payload["expected_revision"]))
+                if len(parts) == 4 and parts[1] == "storyboard" and parts[3] in {"backlot", "backlot-action"} and method == "POST":
+                    from story_builder.services import production_board
+                    payload = _read_story_json(environ, story_limit)
+                    operation = production_board.open_workspace if parts[3] == 'backlot' else production_board.operate
+                    return _json_response(start_response, "200 OK", operation(storyboard, workspace_id, parts[2], payload))
                 if len(parts) == 4 and parts[1] == "storyboard" and parts[3] == "editor" and method == "POST":
                     if _read_story_json(environ, story_limit) != {}:
                         raise ValueError("No editor import options are required.")
@@ -2965,8 +2985,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                 if "source_images" in payload:
                     raise ValueError("Use workspace asset IDs in source_references; ComfyUI filenames are not accepted.")
                 references = payload.get("source_references") or []
-                if references and payload.get("workflow_id") not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511"}:
-                    raise ValueError("Only Qwen Image Edit workflows accept source image references.")
+                if references and payload.get("workflow_id") not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511", "flux_kontext_dev"}:
+                    raise ValueError("Choose Qwen Image Edit or FLUX Kontext to use source image references.")
                 if payload.get("workflow_id") == "qwen_image_multi_angle_2511" and len(references) != 1:
                     raise ValueError("Qwen multi-angle views require exactly one selected base image.")
                 story_workspace = (story.get_workspace(payload.get("workspace_id"), include_source=False)
@@ -3037,8 +3057,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                     raise ValueError("workspace_id must be a safe path-free identifier and idempotency_key must be a non-empty string.")
                 prior = image_jobs.find_idempotent_batch(project_id=workspace, idempotency_key=idempotency_key)
                 references = payload.get("source_references") or []
-                if references and payload.get("workflow_id") not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511"}:
-                    raise ValueError("Only Qwen Image Edit workflows accept source image references.")
+                if references and payload.get("workflow_id") not in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511", "flux_kontext_dev"}:
+                    raise ValueError("Choose Qwen Image Edit or FLUX Kontext to use source image references.")
                 if payload.get("workflow_id") == "qwen_image_multi_angle_2511" and len(references) != 1:
                     raise ValueError("Qwen multi-angle views require exactly one selected base image.")
                 saved = (image_jobs.list_batch(project_id=workspace, batch_id=prior["batch_id"])["jobs"][0]
@@ -3072,7 +3092,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
                         if references else None, allow_legacy_prompt_limit=bool(prior))
                 transient_token = payload.get("vibe_t2i_transient_token")
                 if transient_token is not None:
-                    if (payload.get("workflow_id") not in {"z_image_turbo", "qwen_image_2512", "qwen_image_edit_2511"}
+                    if (payload.get("workflow_id") not in {"z_image_turbo", "qwen_image_2512", "qwen_image_edit_2511", "flux_kontext_dev"}
                             or payload.get("asset_role") != "image_candidate"
                             or not isinstance(transient_token, str)
                             or not re.fullmatch(r"[a-f0-9]{32}", transient_token)):
@@ -3544,6 +3564,8 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
             return _json_response(start_response, "500 Internal Server Error", {"error": {"code": "internal_error", "message": "The isolated video request could not be completed."}})
         except Exception:
             return _json_response(start_response, "500 Internal Server Error", {"error": {"code": "internal_error", "message": "The isolated video request could not be completed."}})
+    from .services.agent_generation_tools import bridge
+    agent_tasks.native_request = bridge(app)
     return app
 
 

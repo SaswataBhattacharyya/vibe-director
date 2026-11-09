@@ -8,8 +8,16 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[3] / "skills"
 
 
-def director_skill_context(*, video: bool = False) -> str:
+def director_skill_context(*, video: bool = False, image_workflow: str | None = None) -> str:
     paths = ["vibe-director/SKILL.md"]
+    if video or image_workflow:
+        paths += ["prompt-craft/SKILL.md", "prompt-craft/references/visual-glossary.md"]
+    if image_workflow == "z_image_turbo":
+        paths.append("z-image-prompting/SKILL.md")
+    elif image_workflow in {"qwen_image_edit_2511", "qwen_image_multi_angle_2511"}:
+        paths.append("qwen-image-edit-prompting/SKILL.md")
+    if image_workflow == "flux_kontext_dev":
+        paths.append("flux-kontext-prompting/SKILL.md")
     if video:
         paths += ["video-prompting/SKILL.md", "video-prompting/references/minimax-h3.md",
                   "video-prompting/references/examples.md"]

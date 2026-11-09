@@ -1,0 +1,732 @@
+{
+  "comparison": "working tree vs HEAD, scoped to shared native generation, standalone storyboard and approved Backlot editing extension; preexisting unrelated changes excluded",
+  "mode": "manual, Graphify discovery refreshed code-only no-cluster",
+  "limitations": [
+    "Manual traversal depth 2\u20134 across conversation/task/creator/persistence and storyboard/Editor/native flows. Graph has partial extraction and does not prove dynamic HTTP or iframe edges.",
+    "This artifact lists scoped Python execution/persistence nodes. Declarative schemas, React callbacks, HTML event handlers, CSS and tests were inspected and browser-tested but have no exhaustive symbol table here. No complete codebase impact or security-audit claim.",
+    "Native GUI acceptance uses synthetic CPU media. No provider/GPU generation, owner-media acceptance or measured test coverage."
+  ],
+  "overall_risk": "high: maximum known score 0.60, upper bound 0.70; heuristic prioritization, not defect probability",
+  "findings": [
+    {
+      "node": "backend/story_builder/services/agent_generation_tools.py::prepare",
+      "location": {
+        "file": "backend/story_builder/services/agent_generation_tools.py",
+        "line": 72
+      },
+      "anchor": "def prepare(call, owner, tool, settings, assets):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation.send -> model context -> AgentTasks._plan/run -> existing image/video routes; _observe polls durable receipts. test_agent_generation_tools exercises frozen validation, exact approval, retry and provenance; no real model runs.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_generation_tools.py::submit",
+      "location": {
+        "file": "backend/story_builder/services/agent_generation_tools.py",
+        "line": 98
+      },
+      "anchor": "def submit(call, owner, plan, invocation, created):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation.send -> model context -> AgentTasks._plan/run -> existing image/video routes; _observe polls durable receipts. test_agent_generation_tools exercises frozen validation, exact approval, retry and provenance; no real model runs.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_generation_tools.py::refresh",
+      "location": {
+        "file": "backend/story_builder/services/agent_generation_tools.py",
+        "line": 125
+      },
+      "anchor": "def refresh(call, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation.send -> model context -> AgentTasks._plan/run -> existing image/video routes; _observe polls durable receipts. test_agent_generation_tools exercises frozen validation, exact approval, retry and provenance; no real model runs.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_generation_tools.py::validate",
+      "location": {
+        "file": "backend/story_builder/services/agent_generation_tools.py",
+        "line": 154
+      },
+      "anchor": "def validate(row, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation.send -> model context -> AgentTasks._plan/run -> existing image/video routes; _observe polls durable receipts. test_agent_generation_tools exercises frozen validation, exact approval, retry and provenance; no real model runs.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::prepare",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 44
+      },
+      "anchor": "def prepare(root, owner, tool, settings):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> native creators -> video_repertoire.create_job -> durable invocation mapping before dispatch. NativeToolsTests covers inert proposals, retry, foreign job rejection and frozen voice references; music/3D model execution remains untested.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::check",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 82
+      },
+      "anchor": "def check(root, owner, tool, settings):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> native creators -> video_repertoire.create_job -> durable invocation mapping before dispatch. NativeToolsTests covers inert proposals, retry, foreign job rejection and frozen voice references; music/3D model execution remains untested.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::correlate",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 97
+      },
+      "anchor": "def correlate(kind, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> native creators -> video_repertoire.create_job -> durable invocation mapping before dispatch. NativeToolsTests covers inert proposals, retry, foreign job rejection and frozen voice references; music/3D model execution remains untested.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::submit",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 114
+      },
+      "anchor": "def submit(root, owner, plan, invocation, on_created):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> native creators -> video_repertoire.create_job -> durable invocation mapping before dispatch. NativeToolsTests covers inert proposals, retry, foreign job rejection and frozen voice references; music/3D model execution remains untested.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::validate_job",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 139
+      },
+      "anchor": "def validate_job(row, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> native creators -> video_repertoire.create_job -> durable invocation mapping before dispatch. NativeToolsTests covers inert proposals, retry, foreign job rejection and frozen voice references; music/3D model execution remains untested.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_plan",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 57
+      },
+      "anchor": "    def _plan(self, owner, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation/task HTTP callers -> frozen project task -> native adapter/receipt -> durable polling. AgentTaskTests plus native/generation regressions; original audio/Editor/computer paths preserved.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_check_inputs",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 277
+      },
+      "anchor": "    def _check_inputs(self, owner, plan):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation/task HTTP callers -> frozen project task -> native adapter/receipt -> durable polling. AgentTaskTests plus native/generation regressions; original audio/Editor/computer paths preserved.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::run",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 381
+      },
+      "anchor": "    def run(self, owner, task, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation/task HTTP callers -> frozen project task -> native adapter/receipt -> durable polling. AgentTaskTests plus native/generation regressions; original audio/Editor/computer paths preserved.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::cancel",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 554
+      },
+      "anchor": "    def cancel(self, owner, task):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation/task HTTP callers -> frozen project task -> native adapter/receipt -> durable polling. AgentTaskTests plus native/generation regressions; original audio/Editor/computer paths preserved.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/storyboard_sources.py::setup",
+      "location": {
+        "file": "backend/story_builder/services/storyboard_sources.py",
+        "line": 10
+      },
+      "anchor": "def setup(ledger):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Standalone HTTP routes -> immutable workspace-owned source -> existing Storyboard save/get -> video/Editor handoffs. StoryboardSourceTests checks idempotence, project snapshot membership, media identity and no screenplay acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/storyboard_sources.py::get",
+      "location": {
+        "file": "backend/story_builder/services/storyboard_sources.py",
+        "line": 18
+      },
+      "anchor": "def get(board, owner, source):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Standalone HTTP routes -> immutable workspace-owned source -> existing Storyboard save/get -> video/Editor handoffs. StoryboardSourceTests checks idempotence, project snapshot membership, media identity and no screenplay acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/storyboard_sources.py::list_sources",
+      "location": {
+        "file": "backend/story_builder/services/storyboard_sources.py",
+        "line": 28
+      },
+      "anchor": "def list_sources(board, owner):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Standalone HTTP routes -> immutable workspace-owned source -> existing Storyboard save/get -> video/Editor handoffs. StoryboardSourceTests checks idempotence, project snapshot membership, media identity and no screenplay acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/storyboard_sources.py::create",
+      "location": {
+        "file": "backend/story_builder/services/storyboard_sources.py",
+        "line": 35
+      },
+      "anchor": "def create(board, owner, body):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Standalone HTTP routes -> immutable workspace-owned source -> existing Storyboard save/get -> video/Editor handoffs. StoryboardSourceTests checks idempotence, project snapshot membership, media identity and no screenplay acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/storyboard.py::editor_handoff",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 344
+      },
+      "anchor": "    def editor_handoff(self, workspace, revision):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StoryboardPage -> saved board -> Editor source lineage or source-kind video draft; App preserves absence of accepted-screenplay lineage on standalone drafts. Original storyboard regressions and standalone browser tests exercise these flows.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/storyboard.py::video_handoff",
+      "location": {
+        "file": "backend/story_builder/services/storyboard.py",
+        "line": 384
+      },
+      "anchor": "    def video_handoff(self, workspace, revision, key):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "StoryboardPage -> saved board -> Editor source lineage or source-kind video draft; App preserves absence of accepted-screenplay lineage on standalone drafts. Original storyboard regressions and standalone browser tests exercise these flows.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::sync",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 24
+      },
+      "anchor": "def sync(board, s, expected_revision=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "NativeWorkspace sync/review -> owned Backlot session -> typed proposal or verified Editor output -> native mirror. Backend stale/identity tests, mocked review/adopt/save UI, actual native editing/final playback CPU acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::proposal",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 101
+      },
+      "anchor": "def proposal(board, s):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "NativeWorkspace sync/review -> owned Backlot session -> typed proposal or verified Editor output -> native mirror. Backend stale/identity tests, mocked review/adopt/save UI, actual native editing/final playback CPU acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/production_board.py::publish_final",
+      "location": {
+        "file": "backend/story_builder/services/production_board.py",
+        "line": 133
+      },
+      "anchor": "def publish_final(board, session, revision):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "NativeWorkspace sync/review -> owned Backlot session -> typed proposal or verified Editor output -> native mirror. Backend stale/identity tests, mocked review/adopt/save UI, actual native editing/final playback CPU acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::create_job",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 806
+      },
+      "anchor": "def create_job(kind: str, request: dict[str, Any]) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing native creators -> durable job -> optional ContextVar correlation; receipt-only kind excluded from normal dispatcher. Native retry/manual-context tests; original AgentTaskTests cover dispatch recovery.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/video_repertoire.py::start_job",
+      "location": {
+        "file": "backend/story_builder/services/video_repertoire.py",
+        "line": 978
+      },
+      "anchor": "def start_job(kind: str, job_id: str) -> dict[str, Any]:",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Existing native creators -> durable job -> optional ContextVar correlation; receipt-only kind excluded from normal dispatcher. Native retry/manual-context tests; original AgentTaskTests cover dispatch recovery.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_conversation.py::send",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 71
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Shared Director and Editor conversation -> authoritative catalogue -> proposed task, never dispatch. Existing image conversation regressions; no live reasoning/provider acceptance.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/projects.py::sql_snapshot",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 102
+      },
+      "anchor": "def sql_snapshot(path, workspace):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "risk_upper_bound": 0.7,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Workspace-owned tables -> project save snapshot -> restore schema. Additive story_board_sources membership is asserted by standalone source test; no destructive schema migration.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_generation_tools.py::context",
+      "location": {
+        "file": "backend/story_builder/services/agent_generation_tools.py",
+        "line": 18
+      },
+      "anchor": "def context():",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentConversation.send -> model context -> AgentTasks._plan/run -> existing image/video routes; _observe polls durable receipts. test_agent_generation_tools exercises frozen validation, exact approval, retry and provenance; no real model runs.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::capture",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 89
+      },
+      "anchor": "def capture(owner, plan, invocation, created):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> native creators -> video_repertoire.create_job -> durable invocation mapping before dispatch. NativeToolsTests covers inert proposals, retry, foreign job rejection and frozen voice references; music/3D model execution remains untested.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_native_tools.py::created",
+      "location": {
+        "file": "backend/story_builder/services/agent_native_tools.py",
+        "line": 108
+      },
+      "anchor": "def created(job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "AgentTasks -> native creators -> video_repertoire.create_job -> durable invocation mapping before dispatch. NativeToolsTests covers inert proposals, retry, foreign job rejection and frozen voice references; music/3D model execution remains untested.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_observe",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 455
+      },
+      "anchor": "    def _observe(self, owner, task, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "risk_upper_bound": 0.5,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": null
+      },
+      "evidence": [
+        "Conversation/task HTTP callers -> frozen project task -> native adapter/receipt -> durable polling. AgentTaskTests plus native/generation regressions; original audio/Editor/computer paths preserved.",
+        "Caller count not exhaustively enumerated; factor unknown. Test gap is a reference proxy, not measured branch coverage."
+      ],
+      "verification": "PENDING"
+    }
+  ]
+}

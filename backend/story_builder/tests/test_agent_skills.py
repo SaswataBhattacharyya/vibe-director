@@ -10,6 +10,22 @@ from story_builder.services.storage_paths import project_root
 
 
 class AgentSkillsTests(unittest.TestCase):
+    def test_model_prompting_skills_are_discoverable_and_routed(self):
+        refs={row['ref'] for row in skills.discover(self.root, 'tool-library')['skills'] if row['available']}
+        for name in ('prompt-craft', 'z-image-prompting', 'qwen-image-edit-prompting', 'flux-kontext-prompting', 'frame-interpolation', 'kdenlive-clip-continuity-and-stitching'):
+            self.assertIn('application/vibe/'+name, refs)
+        z=director_skills.director_skill_context(image_workflow='z_image_turbo')
+        q=director_skills.director_skill_context(image_workflow='qwen_image_multi_angle_2511')
+        self.assertIn('z-image-prompting/SKILL.md',z)
+        self.assertNotIn('qwen-image-edit-prompting/SKILL.md',z)
+        self.assertIn('qwen-image-edit-prompting/SKILL.md',q)
+        self.assertIn('Use discuss while awaiting these choices',q)
+        for context in (z, q, director_skills.director_skill_context(video=True)):
+            self.assertIn('prompt-craft/references/visual-glossary.md', context)
+            self.assertIn('Speed ramp', context)
+            self.assertIn('Chiaroscuro', context)
+        self.assertNotIn('visual-glossary.md', director_skills.director_skill_context())
+
     def test_blueprint_craft_skills_are_registered_and_load_the_shared_contract(self):
         rows = skills.discover(self.root, 'tool-library')['skills']
         craft = [row for row in rows if row['provider'] == 'filmmaking']
@@ -92,7 +108,7 @@ class AgentSkillsTests(unittest.TestCase):
         for video in (False, True):
             paths = ['vibe-director/SKILL.md']
             if video:
-                paths += ['video-prompting/SKILL.md', 'video-prompting/references/minimax-h3.md', 'video-prompting/references/examples.md']
+                paths += ['prompt-craft/SKILL.md', 'prompt-craft/references/visual-glossary.md', 'video-prompting/SKILL.md', 'video-prompting/references/minimax-h3.md', 'video-prompting/references/examples.md']
             expected = []
             for relative in paths:
                 text = (director_skills._ROOT / relative).read_text(encoding='utf-8')

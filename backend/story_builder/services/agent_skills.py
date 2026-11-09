@@ -84,7 +84,7 @@ def _metadata(scope, provider, root, skill_id):
 
 def discover(root: Path, workspace: str) -> dict:
     rows = [_metadata('application', 'vibe', REPO / 'skills', name)
-        for name in ('vibe-director', 'video-prompting')]
+        for name in ('vibe-director', 'video-prompting', 'prompt-craft', 'z-image-prompting', 'qwen-image-edit-prompting', 'flux-kontext-prompting', 'frame-interpolation', 'kdenlive-clip-continuity-and-stitching')]
     rows.append(_metadata('application', 'editor', REPO / 'design/vibe-editor/skills', 'vibe-editor-director'))
     configured = json.loads(os.environ.get('VIBE_DIRECTOR_AGENT_SKILL_ROOTS', '{}'))
     if not isinstance(configured, dict) or len(configured) > 16:
@@ -119,4 +119,4 @@ def discover(root: Path, workspace: str) -> dict:
                 break
             if re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_-]{0,100}', entry.name) and (entry.is_dir() or entry.is_symlink()):
                 rows.append(_metadata(scope, provider, folder, entry.name))
-    return {'skills': rows, 'truncated': truncated}
+    return {'skills': rows[:MAX_SKILLS], 'truncated': truncated or len(rows) > MAX_SKILLS}

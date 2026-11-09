@@ -81,8 +81,9 @@ export default function ProjectController({children}:{children:ReactNode}){
  const action=async(operation:string,target?:string)=>{if(!project||actionBusy.current)return;actionBusy.current=true;setBusy(true);setError('');try{
   const memory=capture(project.workspace_id);localStorage.setItem(localKey+project.workspace_id,JSON.stringify(memory));
   await studioRequest('/api/projects/memory',{workspace_id:project.workspace_id,browser_state:memory});
-  // Save the folder checkpoint before leaving; standalone drafts remain in app storage.
-  if(operation!=='save'&&project.folder)await studioRequest('/api/projects/save',{workspace_id:project.workspace_id,folder:project.folder,browser_state:memory});
+  // A fresh project must not depend on checkpointing the previous project's media.
+  // Its working records and browser memory remain saved under their original owner.
+  if(operation!=='save'&&operation!=='new'&&project.folder)await studioRequest('/api/projects/save',{workspace_id:project.workspace_id,folder:project.folder,browser_state:memory});
   const next:Project=await studioRequest(`/api/projects/${operation==='standalone'?'select':operation}`,{workspace_id:operation==='standalone'?'tool-library':target||project.workspace_id,folder,title,browser_state:memory,...(operation==='new'?{parent_folder:createParent}: {})});
   if(operation!=='save'){
    const saved=localStorage.getItem(localKey+next.workspace_id);if(saved)localStorage.setItem('vibe-recovery:'+next.workspace_id+':browser',saved);
@@ -94,7 +95,7 @@ export default function ProjectController({children}:{children:ReactNode}){
  const choose=async(forNew=false)=>{setBusy(true);try{const result=await studioRequest('/api/projects/choose-folder',{});if(forNew)setCreateParent(result.path);else setFolder(result.path);}catch(e){setError((e as Error).message);}finally{setBusy(false);}};
  return <Context.Provider value={project||{workspace_id:'tool-library',title:'Loading project…',browser_state:{}}}>
   <div className="project-toolbar" aria-label="Project controls"><strong>{project?.title||'Loading project…'}</strong>{project?.folder&&<small title={project.folder}>{project.folder}</small>}
-   <CompactPopover label="New project">
+   <CompactPopover key={project?.workspace_id} label="New project">
     <label>New project name<input value={title} onChange={e=>setTitle(e.target.value)} disabled={busy}/></label>
     <label>Save location<input aria-label="New project parent folder" value={createParent} placeholder="Application projects folder" onChange={e=>setCreateParent(e.target.value)} disabled={busy}/></label>
     <button disabled={busy} onClick={()=>void choose(true)}>Choose parent folder</button>

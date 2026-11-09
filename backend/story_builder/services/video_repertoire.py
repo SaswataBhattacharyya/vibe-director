@@ -65,7 +65,7 @@ def youtube_downloads_root() -> Path:
 def analyzer_runs_root() -> Path:
     return REPERTOIRE_ROOT / "runs"
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm", ".m4v", ".avi"}
-JOB_KINDS = {"agent-transcription", "agent-computer", "continuity-frame", "music-jukebox", "voice-studio", "trellis", "ace-studio", "vibe-editor", "youtube", "analysis", "semantic-index", "image-detailer", "style-frames", "timed-tts", "audio-effects", "audio-scene-split", "audio-scene-stitch", "ace-music", "control-foley", "audio-utilities", "f5-prepare"}
+JOB_KINDS = {"agent-workspace", "agent-generation", "frame-pipeline", "video-overlap", "agent-transcription", "agent-computer", "continuity-frame", "music-jukebox", "voice-studio", "trellis", "ace-studio", "vibe-editor", "youtube", "analysis", "semantic-index", "image-detailer", "style-frames", "timed-tts", "audio-effects", "audio-scene-split", "audio-scene-stitch", "ace-music", "control-foley", "audio-utilities", "f5-prepare"}
 
 # Keep the durable Media Prep queue cheap while it waits: API requests enqueue
 # only an ID, and one dispatcher starts the next subprocess after the current
@@ -807,13 +807,15 @@ def create_job(kind: str, request: dict[str, Any]) -> dict[str, Any]:
     ensure_layout()
     if kind not in JOB_KINDS:
         raise ValueError("Unknown video job kind")
+    from . import agent_native_tools
+    request = agent_native_tools.correlate(kind, request)
     from .output_destinations import freeze
     request = freeze(_CONFIGURED_DATA_ROOT, kind, request)
     job_id = f"{kind}-{uuid.uuid4().hex[:12]}"
     job = {
         "job_id": job_id,
         "kind": kind,
-        "status": "queued",
+        "status": "running" if kind == "agent-generation" else "queued",
         "progress": 0,
         "stage": "queued",
         "message": "Job is queued.",
@@ -826,6 +828,7 @@ def create_job(kind: str, request: dict[str, Any]) -> dict[str, Any]:
         "updated_at": utc_now(),
     }
     _atomic_json(job_path(kind, job_id), job)
+    agent_native_tools.created(job)
     return job
 
 
@@ -931,7 +934,7 @@ def _ensure_media_dispatcher() -> None:
             # Requeue durable jobs after an API restart. Only IDs stay in RAM;
             # no worker process is started until the dispatcher reaches it.
             pending = []
-            for kind in JOB_KINDS:
+            for kind in JOB_KINDS - {"agent-generation"}:
                 pending.extend((job.get("created_at", ""), kind, job["job_id"])
                                for job in list_jobs(kind) if job.get("status") == "queued")
             for _, kind, job_id in sorted(pending):
@@ -973,6 +976,8 @@ def _owned_worker_process(pid: int, kind: str, job_id: str) -> bool:
 
 
 def start_job(kind: str, job_id: str) -> dict[str, Any]:
+    if kind == "agent-generation":
+        raise ValueError("Director generation receipts cannot be dispatched as Media Prep jobs.")
     job = read_job(kind, job_id)
     if job["status"] not in {"queued", "failed", "interrupted", "cancelled"}:
         raise ValueError("Job cannot be started from its current state")

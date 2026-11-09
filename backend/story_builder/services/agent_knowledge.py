@@ -5,6 +5,11 @@ from .production_ledger import LedgerConflict, _now
 
 def read(root, ledger, owner):
     agent_graph.resolve_workspace(root, owner)
+    return read_saved(ledger, owner)
+
+
+def read_saved(ledger, owner):
+    """Read exact-owner notes after the calling surface validates its own context."""
     with ledger._connect() as db:
         row = db.execute('SELECT revision,content FROM agent_knowledge WHERE project_id=? ORDER BY revision DESC LIMIT 1', (owner,)).fetchone()
     return {'workspace_id': owner, 'revision': row['revision'] if row else 0, 'content': row['content'] if row else ''}

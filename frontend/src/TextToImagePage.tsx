@@ -13,6 +13,7 @@ import { listMediaAssets, MediaAsset } from './lib/media-api';
 import './text-to-image.css';
 
 const MODELS = [
+  { id: 'flux_kontext_dev', label: 'FLUX Kontext · reference edit' },
   { id: 'z_image_turbo', label: 'Z Image' },
   { id: 'qwen_image_2512', label: 'Qwen Image 2512' },
   { id: 'qwen_image_edit_2511', label: 'Qwen Image Edit 2511' },
@@ -72,7 +73,8 @@ export default function TextToImagePage() {
   const [loading, setLoading] = useState(true);
 
   const selectedWorkflow = workflows.find(item => item.workflow_id === workflowId);
-  const editing = workflowId === 'qwen_image_edit_2511';
+  const editing = ['qwen_image_edit_2511', 'flux_kontext_dev'].includes(workflowId);
+  const referenceLimit = workflowId === 'flux_kontext_dev' ? 1 : 3;
   const currentJob = batch?.jobs?.[0] || null;
   const readyAsset = selectedAsset || null;
   const chatPreviewUrls = useMemo(() => chatAttachments.map(file => URL.createObjectURL(file)), [chatAttachments]);
@@ -104,7 +106,7 @@ export default function TextToImagePage() {
     if(restoreSettings.current){restoreSettings.current=false;return;}
     setWidth(selectedWorkflow.defaults.width); setHeight(selectedWorkflow.defaults.height);
     setSteps(selectedWorkflow.defaults.steps); setCfg(selectedWorkflow.defaults.cfg);
-    if (workflowId !== 'qwen_image_edit_2511' && references.length) setMessage('This workflow is text-only. Select Qwen Image Edit 2511 to use references.');
+    if (!editing && references.length) setMessage('This workflow is text-only. Select Qwen Image Edit 2511 to use references.');
   }, [selectedWorkflow?.workflow_id]);
   useEffect(() => {
     if (!active) return;
@@ -145,9 +147,9 @@ export default function TextToImagePage() {
 
   const stageReferences = async (files: File[]) => {
     if (!editing) { setMessage('Select Qwen Image Edit 2511 to use reference images.'); return; }
-    const remaining = Math.max(0, 3 - references.length);
+    const remaining = Math.max(0, referenceLimit - references.length);
     const accepted = files.filter(file => file.type.startsWith('image/')).slice(0, remaining);
-    if (!accepted.length) { setError(references.length >= 3 ? 'Qwen Image Edit accepts up to three reference images.' : 'Choose image files.'); return; }
+    if (!accepted.length) { setError(references.length >= referenceLimit ? 'Qwen Image Edit accepts up to three reference images.' : 'Choose image files.'); return; }
     setBusy(true); setError('');
     try {
       const staged: Ref[] = [];
@@ -162,7 +164,7 @@ export default function TextToImagePage() {
         throw reason;
       }
       setReferences(old => {
-        const next = [...old, ...staged].slice(0, 3);
+        const next = [...old, ...staged].slice(0, referenceLimit);
         localStorage.setItem(referenceKey, JSON.stringify(next.map(ref => ({ assetId: ref.asset.asset_id, token: ref.token }))));
         return next;
       });
@@ -176,7 +178,7 @@ export default function TextToImagePage() {
     if(ref.token) await deleteTemporaryImageAsset(workspaceId, ref.asset.asset_id, ref.token).catch(reason => setError(`Temporary reference cleanup failed: ${(reason as Error).message}`));
   };
   const prepare = async () => {
-    if (!workflowId || (editing && !references.length)) return;
+    if (!workflowId || (editing && (!references.length || references.length>referenceLimit))) return;
     setBusy(true); setError(''); setMessage('');
     try {
       const source_references = editing ? references.map(item => ({ asset_id: item.asset.asset_id, sha256: item.asset.sha256 })) : [];
@@ -187,7 +189,7 @@ export default function TextToImagePage() {
     finally { setBusy(false); }
   };
   const generate = async () => {
-    if (!destinationReady || active || !selectedWorkflow?.available || !prompt.trim() || busy || (editing && !references.length)) return;
+    if (!destinationReady || active || !selectedWorkflow?.available || !prompt.trim() || busy || (editing && (!references.length || references.length>referenceLimit))) return;
     setBusy(true); setError(''); setMessage('Checking workflow, GPU safety and worker readiness…');
     try {
       const [catalog, runtime, worker] = await Promise.all([getImageWorkflows(true), getRuntimeGuard(), getImageWorker()]);
@@ -247,22 +249,22 @@ export default function TextToImagePage() {
           {MODELS.map(model => { const item = workflows.find(row => row.workflow_id === model.id); return <option key={model.id} value={model.id} disabled={!item?.available}>{model.label}{item?.available ? '' : ' · unavailable'}</option>; })}
         </select></label>
         {selectedWorkflow && <p className="t2i-model-state">{selectedWorkflow.available ? `${selectedWorkflow.label} · workflow ${selectedWorkflow.version} ready` : selectedWorkflow.disabled_reason || 'This workflow is not ready.'}</p>}
-        {editing && <div className="t2i-reference-tray" aria-label="Selected workflow references">{references.length ? references.map((ref,index)=><span key={ref.asset.asset_id}><img src={ref.asset.content_url} alt=""/>{ref.asset.filename}<button type="button" aria-label={`Remove reference ${ref.asset.filename}`} onClick={()=>void removeReference(index)}><X size={13}/></button></span>) : <small>Select images below and choose “Use as reference”. Up to 3 images.</small>}</div>}
-        {editing&&<MediaSourcePicker workspaceId={workspaceId} kinds={['image']} compact role="project_image" disabled={busy||loading||!!active||references.length>=3}
-          destination={{kind:'model_reference',slot:'image references',capacity:Math.max(0,3-references.length),onSelect:items=>{
+        {editing && <div className="t2i-reference-tray" aria-label="Selected workflow references">{references.length ? references.map((ref,index)=><span key={ref.asset.asset_id}><img src={ref.asset.content_url} alt=""/>{ref.asset.filename}<button type="button" aria-label={`Remove reference ${ref.asset.filename}`} onClick={()=>void removeReference(index)}><X size={13}/></button></span>) : <small>Select images below and choose “Use as reference”. Kontext accepts one reference; Qwen Edit accepts up to three.</small>}</div>}
+        {editing&&<MediaSourcePicker workspaceId={workspaceId} kinds={['image']} compact role="project_image" disabled={busy||loading||!!active||references.length>=referenceLimit}
+          destination={{kind:'model_reference',slot:'image references',capacity:Math.max(0,referenceLimit-references.length),onSelect:items=>{
             if(items.some(asset=>asset.workspace_id!==workspaceId||asset.kind!=='image'))throw new Error('Choose registered image references for this project.');
             const next:Ref[]=[...references,...items.filter(asset=>!references.some(ref=>ref.asset.asset_id===asset.asset_id)).map(asset=>({asset}))];
-            if(next.length>3)throw new Error('Qwen Image Edit accepts up to three references.');
+            if(next.length>referenceLimit)throw new Error('This workflow has too many references; Kontext accepts one, Qwen Edit up to three.');
             setReferences(next);setPromptDraft(null);
             localStorage.setItem(referenceKey,JSON.stringify(next.map(ref=>({assetId:ref.asset.asset_id,token:ref.token}))));
           }}}/>}
         <ZImageLoraControls enabled={workflowId==='z_image_turbo'} onChange={setLora} onTrigger={word=>setPrompt(old=>`${word} ${old}`)}/><label>Prompt<textarea aria-label="Image prompt" rows={7} maxLength={6999} value={prompt} onChange={event => { setPrompt(event.target.value); setPromptDraft(null); }} placeholder="Describe the image you want to create…"/></label>
-        <div className="t2i-settings"><label>Width<input type="number" min="256" max="2048" step="8" value={width} onChange={event => setWidth(Number(event.target.value))}/></label><label>Height<input type="number" min="256" max="2048" step="8" value={height} onChange={event => setHeight(Number(event.target.value))}/></label><label>Steps<input type="number" min={workflowId === 'qwen_image_2512' ? 20 : 4} max={workflowId === 'qwen_image_2512' ? 80 : 16} value={steps} onChange={event => setSteps(Number(event.target.value))}/></label><label>CFG<input type="number" min="0.1" max={workflowId === 'z_image_turbo' ? 2 : 8} step="0.1" value={cfg} onChange={event => setCfg(Number(event.target.value))}/></label><label>Seed<input type="number" min="0" max="4294967295" value={seed} onChange={event => setSeed(Number(event.target.value))}/></label></div>
-        <div className="t2i-actions"><button type="button" className="quiet-button" onClick={() => void prepare()} disabled={busy||(editing&&!references.length)}><Sparkles size={15}/> Prepare prompt</button><button type="button" className="generate-button" onClick={() => void generate()} disabled={busy||loading||!selectedWorkflow?.available||!prompt.trim()||(editing&&!references.length)||!!active||!destinationReady}>{busy?<LoaderCircle size={15} className="spin"/>:<ImageIcon size={15}/>} {active?'Generating…':'Generate image'}</button></div>
+        <div className="t2i-settings">{workflowId==='flux_kontext_dev'&&<p>Kontext follows the reference’s native aspect bucket. Width and height below are nominal; review the actual output before accepting.</p>}<label>Width<input type="number" disabled={workflowId==='flux_kontext_dev'} min="256" max="2048" step="8" value={width} onChange={event => setWidth(Number(event.target.value))}/></label><label>Height<input type="number" disabled={workflowId==='flux_kontext_dev'} min="256" max="2048" step="8" value={height} onChange={event => setHeight(Number(event.target.value))}/></label><label>Steps<input type="number" min={['qwen_image_2512','flux_kontext_dev'].includes(workflowId) ? 20 : 4} max={['qwen_image_2512','flux_kontext_dev'].includes(workflowId) ? 80 : 16} value={steps} onChange={event => setSteps(Number(event.target.value))}/></label><label>CFG<input type="number" min="0.1" max={workflowId === 'z_image_turbo' ? 2 : 8} step="0.1" value={cfg} onChange={event => setCfg(Number(event.target.value))}/></label><label>Seed<input type="number" min="0" max="4294967295" value={seed} onChange={event => setSeed(Number(event.target.value))}/></label></div>
+        <div className="t2i-actions"><button type="button" className="quiet-button" onClick={() => void prepare()} disabled={busy||(editing&&(!references.length||references.length>referenceLimit))}><Sparkles size={15}/> Prepare prompt</button><button type="button" className="generate-button" onClick={() => void generate()} disabled={busy||loading||!selectedWorkflow?.available||!prompt.trim()||(editing&&(!references.length||references.length>referenceLimit))||!!active||!destinationReady}>{busy?<LoaderCircle size={15} className="spin"/>:<ImageIcon size={15}/>} {active?'Generating…':'Generate image'}</button></div>
       </section>
       <section className="card t2i-result" aria-label="Generated image preview"><h2>Image preview</h2>{active&&<div className="t2i-progress"><LoaderCircle size={17} className="spin"/><span>{currentJob?.status?`Image job ${currentJob.status.replaceAll('_',' ')}`:'Connecting to image job…'}</span>{currentJob?.error?.message&&<p role="alert">{currentJob.error.message}</p>}</div>}{readyAsset?<><figure><img src={readyAsset.content_url} alt={readyAsset.description||readyAsset.filename}/><figcaption>{readyAsset.filename} · {readyAsset.media?.width||'—'} × {readyAsset.media?.height||'—'} · {active?.outputToken?'temporary until saved':'saved in output folder'}</figcaption></figure>{active?.outputToken?<><label>Filename<input value={outputName} onChange={event=>setOutputName(event.target.value)} placeholder="image.png"/></label><button type="button" className="generate-button" disabled={busy||!outputHandle||!active||!outputName.trim()} onClick={()=>void saveOnlyToChosenFolder()}><Check size={15}/> Save to chosen folder</button></>:<a className="quiet-button" href={readyAsset.content_url} download={readyAsset.filename}>Download image</a>}</>:previewUrl?<figure><img src={previewUrl} alt="Saved generated image"/><figcaption>{outputName} · Saved to {outputHandle?.name || 'chosen folder'}</figcaption></figure>:<div className="t2i-empty"><ImageIcon size={40}/><p>Choose a model, write a prompt, select an output folder, and generate.</p></div>}</section>
     </div>
-    <DirectorImageReview disabled={busy||loading||!!active||(editing&&!references.length)} request={{workspace_id:workspaceId,workflow_id:workflowId,asset_role:'image_candidate',
+    <DirectorImageReview disabled={busy||loading||!!active||(editing&&(!references.length||references.length>referenceLimit))} request={{workspace_id:workspaceId,workflow_id:workflowId,asset_role:'image_candidate',
       prompt:[prompt.trim(),chatAttachments.length?`Attached local image filenames (metadata only): ${chatAttachments.map(file=>file.name).join(', ')}.`:''].filter(Boolean).join('\n\n'),
       ...(editing&&references.length?{source_references:references.map(item=>({asset_id:item.asset.asset_id,sha256:item.asset.sha256}))}:{})}}
       onApply={draft=>{setPrompt(draft.prompt);setPromptDraft(draft);}}/>
@@ -273,7 +275,7 @@ export default function TextToImagePage() {
       <div className="t2i-chat-attachments" onDragOver={event=>event.preventDefault()} onDrop={event=>{event.preventDefault();const files=Array.from(event.dataTransfer.files).filter(file=>file.type.startsWith('image/'));setChatAttachments(old=>[...old,...files.filter(file=>!old.some(item=>item.name===file.name&&item.size===file.size))]);}}>
         {chatAttachments.map((file,index)=><span key={`${file.name}:${file.size}:${index}`}><img src={chatPreviewUrls[index]} alt=""/>{file.name}<button type="button" aria-label={`Remove ${file.name}`} onClick={()=>setChatAttachments(old=>old.filter((_,i)=>i!==index))}><X size={13}/></button></span>)}
       </div>
-      <LocalImageFolderBrowser maxReferences={3} referencesEnabled={editing&&references.length<3} onUseAsReference={files=>void stageReferences(files)} onAttachToChat={files=>setChatAttachments(old=>[...old,...files.filter(file=>!old.some(item=>item.name===file.name&&item.size===file.size))])}/>
+      <LocalImageFolderBrowser maxReferences={referenceLimit} referencesEnabled={editing&&references.length<referenceLimit} onUseAsReference={files=>void stageReferences(files)} onAttachToChat={files=>setChatAttachments(old=>[...old,...files.filter(file=>!old.some(item=>item.name===file.name&&item.size===file.size))])}/>
     </details>
   </main>;
 }

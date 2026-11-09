@@ -1,13 +1,13 @@
 {
   "provider": "codex",
-  "model": "gpt-6.1-sol",
+  "model": "gpt-6-luna",
   "provider_models": {
     "codex": {
-      "model": "gpt-6.1-sol",
-      "reasoning_effort": "medium"
+      "model": "gpt-6-luna",
+      "reasoning_effort": "high"
     }
   },
-  "reasoning_effort": "medium",
+  "reasoning_effort": "high",
   "lessons": [],
-  "revision": 11
+  "revision": 12
 }

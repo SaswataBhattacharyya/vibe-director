@@ -1,5 +1,7 @@
 # Active fixes — native-interface milestone over 3a5bc11 (2026-11-07)
 
+**Current priority (2026-11-09): Director harness H0/H1 overrides the historical queue below.** Follow [DIRECTOR_HARNESS_P0.md](DIRECTOR_HARNESS_P0.md); observed baseline failures and measured compatibility results are recorded in [DIRECTOR_HARNESS_EVIDENCE.md](DIRECTOR_HARNESS_EVIDENCE.md). H0 reproduces the defect; baseline is not green. H1 real three-tool continuation, progress and process-restart recovery passed in isolation; full security verification remains open. No production harness switch; H2 not started.
+
 This is the **only active implementation queue**. Previously completed foundation is summarized in [COMPLETED_BASELINE.md](COMPLETED_BASELINE.md). Progress means code+tests, not merely an existing service or a written plan. Codex should recheck actual HEAD before working.
 
 | ID | Priority | Status | Next concrete result / acceptance |

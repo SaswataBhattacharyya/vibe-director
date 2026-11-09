@@ -88,6 +88,19 @@ class CodexSchemaTests(unittest.TestCase):
         result = {"reply": "What lighting would you like?", "intent": "discuss", "quality": 5}
         self.assertEqual(self.run_response(result), result)
 
+    def test_chat_schema_preserves_nested_arbitrary_tool_settings(self):
+        result = {'reply': 'Review the proposed tool.', 'intent': 'tool.call', 'quality': 5,
+            'tool_call': {'tool_id': 'media.inspect', 'asset_ids': [],
+                'settings': {'nested': {'optional': ['value', 1]}}}}
+        self.assertEqual(self.run_response(result), result)
+
+    def test_cli_jsonl_failure_is_not_a_successful_reply(self):
+        event = json.dumps({'type': 'turn.failed', 'error': {'message': 'fixture provider failure'}})
+        with patch('story_builder.services.reasoning_provider.shutil.which', return_value='/usr/bin/codex'), \
+             patch('story_builder.services.reasoning_provider._run_json_command', return_value=event):
+            with self.assertRaisesRegex(ReasoningProviderError, 'fixture provider failure'):
+                _codex_json('Discuss this shot.')
+
     def test_chat_schema_still_rejects_invalid_response(self):
         with self.assertRaisesRegex(ReasoningProviderError, "does not match"):
             self.run_response({"reply": "Invalid incomplete reply"})

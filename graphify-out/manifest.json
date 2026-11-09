@@ -330,9 +330,9 @@
     "semantic_hash": "ddcb03685d2955376a4bdcfcc5e9c1e4"
   },
   "backend/story_builder/services/reasoning_provider.py": {
-    "mtime": 1793848749.1256716,
-    "ast_hash": "b6e8b3324e6dd5d6cd7667ee77813935",
-    "semantic_hash": "b6e8b3324e6dd5d6cd7667ee77813935"
+    "mtime": 1794210398.0226786,
+    "ast_hash": "0a9b8efcf2c14640d275f5960afa8e9d",
+    "semantic_hash": "0a9b8efcf2c14640d275f5960afa8e9d"
   },
   "backend/story_builder/services/sam_audio_vibe.py": {
     "mtime": 1793503224.4323514,
@@ -570,9 +570,9 @@
     "semantic_hash": "5f95025f53be407499780d71bbc49683"
   },
   "backend/story_builder/tests/test_reasoning_provider.py": {
-    "mtime": 1793848804.1864765,
-    "ast_hash": "fe5c95b959b4d7df1ae3aea751e3c3e8",
-    "semantic_hash": "fe5c95b959b4d7df1ae3aea751e3c3e8"
+    "mtime": 1794218267.1292977,
+    "ast_hash": "4d8d74a2132fb896f404474e271caa8c",
+    "semantic_hash": "4d8d74a2132fb896f404474e271caa8c"
   },
   "backend/story_builder/tests/test_story_authoring.py": {
     "mtime": 1793509915.5733635,
@@ -2695,14 +2695,14 @@
     "semantic_hash": "84cc6b01424887d02fdaeb2ab52ca127"
   },
   "frontend/src/DirectorConversation.tsx": {
-    "mtime": 1794199570.219377,
-    "ast_hash": "91203f7d06e3fcd50a907b3222db471c",
-    "semantic_hash": "91203f7d06e3fcd50a907b3222db471c"
+    "mtime": 1794209955.4410346,
+    "ast_hash": "a09fa73b0c89dea041e5968724b926fa",
+    "semantic_hash": "a09fa73b0c89dea041e5968724b926fa"
   },
   "frontend/src/DirectorRuntime.tsx": {
-    "mtime": 1794049594.9147265,
-    "ast_hash": "0d6fbae5b6b498a769b26201a2981f36",
-    "semantic_hash": "0d6fbae5b6b498a769b26201a2981f36"
+    "mtime": 1794210005.7545435,
+    "ast_hash": "33afcf345410d6d744c75e8d0152d556",
+    "semantic_hash": "33afcf345410d6d744c75e8d0152d556"
   },
   "frontend/src/ProjectKnowledge.tsx": {
     "mtime": 1793940478.6966085,
@@ -3290,9 +3290,9 @@
     "semantic_hash": "33f899277e55f44796354c5fbf12173f"
   },
   "backend/story_builder/tests/test_agent_tool_access.py": {
-    "mtime": 1794199588.1094007,
-    "ast_hash": "49c318a49872dd7ebd9079c9d82f9438",
-    "semantic_hash": "49c318a49872dd7ebd9079c9d82f9438"
+    "mtime": 1794218215.8455656,
+    "ast_hash": "3f1006c658cd17aabed81ca11c078720",
+    "semantic_hash": "3f1006c658cd17aabed81ca11c078720"
   },
   "backend/story_builder/tests/test_editor_layers.py": {
     "mtime": 1794195775.0779757,
@@ -3313,5 +3313,30 @@
     "mtime": 1794196397.396038,
     "ast_hash": "88488e41ba4179e1ce525edb371616fe",
     "semantic_hash": "88488e41ba4179e1ce525edb371616fe"
+  },
+  ".review/director-tool-access-impact.json": {
+    "mtime": 1794199741.2932582,
+    "ast_hash": "bd0dd96574d1042c033874accf7b54eb",
+    "semantic_hash": "bd0dd96574d1042c033874accf7b54eb"
+  },
+  "backend/story_builder/tests/harness_probe.py": {
+    "mtime": 1794219400.0924628,
+    "ast_hash": "bee02ca79b72802bffb59827636d8889",
+    "semantic_hash": "bee02ca79b72802bffb59827636d8889"
+  },
+  "backend/story_builder/tests/harness_probe_mcp.py": {
+    "mtime": 1794218986.3710997,
+    "ast_hash": "4ceb21c33d5e00b0cd2430ceb3952fb4",
+    "semantic_hash": "4ceb21c33d5e00b0cd2430ceb3952fb4"
+  },
+  "backend/story_builder/tests/test_director_harness_probe.py": {
+    "mtime": 1794219246.4261115,
+    "ast_hash": "327946a3d4bac95ecee5689930b6240c",
+    "semantic_hash": "327946a3d4bac95ecee5689930b6240c"
+  },
+  ".review/director-harness-h1-impact.json": {
+    "mtime": 1794219587.3031518,
+    "ast_hash": "add345178d049b42b9e66972c075ece0",
+    "semantic_hash": "add345178d049b42b9e66972c075ece0"
   }
 }

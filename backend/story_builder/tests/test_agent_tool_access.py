@@ -3,6 +3,7 @@ import io
 import json
 import subprocess
 import uuid
+import unittest
 from unittest.mock import Mock, patch
 from PIL import Image
 from story_builder.tests.test_agent_tasks import AgentTaskFixture
@@ -38,6 +39,33 @@ class ToolAccessTests(AgentTaskFixture):
             self.assertEqual(task['plan']['tool_id'], 'media.inspect')
             self.assertEqual(task['status'], 'draft')
         self.dispatch.assert_not_called()
+
+    def test_current_chat_stops_after_first_task_of_multistep_request(self):
+        """H0 characterization: completing a task does not resume reasoning."""
+        reason = Mock(return_value={'reply': 'Finding project clips.', 'quality': 2,
+            'intent': 'tool.call', 'tool_call': {'tool_id': 'media.list',
+                'asset_ids': [], 'settings': {'kind': 'all', 'offset': 0, 'limit': 100}}})
+        conversation = AgentConversation(self.tasks, reason)
+        result = conversation.send(self.owner, {'request_id': str(uuid.uuid4()),
+            'surface': 'director', 'text': 'Find clips 2 through 6, stitch them in narrative order, preserve audio, and open in Editor.',
+            'asset_ids': [self.asset['asset_id']], 'skill_refs': []})
+        task_id = result['messages'][-1]['task_id']
+        completed = self.run_workspace(self.tasks.get(self.owner, task_id))
+        self.assertEqual(completed['status'], 'completed')
+        self.assertIn(self.asset['asset_id'], completed['report'])
+        reason.assert_called_once()
+        self.assertEqual(len(self.tasks.list(self.owner)['tasks']), 1)
+        self.assertEqual(self.original.read_bytes(), self.before)
+
+    @unittest.expectedFailure
+    def test_unfinished_five_clip_goal_reaches_verified_output_without_second_message(self):
+        """Known red H0 gate; H4/H5 must replace this with real synthetic acceptance."""
+        self.test_current_chat_stops_after_first_task_of_multistep_request()
+        completed_renders = [task for task in self.tasks.list(self.owner)['tasks']
+            if task['plan']['tool_id'] == 'editor.render'
+            and task['status'] == 'completed' and task.get('outputs')]
+        self.assertTrue(completed_renders,
+            'Goal remains unfinished after media.list: no continuation or verified output')
 
     def test_unknown_blocked_malformed_nonfinite_and_foreign_calls_rejected(self):
         catalogue = agent_tools.tools()['tools']

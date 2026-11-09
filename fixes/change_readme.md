@@ -1,28 +1,32 @@
-# Vibe Director — active Codex entry (2026-11-07)
+# Vibe Director — current Codex entry (2026-11-09)
 
-**Read this, not the old dated fix notes.** Current audited branch: `vibe-director-current`, baseline `9180a01376a6eb254ef6c171f9d3977e4d388dfb`. Confirm local `git status` / HEAD first; newer source wins over this audit. These are **implementation guides, not evidence that changes work live**.
+**Single current implementation entrypoint.** First read this file, then **[DIRECTOR_HARNESS_P0.md](DIRECTOR_HARNESS_P0.md)**, [ACTIVE_FIXES.md](ACTIVE_FIXES.md), [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md), and only the relevant portion of [INTEGRATION_ARCHITECTURE.md](INTEGRATION_ARCHITECTURE.md). Read root [AGENTS.md](../AGENTS.md) for preservation rules. The earlier CODEX_START_HERE and COMPLETED_BASELINE guides were consolidated into these current documents; retrieve historic wording from Git history only for a specific regression.
 
-## The only current handoff reading order
+## Source of truth and safe starting protocol
 
-1. [CODEX_START_HERE.md](CODEX_START_HERE.md) — exact next actions, sequence and scope.
-2. [ACTIVE_FIXES.md](ACTIVE_FIXES.md) — live task cards; do NOT reopen marked-done foundation.
-3. [INTEGRATION_ARCHITECTURE.md](INTEGRATION_ARCHITECTURE.md) — HyperFrames, OpenMontage, shared chat/media, capability contracts.
-4. [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) — tests and stop conditions by slice.
-5. [COMPLETED_BASELINE.md](COMPLETED_BASELINE.md) — what source currently implements versus what is still unverified.
-6. `AGENTS.md`, relevant source/tests, and their colocated `change_readme.md` only when editing that area.
+Target branch: `vibe-director-current`. Planning baseline: `6db612357f6ccdd351b5d91e48b5d1ffd408e57a`; newest source-confirmed one-shot harness diagnosis: `05508145fe049214f0f83ac45b1164748920dd4d`. Neither is a frozen implementation target.
 
-**Historical files deleted from this folder are recoverable from Git history**, not active prerequisites. DO NOT read past dated reviews, Q/R/UX result essays, old change matrices, or package handoff prompts unless debugging an historical regression.
+1. At the beginning of each implementation session run `git branch --show-current`, `git rev-parse HEAD`, `git status --short`, and inspect the relevant source/tests. If HEAD has moved, source wins over this planning snapshot; refresh references before editing.
+2. Preserve user-local dirty changes. Do not reset, clean, overwrite, or revert unrelated files. Never discard local media, models, journals, job state, checkpoint history, approved plans, or external outputs.
+3. **TEST FIRST: P0 agent harness.** Phase T0 records a safe targeted baseline and H0 reproduces the one-shot failure without application changes. The first repair milestone is **H1–H5**: a real continuing Codex-like Director with human approvals, MCP, five-clip stitching and in-app playback. No unrelated feature work, broad refactor, dependency upgrade, mass deletion, or code cleanup before this acceptance.
+4. After T0, fix only demonstrated failures in the smallest vertical slice. Re-run focused tests, then neighboring regressions; require a changed-file map and a rollback plan before shared-seam modifications.
+5. Separate observed execution from documentation and mocks. An available tool, successful import or completed job does not establish creative quality or live provider/model readiness.
+6. No paid-provider, model inference, GPU-intensive generation, checkpoint deletion, production rendering, or full-access computer tasks as incidental tests. Real owner-media acceptance is opt-in and separately recorded.
 
-## Product decision
+## Current product boundary
 
-- **One Vibe Director project + one persistent central chat.** No new independent chat composer, asset database or separate project owner for either integration.
-- **Vibe Editor right workspace:** `AI Editor` and `Visual Editor` modes; start with an isolated proof of HyperFrames Studio compatibility, then embed selected controls if feasible. A full-workspace expansion is required for timeline work. Separate-tab mode is fallback, not a second disconnected application.
-- **Storyboard:** preserve existing manual storyboard; optionally add a `Production Board` backed by verified OpenMontage/Backlot capabilities. Do not promise OpenMontage Studio as an embeddable public GUI.
-- **Media:** register once, reference by owned asset ID and hash, explicitly bind to editor session/range/composition. Chat attachment ≠ selected Editor input ≠ image/video model reference.
-- **AI:** a selected skill and glossary entry provide instructions; only live, typed, installed and authorized tool adapters execute. Never tell the user “no audio extraction” when the existing MP3 adapter is ready; equally, do not claim transcription or time-coded detection merely because extraction exists.
+Vibe Director owns project/workspace IDs, media registry and hashes, Director/Editor session state, two edit clearances, durable jobs, output registration, and provenance. HyperFrames Studio, OpenMontage Backlot, and Kdenlive MCP are specialist workspaces/engines, not additional project owners or independent chatbot sessions.
 
-## Safety and done policy
+The current branch includes a shared Director with **37 registered operations** (availability is not always runtime-probed); a bounded two-clip overlap analyzer; Kdenlive MCP preview/render with a narrow 1080p/30 hard-cut adapter; isolated native HyperFrames Studio; and an OpenMontage Backlot mirror with limited reviewable edit extension. These are real implemented paths but **not** full GUI parity, universally ready runtimes, or complete autonomous film direction. See [Director tool contract](../docs/DIRECTOR_TOOL_ACCESS.md), [Kdenlive acceptance](../plans/kdenlive_clip_continuity_usage.md), [native workspaces](../design/vibe-editor/native-interfaces.md), and [frame pipeline usage](../docs/FRAME_PIPELINE_USAGE.md).
 
-No code changes or runtime test executions were made as part of this documentation-only cleanup. The user authorized **these GitHub documentation deletions/updates**; this does not authorize deleting project media, silently rewriting approvals, GPU/paid calls, launching unrestricted computer access or making permanent output changes.
+## Implementation order / stop conditions
 
-Only mark a card DONE after its code, focused backend/UI regressions, project reload, output verification and explicit remaining limitations are recorded. Remove completed task prose from `ACTIVE_FIXES.md` in future cleanups; retain a short entry in `COMPLETED_BASELINE.md`. Preserve the nested `fixes/vibe-director-codex-agent-blueprint-v2/...` package: `services/agent_skills.py` loads 13 runtime skill packages and `shared/CONTRACT.md` from it.
+**T0** safe targeted test baseline → **H0** one-shot defect reproduction → **H1** Codex app-server compatibility (Agents SDK fallback if necessary) → **H2** typed Vibe/MCP goal loop → **H3** exact human approvals and recovery → **H4** real synthetic five-clip render → **H5** in-app video/audio playback and real UI test → **H6** owner acceptance (opt-in). Then return to non-blocking T1/T2 regressions, **S** security/readiness/CI/storage, **M** maintainability, and wider filmmaking expansions. See [P0 harness plan](DIRECTOR_HARNESS_P0.md).
+
+Do not advance to the next stage on documentation alone. If the test environment is unavailable, report **BLOCKED with cause and executable next step**, not PASS. Never silently change supported workflows or replace an unavailable backend with another renderer.
+
+## How Codex must report a completed slice
+
+Report the current HEAD and dirty state, exact files changed, reason, dependency/caller trace, tests executed with real counts and pass/fail/skip, mock vs CPU vs native vs GPU evidence, artifact validation, remaining limitations, any storage/runtime effects, and rollback path. Mark a task DONE in ACTIVE_FIXES only after its acceptance criteria were actually met.
+
+**Deletion boundary:** The nested `fixes/vibe-director-codex-agent-blueprint-v2/vibe-director-codex-agent-blueprint/` is a live skill/reference source. `agent_skills.py` reads its `skills/*/SKILL.md` and `shared/CONTRACT.md`; leave it intact. Do not delete its Markdown as “old notes” without an explicit runtime dependency migration and test. `fixes/skills/` also contains development skills, not disposable handoff prose.

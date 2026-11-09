@@ -1,9 +1,11 @@
-# Frontend Playwright — active verification (2026-11-07)
+# Frontend tests — current guidance (2026-11-09)
 
-Read `fixes/ACCEPTANCE_TESTS.md`. Earlier “needs new chat removal/image/take flatten” instructions in deleted 2026-11-06 guides were stale; re-audit current rendered UI before filing regressions.
+Start with [T0 test baseline runbook](../../fixes/ACCEPTANCE_TESTS.md). Record HEAD, existing dirty files, test commands, exit codes, passed/failed/skipped and mocked vs native evidence. **No application changes while establishing the baseline.**
 
-**Next tests:** Director's single composer, tool-unavailable messaging, approval/Run and source-backed MP3 vs actual timed analyzer; a 7+ second clip with target event after 5s. Editor's `AI Editor | Visual Editor` switch and full expansion, once HF-01 feasibility passes: same session/selected asset, visual timeline edit saved as proposal, clearance invalidated, run/reload/preview/return; no duplicate chat or input file upload. Verify React/Studio CSS/focus isolation and blocked missing module path.
+First run `npm run typecheck` and `npm run build` with existing dependencies. Use `npx --no-install playwright test tests/clip-join.spec.mjs tests/director-runtime.spec.mjs tests/editor-visual.spec.mjs tests/editor-effects.spec.mjs tests/storyboard.spec.mjs` for representative browser contract coverage. Inspect each test's `page.route` interception: browser API mocks do not prove real MCP, GPU, owner-media or native GUI acceptance.
 
-Existing references: `director-runtime.spec.mjs`, `editor-assets.spec.mjs`, `editor-effects.spec.mjs`, `media-source-picker.spec.mjs`, `media-selection-scope.spec.mjs`, `storyboard.spec.mjs`, `video-ui.spec.mjs`. Preserve project ownership, media filter integrity and import consent.
+For UI regressions check one persistent chat, full tool settings, two Editor clearances, selected-range behavior beyond five seconds, import/folder consent, storyboard saved revisions, native Studio/Backlot handoffs and source continuity preview. Capture keyboard/focus at 1440/1280/900/390 widths as targeted tests, not assumed global acceptance.
 
-Run accessibility + layout screenshots at 1440/1280/900/390 widths with all app panes on; collapse/restore and full-screen can never double mount active video jobs or lose unsaved forms. Mock provider/API in isolated fixtures; no live GPU/paid calls. Document mock-vs-actual boundaries.
+`native-interfaces.manual.mjs`, `editor-preview.manual.mjs` and other real-runtime scripts are separate opt-in isolated acceptance. Verify test-owned server/process/media cleanup; never point them to the owner's working project or invoke paid/GPU generation incidentally.
+
+If any test fails, classify pre-existing/test/environment/product regression before altering source or assertions. Do not weaken tests to make the suite green.

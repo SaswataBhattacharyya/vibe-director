@@ -66,4 +66,4 @@ Reviewed against source on **2026-11-05**. This folder is an on-demand knowledge
 
 44 capability groups, 199 exported API helper declarations and 161 HTTP route literals/patterns. Route count includes prefixes/regex branches, not a count of verified endpoints. Backend service index includes internal validators, job workers, renderers, persistence and safety components. This is a source inventory and usage glossary, not a whole-app correctness audit or live availability certificate.
 
-The current [system review](../full_review.md#27-owner-requirement-exactly-like-codex--three-panes-and-directors-that-can-use-the-app) records the requested Codex-style three-pane architecture. This folder supplies its tool-selection knowledge. Existing runtime skills remain unchanged.
+The current [integration architecture](../fixes/INTEGRATION_ARCHITECTURE.md) and [test-first task queue](../fixes/ACTIVE_FIXES.md) describe the requested persistent Director and specialist workspaces. This folder supplies tool-selection knowledge; it does not grant runtime execution. Existing runtime skills remain unchanged.

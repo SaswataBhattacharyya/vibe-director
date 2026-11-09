@@ -12,8 +12,8 @@ Use **New / Open project** in the top bar to choose an existing folder, then cre
 
 The application keeps its operational working copy in `local_data/`; the chosen folder holds `vibe-project.json`, versioned `project-data/` checkpoints and outputs. Reopening preserves newer local edits. Models, secrets and runtime installations remain application-wide. On another runtime, external output overrides require Choose/Locate again. Save retains full checkpoints and media copies, so repeated saves increase disk use. See the [project storage review](audit/PROJECT_STORAGE_REVIEW.md) for validation and recovery limits.
 
-- [Current Codex fix entry](fixes/change_readme.md): **only active task/implementation guide**; dated finished notes were pruned.
-- [Active fixes](fixes/ACTIVE_FIXES.md), [integration architecture](fixes/INTEGRATION_ARCHITECTURE.md) and [acceptance checks](fixes/ACCEPTANCE_TESTS.md): HyperFrames visual-editor, shared Director capability router and optional OpenMontage production-board roadmap.
+- **P0: Fix the Director agent harness first.** [Current Codex entry](fixes/change_readme.md) → **[Codex-like harness plan](fixes/DIRECTOR_HARNESS_P0.md)** → [active task queue](fixes/ACTIVE_FIXES.md) → [test baseline / acceptance](fixes/ACCEPTANCE_TESTS.md). Reproduce one-shot media discovery, prove real multi-step Codex/MCP/approval workflow, render five ordered clips and play verified output before unrelated new features.
+- [Integration and preservation architecture](fixes/INTEGRATION_ARCHITECTURE.md): existing Director, Editor, HyperFrames, OpenMontage, Kdenlive MCP, media and jobs; not a separate implementation queue.
 - [Functionality audit and code review](audit/FUNCTIONALITY_AUDIT.md): component source map, preserved contracts, findings and bounded validation.
 - [Older Editor and ACE-Step requirements](plans/editor_media_output_ace_plan.md): historical feature context; current user decisions govern.
 - [General design foundation](design/VIBE_DIRECTOR_FOUNDATION.md): visual guidance.
@@ -23,7 +23,7 @@ Read only the guide relevant to the current task. Retain third-party notices in 
 
 ## Native filmmaking interfaces
 
-Vibe Editor → **Open Visual Editor → Open HyperFrames Studio** opens the native Studio. Storyboard → **Open OpenMontage Backlot** opens the native read-only production board. Studio imports supported edits as approval-required Vibe proposals; Backlot follows saved storyboard changes with playable media. Setup, limits, licenses and the verified synthetic workflow are in [Native Studio and Backlot](design/vibe-editor/native-interfaces.md). Restart the backend to load these changes.
+Vibe Editor → **Open Visual Editor → Open HyperFrames Studio** opens the native Studio. Storyboard → **Open OpenMontage Backlot** opens the native production board mirror. Studio imports supported edits as approval-required Vibe proposals; Backlot follows saved storyboard changes with playable media, and a Vibe-owned extension stages limited typed edits for review (not general upstream write-back). Setup, limits, licenses and the verified synthetic workflow are in [Native Studio and Backlot](design/vibe-editor/native-interfaces.md). Restart the backend to load these changes.
 
 ## Focused checks
 
@@ -33,9 +33,7 @@ silent MP4/FFV1 export share the Director task system. See
 [frame pipeline usage and limitations](docs/FRAME_PIPELINE_USAGE.md). Restart the
 backend using the normal launcher when active jobs have finished to load new code.
 
-From `frontend/`, use `npm run typecheck` or `npm run build`; run relevant browser specs with `npx --no-install playwright test tests/<name>.spec.mjs`. The test configuration starts a local frontend and specs may intercept API calls; consult each spec before treating it as a mocked check.
-
-From `backend/`, run targeted modules with `python3 -m unittest story_builder.tests.<module>`. Use the project's configured environment for dependencies. Mocked/CPU tests do not establish model compatibility or generated-media quality. Preserve runtime admission, saved-job recovery, original assets and output-folder collision handling.
+Follow the [T0 test runbook](fixes/ACCEPTANCE_TESTS.md) for exact preflight, typecheck/build, focused Python suites, mocked Playwright suites, optional native CPU checks, cleanup assertions and evidence reporting. Do not run production GPU/provider workloads as part of a baseline. Keep the project environment and original media unchanged.
 
 ## Kdenlive clip continuity
 

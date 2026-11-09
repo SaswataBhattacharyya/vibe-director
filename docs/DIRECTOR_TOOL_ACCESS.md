@@ -1,6 +1,6 @@
 # Shared Director and Editor tool access
 
-Both chat surfaces use the live `/api/agent/tools` catalogue and the same `tool.call` router. The former fixed intent list no longer limits which registered operation the model can propose. There are currently 37 registered operations. Discovery and conversation do not dispatch work: the owner reviews exact settings, approves the saved task, then chooses Run. Missing native runtimes remain blockers.
+Both chat surfaces use the live `/api/agent/tools` catalogue and the same `tool.call` router. The former fixed intent list no longer limits which registered operation the model can propose. There are currently 37 registered operations. Discovery and conversation do not dispatch work: the owner reviews exact settings, approves the saved task, then chooses Run. Missing native runtimes remain blockers. **Caveat (2026-11-09 review):** a registered operation is not proof of runtime readiness; several native/generation catalogue entries currently report available before underlying models/workers are probed. Treat runtime-specific readiness as unverified until execution admission, and follow [S1 capability truth](../fixes/ACTIVE_FIXES.md) before relying on this as a comprehensive readiness monitor.
 
 | Area | Registered operations |
 | --- | --- |

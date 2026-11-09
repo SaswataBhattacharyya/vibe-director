@@ -1,14 +1,13 @@
-# Frontend — active change guide (2026-11-07)
+# Frontend — current change guide (2026-11-09)
 
-**Read:** `fixes/CODEX_START_HERE.md`, `fixes/ACTIVE_FIXES.md`, `fixes/INTEGRATION_ARCHITECTURE.md`. The previous Q/R and UX01–UX03 implementation cards and most UX04/UX05–UX08 layout migrations are **source-implemented**, not a new todo. Confirm current code and route coverage; no sweeping redesign.
+**First read [test-first entry](../../fixes/change_readme.md), [P0 agent harness](../../fixes/DIRECTOR_HARNESS_P0.md), [active queue](../../fixes/ACTIVE_FIXES.md), [acceptance runbook](../../fixes/ACCEPTANCE_TESTS.md) and relevant [architecture contracts](../../fixes/INTEGRATION_ARCHITECTURE.md).** Test baseline precedes feature/refactor changes.
 
-- **One persistent chat:** `DirectorRuntime.tsx` / `DirectorConversation.tsx`. Keep only one active AI composer; technical prompts, screenplay editors, property editors and search controls are not duplicate chats.
-- **Visual Editor:** `VibeEditorPage.tsx` owns current AI Editor preview/media/timeline/style/export + clearance UI. Add a gated HyperFrames Studio composition view in its right work pane with full-window expansion after HF-01 compatibility proof. Prefer slim child components/typed view models, no new nested nav and no second chat. Unmount/mount must not discard unsaved plan, playback, running job or chat draft.
-- **Media:** `MediaSourcePicker.tsx`, `MediaPickerManagement.tsx`, `LocalImageFolderBrowser.tsx`, `lib/media-api.ts` and `App.tsx` R2V bindings; re-use picker across surfaces but preserve explicit distinct chat attachments, model slots, tool inputs and Editor ranges. Do not remove import/folder consent or delete management by accident.
-- **Storyboard:** `StoryboardPage.tsx` remains authoritative for panels, scene/shot planning, revisions and manual routing. OpenMontage Production Board is optional, not replacement.
-- **Compact page regressions:** Image Assets, Current Take, Output, Screenplay, Prompt, Text to Image, Media Prep and 3D retain real controls. `EditorWorkspace.tsx` and `StudioChat.tsx` are still used/export helpers; trace imports before deletion.
+Keep one persistent `DirectorRuntime.tsx` / `DirectorConversation.tsx` chat. Tool tasks must remain explicit propose → approve → run → evidence; do not mount a second composer or hide unavailable runtimes. Preserve project/session state across pane changes, navigation and expansion.
 
-Use `fixes/ACCEPTANCE_TESTS.md` for focused source, keyboard/mobile, save/reload and regression coverage.
+Editor: `VibeEditorPage.tsx`, `EditorVisualTimeline.tsx`, `ClipJoinReview.tsx`, `NativeWorkspace.tsx`, `FramePipelineWorkspace.tsx`. Existing native HyperFrames Studio and limited OpenMontage Backlot are implemented, not future placeholders. Preserve both clearances, source-relative range controls, draft conflicts, revisioned proposals and preview vs final-output distinction.
 
-Editor speech review: `EditorSpeechReview.tsx` loads completed source-correlated evidence and submits reviewed segment indices, not model-authored cut timestamps. The server derives retained ranges; existing clearance 2 controls rendering.
-Storyboard production metadata export uses the saved revision and `lib/storyboard-api.ts`; it does not start or embed OpenMontage.
+Media: reuse `MediaSourcePicker.tsx`, `MediaPickerManagement.tsx`, `lib/media-api.ts` with distinct chat/tool/model/Editor destinations and user consent. Never lose imported assets or turn a five-second preview default into an analysis cap. Storyboard `StoryboardPage.tsx` is authoritative; Backlot is an optional project-owned mirror with a bounded typed edit extension, not a second generator.
+
+**T0 tests:** `npm run typecheck`, `npm run build`, and selected mocked Playwright specs named in the runbook. For later changes add a focused regression first, then run neighbors. Do not silently upgrade React, install native apps or run GPU providers. Capture real vs mocked evidence and preserve unsaved user edits. Refactor oversized components only after characterization tests and no-change UI behavior comparisons.
+
+**P0 UI gate:** Do not mark a user goal completed when a tool like `media.list` finishes. Show streamed goal/step status, human-owned exact-plan approval, compact summaries with raw diagnostics collapsed, and an immediately playable source-video/audio workspace. A verified five-clip result must be playable directly in Editor. Playwright MCP must never auto-click human approval controls.

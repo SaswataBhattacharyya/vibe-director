@@ -12,7 +12,7 @@ Use **New / Open project** in the top bar to choose an existing folder, then cre
 
 The application keeps its operational working copy in `local_data/`; the chosen folder holds `vibe-project.json`, versioned `project-data/` checkpoints and outputs. Reopening preserves newer local edits. Models, secrets and runtime installations remain application-wide. On another runtime, external output overrides require Choose/Locate again. Save retains full checkpoints and media copies, so repeated saves increase disk use. See the [project storage review](audit/PROJECT_STORAGE_REVIEW.md) for validation and recovery limits.
 
-- **TEST FIRST:** [current Codex entry](fixes/change_readme.md) → [active milestone queue](fixes/ACTIVE_FIXES.md) → [executable test baseline / acceptance gates](fixes/ACCEPTANCE_TESTS.md). No new feature work before baseline and triage.
+- **P0: Fix the Director agent harness first.** [Current Codex entry](fixes/change_readme.md) → **[Codex-like harness plan](fixes/DIRECTOR_HARNESS_P0.md)** → [active task queue](fixes/ACTIVE_FIXES.md) → [test baseline / acceptance](fixes/ACCEPTANCE_TESTS.md). Reproduce one-shot media discovery, prove real multi-step Codex/MCP/approval workflow, render five ordered clips and play verified output before unrelated new features.
 - [Integration and preservation architecture](fixes/INTEGRATION_ARCHITECTURE.md): existing Director, Editor, HyperFrames, OpenMontage, Kdenlive MCP, media and jobs; not a separate implementation queue.
 - [Functionality audit and code review](audit/FUNCTIONALITY_AUDIT.md): component source map, preserved contracts, findings and bounded validation.
 - [Older Editor and ACE-Step requirements](plans/editor_media_output_ace_plan.md): historical feature context; current user decisions govern.

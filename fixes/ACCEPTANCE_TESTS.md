@@ -1,6 +1,6 @@
 # Acceptance and test baseline — executable runbook
 
-This file specifies **what to run and how to record results**, not a claim that they passed. First milestone: **T0-BASELINE** on current `vibe-director-current`. Execute on the owner's configured Ubuntu/ARM64 checkout, respecting all existing runtime/job guards.
+This file specifies **what to run and how to record results**, not a claim that they passed. First milestone: **T0-BASELINE**, immediately followed by the **[P0 Director harness H0–H5](DIRECTOR_HARNESS_P0.md)** acceptance, on current `vibe-director-current`. Execute on the owner's configured Ubuntu/ARM64 checkout, respecting all existing runtime/job guards.
 
 ## 0. Safety preflight (no edits)
 
@@ -87,11 +87,18 @@ HyperFrames/OpenMontage: inspect `frontend/tests/native-interfaces.manual.mjs`, 
 
 **GPU/provider tests:** separate explicit permission, safe operating conditions and user-owned acceptance. None are required for T0. Do not start image/video/voice training, paid API calls or AI rendering to diagnose a CPU unit-test failure.
 
-## 5. Gate-specific acceptance matrix
+## 5. P0 harness: tests that must genuinely pass
+
+The first product defect is an agent that completes `media.list` and stops, despite a request for clips 2→3→4→5→6 rendered and opened in Editor. Run the *red* goal-level characterization before replacing provider code. The approved harness is **Codex app-server** unless an isolated, measured compatibility/sandbox/HITL test proves unsuitable; use a single Agents SDK fallback, not multiple systems. Full protocol, tool policy, and fixture matrix: [DIRECTOR_HARNESS_P0.md](DIRECTOR_HARNESS_P0.md).
+
+Mandatory cross-layer cases: model-call schema optional `generation_settings`; currently running backend version vs code update; one real turn issues >1 sequential tool call; read-only media inspection feeds planning; correct narrative order (not reverse-date listing); five real synthetic clips and linked audio; explicit human approval of exact plan; no model/browser self-approval; render/checkpoint restart; no duplicate external submission; source hashes unchanged; registered output passes decode and `ffprobe`; visible in-app video playback; native/MCP readiness blockers and prompt-injection rejection. Record mocked/CPU/native/provider/owner status independently. **A tool-completed badge is not goal-completed.**
+
+## 6. Gate-specific acceptance matrix
 
 | Gate | Evidence required |
 | --- | --- |
 | T0 baseline | HEAD + dirty map + environment inventory; each command, exit status, cases passed/failed/skipped, duration, environment-only blockers and test-owned cleanup. No production modifications. |
+| H0–H5 harness | Proven two-plus in-turn tools, owned/approved Vibe MCP gateway, human approvals not agent calls, restart/reconciliation, real five-clip synthetic A/V render and playable UI, with no raw JSON flood. See dedicated harness specification. |
 | T1 triage | Repro case or minimal fixture, failure classification, source owner and affected callers, severity, proposed test and stop/go. |
 | T2 fix | One bounded commit; focused regression now passing; neighbor tests; no lost original hashes/owner IDs/revisions; rollback steps. |
 | S1 capability truth | Table for all 37 registered tools: registered/ready/actionable; missing model/runtime yields unavailable or actionable blocker **before approval**; no tool execution during discovery. |
@@ -105,7 +112,7 @@ HyperFrames/OpenMontage: inspect `frontend/tests/native-interfaces.manual.mjs`, 
 | E2 native | Real pinned native UI round-trip for each added edit type, safe typed import and revision rejection. |
 | F1 film | Opt-in owner scenario with quality notes, recovered jobs, retakes, soundtrack, output checks, and verified final film; no creative-quality claims from codec probe alone. |
 
-## 6. Reporting template — required every test batch
+## 7. Reporting template — required every test batch
 
 ```text
 Run ID / date:

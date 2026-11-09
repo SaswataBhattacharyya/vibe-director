@@ -1,14 +1,14 @@
 # Vibe Director — current Codex entry (2026-11-09)
 
-**Single current implementation entrypoint.** First read this file, then [ACTIVE_FIXES.md](ACTIVE_FIXES.md), [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md), and only the relevant portion of [INTEGRATION_ARCHITECTURE.md](INTEGRATION_ARCHITECTURE.md). Read root [AGENTS.md](../AGENTS.md) for preservation rules. The earlier CODEX_START_HERE and COMPLETED_BASELINE guides were consolidated into these current documents; retrieve historic wording from Git history only for a specific regression.
+**Single current implementation entrypoint.** First read this file, then **[DIRECTOR_HARNESS_P0.md](DIRECTOR_HARNESS_P0.md)**, [ACTIVE_FIXES.md](ACTIVE_FIXES.md), [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md), and only the relevant portion of [INTEGRATION_ARCHITECTURE.md](INTEGRATION_ARCHITECTURE.md). Read root [AGENTS.md](../AGENTS.md) for preservation rules. The earlier CODEX_START_HERE and COMPLETED_BASELINE guides were consolidated into these current documents; retrieve historic wording from Git history only for a specific regression.
 
 ## Source of truth and safe starting protocol
 
-Target branch: `vibe-director-current`. Planning snapshot: `6db612357f6ccdd351b5d91e48b5d1ffd408e57a` (2026-11-09), **not a frozen implementation target**.
+Target branch: `vibe-director-current`. Planning baseline: `6db612357f6ccdd351b5d91e48b5d1ffd408e57a`; newest source-confirmed one-shot harness diagnosis: `05508145fe049214f0f83ac45b1164748920dd4d`. Neither is a frozen implementation target.
 
 1. At the beginning of each implementation session run `git branch --show-current`, `git rev-parse HEAD`, `git status --short`, and inspect the relevant source/tests. If HEAD has moved, source wins over this planning snapshot; refresh references before editing.
 2. Preserve user-local dirty changes. Do not reset, clean, overwrite, or revert unrelated files. Never discard local media, models, journals, job state, checkpoint history, approved plans, or external outputs.
-3. **TEST FIRST.** Phase T0 records the baseline without application changes. No feature work, broad refactor, dependency upgrade, mass deletion, or code cleanup until the baseline and failures are classified.
+3. **TEST FIRST: P0 agent harness.** Phase T0 records a safe targeted baseline and H0 reproduces the one-shot failure without application changes. The first repair milestone is **H1–H5**: a real continuing Codex-like Director with human approvals, MCP, five-clip stitching and in-app playback. No unrelated feature work, broad refactor, dependency upgrade, mass deletion, or code cleanup before this acceptance.
 4. After T0, fix only demonstrated failures in the smallest vertical slice. Re-run focused tests, then neighboring regressions; require a changed-file map and a rollback plan before shared-seam modifications.
 5. Separate observed execution from documentation and mocks. An available tool, successful import or completed job does not establish creative quality or live provider/model readiness.
 6. No paid-provider, model inference, GPU-intensive generation, checkpoint deletion, production rendering, or full-access computer tasks as incidental tests. Real owner-media acceptance is opt-in and separately recorded.
@@ -21,7 +21,7 @@ The current branch includes a shared Director with **37 registered operations** 
 
 ## Implementation order / stop conditions
 
-**T0** reproducible test inventory and baseline → **T1** failure triage, fixes and green focused checks → **S1** security/readiness/CI and storage audit → **M1** incremental maintainability work → **O1** reviewable multi-step Director orchestration → **E1** richer editing and native acceptance → **F1** whole-film quality acceptance.
+**T0** safe targeted test baseline → **H0** one-shot defect reproduction → **H1** Codex app-server compatibility (Agents SDK fallback if necessary) → **H2** typed Vibe/MCP goal loop → **H3** exact human approvals and recovery → **H4** real synthetic five-clip render → **H5** in-app video/audio playback and real UI test → **H6** owner acceptance (opt-in). Then return to non-blocking T1/T2 regressions, **S** security/readiness/CI/storage, **M** maintainability, and wider filmmaking expansions. See [P0 harness plan](DIRECTOR_HARNESS_P0.md).
 
 Do not advance to the next stage on documentation alone. If the test environment is unavailable, report **BLOCKED with cause and executable next step**, not PASS. Never silently change supported workflows or replace an unavailable backend with another renderer.
 

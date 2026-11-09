@@ -1,6 +1,6 @@
 # Vibe Editor — current change guide (2026-11-09)
 
-**Start with [test-first active plan](../../fixes/change_readme.md), [queue](../../fixes/ACTIVE_FIXES.md) and [runbook](../../fixes/ACCEPTANCE_TESTS.md).** This file is a component map, **not** a second task queue. Check actual branch, HEAD, dirty state and source before changing Editor behavior.
+**Start with [test-first active plan](../../fixes/change_readme.md), [P0 Director harness](../../fixes/DIRECTOR_HARNESS_P0.md), [queue](../../fixes/ACTIVE_FIXES.md) and [runbook](../../fixes/ACCEPTANCE_TESTS.md).** This file is a component map, **not** a second task queue. Check actual branch, HEAD, dirty state and source before changing Editor behavior.
 
 ## Current implementation, not future speculation
 
@@ -18,3 +18,5 @@
 Any Editor change must trace project revision, both clearances, owner/source hashes, all plan consumers, job recovery and output registration. A specialty backend must not silently fall back to a different renderer. Test exact stale-revision/cancel paths. Never run owner-media render, paid provider or GPU inference for routine regression work.
 
 For detailed pinned native behavior and limitations see [native interfaces](native-interfaces.md), [Kdenlive usage](../../plans/kdenlive_clip_continuity_usage.md), [tool-access contract](../../docs/DIRECTOR_TOOL_ACCESS.md) and [shared architecture](../../fixes/INTEGRATION_ARCHITECTURE.md). Older implementation narratives remain accessible in Git history.
+
+**P0 user-visible acceptance:** Source video/audio playback is accessible when Editor opens, without a saved creative brief. A Director goal to stitch clips 2→3→4→5→6 must prepare an exact ordered plan (never assume the list's date sort is sequence), obtain human clearance, render once through a verified selected backend, verify A/V and present a playable final artifact with no second user prompt. Keep current HyperFrames/Kdenlive limits truthful; Playwright is a UI test tool, not a substitute for application-native editing services.

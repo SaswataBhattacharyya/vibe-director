@@ -1,6 +1,6 @@
 # Current integration architecture and preservation contracts (2026-11-09)
 
-This is a **current system map and change guard**, not an implementation queue. Use [ACTIVE_FIXES.md](ACTIVE_FIXES.md) for ordering, [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) for gates, and actual source for the final truth. Snapshot: `vibe-director-current@6db612357f6c`.
+This is a **current system map and change guard**, not an implementation queue. **P0 active repair:** [DIRECTOR_HARNESS_P0.md](DIRECTOR_HARNESS_P0.md) for persistent Codex-like tool-loop, MCP, approval and five-clip playback. Use [ACTIVE_FIXES.md](ACTIVE_FIXES.md) for ordering, [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) for gates, and actual source for the final truth. Snapshot: `vibe-director-current@6db612357f6c`.
 
 ## Authority and execution
 
@@ -69,3 +69,9 @@ Vibe owns the project identity, media records, membership/paths/hashes, approval
 | Orchestration | `agent_tasks.py`, `agent_conversation.py`, job state transitions, approval UI, recovery journals, source/output provenance |
 
 For actual source constraints see [Director tool access](../docs/DIRECTOR_TOOL_ACCESS.md), [Kdenlive usage](../plans/kdenlive_clip_continuity_usage.md), [native interfaces](../design/vibe-editor/native-interfaces.md), and [frame-pipeline usage](../docs/FRAME_PIPELINE_USAGE.md). Never overstate those as global end-to-end acceptance.
+
+## P0 gap: one-shot reasoning is not a harness
+
+As of `05508145fe049214f0f83ac45b1164748920dd4d`, `reasoning_provider._codex_json` uses `codex exec --ephemeral` for JSON reasoning, and `agent_conversation.send` proposes one task and returns. Previous tool results only enter a later **user** message. That is why the Director can list media but not automatically continue to sequence/approval/render. See [Director harness P0](DIRECTOR_HARNESS_P0.md) for official Codex app-server first, SDK spike, Agents SDK fallback, project-owned durable goals and human-only approvals.
+
+Do not replace `agent_tasks`, Vibe Editor clearances, registered assets or worker ledgers with Codex session state. Codex/app-server is the **agent control loop**, MCP is a typed connector to existing Vibe operations, native renderers do the actual media work, and Playwright MCP is an optional **restricted browser/UI observer**, not an approval bypass or Qt desktop automation engine. A user-facing goal completes only when its verified final artifact is registered and playable, not when a read-only discovery tool completes.

@@ -2,25 +2,28 @@
 
 This is the **only current task/status queue**. Snapshot is `vibe-director-current` at `6db612357f6c`. All statuses below are **planning states**, not newly run verification. Implement against current HEAD. Each task has a stop/go gate in [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md).
 
-## Required sequence
+## Required sequence — user-confirmed P0 harness recovery
 
-| Order | ID | Priority | Status | Deliverable / gate |
+**Core regression to fix first:** Vibe makes one `codex exec --ephemeral` reasoning call, proposes one tool (often `media.list`), and stops. User requested ordered clips **2→3→4→5→6** and a playable video; discovered media is not a completed user goal. The one-shot response-schema bug may have been patched separately but is not a harness. Follow **[DIRECTOR_HARNESS_P0.md](DIRECTOR_HARNESS_P0.md)** as the exact primary implementation specification. Current source diagnosis: `05508145fe049214f0f83ac45b1164748920dd4d` (2026-11-09).
+
+| Order | ID | Priority | Status | Required concrete outcome |
 | --- | --- | --- | --- | --- |
-| 0 | **T0-BASELINE** | P0 | NEXT — NOT RUN IN THIS DOC UPDATE | Reconcile branch/dirtiness, inventory tests and installed prerequisites, run safe static and representative CPU/mock suites, record precise pass/fail/skip/time and reproducible logs. No product changes. |
-| 1 | **T1-TRIAGE** | P0 | BLOCKED on T0 | Classify each failure as pre-existing, environment, flaky, new regression, unsupported runtime or missing coverage; reproduce, locate owner/caller and prioritize corruption/security/data loss first. |
-| 2 | **T2-REGRESSIONS** | P0 | BLOCKED on T1 | Fix confirmed failures in small isolated changes, with targeted and neighboring tests, no generated/provider job side effects. Green tests or explicit documented exceptions required before feature expansion. |
-| 3 | **S1-CAPABILITY-TRUTH** | P1 | QUEUED | Catalogue distinguishes adapter registered, runtime ready, input actionable and approval needed. Remove unconditional readiness claims; verify blocked and missing-runtime behavior without generation. |
-| 4 | **S2-MCP-ISOLATION** | P1 | QUEUED | Stop passing the full parent environment into Kdenlive MCP, validate workspace/output paths and subprocess lifetime, preserve journals; demonstrate denial of unrelated secrets/files with focused tests. |
-| 5 | **S3-CI** | P1 | QUEUED | Add reliable non-GPU CI checks for Python tests, TS typecheck/build, a selected browser smoke suite, lint/security; native ARM64/MLT and GPU suites remain opt-in runners. |
-| 6 | **S4-STORAGE** | P1 | QUEUED | Measure project checkpoints, copied media, Kdenlive staging and model checkpoints. Implement **read-only** storage report and retention proposal first. No deletion until a separate reversible, reference-aware policy and owner confirmation exist. |
-| 7 | **M1-REPO-HYGIENE** | P1 | QUEUED | Audit consumer references for committed `graphify-out/` AST caches (~138 MB at snapshot), propose ignore/untrack plan in a separate code change, preserve minimal reports and any required runtime graph. Never delete local caches/media as a side effect. |
-| 8 | **M2-MODULE-SEAMS** | P1 | QUEUED | Extract low-risk HTTP/routes and UI responsibilities from oversized modules *incrementally* after characterization tests; avoid rewrites, changing URL contracts or global dependency updates. |
-| 9 | **O1-DIRECTOR-ORCHESTRATION** | P1 | BLOCKED on baseline + S1 | Typed persisted multi-step plans with dependency graph, per-step grants, user approval, pause/reconcile/compensation, idempotent submission and evidence-gated transitions. One synthetic workflow first. |
-| 10 | **E1-KDENLIVE** | P2 | BLOCKED on T0 + owner GUI test | Verify Flatpak can open exported .kdenlive project and managed media; expand beyond two clips/1080p30 only with versioned format and audio/frame correctness tests. |
-| 11 | **E2-NATIVE-EDITORS** | P2 | BLOCKED on baseline | Extend supported Studio/Backlot round-trip only after exact upstream-version/API checks; unsupported controls stay visibly unsupported. |
-| 12 | **E3-MEDIA-INDEX** | P2 | QUEUED | Cross-project membership/index freshness and pre-pagination filtering with migration/snapshot/delete impact proof. |
-| 13 | **F1-OWNER-FILM** | P2 | BLOCKED on orchestration + editor acceptance | Opt-in end-to-end owner-material film run with QA, retakes, soundtrack, provenance, restart recovery and final export; no “fully autonomous” claim from isolated tool tests. |
-| later | **STYLE-VIDEO / UX / advanced speech** | P2 | DEFERRED | Frozen style references; compact/accessibility review; audio retime/replacement and real gibberish judgment, each gated by tested core workflows. |
+| 0 | **T0-BASELINE** | **P0** | **NEXT — not executed in documentation** | Run safe focused unit/type/browser baseline; log existing dirty paths, test counts, exact failures and runtime versions. No production code or owner media edits. |
+| 1 | **H0-REPRO** | **P0** | **OPEN** | Reproduce one-shot `media.list` dead end as a failing goal-level test, independently verify fixed schema with mocks and optionally a user-authorized real Codex call. |
+| 2 | **H1-CODEX-HARNESS** | **P0** | **BLOCKED on H0** | Spike official `codex app-server` in disposable ARM64 workspace: real 2+ tool calls in one turn, stream, restart/resume, MCP, approval events, and denied shell/files. Choose Agents SDK only if Codex fails a recorded requirement. |
+| 3 | **H2-TOOL-GATEWAY** | **P0** | **BLOCKED on H1** | Durable project-owned goal/step ledger; model sees allowlisted Vibe/MCP functions, existing task service remains authority; tool-result continuation, source hashes and compact chat. |
+| 4 | **H3-APPROVAL-RECOVERY** | **P0** | **BLOCKED on H2** | Human-only exact-plan approval, two Editor clearances, cancel/restart/idempotence/stale revisions, no model/Playwright authorization bypass. |
+| 5 | **H4-FIVE-CLIP-EDIT** | **P0** | **BLOCKED on H3** | Resolve true project order (not media-list date order), build 2→3→4→5→6 timeline, use permitted editor, real synthetic CPU render with A/V boundary/hash checks, verify and register video. |
+| 6 | **H5-EDITOR-PLAYBACK** | **P0** | **BLOCKED on H4** | Source video/audio immediately playable in Vibe Editor; user-approved stitched artifact opens without extra prompt; real Playwright frontend/host acceptance; raw metadata collapsed. |
+| 7 | **H6-OWNER-ACCEPTANCE** | **P0** | **OPT-IN after H5** | Actual owner project, manual sequence/audio quality check, no owner-file corruption and truthful completion only after playback. |
+| 8 | **T1/T2-REMAINING-REGRESSIONS** | P1 | QUEUED | Reproduce and repair other confirmed baseline failures in small changes with neighbors and rollback proof. |
+| 9 | **S1–S4** | P1 | QUEUED | Capability-ready truth, MCP minimal-env isolation, non-GPU CI, read-only storage audit/retention proposal. |
+| 10 | **M1–M2** | P1 | QUEUED | Generated Graphify cache tracking audit and small safe refactors of oversized modules. |
+| 11 | **E1–E3** | P2 | QUEUED | Native Kdenlive desktop acceptance / multi-clip backend parity, HyperFrames/Backlot richer round-trip, media indexing. |
+| 12 | **F1-FULL-FILM** | P2 | BLOCKED | Creative QA, multi-stage filmmaking, retakes, soundtrack, verification and opt-in owner acceptance after harness works. |
+| later | STYLE-VIDEO / UX / advanced speech | P2 | DEFERRED | Do not distract from the P0 user-visible goal failure. |
+
+**First mandatory test:** A user request that needs 5–8 verified steps must not report success after one read-only `media.list`; verify full goal state, specific approval and output playback. **No feature is DONE based on tests that were not run.**
 
 ## Current implemented baseline — preserve, do not reimplement
 

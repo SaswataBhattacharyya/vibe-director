@@ -1,21 +1,22 @@
 {
-  "comparison": "working tree vs HEAD cd6f623",
+  "comparison": "working tree vs HEAD 26a3d7b",
   "mode": "manual with partial Graphify discovery",
   "limitations": [
-    "Scope: test/probe code only, documentation and generated Graphify artifacts excluded from function scoring. Production source/storage unchanged.",
-    "Depth two manual probe entry -> client/gateway -> existing service calls; existing service internals were inspected for authorization/dispatch, not claimed as modified or exhaustively scored.",
-    "Graphify refreshed incrementally; partial coverage. Gateway.call graph returned serve and a false-positive same-name test edge; source-confirmed calls only retained. No measured coverage.",
-    "Native sandbox filesystem/network enforcement and prompt-injection cases remain open. Risk is test-harness impact prioritization, not vulnerability probability."
+    "Scope is shared transport extraction, isolated security probe, their test callers and docs. No production conversation route, ledger schema, owner media or approval behavior changes.",
+    "Graphify affected AppServer depth two found main/recovery_probe/denied_calls before extraction. Incremental refresh yielded only 40 nodes/111 edges; it is partial. Source tracing remains authoritative; no measured coverage.",
+    "Transport remains opt-in through the probe. H2 coordinator/production wiring is not implemented; passing protocol tests do not establish five-clip acceptance.",
+    "Embedded sandbox CHECKS executes actual prohibited operations in a child; not separately represented as AST functions by this report. Its entrypoint main is scored.",
+    "Historical already-committed H0 source/test nodes are excluded from current-change scores. Read-only native test resolves an enclosing sandbox mask without chmod/chown of host directories."
   ],
-  "overall_risk": "high (maximum 0.60; credential/authorization probe helpers); production runtime unchanged",
+  "overall_risk": "high: maximum 0.60 (transport/config security handling); this is change-impact prioritization, not vulnerability probability",
   "findings": [
     {
-      "node": "backend/story_builder/tests/harness_probe.py::__init__",
+      "node": "backend/story_builder/services/director_codex_bridge.py::__init__",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 25
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 26
       },
-      "anchor": "    def __init__(self, base, codex):",
+      "anchor": "    def __init__(self, base: Path, codex: str, *, on_event: Callable[[dict], None] | None = None):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.6,
@@ -27,19 +28,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe_mcp.py::__init__",
+      "node": "backend/story_builder/services/director_codex_bridge.py::request",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe_mcp.py",
-        "line": 20
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 113
       },
-      "anchor": "    def __init__(self, root):",
+      "anchor": "    def request(self, method: str, params: dict, timeout: float = 45):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.6,
@@ -51,19 +52,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe_mcp.py::call",
+      "node": "backend/story_builder/services/director_codex_bridge.py::turn",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe_mcp.py",
-        "line": 40
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 127
       },
-      "anchor": "    def call(self, name, arguments):",
+      "anchor": "    def turn(self, thread: str, text: str | None = None, recovery: str | None = None):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.6,
@@ -75,91 +76,115 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
+    },
+    {
+      "node": "backend/story_builder/services/director_codex_bridge.py::close",
+      "location": {
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 150
+      },
+      "anchor": "    def close(self):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
+      ],
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
       "node": "backend/story_builder/tests/harness_probe.py::configure",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 110
+        "line": 24
       },
       "anchor": "def configure(base, codex_home=None):",
       "revision": "working-tree",
       "change": "direct",
-      "risk": 0.45,
+      "risk": 0.6,
       "factors": {
         "test_gap": 0,
         "security": 1,
         "flow": 1,
-        "cross_community": 0,
+        "cross_community": 1,
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::denied_calls",
+      "node": "backend/story_builder/tests/harness_probe.py::main",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 167
+        "line": 161
       },
-      "anchor": "def denied_calls(server, thread_id):",
+      "anchor": "def main():",
       "revision": "working-tree",
       "change": "direct",
-      "risk": 0.45,
+      "risk": 0.6,
       "factors": {
         "test_gap": 0,
         "security": 1,
         "flow": 1,
-        "cross_community": 0,
+        "cross_community": 1,
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::cleanup_jobs",
+      "node": "backend/story_builder/tests/harness_sandbox_probe.py::main",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 184
+        "file": "backend/story_builder/tests/harness_sandbox_probe.py",
+        "line": 65
       },
-      "anchor": "def cleanup_jobs(base):",
+      "anchor": "def main():",
       "revision": "working-tree",
       "change": "direct",
-      "risk": 0.45,
+      "risk": 0.6,
       "factors": {
         "test_gap": 0,
         "security": 1,
         "flow": 1,
-        "cross_community": 0,
+        "cross_community": 1,
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::receive",
+      "node": "backend/story_builder/services/director_codex_bridge.py::_send",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 56
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 86
       },
-      "anchor": "    def receive(self, timeout):",
+      "anchor": "    def _send(self, value):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.45,
@@ -171,19 +196,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/test_director_harness_probe.py::cleanup",
+      "node": "backend/story_builder/services/director_codex_bridge.py::receive",
       "location": {
-        "file": "backend/story_builder/tests/test_director_harness_probe.py",
-        "line": 23
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 92
       },
-      "anchor": "    def cleanup(self):",
+      "anchor": "    def receive(self, timeout: float):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.45,
@@ -195,19 +220,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/test_director_harness_probe.py::test_unknown_tools_and_extra_owner_path_or_command_arguments_are_denied",
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_streams_events_and_passes_only_allowlisted_environment",
       "location": {
-        "file": "backend/story_builder/tests/test_director_harness_probe.py",
-        "line": 28
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 74
       },
-      "anchor": "    def test_unknown_tools_and_extra_owner_path_or_command_arguments_are_denied(self):",
+      "anchor": "    def test_streams_events_and_passes_only_allowlisted_environment(self):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.45,
@@ -219,19 +244,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/test_director_harness_probe.py::test_changed_source_hash_is_denied_before_read_dispatch",
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_denies_server_escalation_without_an_approval_callback",
       "location": {
-        "file": "backend/story_builder/tests/test_director_harness_probe.py",
-        "line": 39
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 87
       },
-      "anchor": "    def test_changed_source_hash_is_denied_before_read_dispatch(self):",
+      "anchor": "    def test_denies_server_escalation_without_an_approval_callback(self):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.45,
@@ -243,19 +268,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/test_director_harness_probe.py::test_protected_proposal_is_durable_and_cannot_run_or_use_stale_approval",
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_arbitrary_host_execution_methods_are_rejected",
       "location": {
-        "file": "backend/story_builder/tests/test_director_harness_probe.py",
-        "line": 45
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 102
       },
-      "anchor": "    def test_protected_proposal_is_durable_and_cannot_run_or_use_stale_approval(self):",
+      "anchor": "    def test_arbitrary_host_execution_methods_are_rejected(self):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.45,
@@ -267,19 +292,43 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
+    },
+    {
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_rejects_nonprivate_runtime_without_changing_permissions",
+      "location": {
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 132
+      },
+      "anchor": "    def test_rejects_nonprivate_runtime_without_changing_permissions(self):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.45,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 0,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
+      ],
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
       "node": "backend/story_builder/tests/harness_probe.py::fixture",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 142
+        "line": 58
       },
-      "anchor": "def fixture(base):",
+      "anchor": "def fixture(base, filename='synthetic-H1.wav'):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.4,
@@ -291,91 +340,43 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
-    },
-    {
-      "node": "backend/story_builder/tests/harness_probe.py::completed_calls",
-      "location": {
-        "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 157
-      },
-      "anchor": "def completed_calls(events):",
-      "revision": "working-tree",
-      "change": "direct",
-      "risk": 0.25,
-      "factors": {
-        "test_gap": 0,
-        "security": 0,
-        "flow": 1,
-        "cross_community": 0,
-        "caller_count": 0
-      },
-      "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
-      ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
-    },
-    {
-      "node": "backend/story_builder/tests/harness_probe.py::final_text",
-      "location": {
-        "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 162
-      },
-      "anchor": "def final_text(events):",
-      "revision": "working-tree",
-      "change": "direct",
-      "risk": 0.25,
-      "factors": {
-        "test_gap": 0,
-        "security": 0,
-        "flow": 1,
-        "cross_community": 0,
-        "caller_count": 0
-      },
-      "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
-      ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
       "node": "backend/story_builder/tests/harness_probe.py::recovery_probe",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 198
+        "line": 114
       },
       "anchor": "def recovery_probe(server, base, thread_id, codex, record):",
       "revision": "working-tree",
-      "change": "direct",
-      "risk": 0.25,
+      "change": "indirect",
+      "risk": 0.4,
       "factors": {
         "test_gap": 0,
         "security": 0,
         "flow": 1,
-        "cross_community": 0,
+        "cross_community": 1,
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::main",
+      "node": "backend/story_builder/services/director_codex_bridge.py::_enqueue",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 245
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 61
       },
-      "anchor": "def main():",
+      "anchor": "    def _enqueue(self, value):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.25,
@@ -387,17 +388,17 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::_reader",
+      "node": "backend/story_builder/services/director_codex_bridge.py::_reader",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 44
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 69
       },
       "anchor": "    def _reader(self):",
       "revision": "working-tree",
@@ -411,21 +412,21 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::send",
+      "node": "backend/story_builder/tests/harness_probe.py::completed_calls",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 52
+        "line": 73
       },
-      "anchor": "    def send(self, value):",
+      "anchor": "def completed_calls(events):",
       "revision": "working-tree",
-      "change": "direct",
+      "change": "indirect",
       "risk": 0.25,
       "factors": {
         "test_gap": 0,
@@ -435,21 +436,21 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::request",
+      "node": "backend/story_builder/tests/harness_probe.py::final_text",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 69
+        "line": 78
       },
-      "anchor": "    def request(self, method, params, timeout=45):",
+      "anchor": "def final_text(events):",
       "revision": "working-tree",
-      "change": "direct",
+      "change": "indirect",
       "risk": 0.25,
       "factors": {
         "test_gap": 0,
@@ -459,21 +460,21 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::turn",
+      "node": "backend/story_builder/tests/harness_probe.py::denied_calls",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 82
+        "line": 83
       },
-      "anchor": "    def turn(self, thread, text=None, recovery=None):",
+      "anchor": "def denied_calls(server, thread_id):",
       "revision": "working-tree",
-      "change": "direct",
+      "change": "indirect",
       "risk": 0.25,
       "factors": {
         "test_gap": 0,
@@ -483,21 +484,21 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe.py::close",
+      "node": "backend/story_builder/tests/harness_probe.py::cleanup_jobs",
       "location": {
         "file": "backend/story_builder/tests/harness_probe.py",
-        "line": 98
+        "line": 100
       },
-      "anchor": "    def close(self):",
+      "anchor": "def cleanup_jobs(base):",
       "revision": "working-tree",
-      "change": "direct",
+      "change": "indirect",
       "risk": 0.25,
       "factors": {
         "test_gap": 0,
@@ -507,41 +508,17 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/harness_probe_mcp.py::serve",
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::setUp",
       "location": {
-        "file": "backend/story_builder/tests/harness_probe_mcp.py",
-        "line": 76
-      },
-      "anchor": "def serve(root):",
-      "revision": "working-tree",
-      "change": "direct",
-      "risk": 0.25,
-      "factors": {
-        "test_gap": 0,
-        "security": 0,
-        "flow": 1,
-        "cross_community": 0,
-        "caller_count": 0
-      },
-      "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
-      ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
-    },
-    {
-      "node": "backend/story_builder/tests/test_director_harness_probe.py::setUp",
-      "location": {
-        "file": "backend/story_builder/tests/test_director_harness_probe.py",
-        "line": 15
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 49
       },
       "anchor": "    def setUp(self):",
       "revision": "working-tree",
@@ -555,41 +532,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Opt-in probe flow only; no production import/route registration. Static callers traced within main/recovery/serve and ProbeBoundaryTests; fewer than five confirmed direct callers.",
-        "Actual live/offline probe and focused tests ran; test_gap=0 records execution/reference evidence, not measured branch coverage.",
-        "Gateway calls existing AgentTasks -> native/workspace dispatch -> durable CPU worker. Recovery reads same Codex thread and same task database. Cross-module factor only for helper consumers/imported services; graph communities unavailable."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/test_agent_tool_access.py::test_current_chat_stops_after_first_task_of_multistep_request",
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::cleanup",
       "location": {
-        "file": "backend/story_builder/tests/test_agent_tool_access.py",
-        "line": 43
-      },
-      "anchor": "    def test_current_chat_stops_after_first_task_of_multistep_request(self):",
-      "revision": "working-tree",
-      "change": "direct",
-      "risk": 0.25,
-      "factors": {
-        "test_gap": 0,
-        "security": 0,
-        "flow": 1,
-        "cross_community": 0,
-        "caller_count": 0
-      },
-      "evidence": [
-        "Unittest-discovered characterization/schema regression; executed in focused suite. No production caller. Expected-failure goal test documents missing behavior, not acceptance."
-      ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
-    },
-    {
-      "node": "backend/story_builder/tests/test_agent_tool_access.py::test_unfinished_five_clip_goal_reaches_verified_output_without_second_message",
-      "location": {
-        "file": "backend/story_builder/tests/test_agent_tool_access.py",
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
         "line": 61
       },
-      "anchor": "    def test_unfinished_five_clip_goal_reaches_verified_output_without_second_message(self):",
+      "anchor": "    def cleanup(self):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.25,
@@ -601,17 +556,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Unittest-discovered characterization/schema regression; executed in focused suite. No production caller. Expected-failure goal test documents missing behavior, not acceptance."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/test_reasoning_provider.py::test_chat_schema_preserves_nested_arbitrary_tool_settings",
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::start",
       "location": {
-        "file": "backend/story_builder/tests/test_reasoning_provider.py",
-        "line": 91
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 69
       },
-      "anchor": "    def test_chat_schema_preserves_nested_arbitrary_tool_settings(self):",
+      "anchor": "    def start(self, mode='normal', **kwargs):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.25,
@@ -623,17 +580,19 @@
         "caller_count": 0
       },
       "evidence": [
-        "Unittest-discovered characterization/schema regression; executed in focused suite. No production caller. Expected-failure goal test documents missing behavior, not acceptance."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     },
     {
-      "node": "backend/story_builder/tests/test_reasoning_provider.py::test_cli_jsonl_failure_is_not_a_successful_reply",
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_recovery_uses_internal_context_without_a_user_message",
       "location": {
-        "file": "backend/story_builder/tests/test_reasoning_provider.py",
-        "line": 97
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 95
       },
-      "anchor": "    def test_cli_jsonl_failure_is_not_a_successful_reply(self):",
+      "anchor": "    def test_recovery_uses_internal_context_without_a_user_message(self):",
       "revision": "working-tree",
       "change": "direct",
       "risk": 0.25,
@@ -645,9 +604,83 @@
         "caller_count": 0
       },
       "evidence": [
-        "Unittest-discovered characterization/schema regression; executed in focused suite. No production caller. Expected-failure goal test documents missing behavior, not acceptance."
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
       ],
-      "verification": "Source anchor verified; relationship/scoring manually reviewed"
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
+    },
+    {
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_transport_failure_never_reports_completion_and_stops_process",
+      "location": {
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 108
+      },
+      "anchor": "    def test_transport_failure_never_reports_completion_and_stops_process(self):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.25,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 0,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
+      ],
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
+    },
+    {
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_deadline_stops_agent_instead_of_leaving_tools_running",
+      "location": {
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 117
+      },
+      "anchor": "    def test_deadline_stops_agent_instead_of_leaving_tools_running(self):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.25,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 0,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
+      ],
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
+    },
+    {
+      "node": "backend/story_builder/tests/test_director_codex_bridge.py::test_event_budget_stops_agent_without_retaining_unbounded_output",
+      "location": {
+        "file": "backend/story_builder/tests/test_director_codex_bridge.py",
+        "line": 124
+      },
+      "anchor": "    def test_event_budget_stops_agent_without_retaining_unbounded_output(self):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.25,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 0,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Manual depth-two trace: opt-in probe main/recovery -> shared AppServer -> stdio reader/send/receive; gateway calls remain existing AgentTasks -> workspace CPU job. No application route imports the new driver.",
+        "Transport unit tests reference the driver through its host interface; real app-server live/offline probes exercise the extracted driver. Native OS probe exercises configure with actual sandbox commands. Static references and actual execution are evidence, not measured branch coverage.",
+        "Security factor identifies confirmed environment/configuration/process/protocol handling or its acceptance test. Cross-module factor identifies shared callers. Fewer than five distinct direct callers found by rg/AST; graph is partial, not exhaustive."
+      ],
+      "verification": "Source anchor verified (28 checked, zero rejected); relationships/scoring manually reviewed"
     }
   ]
 }

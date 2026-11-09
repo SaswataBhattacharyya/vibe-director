@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import subprocess
 import unittest
@@ -68,6 +69,28 @@ class CodexImageInputTests(unittest.TestCase):
                 with self.assertRaisesRegex(ReasoningProviderError, "existing PNG, JPEG, WebP, or GIF"):
                     _codex_json("Inspect candidate.", image_paths=[missing])
             run.assert_not_called()
+
+
+class CodexSchemaTests(unittest.TestCase):
+    def run_response(self, result):
+        from story_builder.services.agent_conversation import RESPONSE_SCHEMA
+        event = json.dumps({"type": "item.completed", "item": {
+            "type": "agent_message", "text": json.dumps(result)}})
+        with patch("story_builder.services.reasoning_provider.shutil.which", return_value="/usr/bin/codex"), \
+             patch("story_builder.services.reasoning_provider._run_json_command", return_value=event) as run:
+            value = _codex_json("Discuss this shot.", output_schema=RESPONSE_SCHEMA)
+        command, prompt = run.call_args.args
+        self.assertNotIn("--output-schema", command)
+        self.assertIn(json.dumps(RESPONSE_SCHEMA), prompt)
+        return value
+
+    def test_chat_schema_accepts_reply_without_optional_generation_settings(self):
+        result = {"reply": "What lighting would you like?", "intent": "discuss", "quality": 5}
+        self.assertEqual(self.run_response(result), result)
+
+    def test_chat_schema_still_rejects_invalid_response(self):
+        with self.assertRaisesRegex(ReasoningProviderError, "does not match"):
+            self.run_response({"reply": "Invalid incomplete reply"})
 
 
 if __name__ == "__main__":

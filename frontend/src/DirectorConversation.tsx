@@ -1,5 +1,5 @@
 import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
-import {ArrowUp, MessageSquare, PanelLeftClose, RefreshCw, SlidersHorizontal} from 'lucide-react';
+import {ArrowUp, LoaderCircle, MessageSquare, PanelLeftClose, RefreshCw, SlidersHorizontal} from 'lucide-react';
 import {useProject} from './ProjectController';
 import ModelSelector, {consumeModelCommand} from './ModelSelector';
 import ProjectKnowledge from './ProjectKnowledge';
@@ -13,7 +13,7 @@ type Props = {
   messages: AgentMessage[]; tasks: AgentTask[]; discovery: AgentDiscovery | null;
   text: string; setText: (value: string) => void; selected: string[]; skills: string[];
   setSelected: Dispatch<SetStateAction<string[]>>; setSkills: Dispatch<SetStateAction<string[]>>;
-  busy: boolean; error: string; send: () => void; loadContext: () => void; refresh: () => void;
+  busy: boolean; thinking: boolean; error: string; send: () => void; loadContext: () => void; refresh: () => void;
   onCollapse: () => void;
   control: (task: AgentTask, action: 'approve' | 'run' | 'cancel') => void;
 };
@@ -63,6 +63,7 @@ export function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> 
 }
 export default function DirectorConversation(props: Props) {
   const {title,workspace_id:owner} = useProject();
+  const editing = location.hash.startsWith('#/editor');
   const [contextOpen, setContextOpen] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -114,7 +115,9 @@ export default function DirectorConversation(props: Props) {
           <DirectorAttachments key={owner} owner={owner} selected={props.selected} setSelected={props.setSelected} disabled={props.busy || props.access !== 'app'} onBusy={setUploading}>
           <textarea id="project-director-message" rows={3} placeholder="Describe your next scene or ask for a plan…" value={props.text} onChange={event => props.setText(consumeModelCommand(event.target.value, () => setModelOpen(true), 'project-director-message'))} disabled={props.busy}/>
           </DirectorAttachments>
-          <div className="director-composer-footer"><ModelSelector open={modelOpen} onClose={() => setModelOpen(false)} returnFocusId="project-director-message" disabled={props.busy}/><small>{props.busy ? 'Working on your request…' : 'Review a plan before running it.'}</small><button aria-label="Send to project Director" disabled={props.busy || uploading || !props.text.trim()}><ArrowUp size={18}/></button></div>
+          <div className="director-composer-footer"><ModelSelector open={modelOpen} onClose={() => setModelOpen(false)} returnFocusId="project-director-message" disabled={props.busy}/><small className={props.thinking ? 'director-thinking' : undefined} role={props.thinking ? 'status' : undefined} aria-live={props.thinking ? 'polite' : undefined}>
+            {props.thinking ? <><LoaderCircle size={14} className="director-thinking-icon" aria-hidden="true"/><span>{editing ? 'Thinking about your edit' : 'Thinking'}</span><span className="director-thinking-dots" aria-hidden="true"><i/><i/><i/></span></> : props.busy ? 'Working on your request…' : 'Review a plan before running it.'}
+          </small><button aria-label="Send to project Director" disabled={props.busy || uploading || !props.text.trim()}><ArrowUp size={18}/></button></div>
         </form>
       </div>
     </div>

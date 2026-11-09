@@ -276,12 +276,11 @@ def _codex_json(prompt: str, *, image_paths: list[str | Path] | None = None,
         selected["model"], "--config", f'model_reasoning_effort={json.dumps(selected["reasoning_effort"])}',
         *image_args, "--json", "-",
     ]
-    with tempfile.TemporaryDirectory(prefix="vibe-director-schema-") as directory:
-        if output_schema is not None:
-            schema_path = Path(directory) / "response.json"
-            schema_path.write_text(json.dumps(output_schema), encoding="utf-8")
-            command[2:2] = ["--output-schema", str(schema_path)]
-        output = _run_json_command(command, prompt)
+    # Application schemas allow optional fields and open tool settings; Codex
+    # strict output schemas cannot express these unchanged. Validate locally.
+    if output_schema is not None:
+        prompt += "\n\nReturn only JSON matching this schema:\n" + json.dumps(output_schema)
+    output = _run_json_command(command, prompt)
     messages: list[str] = []
     failures: list[str] = []
     for line in output.splitlines():
@@ -303,7 +302,14 @@ def _codex_json(prompt: str, *, image_paths: list[str | Path] | None = None,
         if failures:
             raise ReasoningProviderError("Codex failed: " + "; ".join(failures)[-1800:])
         raise ReasoningProviderError("Codex completed without a final assistant message")
-    return _parse_dict(messages[-1], "Codex")
+    result = _parse_dict(messages[-1], "Codex")
+    if output_schema is not None:
+        from jsonschema import ValidationError, validate
+        try:
+            validate(result, output_schema)
+        except ValidationError as exc:
+            raise ReasoningProviderError("Codex returned JSON that does not match the requested schema: " + exc.message) from exc
+    return result
 
 
 def generate_json(

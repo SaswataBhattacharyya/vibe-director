@@ -16,6 +16,15 @@
 .director-welcome p {line-height:1.7;margin:0 0 16px}
 .director-hint {font-size:12px;color:var(--studio-muted)}
 .director-message {margin-bottom:28px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.director-thinking {display:flex;align-items:center;gap:6px;color:var(--studio-accent)!important}
+.director-thinking-icon {flex:none;animation:director-thinking-turn 1.4s linear infinite}
+.director-thinking-dots {display:inline-flex;gap:3px;align-items:center}
+.director-thinking-dots i {width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.3;animation:director-thinking-pulse 1s ease-in-out infinite}
+.director-thinking-dots i:nth-child(2) {animation-delay:.16s}
+.director-thinking-dots i:nth-child(3) {animation-delay:.32s}
+@keyframes director-thinking-turn {to {transform:rotate(360deg)}}
+@keyframes director-thinking-pulse {50% {opacity:1;transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce) {.director-thinking-icon,.director-thinking-dots i {animation:none;opacity:1}}
 .director-user-message {background:var(--studio-surface);padding:12px 16px;border-radius:16px 16px 4px 16px;margin:0 0 16px 20px}
 .director-composer-wrap {display:flex;flex-direction:column;gap:12px;padding:12px 20px 16px;flex-shrink:0;min-height:0;max-height:calc(100% - 64px);overflow:auto;scrollbar-gutter:stable}
 .director-composer-context {min-height:0;overflow:auto;flex:1 1 auto}

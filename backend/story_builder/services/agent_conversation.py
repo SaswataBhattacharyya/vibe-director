@@ -79,6 +79,8 @@ class AgentConversation:
                 message['goal'] = goal
                 if recover and self.harness and self.harness.enabled(owner) and goal['status'] == 'running':
                     self.harness.recover(owner, message['request_id'])
+                elif recover and self.harness:
+                    self.harness.observe(owner, message['request_id'])
             except LedgerNotFound:
                 pass
             messages.append(message)

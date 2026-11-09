@@ -267,3 +267,84 @@ Graphify refreshed with the required code-only command: **151 nodes / 533 edges*
 - `graphify-out/cache/ast/v0.9.17/fa9a65c45a1f8200b9baa902c7d2153b6ed9b4c6d6e1cb3eeef027c064e16ef5.json`
 
 The graph/cache files are generated discovery artifacts from the required Graphify refresh. No dependency lockfile, launcher, owner media or production records changed.
+
+## H3 approval-driven continuation — 2026-11-09, over clean 61477e7
+
+**Status: implemented and functionally verified for the bounded CPU session/selection adapters; H3 security acceptance is BLOCKED. H4 has NOT started.** No owner media, records, active services, approval history or jobs were modified. No GPU, paid media operation or production rendering ran. Work is local. The harness remains exact-project opt-in and off by default; the launcher and accepted H1 sandbox policy are unchanged.
+
+### What changed
+
+Existing `AgentTasks` approval records remain authoritative. The original goal step's draft receipt binds the exact task revision and plan hash. Approval/run revalidate that binding **inside the existing project lock**, as well as the existing immediate source/context checks. Cancelled goals/tasks and failed tasks cannot authorize execution. An existing invocation without a discoverable job is rejected for manual reconciliation, never blindly resubmitted. Existing jobs are found by their durable invocation identity and observed through the current task services.
+
+The task API notifies the existing coordinator after human controls; it requires the **existing local computer-access grant** for goal-linked mutations. No second approval store, token type, database, job service or agent framework was introduced. Approval alone transitions to `waiting_for_execution`; the separate **Run approved task** action is still required. The host observes dispatched jobs without asking Codex to approve or run anything. Once verified, approval timestamp, exact revision/hash, task ID, invocation/job ID and bounded result/digest are supplied as structured internal context to the **same Codex thread**. A consumed-result digest prevents unchanged completed receipts from causing repeated continuation. Startup and history reconcile pending goals; uncertain operations stop. A polling race that repeatedly started workers for an unchanged approval wait was found and fixed.
+
+MCP has six typed tools: the existing five plus `editor_propose_selection`, reusing `editor.select_media` and its source hash/session snapshot checks. All protected calls remain draft-only; no approve/run/grant/browser/shell endpoint is exposed to Codex. Task status can return verified protected-result references. Read policy is unchanged. Shared Director and Editor UI acquire the existing local grant for linked controls, refresh the same goal after actions, explain empty-session creation versus approval/execution, and collapse technical reports. No schema migration was needed.
+
+### Exact tests and evidence
+
+- Before implementation: `PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m unittest story_builder.tests.test_director_harness story_builder.tests.test_agent_tasks story_builder.tests.test_agent_api -q` — **27 tests passed, 29.673s**.
+- Final focused backend: same command plus `story_builder.tests.test_director_harness_approvals` — **37 tests passed, 50.881s**. Ten new tests use real task APIs, SQLite/job files and CPU workspace adapters, with fake Codex and controlled worker scheduling. They cover no-grant/cross-origin denial, no preapproval dispatch, exact approval, separate run, single dispatch, same-thread continuation, rejection, modified revisions, changed source bytes, restart before run, uncertain dispatch before job creation, lost job acknowledgement and queued-job recovery. Source changes return 422 before dispatch; stale exact-plan checks return 409. Faults are injected at submission/mapping boundaries; this is not a real process-kill-at-every-boundary test.
+- Complementary regression command: `PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m unittest story_builder.tests.test_agent_tool_access story_builder.tests.test_director_codex_bridge story_builder.tests.test_projects -q` — **42 run, 41 passed, 1 expected failure, 23.347s**. Combined **79 run, 78 passed, one unchanged full-film expected failure**. That test remains red-by-design until the actual H4 film workflow is implemented and verified; its assertion was not weakened.
+- Frontend: `npm run typecheck` and `npm run build` — **passed**. Build retains the existing large-chunk warning.
+- Browser regressions, isolated API mocks and test-owned Vite, with `VIBE_DIRECTOR_TEST_PORT=5187 PLAYWRIGHT_CHROMIUM_EXECUTABLE=/home/riki/.cache/ms-playwright/chromium_headless_shell-1234/chrome-linux/headless_shell`: `npm run test:ui -- director-harness.spec.mjs agent-inspector.spec.mjs` — **9 passed, 12.0s**; after adding approval controls coverage, `npm run test:ui -- director-harness.spec.mjs --grep 'separate approval'` — **2 passed, 2.1s**. These prove UI interactions, not a secure human identity.
+
+Actual model/worker acceptance (authorized signed-in reasoning, host context for the native sandbox socket):
+
+`PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m story_builder.tests.harness_approval_acceptance --live-account`
+
+**Final exit 0. No mock Codex, tool results or job execution.** Real request generated an unapproved Editor session proposal after media discovery/inspection. The test host represents a human reviewer through the real exact-plan approval API, recreates the application with the saved approval, and separately authorizes Run. A real subprocess CPU job creates one disposable session. Codex automatically resumes its original objective, consumes the created Editor ID, calls `task_status`, then performs an audio-only discovery without another user message.
+
+- Thread: `01a1c028-b47b-7523-a12d-c45b161ff1f1` (unchanged across continuation).
+- Protected task: `task-dd2c71109eae4b81aea778392a73df4c`; invocation `call-fc54c4a4d61c41368de1c90ddfe60afb`; job `agent-workspace-625c2b5c454b`.
+- Created session: `edit-b417e7583605448a`; one source, measured 0.3-second audio; source SHA-256 unchanged.
+- Consumed receipt: `c8558676a9f51a2d383165a046b3db4ac77999af88d787dc1ac66306213c44b2`.
+- Saved goal steps: `media_list → media_inspect → editor_propose_session → media_list(kind=audio)`. Status observation also executed, without creating a new task.
+- Actual persisted Codex `thread/read` confirmed **one userMessage**; no new goal/chat/user prompt. A repeated Run returns the same invocation. Final goal truthfully remains blocked for unsupported film completion.
+- This is a host-simulated reviewer, **not a physical human acceptance click**, and not a video-render/playback test.
+
+Setup/debug attempts are not omitted: the initial live attempt was interrupted after an approval-wait polling race, with cleanup verified. A subsequent run passed real continuation but exited 1 on its optional audit because it tried to resume Codex with a deliberately revoked MCP lease. The audit was corrected to read persisted history without resuming the revoked gateway; the final full command above passed. Earlier unit implementation failures (nested project lock/test fixture reuse, read-policy handling and the source-denial HTTP expectation) were corrected before the reported final checks. No assertions were relaxed to permit unauthorized execution.
+
+### Actual browser authorization failure — mandatory case 10 NOT passed
+
+Command:
+
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE=/home/riki/.cache/ms-playwright/chromium_headless_shell-1234/chrome-linux/headless_shell PYTHONPATH=backend /home/riki/miniforge3/envs/react/bin/python -m story_builder.tests.harness_browser_authority_probe`
+
+Diagnostic exited 0 **because it successfully reproduced the blocker**, not because security passed:
+
+```json
+{"H3_security_gate":"BLOCKED","fresh_browser_identity":true,"without_grant":400,"grant_obtainable":true,"with_self_fetched_grant":200,"protected_execution":false}
+```
+
+A fresh Playwright browser without preloaded credentials opened a disposable backend origin. Posting approval without a grant returned 400. However, **GET `/api/agent/computer-access` returns the grant to any same-origin local browser**. That browser fetched it and approved the exact disposable draft, returning 200. The task stayed approved with **no invocation**; the probe never called Run. All test records were removed. Local origin/CSRF checks are not proof of human ownership. This is an existing grant-delivery limitation; H3's use of that grant does not fix it. Cross-origin denial and the accepted H1 model network/browser restrictions do not negate this result. The model still has no browser tool, but it is false to claim that an independently connected same-origin browser cannot approve.
+
+**Required owner decision before expanding protected execution:** retain the existing approval rows and separate Approve/Run actions, but deliver/unlock the existing grant through a trusted owner channel that an agent-controlled browser cannot retrieve. A launcher-issued unlock code is one concrete option, requiring a manual unlock step. Do not add a second approval system or silently weaken the acceptance gate. Until resolved, keep the harness disabled for owner projects and do not proceed to H4.
+
+### Recovery coverage and remaining limits
+
+| Mandatory case | Evidence / status |
+| --- | --- |
+| 1. Actual unapproved proposal | Real Codex + existing APIs, passed |
+| 2. No effect before authorization | Real proposal inert; unit/API denial passed; browser credential acquisition remains a blocker |
+| 3. Exact reviewed plan only | Revision/hash and changed-source tests passed |
+| 4. Execute once | Actual CPU job/repeated Run returns same invocation; fault-injection tests passed |
+| 5. Automatic original-goal continuation | Actual Codex same thread, one userMessage, consumed result and subsequent real read passed |
+| 6. Rejection stops operation | Real API/CPU fixture regression passed |
+| 7. Stale revision/media hash | Real file mutation and API tests passed |
+| 8. Restart retains approval/goal | Actual app recreation before Run + durable fixture tests passed |
+| 9. No duplicate crash jobs | Durable-file tests with injected pre/post dispatch faults and queued-job restart passed; real crash/kill matrix remains limited |
+| 10. Model/MCP/Playwright cannot approve | MCP denied; **fresh same-origin Playwright can retrieve grant and approve — FAILED** |
+
+Previous two enclosing-sandbox Kdenlive errors and seven broader browser failures remain classified in H1/H2 evidence. The focused H3 suites above do not erase them. No unrelated UI/native editor fixes were attempted. H4 five-clip CPU render/verification, H5 real final playback and H6 owner acceptance remain open.
+
+All temporary synthetic media, sessions, jobs, approval records, isolated Codex credentials/history and owned processes were removed in `finally`, including failed attempts. An interrupted unit-fixture directory was checked for test-only empty auth and absence of jobs before removal. Final `/tmp/vibe-h3-*` and `/tmp/vibe-agent-task-*` inventory was empty. Owner services were not stopped or restarted.
+
+### Change inventory and rollback
+
+Application source: `backend/story_builder/isolated_server.py`; services `agent_api.py`, `agent_conversation.py`, `agent_tasks.py`, `director_codex_config.py`, `director_harness.py`, `director_mcp.py`, new `director_goal_tasks.py`; frontend `DirectorConversation.tsx`, `DirectorRuntime.tsx`, `lib/agent-tasks.ts`.
+
+Tests: `backend/story_builder/tests/test_director_harness.py`, new `test_director_harness_approvals.py`, `harness_production_acceptance.py`, new `harness_approval_acceptance.py`, new `harness_browser_authority_probe.py`; `frontend/tests/director-harness.spec.mjs`. Documentation: this evidence, `fixes/ACTIVE_FIXES.md`, `.review/director-harness-h3-impact.json`.
+
+Generated discovery artifacts: `graphify-out/graph.json`, `graphify-out/manifest.json`, `graphify-out/cache/stat-index.json` and the new AST cache JSON files. `conda run -n react graphify extract . --code-only --no-cluster` initially refreshed a partial incremental graph (176 nodes, 673 edges); another incremental run replaced it with only 20 nodes/62 edges. A full local AST refresh with `--force --max-workers 4` corrected that coverage problem: **6,010 nodes / 18,413 edges, 657 code files scanned**, no LLM/API calls or clustering. The tool reported 102 zero-node files and 50 unclassified files; the graph remains a discovery aid. Depth-two `affected DirectorHarness` output was source-checked, generic `uses` edges excluded. Impact report has 25 source citations verified, zero rejected; max prioritization risk 0.60 (high), not a defect probability or a full security audit.
+
+Rollback: keep `VIBE_DIRECTOR_HARNESS` unset (or clear the exact project allowlist) before the owner's next manual launch. Do not restart active services to apply it. Preserve all task/approval/invocation/goal tables and media. No schema rollback is needed. If removing this local slice, revert **only the listed H3 patch after saving subsequent local work**, never reset the checkout or delete project/runtime databases. Disablement does not undo already authorized tasks; review them through the existing task UI.

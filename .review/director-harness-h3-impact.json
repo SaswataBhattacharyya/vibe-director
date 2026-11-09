@@ -1,0 +1,624 @@
+{
+  "comparison": "working tree vs 61477e7 (HEAD)",
+  "mode": "manual source tracing with partial Graphify discovery",
+  "traversal": {
+    "depth": 2,
+    "filters": "Director task approval/dispatch, saved goal continuation/recovery, typed MCP and shared chat; generic Graphify uses edges excluded unless source confirmed",
+    "node_count": 25
+  },
+  "graph": {
+    "nodes": 6010,
+    "edges": 18413,
+    "command": "conda run -n react graphify extract . --code-only --no-cluster --force --max-workers 4",
+    "affected": "graphify affected DirectorHarness --depth 2"
+  },
+  "limitations": [
+    "Full AST refresh scans 657 code files, no clustering or complete test edges. Tool reports 102 zero-node and 50 unclassified files. Incremental replacement dropped unchanged nodes, so --force was required. Cross-community means another source module.",
+    "Test-gap=0 means focused static test-reference evidence, not full coverage. Max risk is prioritization, not a defect probability.",
+    "Actual browser authority gate failed; H3 is incomplete. H4\u2013H6, previous Kdenlive enclosing-sandbox errors and seven broader UI failures are untouched."
+  ],
+  "max_risk": 0.6,
+  "overall_risk": "high",
+  "findings": [
+    {
+      "node": "backend/story_builder/services/agent_api.py::handle",
+      "location": {
+        "file": "backend/story_builder/services/agent_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root, environ, start_response, respond, *, tasks=None, conversation=None, read_json=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_check_inputs",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 293
+      },
+      "anchor": "    def _check_inputs(self, owner, plan):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::approve",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 322
+      },
+      "anchor": "    def approve(self, owner, task, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::run",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 399
+      },
+      "anchor": "    def run(self, owner, task, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::_observe",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 477
+      },
+      "anchor": "    def _observe(self, owner, task, job):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_tasks.py::poll",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 563
+      },
+      "anchor": "    def poll(self, owner, task):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_harness.py::DirectorHarness",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 22
+      },
+      "anchor": "class DirectorHarness:",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goal_tasks.py::linked",
+      "location": {
+        "file": "backend/story_builder/services/director_goal_tasks.py",
+        "line": 15
+      },
+      "anchor": "def linked(goals, owner, task_id):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goal_tasks.py::reviewed_step",
+      "location": {
+        "file": "backend/story_builder/services/director_goal_tasks.py",
+        "line": 22
+      },
+      "anchor": "def reviewed_step(goal, task):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goal_tasks.py::validate_action",
+      "location": {
+        "file": "backend/story_builder/services/director_goal_tasks.py",
+        "line": 30
+      },
+      "anchor": "def validate_action(tasks, owner, task):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goal_tasks.py::snapshot",
+      "location": {
+        "file": "backend/story_builder/services/director_goal_tasks.py",
+        "line": 44
+      },
+      "anchor": "def snapshot(tasks, goal):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goal_tasks.py::unconsumed",
+      "location": {
+        "file": "backend/story_builder/services/director_goal_tasks.py",
+        "line": 87
+      },
+      "anchor": "def unconsumed(goal, evidence):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_mcp.py::Gateway",
+      "location": {
+        "file": "backend/story_builder/services/director_mcp.py",
+        "line": 14
+      },
+      "anchor": "class Gateway:",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_mcp.py::serve",
+      "location": {
+        "file": "backend/story_builder/services/director_mcp.py",
+        "line": 126
+      },
+      "anchor": "def serve(manifest):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_conversation.py::history",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 57
+      },
+      "anchor": "    def history(self, owner, *, recover=True):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/isolated_server.py::create_app",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 273
+      },
+      "anchor": "def create_app(*, data_root: Path, ledger_path: Path | None = None,",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goals.py::update",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 46
+      },
+      "anchor": "    def update(self, owner, request, *, status=None, thread_id=None, reply=None, message_status='answered', **changes):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goals.py::activate",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 79
+      },
+      "anchor": "    def activate(self, owner, request):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_goals.py::receipt",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 90
+      },
+      "anchor": "    def receipt(self, owner, request, key, *, task_id=None, result=None):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_access.py::local_request",
+      "location": {
+        "file": "backend/story_builder/services/agent_access.py",
+        "line": 9
+      },
+      "anchor": "def local_request(environ):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_access.py::capabilities",
+      "location": {
+        "file": "backend/story_builder/services/agent_access.py",
+        "line": 21
+      },
+      "anchor": "def capabilities(environ):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_access.py::require_grant",
+      "location": {
+        "file": "backend/story_builder/services/agent_access.py",
+        "line": 28
+      },
+      "anchor": "def require_grant(environ):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::prepare",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 41
+      },
+      "anchor": "def prepare(root, owner, tool, settings):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/agent_workspace_tools.py::run",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 89
+      },
+      "anchor": "def run(root, job_id, request):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    },
+    {
+      "node": "backend/story_builder/services/director_codex_config.py::configure",
+      "location": {
+        "file": "backend/story_builder/services/director_codex_config.py",
+        "line": 26
+      },
+      "anchor": "def configure(base, codex, manifest, auth_home):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Traced depth 2: task HTTP control \u2192 AgentTasks approval/run \u2192 goal-task validation \u2192 existing frozen job dispatch/poll; goal observer \u2192 same-thread continuation \u2192 typed MCP task receipts; API grant \u2192 shared UI approve/run controls.",
+        "Source confirmed existing approval/invocation tables remain authoritative; no schema change. Goal step immutable draft receipt binds revision/hash. See test_director_harness_approvals for exact-grant/revision/hash/rejection/restart/dispatch tests; live and browser probes separately measured.",
+        "Security gate FAIL: capabilities() returns existing grant to fresh same-origin Playwright. No claim of measured branch coverage. Caller-count factor enumerates only confirmed production consumers; threshold five not established."
+      ],
+      "verification": "PENDING"
+    }
+  ]
+}

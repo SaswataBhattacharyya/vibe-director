@@ -1,7 +1,7 @@
 """Shared discovery and explicitly approved task boundary."""
 import re
 from urllib.parse import parse_qs
-from . import agent_access, agent_graph, agent_skills, agent_tools
+from . import agent_access, agent_graph, agent_skills, agent_tools, director_goal_tasks
 
 
 def handle(root, environ, start_response, respond, *, tasks=None, conversation=None, read_json=None):
@@ -59,7 +59,9 @@ def handle(root, environ, start_response, respond, *, tasks=None, conversation=N
             proposed = payload.get('proposal', payload) if isinstance(payload, dict) else {}
             if not isinstance(proposed, dict):
                 raise ValueError('Task proposal must be an object.')
-            if proposed.get('tool_id') == 'computer.execute' or (task and tasks.get(owner, task)['plan']['tool_id'] == 'computer.execute'):
+            harness = conversation.harness if conversation else None
+            goal = director_goal_tasks.linked(harness.goals, owner, task) if task and harness else None
+            if goal or proposed.get('tool_id') == 'computer.execute' or (task and tasks.get(owner, task)['plan']['tool_id'] == 'computer.execute'):
                 agent_access.require_grant(environ)
             if not task:
                 result = tasks.propose(owner, payload)
@@ -69,6 +71,8 @@ def handle(root, environ, start_response, respond, *, tasks=None, conversation=N
                 result = tasks.cancel(owner, task)
             else:
                 result = getattr(tasks, action)(owner, task, payload)
+            if task and harness:
+                harness.task_changed(owner, task)
         else:
             return respond(start_response, '405 Method Not Allowed', {'error': {'code': 'method_not_allowed', 'message': 'Unsupported task method.'}})
         return respond(start_response, '200 OK', result)

@@ -44,8 +44,9 @@ export function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> 
     {task.plan.settings.access_mode && <><strong>{task.plan.settings.access_mode === 'full' ? 'Full access' : 'Project only'}</strong>
       <small className="director-job">{task.plan.settings.workspace_path} · {task.plan.settings.model}</small>
       <pre style={{whiteSpace: 'pre-wrap'}}>{task.plan.settings.instruction}</pre></>}
-    {task.report && <details open={!['media.list', 'media.inspect'].includes(task.plan.tool_id)}><summary>{task.plan.tool_id === 'editor.prepare_brief' ? 'Editor result' : task.plan.tool_id === 'audio.transcribe' ? 'Timed speech evidence · review against playback before cutting' : 'Tool result · review before using'}</summary><pre style={{whiteSpace: 'pre-wrap'}}>{task.report}</pre></details>}
+    {task.report && <details><summary>{task.plan.tool_id === 'editor.prepare_brief' ? 'Editor result' : task.plan.tool_id === 'audio.transcribe' ? 'Timed speech evidence · review against playback before cutting' : 'Tool result · review before using'}</summary><pre style={{whiteSpace: 'pre-wrap'}}>{task.report}</pre></details>}
     <details><summary>Exact tool settings</summary><pre style={{whiteSpace: 'pre-wrap'}}>{JSON.stringify(task.plan.settings, null, 2)}</pre></details>
+    {task.plan.tool_id === 'editor.create_session' && <p>Create an empty Editor session named “{task.plan.settings.name}”. Approval saves your decision; Run approved task creates the session. No media is changed or rendered.</p>}
     <ul>{task.plan.assets.map(asset => <li key={asset.asset_id}>{asset.filename}</li>)}</ul>
     <small>{task.plan.settings.quality !== undefined && `Quality ${task.plan.settings.quality} · `}revision {task.current_revision} · {task.plan_hash.slice(0, 10)}</small>
     {task.invocation?.job_id && <small className="director-job">Job {task.invocation.job_id}</small>}

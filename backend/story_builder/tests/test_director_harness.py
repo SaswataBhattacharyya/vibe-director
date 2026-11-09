@@ -21,7 +21,7 @@ from story_builder.services.production_ledger import LedgerConflict
 from story_builder.tests.test_agent_tasks import AgentTaskFixture
 
 
-class DirectorHarnessTests(AgentTaskFixture):
+class DirectorHarnessFixture(AgentTaskFixture):
     def setUp(self):
         super().setUp()
         self.auth = Path(self.temp.name) / 'auth'
@@ -48,6 +48,7 @@ class DirectorHarnessTests(AgentTaskFixture):
         self.goals.update(self.owner, self.request, token='host-only')
         return Gateway(self.tasks, self.owner, self.request, 'host-only')
 
+class DirectorHarnessTests(DirectorHarnessFixture):
     def test_gateway_continues_real_cpu_results_and_keeps_draft_unapproved(self):
         gateway = self.new_goal()
         discovered = gateway.call('media_list', {'kind': 'all', 'offset': 0, 'limit': 10})

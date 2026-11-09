@@ -3569,6 +3569,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
     from .services.agent_generation_tools import bridge
     agent_tasks.native_request = bridge(app)
     app.director_harness = agent_conversation.harness
+    app.director_harness.recover_pending()
     return app
 
 

@@ -46,7 +46,7 @@ def configure(base, codex, manifest, auth_home):
     lines += ['skip_host_skill_discovery = true', '[mcp_servers.vibe]',
               'command = ' + json.dumps(sys.executable),
               'args = ' + json.dumps(['-m', 'story_builder.services.director_mcp', str(base / 'gateway.json')]),
-              'required = true', 'enabled_tools = ["media_list", "media_inspect", "task_status", "editor_propose_session", "goal_pause"]',
+              'required = true', 'enabled_tools = ["media_list", "media_inspect", "task_status", "editor_propose_session", "editor_propose_selection", "goal_pause"]',
               'default_tools_approval_mode = "approve"', 'tool_timeout_sec = 40', '[mcp_servers.vibe.env]',
               'PYTHONPATH = ' + json.dumps(str(Path(__file__).resolve().parents[2])),
               'VIBE_DIRECTOR_DATA_DIR = ' + json.dumps(manifest['root'])]

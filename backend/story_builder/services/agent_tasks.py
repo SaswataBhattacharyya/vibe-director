@@ -321,6 +321,8 @@ class AgentTasks:
 
     def approve(self, owner, task, payload):
         with projects.locked(self.root), self.ledger._connect() as db:
+            from .director_goal_tasks import validate_action
+            validate_action(self, owner, self.get(owner, task))
             agent_graph.resolve_workspace(self.root, owner)
             db.execute('BEGIN IMMEDIATE')
             row = self._row(db, owner, task)
@@ -399,6 +401,8 @@ class AgentTasks:
         # A crashed runner releases it; frozen correlation resolves acknowledgment loss.
         with projects.locked(self.root):
             row = self.get(owner, task)
+            from .director_goal_tasks import validate_action
+            goal_linked = validate_action(self, owner, row)
             self._expected(row, payload)
             if row['status'] in {'completed', 'cancelled', 'failed'}:
                 return row
@@ -424,6 +428,8 @@ class AgentTasks:
                     self._map_job(owner, task, invocation, job)
                 # Queue recovery owns dispatch. A retry never restarts a failed/cancelled job.
                 return self._observe(owner, task, job)
+            if goal_linked and row['invocation']:
+                raise LedgerConflict('Uncertain protected dispatch has no job. Manual reconciliation is required; it was not repeated.')
             try:
                 if (generated_root(self.root, owner) / 'utility_inputs' / ('stage-' + invocation)).exists():
                     raise LedgerConflict('Unclaimed staged input remains from an interrupted submission. Cancel this task and propose a new plan; retained inputs will not be deleted automatically.')

@@ -169,10 +169,12 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
     }).finally(() => setThinking(false));
   };
   const control = (task: AgentTask, action: 'approve' | 'run' | 'cancel') => attempt(async signal => {
-    const token = task.plan.tool_id === 'computer.execute' ? await computerGrant(signal) : undefined;
+    const goalLinked = messages.some(message => message.goal?.steps.some(step => step.task_id === task.task_id));
+    const token = task.plan.tool_id === 'computer.execute' || goalLinked ? await computerGrant(signal) : undefined;
     const updated = await agentRequest<AgentTask>(owner, `tasks/${task.task_id}/${action}`, signal, action === 'cancel' ? {} : exactApproval(task), token);
     if (!signal.aborted) setTasks(rows => rows.map(row => row.task_id === updated.task_id ? updated : row));
     if (!signal.aborted && updated.plan.tool_id === 'editor.prepare_brief') await editor.current?.refresh();
+    if (!signal.aborted && goalLinked) await refresh(signal);
   });
   return <DirectorStory.Provider value={{bridge:story,messages}}><DirectorMusic.Provider value={music}><DirectorStudio.Provider value={{bridge:studio,messages}}><DirectorVideo.Provider value={{bridge:video,messages}}><DirectorPrompts.Provider value={prompts}><DirectorScreenplay.Provider value={screenplay}><DirectorImage.Provider value={{bridge: image, messages}}><DirectorEditor.Provider value={editor}><PaneContext.Provider value={{panes, togglePane, openPane}}><Slot.Provider value={setSlot}>{children}{slot && createPortal(<DirectorConversation
     access={access} setAccess={setAccess} messages={messages} tasks={tasks} discovery={discovery} text={text} setText={setText}

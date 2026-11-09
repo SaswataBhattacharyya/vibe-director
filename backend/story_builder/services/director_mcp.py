@@ -26,13 +26,15 @@ class Gateway:
              'inputSchema': single('task_id')},
             {'name': 'editor_propose_session', 'description': 'Prepare a draft Editor task only. Human approval is required; never creates or runs a session.',
              'inputSchema': workspace.schema('editor.create_session')},
+            {'name': 'editor_propose_selection', 'description': 'Draft ordered source ranges on an existing Editor session. Requires separate human approval and execution; never renders.',
+             'inputSchema': workspace.schema('editor.select_media')},
             {'name': 'goal_pause', 'description': 'Record a missing-information question or runtime blocker. Cannot mark a goal complete or authorize tools.',
              'inputSchema': {'type': 'object', 'additionalProperties': False, 'required': ['reason', 'message'],
                  'properties': {'reason': {'enum': ['clarification_needed', 'runtime_blocked']},
                                 'message': {'type': 'string', 'minLength': 1, 'maxLength': 2000}}}},
         ]
         for tool in self.tools:
-            tool['annotations'] = {'readOnlyHint': tool['name'] not in {'editor_propose_session', 'goal_pause'},
+            tool['annotations'] = {'readOnlyHint': tool['name'] not in {'editor_propose_session', 'editor_propose_selection', 'goal_pause'},
                                    'destructiveHint': False, 'openWorldHint': False}
 
     def authorized(self):
@@ -54,9 +56,12 @@ class Gateway:
             if arguments['task_id'] not in {s['task_id'] for s in goal['steps']}:
                 raise ValueError('Task does not belong to this goal.')
             task = self.tasks.poll(self.owner, arguments['task_id'])
-            return {'task_id': task['task_id'], 'status': task['status'], 'plan_hash': task['plan_hash']}
+            from .director_goal_tasks import snapshot
+            protected = snapshot(self.tasks, goal)['protected_tasks']
+            return next((r for r in protected if r['task_id'] == task['task_id']),
+                        {'task_id': task['task_id'], 'status': task['status'], 'plan_hash': task['plan_hash']})
         tool = {'media_list': 'media.list', 'media_inspect': 'media.inspect',
-                'editor_propose_session': 'editor.create_session'}[name]
+                'editor_propose_session': 'editor.create_session', 'editor_propose_selection': 'editor.select_media'}[name]
         # Existing adapters validate exact schemas, input ownership, hashes and
         # frozen snapshots. Only these two reads have host execution permission.
         if name == 'media_inspect':
@@ -72,13 +77,14 @@ class Gateway:
             raise LedgerConflict('Unacknowledged tool preparation; reconcile before retrying. It was not repeated.')
         if fresh:
             task = self.tasks.propose(self.owner, {'tool_id': tool,
-                'asset_ids': [arguments['asset_id']] if name == 'media_inspect' else [],
+                'asset_ids': [arguments['asset_id']] if name == 'media_inspect' else
+                    list(dict.fromkeys(s['asset_id'] for s in arguments['selection'])) if name == 'editor_propose_selection' else [],
                 'settings': {} if name == 'media_inspect' else arguments})
             self.goals.receipt(self.owner, self.request, step['step_key'], task_id=task['task_id'])
         else:
             task = self.tasks.get(self.owner, step['task_id'])
         self.authorized()
-        if name == 'editor_propose_session':
+        if name in {'editor_propose_session', 'editor_propose_selection'}:
             result = {'task_id': task['task_id'], 'status': 'waiting_for_approval',
                       'revision': task['current_revision'], 'plan_hash': task['plan_hash']}
         else:

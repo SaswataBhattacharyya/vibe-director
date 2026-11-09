@@ -2,7 +2,7 @@
 
 The caller owns a private, reviewed CODEX_HOME, sandbox profile and MCP config.
 Never pass browser/model requests through this interface. Only Vibe's gateway
-can authorize tools. Production conversation routing is deliberately unchanged.
+can authorize tools. Production routing belongs to the separate coordinator.
 One host worker owns a client; callbacks observe untrusted streamed data.
 """
 import json
@@ -51,7 +51,7 @@ class AppServer:
         self.reader = threading.Thread(target=self._reader, daemon=True)
         self.reader.start()
         try:
-            self.request('initialize', {'clientInfo': {'name': 'vibe-director', 'version': '1'},
+            self.info = self.request('initialize', {'clientInfo': {'name': 'vibe-director', 'version': '1'},
                                         'capabilities': {'experimentalApi': True}})
             self._send({'method': 'initialized'})
         except BaseException:
@@ -151,6 +151,12 @@ class AppServer:
         if self.closed.is_set():
             return
         self.closed.set()
+        # Host cancellation may arrive while the owner thread waits for a frame.
+        # Wake it without waiting for the model's response deadline.
+        try:
+            self.inbox.put_nowait({'transport_closed': True})
+        except queue.Full:
+            pass
         if self.process.poll() is None:
             try:
                 os.killpg(self.process.pid, signal.SIGTERM)

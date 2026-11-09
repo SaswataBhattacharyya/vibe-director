@@ -49,6 +49,8 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
   const {workspace_id: owner} = useProject();
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   const [messages, setMessages] = useState<AgentMessage[]>([]), [tasks, setTasks] = useState<AgentTask[]>([]);
+  const [harnessOwner, setHarnessOwner] = useState<string | null>(null);
+  const [harnessModel, setHarnessModel] = useState<string | null>(null);
   const [discovery, setDiscovery] = useState<AgentDiscovery | null>(null);
   const [text, setText] = useProjectState('DirectorRuntime:text', '');
   const [selected, setSelected] = useProjectState<string[]>('DirectorRuntime:assets', []);
@@ -71,14 +73,18 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
   const video = useRef<{prepareTarget:()=>VideoPromptTarget}|null>(null);
   const refresh = useCallback(async (signal: AbortSignal) => {
     const [history, listing] = await Promise.all([
-      agentRequest<{messages: AgentMessage[]}>(owner, 'conversation', signal),
+      agentRequest<{messages: AgentMessage[]; runtime?: {harness_enabled: boolean; harness_model?: string}}>(owner, 'conversation', signal),
       agentRequest<{tasks: AgentTask[]}>(owner, 'tasks', signal),
     ]);
     if (signal.aborted) return;
     if (!Array.isArray(history.messages) || !Array.isArray(listing.tasks)) throw new Error('Restart the backend to load the Director runtime.');
     const reconciled = await Promise.all(listing.tasks.map(task => task.invocation ?
       agentRequest<AgentTask>(owner, `tasks/${task.task_id}`, signal) : Promise.resolve(task)));
-    if (!signal.aborted) {setMessages(history.messages); setTasks(reconciled);}
+    if (!signal.aborted) {
+      setMessages(history.messages); setTasks(reconciled);
+      setHarnessOwner(history.runtime?.harness_enabled ? owner : null);
+      setHarnessModel(history.runtime?.harness_model || null);
+    }
     if (!signal.aborted && reconciled.some(task => task.plan.tool_id === 'editor.prepare_brief')) await editor.current?.refresh();
   }, [owner]);
   useEffect(() => {
@@ -87,12 +93,13 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
     return () => controller.abort();
   }, [refresh]);
   useEffect(() => {
-    if (!tasks.some(task => ['submitting', 'running', 'cancel_requested'].includes(task.status))) return;
+    if (!messages.some(message => message.goal?.status === 'running') &&
+        !tasks.some(task => ['submitting', 'running', 'cancel_requested'].includes(task.status))) return;
     const timer = window.setInterval(() => void refresh(abort.current.signal).catch(e => {
       if (!abort.current.signal.aborted) setError(e.message);
     }), 2500);
     return () => window.clearInterval(timer);
-  }, [tasks, refresh]);
+  }, [tasks, messages, refresh]);
   async function attempt(action: (signal: AbortSignal) => Promise<void>) {
     const signal = abort.current.signal;
     if (busy || signal.aborted) return;
@@ -115,7 +122,23 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
         if (!signal.aborted) {setText(''); await refresh(signal);}
         return;
       }
+      const postMessage = async (payload: {text: string; asset_ids: string[]; skill_refs: string[]; surface: string; target?: unknown}) => {
+        const key = JSON.stringify(payload);
+        if (!pending.current || pending.current.key !== key) pending.current = {id: crypto.randomUUID(), key};
+        const result = await agentRequest<{messages: AgentMessage[]}>(owner, 'conversation', signal, {
+          request_id: pending.current.id, ...payload,
+        });
+        if (!signal.aborted) {setMessages(result.messages); setText(''); pending.current = null; await refresh(signal);}
+      };
       const editing = location.hash.startsWith('#/editor');
+      if (harnessOwner === owner) {
+        // Read-only context getter: starting chat must not create an Editor session
+        // or require a screenplay/creative form before the agent can discover media.
+        const target = editing ? editor.current?.currentTarget?.() : undefined;
+        await postMessage({text, asset_ids: selected, skill_refs: skills,
+          surface: target ? 'editor' : 'director', ...(target ? {target} : {})});
+        return;
+      }
       if (editing && !editor.current) throw new Error('Wait for the Editor session to load.');
       const inStory = location.hash.split('?')[0] === '#/story';
       if (inStory && !story.current) throw new Error('Wait for the Story workspace to load.');
@@ -137,13 +160,8 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
       if (signal.aborted) return;
       const payload = {text, asset_ids: selected, skill_refs: skills,
         surface: editing ? 'editor' : storyTarget ? 'story' : screenplayTarget ? 'screenplay' : promptTarget ? 'prompt' : imageTarget ? 'image' : videoTarget ? 'video' : studioTarget ? 'studio' : musicTarget ? 'music' : 'director', ...(target ? {target} : {})};
-      const key = JSON.stringify(payload);
-      if (!pending.current || pending.current.key !== key) pending.current = {id: crypto.randomUUID(), key};
-      const result = await agentRequest<{messages: AgentMessage[]}>(owner, 'conversation', signal, {
-        request_id: pending.current.id, ...payload,
-      });
+      await postMessage(payload);
       if (!signal.aborted) {
-        setMessages(result.messages); setText(''); pending.current = null; await refresh(signal);
         if (!signal.aborted && screenplayTarget) await screenplay.current?.refresh();
         if (!signal.aborted && promptTarget) await prompts.current?.refresh();
         if (!signal.aborted && musicTarget) await music.current?.refresh();
@@ -160,5 +178,9 @@ export default function DirectorRuntime({children}: {children: ReactNode}) {
     access={access} setAccess={setAccess} messages={messages} tasks={tasks} discovery={discovery} text={text} setText={setText}
     selected={selected} setSelected={setSelected} skills={skills} setSkills={setSkills}
     busy={busy} thinking={thinking} error={error} send={send} control={control} loadContext={loadContext}
+    harnessModel={harnessOwner === owner ? harnessModel : null}
+    goalControl={(request, action) => void attempt(async signal => {
+      await agentRequest(owner, `conversation/${request}/${action}`, signal, {}); await refresh(signal);
+    })}
     onCollapse={() => togglePane('chat')} refresh={() => void attempt(refresh)}/>, slot)}</Slot.Provider></PaneContext.Provider></DirectorEditor.Provider></DirectorImage.Provider></DirectorScreenplay.Provider></DirectorPrompts.Provider></DirectorVideo.Provider></DirectorStudio.Provider></DirectorMusic.Provider></DirectorStory.Provider>;
 }

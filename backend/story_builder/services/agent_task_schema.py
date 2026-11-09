@@ -1,6 +1,28 @@
 """Additive agent tables in the existing production ledger; no media or third DB."""
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS director_goals (
+    project_id TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    objective TEXT NOT NULL,
+    status TEXT NOT NULL,
+    thread_id TEXT,
+    state_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (project_id, request_id)
+);
+CREATE TABLE IF NOT EXISTS director_goal_steps (
+    project_id TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    step_key TEXT NOT NULL,
+    tool TEXT NOT NULL,
+    arguments_json TEXT NOT NULL,
+    task_id TEXT,
+    status TEXT NOT NULL,
+    result_json TEXT,
+    PRIMARY KEY (project_id, request_id, step_key),
+    FOREIGN KEY (project_id, request_id) REFERENCES director_goals(project_id, request_id)
+);
 CREATE TABLE IF NOT EXISTS agent_knowledge (
     project_id TEXT NOT NULL,
     revision INTEGER NOT NULL,

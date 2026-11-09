@@ -107,6 +107,9 @@ export default function VibeEditorPage() {
   const command=async(action:string,text?:string)=>{const target=await ensureProject();await mutate(`projects/${target.id}/command`,'POST',{action,text,revision:target.revision});};
   useEffect(() => {
     const bridge = {
+      currentTarget: () => savedProject ? {version: 1 as const, editor_session_id: savedProject.id,
+        expected_revision: savedProject.revision,
+        selected_ranges: savedProject.selection.map(({asset_id,start,end}) => ({asset_id,start,end}))} : undefined,
       prepareTarget: async () => {
         if (projectId && !savedProject) throw new Error('Wait for the selected Editor session to load.');
         const target = await ensureProject();

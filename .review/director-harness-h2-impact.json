@@ -1,0 +1,1176 @@
+{
+  "comparison": "working tree vs c094083 (HEAD)",
+  "mode": "manual source trace with partial Graphify discovery",
+  "traversal": {
+    "depth": 2,
+    "filters": "Production conversation, coordinator, MCP, task jobs, persisted snapshots and shared chat consumers. Test entrypoints as evidence; third-party/library symbols excluded.",
+    "node_count": 50,
+    "caller_count_scope": "Production callers checked; no five confirmed direct callers found for scored nodes. No measured coverage claimed."
+  },
+  "graph": {
+    "nodes": 151,
+    "edges": 533,
+    "extraction": "conda run -n react graphify extract . --code-only --no-cluster",
+    "discovery": "affected DirectorHarness --depth 2 and query with 1200 token budget; query truncated and generic uses edges discarded unless confirmed in source"
+  },
+  "limitations": [
+    "Incremental graph is partial; 19 changed code files indexed, 652 unchanged. Not a repository-wide audit or measured test coverage.",
+    "No clustering; cross-community proxy means distinct source module. Test-gap=0 means test-reference evidence found, not complete branch coverage.",
+    "Native OS denial evidence is accepted H1; H2 actual live tests prove restricted production routing, not full H3 protected-effect recovery.",
+    "Known two Kdenlive enclosing-sandbox errors, seven broader UI failures and full five-clip expected failure remain tracked."
+  ],
+  "max_risk": 0.6,
+  "overall_risk": "high (change-impact prioritization, not defect probability)",
+  "findings": [
+    {
+      "node": "isolated_server.py::def create_app(",
+      "location": {
+        "file": "backend/story_builder/isolated_server.py",
+        "line": 273
+      },
+      "anchor": "def create_app(*, data_root: Path, ledger_path: Path | None = None,",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Server constructs single coordinator with existing AgentTasks and passes it to shared conversation; exposes owned coordinator for lifecycle tests.",
+        "test_agent_api/test_agent_tasks/test_director_harness/test_projects instantiate real app; real browser acceptance uses WSGI and Vite."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_api.py::def handle(",
+      "location": {
+        "file": "backend/story_builder/services/agent_api.py",
+        "line": 7
+      },
+      "anchor": "def handle(root, environ, start_response, respond, *, tasks=None, conversation=None, read_json=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "isolated_server dispatches agent_api.handle; goal resume/cancel validates local request, project feature flag and empty body.",
+        "test_agent_api existing boundary regressions; real production interruption acceptance calls resume endpoint with original goal UUID."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_conversation.py::def __init__(",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 47
+      },
+      "anchor": "    def __init__(self, tasks, reason=None, *, image_prepare=None, screenplay=None, prompts=None, video=None, story=None, harness=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "agent_api.handle -> conversation.send/history -> DirectorHarness -> Gateway -> AgentTasks. Legacy branch remains default.",
+        "test_agent_tool_access/test_agent_api preserve legacy; test_director_harness and real browser acceptance cover opt-in route and saved message identity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_conversation.py::def history(",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 57
+      },
+      "anchor": "    def history(self, owner, *, recover=True):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "agent_api.handle -> conversation.send/history -> DirectorHarness -> Gateway -> AgentTasks. Legacy branch remains default.",
+        "test_agent_tool_access/test_agent_api preserve legacy; test_director_harness and real browser acceptance cover opt-in route and saved message identity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_conversation.py::def send(",
+      "location": {
+        "file": "backend/story_builder/services/agent_conversation.py",
+        "line": 89
+      },
+      "anchor": "    def send(self, owner, payload):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "agent_api.handle -> conversation.send/history -> DirectorHarness -> Gateway -> AgentTasks. Legacy branch remains default.",
+        "test_agent_tool_access/test_agent_api preserve legacy; test_director_harness and real browser acceptance cover opt-in route and saved message identity."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_task_schema.py::CREATE TABLE IF NOT EXISTS director_goals (",
+      "location": {
+        "file": "backend/story_builder/services/agent_task_schema.py",
+        "line": 4
+      },
+      "anchor": "CREATE TABLE IF NOT EXISTS director_goals (",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "AgentTasks.__init__ executes additive schema; Goals inserts rows; projects.sql_snapshot and assert_idle consume project-owned state. New tables use existing production ledger.",
+        "test_director_harness snapshot/active guards and test_projects existing save/open suite."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_task_schema.py::CREATE TABLE IF NOT EXISTS director_goal_steps (",
+      "location": {
+        "file": "backend/story_builder/services/agent_task_schema.py",
+        "line": 14
+      },
+      "anchor": "CREATE TABLE IF NOT EXISTS director_goal_steps (",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Goals.step/receipt -> project-owned task references/results; Gateway recovery reuses exact receipts; generic project snapshot includes steps.",
+        "Repeated read/draft and uncertain-preparation tests; live restart test asserts no duplicate tasks."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_tasks.py::def __init__(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 17
+      },
+      "anchor": "    def __init__(self, root, ledger):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Gateway -> existing AgentTasks -> ledger, exact source validation and workspace jobs. Existing storage and exact-plan approvals preserved; model cannot invoke approve/run.",
+        "test_agent_tasks plus gateway unit/live acceptance exercise existing adapters and recovery. No new generation dispatch."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_tasks.py::def _assets(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 36
+      },
+      "anchor": "    def _assets(self, owner, ids, *, extensions=None):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Gateway -> existing AgentTasks -> ledger, exact source validation and workspace jobs. Existing storage and exact-plan approvals preserved; model cannot invoke approve/run.",
+        "test_agent_tasks plus gateway unit/live acceptance exercise existing adapters and recovery. No new generation dispatch."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_tasks.py::def propose(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 162
+      },
+      "anchor": "    def propose(self, owner, payload):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Gateway -> existing AgentTasks -> ledger, exact source validation and workspace jobs. Existing storage and exact-plan approvals preserved; model cannot invoke approve/run.",
+        "test_agent_tasks plus gateway unit/live acceptance exercise existing adapters and recovery. No new generation dispatch."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_tasks.py::def approve(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 322
+      },
+      "anchor": "    def approve(self, owner, task, payload):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Gateway -> existing AgentTasks -> ledger, exact source validation and workspace jobs. Existing storage and exact-plan approvals preserved; model cannot invoke approve/run.",
+        "test_agent_tasks plus gateway unit/live acceptance exercise existing adapters and recovery. No new generation dispatch."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_tasks.py::def run(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 397
+      },
+      "anchor": "    def run(self, owner, task, payload):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Gateway -> existing AgentTasks -> ledger, exact source validation and workspace jobs. Existing storage and exact-plan approvals preserved; model cannot invoke approve/run.",
+        "test_agent_tasks plus gateway unit/live acceptance exercise existing adapters and recovery. No new generation dispatch."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_tasks.py::def poll(",
+      "location": {
+        "file": "backend/story_builder/services/agent_tasks.py",
+        "line": 557
+      },
+      "anchor": "    def poll(self, owner, task):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Gateway -> existing AgentTasks -> ledger, exact source validation and workspace jobs. Existing storage and exact-plan approvals preserved; model cannot invoke approve/run.",
+        "test_agent_tasks plus gateway unit/live acceptance exercise existing adapters and recovery. No new generation dispatch."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent_workspace_tools.py::def run(",
+      "location": {
+        "file": "backend/story_builder/services/agent_workspace_tools.py",
+        "line": 89
+      },
+      "anchor": "def run(root, job_id, request):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "AgentTasks.run -> existing workspace CPU job -> run(media.list/media.inspect); saved job result -> Gateway bounded result -> Codex.",
+        "test_director_harness real ffprobe CPU adapters and live production actual subprocess jobs."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_codex_bridge.py::def __init__(",
+      "location": {
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 26
+      },
+      "anchor": "    def __init__(self, base: Path, codex: str, *, on_event: Callable[[dict], None] | None = None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness._work starts transport and cancels owned client; initialize userAgent recorded; close wakes waiting transport owner.",
+        "test_director_codex_bridge covers process/environment/protocol cleanup; real interrupted production continuation passed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_codex_bridge.py::def close(",
+      "location": {
+        "file": "backend/story_builder/services/director_codex_bridge.py",
+        "line": 150
+      },
+      "anchor": "    def close(self):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness._work starts transport and cancels owned client; initialize userAgent recorded; close wakes waiting transport owner.",
+        "test_director_codex_bridge covers process/environment/protocol cleanup; real interrupted production continuation passed."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_codex_config.py::def private_directory(",
+      "location": {
+        "file": "backend/story_builder/services/director_codex_config.py",
+        "line": 9
+      },
+      "anchor": "def private_directory(path):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness._work calls configure -> private_directory/private_json; AppServer consumes reviewed config and minimal environment; no production owner config inherited.",
+        "Missing-runtime regression and live production acceptance exercise setup; accepted H1 native profile supplies OS-boundary evidence, not inferred from tool mocking."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_codex_config.py::def private_json(",
+      "location": {
+        "file": "backend/story_builder/services/director_codex_config.py",
+        "line": 20
+      },
+      "anchor": "def private_json(path, value):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness._work calls configure -> private_directory/private_json; AppServer consumes reviewed config and minimal environment; no production owner config inherited.",
+        "Missing-runtime regression and live production acceptance exercise setup; accepted H1 native profile supplies OS-boundary evidence, not inferred from tool mocking."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_codex_config.py::def configure(",
+      "location": {
+        "file": "backend/story_builder/services/director_codex_config.py",
+        "line": 26
+      },
+      "anchor": "def configure(base, codex, manifest, auth_home):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness._work calls configure -> private_directory/private_json; AppServer consumes reviewed config and minimal environment; no production owner config inherited.",
+        "Missing-runtime regression and live production acceptance exercise setup; accepted H1 native profile supplies OS-boundary evidence, not inferred from tool mocking."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def __init__(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 13
+      },
+      "anchor": "    def __init__(self, tasks):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def get(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 16
+      },
+      "anchor": "    def get(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def create(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 32
+      },
+      "anchor": "    def create(self, owner, request, objective):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def update(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 46
+      },
+      "anchor": "    def update(self, owner, request, *, status=None, thread_id=None, reply=None, message_status='answered', **changes):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def step(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 64
+      },
+      "anchor": "    def step(self, owner, request, tool, arguments):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def activate(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 79
+      },
+      "anchor": "    def activate(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def receipt(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 90
+      },
+      "anchor": "    def receipt(self, owner, request, key, *, task_id=None, result=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def message(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 99
+      },
+      "anchor": "    def message(self, owner, request, reply, status='answered'):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_goals.py::def public(",
+      "location": {
+        "file": "backend/story_builder/services/director_goals.py",
+        "line": 104
+      },
+      "anchor": "    def public(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorHarness submit/recover/_work/cancel/interrupt and Gateway call consume Goals; receipt task IDs resolve existing AgentTasks.",
+        "test_director_harness covers snapshot, active switch guard, terminal cancellation, recovery receipt reuse and uncertain preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def __init__(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 21
+      },
+      "anchor": "    def __init__(self, tasks, *, engine=None):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def enabled(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 28
+      },
+      "anchor": "    def enabled(owner):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def submit(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 33
+      },
+      "anchor": "    def submit(self, owner, request, objective):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def base(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 41
+      },
+      "anchor": "    def base(self, owner):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def start(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 45
+      },
+      "anchor": "    def start(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def recover(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 54
+      },
+      "anchor": "    def recover(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def cancel(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 64
+      },
+      "anchor": "    def cancel(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def interrupt(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 72
+      },
+      "anchor": "    def interrupt(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def _work(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 82
+      },
+      "anchor": "    def _work(self, owner, request):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_harness.py::def event(",
+      "location": {
+        "file": "backend/story_builder/services/director_harness.py",
+        "line": 112
+      },
+      "anchor": "            def event(value):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "create_app injects DirectorHarness into AgentConversation; send/history and agent_api goal controls call it. _work invokes restricted AppServer and Goals; two levels traced.",
+        "test_director_harness has actual route with fake engine/real CPU adapters; harness_production_acceptance has real Codex, real jobs, same-thread interruption and actual browser submission."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_mcp.py::def __init__(",
+      "location": {
+        "file": "backend/story_builder/services/director_mcp.py",
+        "line": 15
+      },
+      "anchor": "    def __init__(self, tasks, owner, request, token):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "director_codex_config fixed command/allowlist launches serve; Gateway.call invokes existing AgentTasks propose/approve/run/poll only with exact read policy or unapproved draft. Coordinator consumes stored receipts.",
+        "test_director_harness exercises schema/ownership/hash/token denials, missing ffprobe, draft inertness and receipt reuse; live acceptance uses production Gateway."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_mcp.py::def authorized(",
+      "location": {
+        "file": "backend/story_builder/services/director_mcp.py",
+        "line": 38
+      },
+      "anchor": "    def authorized(self):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "director_codex_config fixed command/allowlist launches serve; Gateway.call invokes existing AgentTasks propose/approve/run/poll only with exact read policy or unapproved draft. Coordinator consumes stored receipts.",
+        "test_director_harness exercises schema/ownership/hash/token denials, missing ffprobe, draft inertness and receipt reuse; live acceptance uses production Gateway."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_mcp.py::def call(",
+      "location": {
+        "file": "backend/story_builder/services/director_mcp.py",
+        "line": 44
+      },
+      "anchor": "    def call(self, name, arguments):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "director_codex_config fixed command/allowlist launches serve; Gateway.call invokes existing AgentTasks propose/approve/run/poll only with exact read policy or unapproved draft. Coordinator consumes stored receipts.",
+        "test_director_harness exercises schema/ownership/hash/token denials, missing ffprobe, draft inertness and receipt reuse; live acceptance uses production Gateway."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "director_mcp.py::def serve(",
+      "location": {
+        "file": "backend/story_builder/services/director_mcp.py",
+        "line": 120
+      },
+      "anchor": "def serve(manifest):",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "director_codex_config fixed command/allowlist launches serve; Gateway.call invokes existing AgentTasks propose/approve/run/poll only with exact read policy or unapproved draft. Coordinator consumes stored receipts.",
+        "test_director_harness exercises schema/ownership/hash/token denials, missing ffprobe, draft inertness and receipt reuse; live acceptance uses production Gateway."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::def sql_snapshot(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 102
+      },
+      "anchor": "def sql_snapshot(path, workspace):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Additive project_id tables are consumed by generic snapshots -> save/open and assert_idle -> project switching guards.",
+        "test_existing_project_snapshot_preserves_goals_and_blocks_active_switch plus test_projects suite; no claim Codex private thread history travels in project export."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "projects.py::def assert_idle(",
+      "location": {
+        "file": "backend/story_builder/services/projects.py",
+        "line": 135
+      },
+      "anchor": "def assert_idle(root, workspace):",
+      "revision": "working-tree",
+      "change": "indirect",
+      "risk": 0.6,
+      "factors": {
+        "test_gap": 0,
+        "security": 1,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Additive project_id tables are consumed by generic snapshots -> save/open and assert_idle -> project switching guards.",
+        "test_existing_project_snapshot_preserves_goals_and_blocks_active_switch plus test_projects suite; no claim Codex private thread history travels in project export."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "DirectorConversation.tsx::export function TaskCard(",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 36
+      },
+      "anchor": "export function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> & {task: AgentTask}) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Shared conversation renders existing task approvals; read reports now collapsed, protected draft actions remain human controls.",
+        "Existing agent-inspector tests plus real draft left inert; protected approval workflow is still H3."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "DirectorConversation.tsx::export default function DirectorConversation(",
+      "location": {
+        "file": "frontend/src/DirectorConversation.tsx",
+        "line": 66
+      },
+      "anchor": "export default function DirectorConversation(props: Props) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "DirectorRuntime portal passes saved goals/state/controls/model; same transcript displays progression, draft tasks and resume/cancel.",
+        "5 focused harness browser tests and actual no-mock shared UI acceptance; 4 inspector regressions."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "DirectorEditor.tsx::export type EditorBridge =",
+      "location": {
+        "file": "frontend/src/DirectorEditor.tsx",
+        "line": 6
+      },
+      "anchor": "export type EditorBridge = {prepareTarget: () => Promise<EditorTarget>; currentTarget?: () => EditorTarget | undefined; refresh: () => Promise<void>};",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "VibeEditorPage bridge -> DirectorRuntime read-only currentTarget; prepareTarget remains for legacy path.",
+        "Both opt-in Editor mock browser and actual browser assert no premature Editor writes."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "DirectorRuntime.tsx::export default function DirectorRuntime(",
+      "location": {
+        "file": "frontend/src/DirectorRuntime.tsx",
+        "line": 48
+      },
+      "anchor": "export default function DirectorRuntime({children}: {children: ReactNode}) {",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "App shared root -> DirectorRuntime -> shared DirectorConversation; refresh polls saved goal; send preserves UUID and opt-in routing; control posts same-goal resume/cancel.",
+        "director-harness.spec.mjs both routes, actual browser Editor composer then Director, agent-inspector.spec.mjs project-switch isolation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "VibeEditorPage.tsx::currentTarget: () =>",
+      "location": {
+        "file": "frontend/src/VibeEditorPage.tsx",
+        "line": 110
+      },
+      "anchor": "      currentTarget: () => savedProject ? {version: 1 as const, editor_session_id: savedProject.id,",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Existing Editor savedProject creates read-only revision/ranges context -> shared Runtime; no ensureProject call in opt-in chat.",
+        "Mocked and actual Editor chat acceptance assert no Editor POST/PUT during reads/draft preparation."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    },
+    {
+      "node": "agent-tasks.ts::export type DirectorGoal =",
+      "location": {
+        "file": "frontend/src/lib/agent-tasks.ts",
+        "line": 14
+      },
+      "anchor": "export type DirectorGoal = {request_id: string; objective: string; status: string;",
+      "revision": "working-tree",
+      "change": "direct",
+      "risk": 0.4,
+      "factors": {
+        "test_gap": 0,
+        "security": 0,
+        "flow": 1,
+        "cross_community": 1,
+        "caller_count": 0
+      },
+      "evidence": [
+        "Conversation JSON -> shared AgentMessage.goal contract -> Runtime polling and Conversation progress/controls.",
+        "TypeScript noEmit and browser tests exercise contracts; Python real production response consumed in browser."
+      ],
+      "verification": "VERIFIED_SOURCE_ANCHOR"
+    }
+  ]
+}

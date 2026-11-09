@@ -23,6 +23,16 @@ def handle(root, environ, start_response, respond, *, tasks=None, conversation=N
         else:
             return respond(start_response, '405 Method Not Allowed', {'error': {'code': 'method_not_allowed', 'message': 'Use GET or POST.'}})
         return respond(start_response, '200 OK', result)
+    goal_match = re.fullmatch(r'/api/agent/projects/([^/]+)/conversation/([0-9a-f-]{36})/(resume|cancel)', path)
+    if goal_match:
+        owner, request, action = goal_match.groups()
+        if environ.get('REQUEST_METHOD') != 'POST' or environ.get('QUERY_STRING') or read_json(environ):
+            raise ValueError('Goal controls require POST without fields or query parameters.')
+        agent_access.local_request(environ)
+        if conversation.harness is None or not conversation.harness.enabled(owner):
+            raise ValueError('The harness is not enabled for this project.')
+        getattr(conversation.harness, 'recover' if action == 'resume' else 'cancel')(owner, request)
+        return respond(start_response, '200 OK', conversation.history(owner))
     chat_match = re.fullmatch(r'/api/agent/projects/([^/]+)/conversation', path)
     if chat_match:
         if environ.get('QUERY_STRING'):

@@ -16,6 +16,8 @@ type Props = {
   busy: boolean; thinking: boolean; error: string; send: () => void; loadContext: () => void; refresh: () => void;
   onCollapse: () => void;
   control: (task: AgentTask, action: 'approve' | 'run' | 'cancel') => void;
+  goalControl?: (request: string, action: 'resume' | 'cancel') => void;
+  harnessModel?: string | null;
 };
 const taskLabels: Record<string, string> = {
   'audio.extract_mp3': 'Extract MP3', 'audio.transcribe': 'Analyze complete-source speech',
@@ -42,7 +44,7 @@ export function TaskCard({task, busy, control}: Pick<Props, 'busy' | 'control'> 
     {task.plan.settings.access_mode && <><strong>{task.plan.settings.access_mode === 'full' ? 'Full access' : 'Project only'}</strong>
       <small className="director-job">{task.plan.settings.workspace_path} · {task.plan.settings.model}</small>
       <pre style={{whiteSpace: 'pre-wrap'}}>{task.plan.settings.instruction}</pre></>}
-    {task.report && <><small>{task.plan.tool_id === 'editor.prepare_brief' ? 'Editor result' : task.plan.tool_id === 'audio.transcribe' ? 'Timed speech evidence · review against playback before cutting' : 'Tool result · review before using'}</small><pre style={{whiteSpace: 'pre-wrap'}}>{task.report}</pre></>}
+    {task.report && <details open={!['media.list', 'media.inspect'].includes(task.plan.tool_id)}><summary>{task.plan.tool_id === 'editor.prepare_brief' ? 'Editor result' : task.plan.tool_id === 'audio.transcribe' ? 'Timed speech evidence · review against playback before cutting' : 'Tool result · review before using'}</summary><pre style={{whiteSpace: 'pre-wrap'}}>{task.report}</pre></details>}
     <details><summary>Exact tool settings</summary><pre style={{whiteSpace: 'pre-wrap'}}>{JSON.stringify(task.plan.settings, null, 2)}</pre></details>
     <ul>{task.plan.assets.map(asset => <li key={asset.asset_id}>{asset.filename}</li>)}</ul>
     <small>{task.plan.settings.quality !== undefined && `Quality ${task.plan.settings.quality} · `}revision {task.current_revision} · {task.plan_hash.slice(0, 10)}</small>
@@ -81,8 +83,15 @@ export default function DirectorConversation(props: Props) {
           <div className="director-user-message">{message.text}</div>
           {!!message.attachments?.length && <ul className="director-message-attachments" aria-label="Message attachments">{message.attachments.map(asset => <li key={asset.asset_id}><a href={`/api/media/${encodeURIComponent(owner)}/assets/${encodeURIComponent(asset.asset_id)}/content`} target="_blank" rel="noreferrer">{asset.filename}</a></li>)}</ul>}
           {message.reply && <p>{message.reply}</p>}
-          {message.status === 'thinking' && <p className="director-hint">Response pending. Refresh to check the saved conversation; an interrupted request will not be sent again automatically.</p>}
-          {message.status === 'interrupted' && <p role="status">This response was interrupted. Your message is saved. {message.story_target ? 'Refresh to recover the saved Story proposal before requesting another edit.' : 'Send a new message to continue.'}</p>}
+          {message.goal && <section aria-label="Saved Director goal">
+            <p role="status">{message.goal.status === 'running' && <LoaderCircle className="director-thinking-icon" size={14} aria-hidden="true"/>} {message.goal.status.replaceAll('_', ' ')} · {message.goal.state.phase}</p>
+            {message.goal.status === 'running' && <p className="director-hint">{message.goal.state.progress || 'Planning the next step…'}</p>}
+            <ol>{message.goal.steps.map((step, index) => <li key={index}>{step.tool.replaceAll('_', ' ')} · {step.status}</li>)}</ol>
+            {['blocked', 'interrupted'].includes(message.goal.status) && <button disabled={props.busy} onClick={() => props.goalControl?.(message.request_id, 'resume')}>Resume saved goal</button>}
+            {!['completed', 'cancelled', 'failed'].includes(message.goal.status) && <button disabled={props.busy} onClick={() => props.goalControl?.(message.request_id, 'cancel')}>Cancel goal</button>}
+          </section>}
+          {!message.goal && message.status === 'thinking' && <p className="director-hint">Response pending. Refresh to check the saved conversation; an interrupted request will not be sent again automatically.</p>}
+          {!message.goal && message.status === 'interrupted' && <p role="status">This response was interrupted. Your message is saved. {message.story_target ? 'Refresh to recover the saved Story proposal before requesting another edit.' : 'Send a new message to continue.'}</p>}
         </article>)}
         {props.tasks.map(task => <TaskCard key={task.task_id} task={task} busy={props.busy} control={props.control}/>)}
       </div>
@@ -115,7 +124,7 @@ export default function DirectorConversation(props: Props) {
           <DirectorAttachments key={owner} owner={owner} selected={props.selected} setSelected={props.setSelected} disabled={props.busy || props.access !== 'app'} onBusy={setUploading}>
           <textarea id="project-director-message" rows={3} placeholder="Describe your next scene or ask for a plan…" value={props.text} onChange={event => props.setText(consumeModelCommand(event.target.value, () => setModelOpen(true), 'project-director-message'))} disabled={props.busy}/>
           </DirectorAttachments>
-          <div className="director-composer-footer"><ModelSelector open={modelOpen} onClose={() => setModelOpen(false)} returnFocusId="project-director-message" disabled={props.busy}/><small className={props.thinking ? 'director-thinking' : undefined} role={props.thinking ? 'status' : undefined} aria-live={props.thinking ? 'polite' : undefined}>
+          <div className="director-composer-footer">{props.harnessModel && props.access === 'app' ? <small>Codex harness · {props.harnessModel}</small> : <ModelSelector open={modelOpen} onClose={() => setModelOpen(false)} returnFocusId="project-director-message" disabled={props.busy}/>}<small className={props.thinking ? 'director-thinking' : undefined} role={props.thinking ? 'status' : undefined} aria-live={props.thinking ? 'polite' : undefined}>
             {props.thinking ? <><LoaderCircle size={14} className="director-thinking-icon" aria-hidden="true"/><span>{editing ? 'Thinking about your edit' : 'Thinking'}</span><span className="director-thinking-dots" aria-hidden="true"><i/><i/><i/></span></> : props.busy ? 'Working on your request…' : 'Review a plan before running it.'}
           </small><button aria-label="Send to project Director" disabled={props.busy || uploading || !props.text.trim()}><ArrowUp size={18}/></button></div>
         </form>

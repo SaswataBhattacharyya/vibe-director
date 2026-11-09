@@ -44,7 +44,7 @@ RESPONSE_SCHEMA = {'type': 'object', 'additionalProperties': False,
 
 
 class AgentConversation:
-    def __init__(self, tasks, reason=None, *, image_prepare=None, screenplay=None, prompts=None, video=None, story=None):
+    def __init__(self, tasks, reason=None, *, image_prepare=None, screenplay=None, prompts=None, video=None, story=None, harness=None):
         self.tasks, self.root, self.ledger = tasks, tasks.root, tasks.ledger
         self.reason = reason or reasoning_provider.generate_json
         self.image_prepare = image_prepare
@@ -52,8 +52,9 @@ class AgentConversation:
         self.prompts = prompts
         self.video = video
         self.story = story
+        self.harness = harness
 
-    def history(self, owner):
+    def history(self, owner, *, recover=True):
         agent_graph.resolve_workspace(self.root, owner)
         with self.ledger._connect() as db:
             rows = db.execute('SELECT request_id,text,reply,status,task_id,created_at,context_json FROM agent_messages '
@@ -69,8 +70,21 @@ class AgentConversation:
                 message['video_target'] = context['video']
             if 'proposal' in context:
                 message['proposal'] = context['proposal']
+            # Existing sessions retain their legacy path. Only persisted harness
+            # goals are projected/recovered; discovery never creates a new goal.
+            from .director_goals import Goals
+            from .production_ledger import LedgerNotFound
+            try:
+                goal = Goals(self.tasks).public(owner, message['request_id'])
+                message['goal'] = goal
+                if recover and self.harness and self.harness.enabled(owner) and goal['status'] == 'running':
+                    self.harness.recover(owner, message['request_id'])
+            except LedgerNotFound:
+                pass
             messages.append(message)
-        return {'workspace_id': owner, 'messages': messages}
+        return {'workspace_id': owner, 'messages': messages,
+                'runtime': {'harness_enabled': bool(self.harness and self.harness.enabled(owner)),
+                            'harness_model': 'gpt-6-luna'}}
 
     def send(self, owner, payload):
         fields = {'request_id', 'text', 'asset_ids', 'skill_refs', 'surface'}
@@ -99,7 +113,9 @@ class AgentConversation:
                 if previous:
                     if previous['request_hash'] != stable_hash(payload):
                         raise LedgerConflict('This message identity already belongs to different content.')
-                    return self.history(owner)
+                    # History may start recovery; never start it while holding
+                    # the non-reentrant project mutation lock.
+                    return self.history(owner, recover=False)
             if not isinstance(payload['asset_ids'], list):
                 raise ValueError('asset_ids must be a list.')
             assets = self.tasks._assets(owner, payload['asset_ids'], extensions=agent_editor.EXTENSIONS) if payload['asset_ids'] else []
@@ -112,6 +128,8 @@ class AgentConversation:
             skills = agent_skills.selected_context(self.root, owner, payload['skill_refs'])
             context = {'surface': payload['surface'], 'assets': assets,
                        'skills': [{'ref': s['ref'], 'sha256': s['sha256']} for s in skills]}
+            if self.harness and self.harness.enabled(owner):
+                context['harness_skills'] = skills
             context['image_inputs'] = [{'image_number': index, **asset} for index, asset in enumerate(images, 1)]
             if 'target' in payload:
                 if payload['surface'] == 'story':
@@ -179,6 +197,9 @@ class AgentConversation:
             with self.ledger._connect() as db:
                 db.execute('INSERT INTO agent_messages VALUES (?,?,?,?,?,?,?,?,?)',
                     (owner, payload['request_id'], stable_hash(payload), payload['text'], '', 'thinking', None, json.dumps(context), _now()))
+        if self.harness and self.harness.enabled(owner) and payload['surface'] in {'director', 'editor'}:
+            self.harness.submit(owner, payload['request_id'], payload['text'])
+            return self.history(owner)
         catalogue = agent_tools.tools()['tools']
         from .agent_tool_routing import context as tool_context
         evidence, sampled_frames, sampled_paths = tool_context(self.tasks, owner, selected_ids)

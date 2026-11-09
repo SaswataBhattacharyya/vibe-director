@@ -381,7 +381,9 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
             raise ValueError("Codex returned an invalid edit response.")
         return {**result, "provider": result.get("provider", get_settings()["provider"]), "model": result.get("model") or model_for()}
     from story_builder.services.agent_video_prompt import VideoPromptDirector
+    from story_builder.services.director_harness import DirectorHarness
     agent_conversation = AgentConversation(agent_tasks, reasoning_json_provider,
+        harness=DirectorHarness(agent_tasks),
         image_prepare=prepare_image_context, screenplay=ScreenplayDirector(storyboard, screenplay_director),
         prompts=PromptDirectorAdapter(prompt_director, prompt_chat_provider),
         video=VideoPromptDirector(field_edits, field_edit_provider),
@@ -3566,6 +3568,7 @@ def create_app(*, data_root: Path, ledger_path: Path | None = None,
             return _json_response(start_response, "500 Internal Server Error", {"error": {"code": "internal_error", "message": "The isolated video request could not be completed."}})
     from .services.agent_generation_tools import bridge
     agent_tasks.native_request = bridge(app)
+    app.director_harness = agent_conversation.harness
     return app
 
 

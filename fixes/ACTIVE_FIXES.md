@@ -1,31 +1,44 @@
-# Active fixes — native-interface milestone over 3a5bc11 (2026-11-07)
+# Active roadmap — test-first, evidence-gated (2026-11-09)
 
-This is the **only active implementation queue**. Previously completed foundation is summarized in [COMPLETED_BASELINE.md](COMPLETED_BASELINE.md). Progress means code+tests, not merely an existing service or a written plan. Codex should recheck actual HEAD before working.
+This is the **only current task/status queue**. Snapshot is `vibe-director-current` at `6db612357f6c`. All statuses below are **planning states**, not newly run verification. Implement against current HEAD. Each task has a stop/go gate in [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md).
 
-| ID | Priority | Status | Next concrete result / acceptance |
-| --- | --- | --- | --- |
-| **CAP-01** | P0 | PARTIAL | Seven typed tools now expose live readiness, schemas, scope, runtime and exact-plan approval; speech, denoise and CPU stems reuse durable jobs. Remaining: broader generation/render adapters and approved multi-step planning; Director chooses installed typed adapters, plans/approves/executes with evidence, not vague “cannot” or hallucinated capability. |
-| **AUD-01** | P0 | PARTIAL | Complete-source offline CPU ASR now works for selected Editor sources or explicit chat attachments; source/hash-correlated timed evidence survives jobs/reload and informs follow-up chat/briefs. Real 9.85s MP4 analyzed beyond 5s. Reviewed transcript segments now create a revisioned normal-speed hard-cut proposal, retain unaffected footage/original sound and require clearance 2. Real synthetic CPU render passed picture/audio/duration checks. Remaining: owner-content speech judgments and retimed/replacement-soundtrack alignment; actual transcript/diagnostics with exact source timestamps; reviewed edit ranges; no claims without running analyzer; no accidental 0–5s limit. |
-| **HF-01** | P0 | DONE (spike only) | Installed Apache-2.0 CLI/Studio 0.8.199 tested in isolation with owned MP4/WAV, actual decode/play/seek, timeline trim and caption save/reload. Use isolated Studio, avoiding React 18→19 upgrade; preserve existing renderer. Repeatable probe and limitations in `design/vibe-editor/change_readme.md`. |
-| **HF-02** | P1 | DONE for native-interface milestone | Actual pinned Studio opens inside Visual Editor with copied owned media; native caption/trim persistence imports a revisioned JSON proposal requiring existing approval. Script/raw executable writes and direct native generation/render are gated. Existing effects/speed/transitions remain in Vibe. Arbitrary native layers/animation/history/soundtrack round-trip remains unsupported. Real native workflow and CPU export passed; see [native interfaces](../design/vibe-editor/native-interfaces.md). |
-| **MEDIA-01** | P1 | DONE (browser consolidation) | One picker with typed chat/model/tool/Editor destinations; preserve existing R2V and Qwen reference constraints, in/out range, folder consent/import, deletion management and per-project identity. Editor now uses the shared picker plus management actions; duplicate browser removed. Focused folder/import/delete/drop/range/reference regressions pass. Membership/index migration remains MED-INDEX. |
-| **OM-01** | P1 | DONE for read-only native-board milestone | Actual pinned AGPL-3.0 Backlot opens on Storyboard, plays hash-verified owned copies and follows saved revisions through five-second staging + native SSE refresh. No generation pipeline or supported write-back; no claim of bidirectional editing. Native playback, live refresh and simultaneous Studio embedding passed. |
-| **UX-01** | P1 | PARTIAL | Route-by-route one-composer/compactness/accessibility regression; existing Story, Screenplay, Image, Take and output changes are foundations, not approval to redo or declare perfect. |
-| **FILM-01** | P2 | BLOCKED | Multi-step durable film orchestration, output QA, retake, provenance and final assembly only after CAP/AUD/Editor adapters pass. |
-| **MED-INDEX** | P2 | PARTIAL | Truthful cross-project membership + index freshness and pre-pagination filters; add schema only after storage/snapshot/delete impact proof. |
-| **STYLE-VIDEO** | P2 | OPEN | Optional production style/storyboard-to-video wiring and model-specific frozen reference manifests; no automatic change to old jobs. |
+## Required sequence
 
-## Original P0 failure (now partly repaired)
+| Order | ID | Priority | Status | Deliverable / gate |
+| --- | --- | --- | --- | --- |
+| 0 | **T0-BASELINE** | P0 | NEXT — NOT RUN IN THIS DOC UPDATE | Reconcile branch/dirtiness, inventory tests and installed prerequisites, run safe static and representative CPU/mock suites, record precise pass/fail/skip/time and reproducible logs. No product changes. |
+| 1 | **T1-TRIAGE** | P0 | BLOCKED on T0 | Classify each failure as pre-existing, environment, flaky, new regression, unsupported runtime or missing coverage; reproduce, locate owner/caller and prioritize corruption/security/data loss first. |
+| 2 | **T2-REGRESSIONS** | P0 | BLOCKED on T1 | Fix confirmed failures in small isolated changes, with targeted and neighboring tests, no generated/provider job side effects. Green tests or explicit documented exceptions required before feature expansion. |
+| 3 | **S1-CAPABILITY-TRUTH** | P1 | QUEUED | Catalogue distinguishes adapter registered, runtime ready, input actionable and approval needed. Remove unconditional readiness claims; verify blocked and missing-runtime behavior without generation. |
+| 4 | **S2-MCP-ISOLATION** | P1 | QUEUED | Stop passing the full parent environment into Kdenlive MCP, validate workspace/output paths and subprocess lifetime, preserve journals; demonstrate denial of unrelated secrets/files with focused tests. |
+| 5 | **S3-CI** | P1 | QUEUED | Add reliable non-GPU CI checks for Python tests, TS typecheck/build, a selected browser smoke suite, lint/security; native ARM64/MLT and GPU suites remain opt-in runners. |
+| 6 | **S4-STORAGE** | P1 | QUEUED | Measure project checkpoints, copied media, Kdenlive staging and model checkpoints. Implement **read-only** storage report and retention proposal first. No deletion until a separate reversible, reference-aware policy and owner confirmation exist. |
+| 7 | **M1-REPO-HYGIENE** | P1 | QUEUED | Audit consumer references for committed `graphify-out/` AST caches (~138 MB at snapshot), propose ignore/untrack plan in a separate code change, preserve minimal reports and any required runtime graph. Never delete local caches/media as a side effect. |
+| 8 | **M2-MODULE-SEAMS** | P1 | QUEUED | Extract low-risk HTTP/routes and UI responsibilities from oversized modules *incrementally* after characterization tests; avoid rewrites, changing URL contracts or global dependency updates. |
+| 9 | **O1-DIRECTOR-ORCHESTRATION** | P1 | BLOCKED on baseline + S1 | Typed persisted multi-step plans with dependency graph, per-step grants, user approval, pause/reconcile/compensation, idempotent submission and evidence-gated transitions. One synthetic workflow first. |
+| 10 | **E1-KDENLIVE** | P2 | BLOCKED on T0 + owner GUI test | Verify Flatpak can open exported .kdenlive project and managed media; expand beyond two clips/1080p30 only with versioned format and audio/frame correctness tests. |
+| 11 | **E2-NATIVE-EDITORS** | P2 | BLOCKED on baseline | Extend supported Studio/Backlot round-trip only after exact upstream-version/API checks; unsupported controls stay visibly unsupported. |
+| 12 | **E3-MEDIA-INDEX** | P2 | QUEUED | Cross-project membership/index freshness and pre-pagination filtering with migration/snapshot/delete impact proof. |
+| 13 | **F1-OWNER-FILM** | P2 | BLOCKED on orchestration + editor acceptance | Opt-in end-to-end owner-material film run with QA, retakes, soundtrack, provenance, restart recovery and final export; no “fully autonomous” claim from isolated tool tests. |
+| later | **STYLE-VIDEO / UX / advanced speech** | P2 | DEFERRED | Frozen style references; compact/accessibility review; audio retime/replacement and real gibberish judgment, each gated by tested core workflows. |
 
-Screenshot in Editor: user asks to locate gibberish. Existing assistant produces “I have not heard the audio”; `agent_tools.py`/`audio_utilities.py` already contain MP3 extraction, **but** `agent_conversation.py` only runs extraction when selected whole-asset inputs and intent align, and the Editor bridge only prepared a brief. The new separate `audio.transcribe` adapter addresses real timed analysis; the brief still cannot approve cuts or render. A happy-path “job completed” indicator is not evidence audio was analyzed. Implement tool routing and honest per-step evidence before another UI re-skin.
+## Current implemented baseline — preserve, do not reimplement
 
-## Source-level acceptance gates
+- **CAP-01:** shared Director/Editor task gateway, approvals and 37 registered operations; catalogue truth and multi-step orchestration are incomplete.
+- **AUD-01:** complete-source CPU speech evidence and reviewed, normal-speed hard-cut proposals exist; owner-content speech judgment and retimed/replacement audio alignment not validated.
+- **HF-01 / HF-02:** actual isolated HyperFrames 0.8.199 Studio, bounded trim/order/caption/framing round-trip to a Vibe approval; arbitrary native layers/history/audio are unsupported.
+- **OM-01:** pinned Backlot mirrors playable saved storyboard media, supports a **Vibe extension** staging typed prompt/duration/note edits for review, and displays registered final outputs; upstream general write-back/generation is not implemented. Older claims that it is strictly “read-only” refer to upstream API, not the extension.
+- **MEDIA-01:** shared typed media picker consolidated; cross-project indexing is separate.
+- **KDENLIVE:** actual two-clip moving-overlap analysis and MCP hard-cut preview/render/export implementation with synthetic CPU test evidence. Flatpak desktop opening and creative continuity on owner media remain owner acceptance.
+- **FRAMES:** reviewed keyframe takes and FILM/RIFE interpolation/export code; live model inference and visual quality unverified.
+- **FILM-01:** general multi-stage autonomous filmmaking remains incomplete.
 
-- Frontend remains React 18.3.1. The native installed HyperFrames 0.8.199 Studio UI is hosted separately behind a capability gate. Existing `vibe_editor_render.py` still renders approved JSON through its sandboxed CPU path.
-- Source: `VibeEditorPage.tsx` supports `preview/media/visual/timeline/style/export` and `MediaSourcePicker` with `MediaPickerManagement`. Editor attachment defaults to first 5 seconds for selection/preview; must not be mistaken for full-asset analysis.
-- Source: `agent_tools.py` exposes MP3, continuity frame, Editor brief, Codex computer, complete-source transcription, denoising and CPU stems; `agent_conversation.py` also routes several **proposal/discussion** adapters. This does **not** mean automatic access to every generation, analyzer or renderer.
-- Native Backlot is connected through a playable one-way mirror of saved storyboard revisions. Public upstream has no supported write-back interface; final-output synchronization and native bidirectional editing are not claimed.
+These statuses are based on inspected source and prior reports, not a new test run. Do not mark them DONE for live owner projects solely from old test notes.
 
-**Do not start by rewriting UX05/UX06/UX07, R01/R02, UX01–UX03 or Q01–Q08.** Those are source-implemented, with runtime quality/live provider gaps noted in baseline. Preserve assets/session revisions/frozen jobs/clearances in every slice.
+## Task execution policy
 
-Use [INTEGRATION_ARCHITECTURE.md](INTEGRATION_ARCHITECTURE.md) for contracts and [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) for focused checks.
+For **each** task: (1) inspect actual current source and clients, (2) write a small change/rollback map, (3) reproduce a concrete baseline or missing acceptance case, (4) implement one vertical slice, (5) run focused tests and neighbors, (6) review artifact bytes and authorization/security, (7) record exact results and update this table. Preserve original media, IDs/hashes, two Editor clearances, database/job schema compatibility, active grants, external outputs and user-local modifications.
+
+**P0 immediately:** confirmed data loss, inaccessible previously saved projects, bypass of tool approval/ownership, unsafe file deletion, unauthenticated remote exposure, broken supported primary export, and regression in durable recovery. Stop adding features until fixed.
+
+**Testing modes:** MOCKED (contract/UI only), CPU (actual synthetic media processing), NATIVE (pinned desktop/MCP real runtime), GPU/PROVIDER (explicit opt-in), OWNER (human artistic acceptance). A pass in one mode never substitutes for another.

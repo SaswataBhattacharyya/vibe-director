@@ -1,11 +1,9 @@
-# Skills — current implementation vs remaining work (2026-11-06)
+# Skills — current guidance (2026-11-09)
 
-Current source review: [code review](../fixes/CODE_REVIEW_2026-11-06.md) and [active work](../fixes/ACTIVE_FIXES_2026-11-06.md).
+Follow [test-first Codex entry](../fixes/change_readme.md), [current task queue](../fixes/ACTIVE_FIXES.md) and [acceptance gates](../fixes/ACCEPTANCE_TESTS.md). Prior links to deleted dated fix guides were obsolete.
 
-**Done as bounded foundation:** `agent_skills.py` provides one metadata/selected-context resolver for Director/Editor; the 13 blueprint craft skills are registered alongside existing app craft roots; launcher configures global Codex skill roots (see historical `Q07_Q08_RESULTS.md`). Respect availability/blocked entries and safe-root rules; no implicit skill activation or permission grant.
+`backend/story_builder/services/agent_skills.py` registers bundled application skills, configured global skill roots and project-local selected guidance. It also loads skill packages and `shared/CONTRACT.md` from `fixes/vibe-director-codex-agent-blueprint-v2/vibe-director-codex-agent-blueprint/`. **Never delete this nested package or its SKILL.md/reference files in a documentation cleanup.** Preserve all runtime `skills/**/SKILL.md` and references.
 
-**Still incomplete:** project-owned custom skills/bindings with versioned portability, optional type/visual/directing “jackets” at project scope, rule/learning revisions across scenes, ability to use a newly installed global skill when its configured provider becomes available, and actual runtime adapters for skills' suggested tools. Avoid silently assuming every global skill supports the app's filesystem sandbox or that loaded SKILL.md grants computer use.
+Skills are guidance, **not execution grants**. The shared Director accepts selected skill hashes and uses the live typed tool gateway with separate owner/revision/source/approval checks. A global Codex MCP registration does not automatically expose an operation inside Vibe Director. The built-in `kdenlive-clip-continuity-and-stitching` skill directs real video analysis and pinned MCP join tools; it does not bypass user clearances.
 
-**For UX migration:** central Director and Editor must use the same resolver; old page-specific agents should contribute narrowly selected craft guidance, not spawn new chat stores. Preserve screenplay and prompt revision/proposal data, source hashes and already accepted skill references.
-
-**Tests:** global/bundled/project discovery, unsafe symlinks/root absence, hash drift and invalidation, project A/B isolation, bounded context, duplicate names, Editor/Director parity, save/reload. Cleanup only synthetic test skill roots. Do not delete or alter global installations during tests.
+**T0:** test skill discovery and bounded context against existing test fixtures, with no global skill install, edit or delete. Later work may improve project-owned versioning, optional specialist skills and richer tool adapters, but only after baseline/triage. Test symlinks, absent roots, source drift, duplicate IDs, per-project isolation, session recovery and approval boundaries. Keep history and accepted skill references immutable.

@@ -1,65 +1,126 @@
-# Acceptance checks — implementation evidence and remaining gates
+# Acceptance and test baseline — executable runbook
 
-Run focused tests in disposable test-owned projects. Mock UI/provider where appropriate, but distinguish mock/CPU evidence from verified real source audio or actual HyperFrames Studio functionality. Report real commands, exit codes, media outputs and blockers. Do not trigger paid/GPU generation or full-access Codex incidentally.
+This file specifies **what to run and how to record results**, not a claim that they passed. First milestone: **T0-BASELINE** on current `vibe-director-current`. Execute on the owner's configured Ubuntu/ARM64 checkout, respecting all existing runtime/job guards.
 
-## CAP-01 / AUD-01
+## 0. Safety preflight (no edits)
 
-- Discovery truth: FFmpeg installed vs missing; transcription service present vs absent; image/video/render worker ready vs not. Correct `ready`, `reason`, valid schema. A skill/glossary entry never grants tool runtime.
-- Select a **7+ second** synthetic video with a spoken fixture and a designed error at >5s: analysis requests the whole asset or explicitly selected interval, not preview range. Extraction of MP3 alone does NOT satisfy time-coded error detection.
-- Test two cases: actual timed analyzer runs and returns source-aligned timestamps/confidence; analyzer unavailable produces precise blocker and no invented words/times. Editing only after reviewed ranges and two existing clearances. Preserve the non-target soundtrack/pacing if requested; if removing duration changes, tell user and require confirmation.
-- Wrong project, stale sha, selection revision changed, aborted job, repeated request key, missing artifact, deleted source and concurrent chat interactions cannot apply edits or duplicate jobs. Inspect logs/output hashes and registered derived media before reporting success.
-- Focused backend candidates: `test_agent_tools.py`, `test_agent_tasks.py`, `test_agent_editor.py`, `test_audio_utilities_integration.py` plus new timed-analysis tests. Frontend `director-runtime.spec.mjs` and Editor tests.
+From repository root:
 
-## HF-01 / HF-02
+```bash
+git branch --show-current
+git rev-parse HEAD
+git status --short
+git diff --check
+uname -m
+command -v conda || true
+command -v ffmpeg || true
+command -v ffprobe || true
+command -v melt || command -v melt-7 || true
+command -v node || true
+command -v pnpm || true
+```
 
-- Disposable Studio compatibility smoke test: React/Studio peer dependencies, CSS isolation, license notices, runtime version, imported MP4 + WAV from verified project ID, actual preview/play/scrub/trim, timeline/properties, save/reload.
-- No source files exposed by arbitrary path; no cross-project asset leak; browser refresh/closed tab keeps revisioned draft. Native composition import and flattened-video fallback behave differently and are labelled correctly.
-- Visual move/trim/transition/caption change updates an approved-plan **proposal**, invalidates old clearance, requires new approval and uses the existing trusted renderer. Visual output inspected for duration, FPS, dimensions, audio and exact event positions. Unsupported features are blocked visibly, not silently discarded.
-- Collapse central/right pane and enter/exit full-screen at desktop/tablet/mobile; no duplicate chat, no lost draft/selected media, no double job submit. Keyboard shortcuts, labels, focus, scroll and reduced-motion checks.
+Write results to a **new ignored test-only folder** such as `local_data/test-reports/<run-id>/`. Do not commit environment secrets, user paths, generated media, full logs with tokens, or changed application state. Keep a baseline of already-dirty files; do not “fix” by resetting them. Report branch mismatch as a blocker. Record Node, Python, FFmpeg, MLT, Flatpak and runtime versions if present; absence means SKIP/BLOCKED, never PASS.
 
-## MEDIA-01 / MED-INDEX
+Before invoking any test, skim its setup/teardown and marker/skip rules. Tests invoking real ComfyUI, expensive generation, external network/providers, training, destructive checkpoint cleanup or user projects **must be excluded** from routine T0. Use disposable fixtures and existing test harness roots only.
 
-- Same registered video/audio/image appears in chat and Editor after explicit binding, no extra upload. Chat attachment alone never binds a model reference or a render track.
-- Validate audio/video/image filters before pagination, selected source roles, R2V separate caps/voice, Qwen 1–3 image references, FFLF first/last roles, Editor exact start/end, wrong-owner/expired grant and deletion protections.
-- Two project IDs can reference same occurrence without changing old IDs; unlink from one does not delete the other or corrupt immutable approved jobs. Reopen project checkpoints; check stale and missing media clearly. Never delete through generic picker.
-- Focused tests: `test_media_library.py`, `test_media_catalogue.py`, `frontend/tests/media-source-picker.spec.mjs`, `editor-assets.spec.mjs`, `media-selection-scope.spec.mjs`.
+## 1. Static/front-end baseline (safe; no media generation)
 
-## OM-01
+With dependencies **already installed**:
 
-- Capture upstream commit/license/API readme and compatibility decision before coding. Without a supported Studio API, mark the GUI “not integrable yet” rather than implementing fake UI.
-- Round-trip at least one existing story scene/shot/asset to a separately staged OpenMontage/Backlot fixture and back; preserve IDs, revision and job provenance; never overwrite source Storyboard.
-- Verify available/unavailable runtime UI and optional feature flag; no side effects in read-only dashboard; an external tab carries an authenticated/owner-scoped project handoff or is clearly just a documentation link.
+```bash
+cd frontend
+npm run typecheck
+npm run build
+cd ..
+git diff --check
+```
 
-## General preservation / run guidance
+Do not silently run `npm ci`, upgrade Node/React, rewrite lockfiles, regenerate Graphify or change runtime packages merely to run this step. If dependencies are missing, record the blocker and seek an explicit environment-install step. A Vite bundle-size warning is not automatically a failure; capture it.
 
-- Existing `frontend/tests/storyboard.spec.mjs`, `editor-assets.spec.mjs`, `editor-effects.spec.mjs`, `director-runtime.spec.mjs` and focused backend Editor/storyboard tests remain green.
-- `cd frontend && npm run typecheck && npm run build`; `cd backend && python3 -m unittest story_builder.tests.test_agent_tools story_builder.tests.test_agent_editor story_builder.tests.test_audio_utilities_integration`, with actual project environment as needed.
-- Playwright only against test fixtures with isolated API intercepts; screenshots at 1440/1280/900/390 widths. Test fail/retry/cleanup and verify no temporary artifacts left behind. The earlier documentation-only cleanup did not execute tests; implementation evidence below is separate.
+## 2. Focused Python CPU/mocked tests
 
-## Executed for the 2026-11-07 capability/speech slice
+Use the existing `react` Conda environment (or the confirmed project Python, without creating a new environment) and run from `backend/`:
 
-- Backend all-agent discovery: `cd backend && conda run --no-capture-output -n react python -m unittest discover -s story_builder/tests -p 'test_agent_*.py'` — 74 tests OK, one skipped. After bounded evidence-to-brief changes, `test_agent_transcription test_agent_editor test_agent_editor_tool_handoff` — 19 tests OK.
-- `test_agent_transcription test_audio_utilities_integration test_workload_policy` — 27 tests OK. These mock analyzer/job execution; they cover frozen hashes, repeat requests, blockers, cancellation, CPU dispatch, timing validation, output registration and failure cleanup. They do not prove real denoiser/Demucs generation.
-- `cd frontend && npm run build` — TypeScript/build passed; existing bundle-size and SWC recommendations remain. No separate `typecheck` script was assumed.
-- `npx playwright test tests/editor-assets.spec.mjs tests/director-runtime.spec.mjs` — 30 passed against isolated API mocks. Whole-source range selection, preserved ranges, one composer, truthful task settings/labels and restored timed reports are covered. Mock fixtures emitted expected unused-endpoint/proxy diagnostics; no live application backend was used.
-- `npx playwright test tests/editor-effects.spec.mjs tests/storyboard.spec.mjs` — eight existing preservation regressions passed with isolated fixtures.
-- **Real runtime:** disposable synthetic WAV and 9.85s H264/AAC MP4 processed by installed offline CPU Whisper. Speech evidence reached 8.98s and contained the fixture's post-five-second keyword. ASR was imperfect (not a truth oracle). This ran the real analyzer worker directly in isolated storage; durable dispatch/recovery was tested separately with mocks. Original test sources were preserved until fixture teardown, then all temporary media/database and worker staging were verified removed.
-- **Real Studio:** `node frontend/tests/hyperframes-studio.manual.mjs` passed registered MP4/WAV decode, play/pause/seek, caption and timeline trim save/reload, and fixture cleanup. See the Editor guide for versions, licensing, browser codec limitation and the isolation decision. No Studio export acceptance or application Studio bridge is implied; the existing CPU renderer was accepted separately in the next slice.
+```bash
+cd backend
+conda run --no-capture-output -n react python -m unittest \
+  story_builder.tests.test_video_overlap \
+  story_builder.tests.test_editor_kdenlive \
+  story_builder.tests.test_kdenlive_bridge \
+  story_builder.tests.test_agent_tool_access \
+  story_builder.tests.test_agent_tasks \
+  story_builder.tests.test_editor_preview \
+  story_builder.tests.test_editor_speech \
+  story_builder.tests.test_projects
+cd ..
+```
 
-Remaining owner acceptance: repeat analysis → playback review → cut proposal → clearance 2 → output inspection with real owner content; production Studio synchronization/export; real denoiser/stem execution only when explicitly authorized. Other cards retain their own gates above.
+Some native Kdenlive tests intentionally skip if private pinned runtime/host MLT is absent. Record skips and check that real runtime cases were not silently mistaken for mock coverage. These tests may produce short synthetic CPU video in temporary folders; verify fixture cleanup. A failure caused by a missing dependency belongs in the environment category, not automatically a code defect.
 
-## Executed for reviewed cuts / shared browser / metadata export
+Next, inventory the **full** backend suite from files and test setups. Only after identifying unsafe/external-runtime cases, run a broader bounded selection. Do not blindly start every `test_*.py` on the owner's active production environment.
 
-- `VIBE_TEST_CPU_RENDER=1 conda run --no-capture-output -n react python -m unittest story_builder.tests.test_editor_speech story_builder.tests.test_production_manifest story_builder.tests.test_catalogue_filters` covers 14 focused cases. The optional CPU case uses the installed sandboxed HyperFrames renderer; the other cases use mocked analyzer/dispatch data and real disposable media/catalogues. Checks include exact retained ranges, interval union, source/invocation/hash ownership, invalid/stale cuts, revisioned save/reload, approval-only submission, preserved captions/effects/dimensions, explicit rejection of retiming/replacement audio, and refusal to publish output missing expected audio.
-- Real render acceptance: remove 1.000–1.500s from a synthetic 3s blue H264/AAC source; final 2.5s at 320×180, audio+video streams, decoded source-colour frames at three positions and non-silent PCM samples. Output registered into the test library only. Synthetic speech timestamps are mocked in this test; actual ASR was independently verified in the preceding slice. This does not establish human speech judgment or exact real-content lip sync.
-- `test_agent_editor test_agent_editor_tool_handoff test_media_catalogue`: 28 preservation cases passed in the combined run; the new metadata fixture's initial error expectations were corrected to the existing API/catalogue contracts and its three tests subsequently passed.
-- Browser: `editor-assets ace-editor-ux media-source-picker` — eight passed; `storyboard editor-speech media-selection-scope editor-effects` — eleven passed. These use isolated API mocks, including partial folder import, range persistence, paste/drop, bulk attach, confirmed deletion/cancel/blockers, reference constraints, reviewed-cut save/reload, and saved-revision production-metadata download. Download is removed in `finally`. Build/TypeScript passed. Desktop/mobile Storyboard screenshots were inspected; not every route/viewport was visually accepted.
-- Metadata adapter pins upstream `d21f5d4eaa08422b09c7091757a05affcbabb35b`. Tests verify version, owned IDs/hashes, planned timing, revision conflicts, changed/foreign sources, no local path leakage and no state mutation. No upstream runtime was installed; Backlot playability/round-trip/write-back remain unverified and unavailable.
-- Fixture teardown verifies removal of test-owned directories, generated media and records on success/failure. No paid/provider/GPU generation ran, no application dependency/schema migration was added, and owner projects/history were not removed.
+## 3. Browser contract tests (mocked APIs)
 
-## In-app visual timeline and HyperFrames preview (2026-11-07)
+With `frontend/` dependencies and browser installed:
 
-- `cd backend && VIBE_TEST_CPU_RENDER=1 conda run --no-capture-output -n react python -m unittest story_builder.tests.test_editor_preview story_builder.tests.test_editor_speech`: 11 passed, including actual CPU export after extracting shared markup. Preview covers selected-range/owner/revision checks, strict keys, escaped captions, fixed runtime paths, no state writes and no job dispatch. Read-only refinement separately passed all 3 preview tests.
-- `cd frontend && npx playwright test tests/editor-visual.spec.mjs tests/editor-effects.spec.mjs tests/editor-speech.spec.mjs tests/editor-assets.spec.mjs`: 4 passed with mocked application routes. Save/reload, approved-plan restoration, unsaved approval blocking, remote conflict preservation and existing effects/speech/attachments pass. Expanded mobile sizing was subsequently checked separately; screenshots inspected.
-- `node frontend/tests/editor-preview.manual.mjs`: real installed HyperFrames runtime and system Chromium decoded synthetic H264, played/paused, selected the second caption and sought timeline 1.4s to source 1.9s. During playback, timeline 1.6621s corresponded to source 2.1621s. The fixture serves byte ranges like the real content endpoint; no mocked runtime/player. Test-owned server/browser/media/database are removed in `finally`, cleanup verified. This does not establish owner-content speech quality or every transition/filter.
-- Frontend TypeScript/production build passed. Existing bundle-size warning remains. No paid/provider or GPU model generation, owner-content editing, production Studio embedding or OpenMontage write-back acceptance ran.
+```bash
+cd frontend
+npx --no-install playwright test \
+  tests/clip-join.spec.mjs \
+  tests/director-runtime.spec.mjs \
+  tests/editor-visual.spec.mjs \
+  tests/editor-effects.spec.mjs \
+  tests/storyboard.spec.mjs
+cd ..
+```
+
+These tests may intercept APIs and must be recorded as **MOCKED browser verification** unless the individual test proves otherwise. Inspect failures for test flakiness, race conditions and console errors; capture failing trace/screenshot in ignored test artifacts. Avoid running against a live owner project.
+
+## 4. Native CPU acceptance — opt-in after baseline passes
+
+Kdenlive MCP synthetic diagnostics: `node scripts/check_kdenlive_mcp.mjs` from repo root **only after** verifying its private runtime, sandbox/test root, no production media, and actual script actions. Inspect the existing `test_editor_kdenlive.py` real-runtime cases: preview, exact approval, linked audio, verified output, editable project, recovery and source byte preservation. The Kdenlive/MLT runtime is pinned, not necessarily Flatpak GUI-compatible.
+
+HyperFrames/OpenMontage: inspect `frontend/tests/native-interfaces.manual.mjs`, sandboxed runtime processes, and cleanup, then run only in an isolated synthetic acceptance window. Native Studio is not the same as a React mock; Backlot extension is not general upstream write-back. Verify revision conflicts and cleanup.
+
+**Owner desktop test (manual):** download a disposable rendered `.kdenlive` project; open in Flatpak Kdenlive; confirm media paths, both linked A/V clips, trim, audio join, playback and no missing-media dialog. Record Flatpak version and any 26.04-format compatibility errors. Do not assert this test passed unless the owner actually performed it.
+
+**GPU/provider tests:** separate explicit permission, safe operating conditions and user-owned acceptance. None are required for T0. Do not start image/video/voice training, paid API calls or AI rendering to diagnose a CPU unit-test failure.
+
+## 5. Gate-specific acceptance matrix
+
+| Gate | Evidence required |
+| --- | --- |
+| T0 baseline | HEAD + dirty map + environment inventory; each command, exit status, cases passed/failed/skipped, duration, environment-only blockers and test-owned cleanup. No production modifications. |
+| T1 triage | Repro case or minimal fixture, failure classification, source owner and affected callers, severity, proposed test and stop/go. |
+| T2 fix | One bounded commit; focused regression now passing; neighbor tests; no lost original hashes/owner IDs/revisions; rollback steps. |
+| S1 capability truth | Table for all 37 registered tools: registered/ready/actionable; missing model/runtime yields unavailable or actionable blocker **before approval**; no tool execution during discovery. |
+| S2 MCP isolation | Minimal-env allowlist; no API token inherited; outside-root paths refused; cancellation, timeout and orphan cleanup verified; uncertain external acknowledgements not replayed. |
+| S3 CI | CI runs without expensive models/providers; reliable build, selected backend and UI tests; failures block merges; native ARM64 suite separate. |
+| S4 storage | Read-only byte accounting on sample project and checkpoints; identity-aware retention proposal; zero deletions by the reporting step. |
+| M1 hygiene | Exact tracked Graphify consumers audited; proposed generated cache untracking excludes source/skills/contracts; Git diff confirms zero product code or data deletion. |
+| M2 seams | Characterization tests before extraction, route/output JSON compatibility afterward, no significant user-visible change. |
+| O1 orchestration | One synthetic multi-step analyze→propose→approve→preview→render→verify path survives restart and stale revision, cancellation, pending external mutation, and missing backend; no self-approval. |
+| E1 Kdenlive | Actual desktop project round-trip plus multi-clip/fps/audio tests before claiming richer control; current two-clip MVP stays supported. |
+| E2 native | Real pinned native UI round-trip for each added edit type, safe typed import and revision rejection. |
+| F1 film | Opt-in owner scenario with quality notes, recovered jobs, retakes, soundtrack, output checks, and verified final film; no creative-quality claims from codec probe alone. |
+
+## 6. Reporting template — required every test batch
+
+```text
+Run ID / date:
+Branch + HEAD:
+Pre-existing dirty paths (unchanged):
+Hardware / Python / Node / FFmpeg / MLT / installed runtimes:
+Scope / safety exclusions:
+Command:
+Result: PASS | FAIL | SKIP | BLOCKED
+Counts: passed / failed / skipped; exit code; duration:
+Failure classification + reproduction (if applicable):
+Real evidence: MOCKED | CPU | NATIVE | GPU/PROVIDER | OWNER:
+Media/job ownership and temporary cleanup check:
+Source changes: none | exact paths and reason:
+Next action / gate:
+```
+
+Do not turn a failing test green by weakening assertions or quietly altering test inputs. Any test fixture correction must be justified against production contracts and include before/after output. A **blocked** command must stay visibly blocked until the missing runtime/dependency is supplied. Do not mark a milestone DONE based on a documentation-only update.
